@@ -1,0 +1,42 @@
+.pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 20px);
+}
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+@media print {
+    body {
+        background: white;
+    }
+    .print\\:hidden {
+        display: none !important;
+    }
+    .print\\:block {
+        display: block !important;
+    }
+    .print\\:h-auto {
+        height: auto !important;
+    }
+    .print\\:overflow-visible {
+        overflow: visible !important;
+    }
+    .print\\:shadow-none {
+        box-shadow: none !important;
+    }
+    .print\\:border-gray-300 {
+        border-color: #d1d5db !important;
+    }
+    .break-before-page {
+        break-before: page;
+    }
+    .break-after-page {
+        break-after: page;
+    }
+    .break-inside-avoid {
+        break-inside: avoid;
+    }
+}
