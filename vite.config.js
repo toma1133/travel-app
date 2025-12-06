@@ -10,7 +10,7 @@ export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, process.cwd());
 
     return {
-        base: process.env.NODE_ENV === "production" ? "/trip-app/" : "/",
+        base: process.env.NODE_ENV === "production" ? "/travel-app/" : "/",
         envPrefix: ["VITE_", "SUPABASE_"],
         resolve: {
             alias: {
