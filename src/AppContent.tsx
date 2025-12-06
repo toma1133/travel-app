@@ -113,7 +113,8 @@ const AppContent = () => {
                 supabase
                     .from("payment_methods")
                     .select("*")
-                    .eq("trip_id", trip.id),
+                    .eq("trip_id", trip.id)
+                    .order("order", { ascending: true }),
                 supabase
                     .from("budget_items")
                     .select("*")
@@ -260,6 +261,7 @@ const AppContent = () => {
                 type: paymentMethod.type,
                 currency_code: paymentMethod.currency_code,
                 credit_limit: paymentMethod.credit_limit,
+                order: paymentMethod.order,
                 user_id: session.user.id,
             });
         }
@@ -272,7 +274,8 @@ const AppContent = () => {
         const { data: updatedPaymentMethods } = await supabase
             .from("payment_methods")
             .select("*")
-            .eq("trip_id", activeTrip.id);
+            .eq("trip_id", activeTrip.id)
+            .order("order", { ascending: true });
 
         if (Array.isArray(trips) && trips.length === 1)
             setActiveSettings(trips[0].settings_config);
@@ -311,9 +314,23 @@ const AppContent = () => {
     const handlePrintFullBook = async (trip) => {
         const promises = [
             supabase.from("places").select("*").eq("trip_id", trip.id),
-            supabase.from("itinerary_days").select("*").eq("trip_id", trip.id),
-            supabase.from("payment_methods").select("*").eq("trip_id", trip.id),
-            supabase.from("budget_items").select("*").eq("trip_id", trip.id),
+            supabase
+                .from("itinerary_days")
+                .select("*")
+                .eq("trip_id", trip.id)
+                .order("date", { ascending: true })
+                .order("id", { ascending: true }),
+            supabase
+                .from("payment_methods")
+                .select("*")
+                .eq("trip_id", trip.id)
+                .order("order", { ascending: false }),
+            supabase
+                .from("budget_items")
+                .select("*")
+                .eq("trip_id", trip.id)
+                .order("expense_date", { ascending: true })
+                .order("id", { ascending: true }),
             supabase.from("accommodations").select("*").eq("trip_id", trip.id),
             supabase.from("flights").select("*").eq("trip_id", trip.id),
             supabase.from("car_rentals").select("*").eq("trip_id", trip.id),
