@@ -7,7 +7,7 @@ const SectionHeader = ({ title, subtitle, rightAction, theme }) => (
         <div className="flex items-center">
             <div>
                 <h2
-                    className={`text-xl font-serif font-bold tracking-tight ${theme.primary}`}
+                    className={`text-xl font-[Noto_Sans_TC] font-bold tracking-tight ${theme.primary}`}
                 >
                     {title}
                 </h2>

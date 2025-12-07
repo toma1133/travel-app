@@ -65,7 +65,7 @@ const AppContent = () => {
         (async () => {
             try {
                 const storedTripId = localStorage.getItem(
-                    STORAGE_KEYS.activeTripId
+                    STORAGE_KEYS.activeTripId,
                 );
                 if (!storedTripId) {
                     setActiveTrip(null);
@@ -395,7 +395,7 @@ const AppContent = () => {
     return (
         <div className="mx-auto max-w-md shadow-2xl h-screen overflow-hidden relative">
             {(loading || detailLoading) && (
-                <div className="flex justify-center items-center h-full w-full backdrop-blur-md absolute top-0 z-50">
+                <div className="flex justify-center items-center h-full w-full backdrop-blur-md absolute top-0 z-50 animate-in fade-in">
                     <svg
                         className="text-gray-300 animate-spin"
                         viewBox="0 0 64 64"

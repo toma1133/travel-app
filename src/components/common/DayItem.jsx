@@ -28,7 +28,7 @@ const DayItem = ({
                         {day.weekday}
                     </span>
                     <span
-                        className={`text-2xl font-serif font-bold ${
+                        className={`text-2xl font-[Noto_Sans_TC] font-bold ${
                             theme.primary || "text-gray-900"
                         } print:text-gray-900`}
                     >

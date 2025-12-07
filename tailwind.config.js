@@ -1,5 +1,11 @@
 export default {
     darkMode: ["class"],
+    mode: "jit",
+    plugin: [],
+    purge: {
+        content: ["./src/**/*.html", "./src/**/*.jsx", "./src/**/*.tsx"],
+        safelist: ["html", "body"],
+    },
     theme: {
         container: {
             center: true,

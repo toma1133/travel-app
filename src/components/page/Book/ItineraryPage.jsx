@@ -7,7 +7,7 @@ const ItineraryPage = ({ itinerary, theme, isPrinting, onNavigateToPlace }) => {
 
     return (
         <div
-            className={`min-h-full font-sans text-gray-800 ${
+            className={`min-h-full font-[Noto_Sans_TC] text-gray-800 ${
                 isPrinting
                     ? "p-0 h-auto min-h-[50vh] break-after-page overflow-visible print:bg-white"
                     : `${theme.bg || "bg-gray-100"} py-12 pb-24`
@@ -39,7 +39,7 @@ const ItineraryPage = ({ itinerary, theme, isPrinting, onNavigateToPlace }) => {
                                 setExpandedDay(
                                     expandedDay === day.day_number
                                         ? null
-                                        : day.day_number
+                                        : day.day_number,
                                 )
                             }
                             onNavigate={onNavigateToPlace}

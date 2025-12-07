@@ -14,7 +14,7 @@ const CoverPage = ({ tripData, theme, isPrinting }) => (
             />
             <div className="absolute inset-0 bg-linear-to-t from-[#2C3E50] via-transparent to-transparent"></div>
             <div className="absolute top-10 right-8 flex flex-col items-center space-y-4 opacity-70">
-                <div className="writing-vertical text-white text-lg font-serif tracking-widest border-r border-white/50 pr-3 h-32">
+                <div className="writing-vertical text-white text-lg font-[Noto_Sans_TC] tracking-widest border-r border-white/50 pr-3 h-32">
                     {tripData.cover_text}
                 </div>
             </div>
@@ -29,7 +29,7 @@ const CoverPage = ({ tripData, theme, isPrinting }) => (
                         TRAVEL ITINERARY
                     </span>
                     <h1
-                        className={`text-3xl font-serif font-bold ${theme.primary} mb-2`}
+                        className={`text-3xl font-[Noto_Sans_TC] font-bold ${theme.primary} mb-2`}
                     >
                         {tripData.title}
                     </h1>

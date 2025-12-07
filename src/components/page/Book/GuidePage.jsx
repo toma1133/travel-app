@@ -18,7 +18,7 @@ const GuidePage = ({ places, targetPlaceId, theme, isPrinting }) => {
 
     return (
         <div
-            className={`min-h-full font-sans text-gray-800 ${
+            className={`min-h-full font-[Noto_Sans_TC] text-gray-800 ${
                 isPrinting
                     ? "p-0 h-auto min-h-[50vh] break-after-page overflow-visible print:bg-white"
                     : `${theme.bg || "bg-gray-100"} py-12 pb-24`

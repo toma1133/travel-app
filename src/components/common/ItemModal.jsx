@@ -26,14 +26,14 @@ const ItemModal = ({
     const [category, setCategory] = useState("food");
     const [currency, setCurrency] = useState(settings.localCurrency);
     const [paymentId, setPaymentId] = useState(
-        Array.isArray(paymentMethods) ? paymentMethods[0]?.id : null
+        Array.isArray(paymentMethods) ? paymentMethods[0]?.id : null,
     );
     const [date, setDate] = useState(
         new Date().toLocaleDateString("zh-TW", {
             year: "numeric",
             month: "2-digit",
             day: "2-digit",
-        })
+        }),
     );
 
     useEffect(() => {
@@ -45,10 +45,10 @@ const ItemModal = ({
                 setTitle(initialData.title || "");
                 setCategory(initialData.category || "food");
                 setCurrency(
-                    initialData.currency_code || settings.localCurrency
+                    initialData.currency_code || settings.localCurrency,
                 );
                 setPaymentId(
-                    initialData.payment_method_id || paymentMethods[0]?.id
+                    initialData.payment_method_id || paymentMethods[0]?.id,
                 );
                 setDate(
                     initialData.date ||
@@ -56,7 +56,7 @@ const ItemModal = ({
                             year: "numeric",
                             month: "2-digit",
                             day: "2-digit",
-                        })
+                        }),
                 );
             } else {
                 setId(null);
@@ -70,7 +70,7 @@ const ItemModal = ({
                         year: "numeric",
                         month: "2-digit",
                         day: "2-digit",
-                    })
+                    }),
                 );
             }
         })();
@@ -109,7 +109,7 @@ const ItemModal = ({
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in">
             <div className="bg-[#F2F2F0] w-full max-w-sm p-6 rounded-t-2xl sm:rounded-none shadow-2xl animate-in slide-in-from-bottom border border-gray-600">
                 <div className="flex justify-between items-center mb-6">
-                    <h3 className="font-serif font-bold text-xl">
+                    <h3 className="font-[Noto_Sans_TC] font-bold text-xl">
                         {initialData ? "編輯紀錄" : "新增消費"}
                     </h3>
                     <button onClick={onClose}>
@@ -128,6 +128,7 @@ const ItemModal = ({
                                     type="number"
                                     inputMode="decimal"
                                     value={amount}
+                                    step="1"
                                     onChange={(e) => setAmount(e.target.value)}
                                     placeholder="0"
                                     className="w-full bg-white border border-gray-300 p-3 font-mono text-2xl font-bold outline-none focus:border-black"
@@ -225,7 +226,7 @@ const ItemModal = ({
                             type="text"
                             value={date}
                             onChange={(e) => setDate(e.target.value)}
-                            className="w-full bg-transparent border-b border-gray-300 py-2 outline-none font-serif"
+                            className="w-full bg-transparent border-b border-gray-300 py-2 outline-none font-[Noto_Sans_TC]"
                             placeholder="日期"
                         />
                     </div>
@@ -238,7 +239,7 @@ const ItemModal = ({
                             type="text"
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
-                            className="w-full bg-transparent border-b border-gray-300 py-2 outline-none font-serif"
+                            className="w-full bg-transparent border-b border-gray-300 py-2 outline-none font-[Noto_Sans_TC]"
                             placeholder="備註..."
                         />
                     </div>

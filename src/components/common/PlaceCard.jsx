@@ -51,7 +51,7 @@ const PlaceCard = ({ place, isHighlighted, theme, isPrinting }) => {
                 <h3
                     className={`text-xl font-bold ${
                         theme.primary || "text-gray-800"
-                    } font-serif print:text-lg print:text-gray-900`}
+                    } font-[Noto_Sans_TC] print:text-lg print:text-gray-900`}
                 >
                     {place.name}
                 </h3>

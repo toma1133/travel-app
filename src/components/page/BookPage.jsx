@@ -116,7 +116,7 @@ const BookPage = ({
 
     return (
         <div
-            className={`h-screen w-full bg-[#F9F8F6] font-sans text-gray-800 overflow-hidden flex flex-col mx-auto max-w-md shadow-2xl relative`}
+            className={`h-screen w-full bg-[#F9F8F6] font-[Noto_Sans_TC] text-gray-500 overflow-hidden flex flex-col mx-auto max-w-md shadow-2xl relative`}
         >
             {/* Main Content */}
             <div className="flex-1 overflow-y-auto no-scrollbar scroll-smooth">

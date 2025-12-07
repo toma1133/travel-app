@@ -3,10 +3,10 @@ import { Plus, Printer } from "lucide-react";
 const BookshelfPage = ({ tripDataList, onPrintTrip, onSelectTrip }) => {
     return (
         <div
-            className={`h-screen w-full bg-[#F9F8F6] font-sans text-gray-800 overflow-hidden flex flex-col mx-auto max-w-md shadow-2xl relative`}
+            className={`h-screen w-full bg-[#F9F8F6] font-[Noto_Sans_TC] text-gray-800 overflow-hidden flex flex-col mx-auto max-w-md shadow-2xl relative`}
         >
             <div className="px-6 py-8">
-                <h1 className="text-2xl font-serif font-bold text-[#111827]">
+                <h1 className="text-2xl font-[Noto_Sans_TC] font-bold text-[#111827]">
                     我的旅程
                 </h1>
                 <p className="text-xs text-gray-500 font-mono uppercase tracking-widest mt-1">
@@ -43,7 +43,7 @@ const BookshelfPage = ({ tripDataList, onPrintTrip, onSelectTrip }) => {
                                             {trip.settings_config.localCurrency}{" "}
                                             Trip
                                         </span>
-                                        <h3 className="text-xl font-serif font-bold shadow-black drop-shadow-md">
+                                        <h3 className="text-xl font-[Noto_Sans_TC] font-bold shadow-black drop-shadow-md">
                                             {trip.title}
                                         </h3>
                                     </div>

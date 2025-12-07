@@ -41,7 +41,7 @@ const BudgetPage = ({
         ? budgetItems.reduce(
               (sum, item) =>
                   sum + convertToHome(item.amount, item.currency_code),
-              0
+              0,
           )
         : 0;
 
@@ -56,7 +56,7 @@ const BudgetPage = ({
                 if (usage[item.payment_method_id] !== undefined) {
                     usage[item.payment_method_id] += convertToHome(
                         item.amount,
-                        item.currency_code
+                        item.currency_code,
                     );
                 }
             });
@@ -123,7 +123,7 @@ const BudgetPage = ({
 
     return (
         <div
-            className={`min-h-full py-12 pb-24 font-sans text-gray-800 ${
+            className={`min-h-full py-12 pb-24 font-[Noto_Sans_TC] text-gray-800 ${
                 isPrinting
                     ? "p-0 h-auto break-after-page overflow-visible"
                     : theme.bg
@@ -180,7 +180,7 @@ const BudgetPage = ({
                     <div className="text-xs text-gray-500 mt-1 print:text-right">
                         ≈ {settings.localCurrency}{" "}
                         {Math.round(
-                            totalSpentHome / settings.exchangeRate
+                            totalSpentHome / settings.exchangeRate,
                         ).toLocaleString()}
                     </div>
                     {/* Legend Mini */}
@@ -233,7 +233,7 @@ const BudgetPage = ({
                                 const used = cardUsages[pm.id] || 0;
                                 const percent = Math.min(
                                     (used / pm.credit_limit) * 100,
-                                    100
+                                    100,
                                 );
                                 return (
                                     <div
@@ -319,7 +319,7 @@ const BudgetPage = ({
                     budgetItems.map((item) => {
                         const pmName =
                             paymentMethods.find(
-                                (p) => p.id === item.payment_method_id
+                                (p) => p.id === item.payment_method_id,
                             )?.name || "Unknown";
                         return (
                             <button
@@ -417,7 +417,7 @@ const BudgetPage = ({
                                             ≈ {settings.homeCurrency}{" "}
                                             {convertToHome(
                                                 item.amount,
-                                                item.currency_code
+                                                item.currency_code,
                                             ).toLocaleString()}
                                         </div>
                                     )}
