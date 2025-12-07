@@ -206,9 +206,7 @@ const ItineraryPage = ({
                                     ) : (
                                         <Settings size={16} className="mr-1" />
                                     )}
-                                    {isEditing
-                                        ? "退出編輯模式"
-                                        : "進入編輯模式"}
+                                    {isEditing ? "退出編輯" : "開始編輯"}
                                 </button>
                                 <button
                                     type="button"

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Star, Clock, MapPin, Pencil, Trash2 } from "lucide-react";
 
 const PlaceCard = ({
@@ -8,6 +9,7 @@ const PlaceCard = ({
     onEdit,
     onDelete,
 }) => {
+    const [showActions, setShowActions] = useState(false);
     const getPlaceTypeName = (param) => {
         switch (param) {
             case "sight":
@@ -37,17 +39,26 @@ const PlaceCard = ({
                         : "break-inside-avoid"
                 }
             `}
+            onMouseEnter={() => setShowActions(true)}
+            onMouseLeave={() => setShowActions(false)}
+            onTouchStart={() => setShowActions(true)}
         >
             <div className="relative h-48 overflow-hidden">
-                <img
-                    src={place.image}
-                    alt={place.name}
-                    className={`w-full h-full object-cover ${
-                        !isPrinting
-                            ? "transition-transform duration-700 group-hover:scale-105"
-                            : ""
-                    }`}
-                />
+                {place.image_url ? (
+                    <img
+                        src={place.image_url}
+                        alt={place.name}
+                        className={`w-full h-full object-cover ${
+                            !isPrinting
+                                ? "transition-transform duration-700 group-hover:scale-105"
+                                : ""
+                        }`}
+                    />
+                ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
+                        無圖片
+                    </div>
+                )}
                 <div className="absolute top-3 left-3">
                     <span className="bg-black/60 backdrop-blur-sm text-white text-[10px] px-2 py-1 uppercase tracking-wider">
                         {getPlaceTypeName(place.type)}
@@ -56,7 +67,10 @@ const PlaceCard = ({
 
                 {/* 編輯與刪除按鈕 (僅非列印模式顯示) */}
                 {!isPrinting && (
-                    <div className="absolute top-3 right-3 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    <div
+                        className={`absolute top-3 right-3 flex space-x-2 transition-opacity duration-200
+                            ${showActions ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
+                    >
                         <button
                             onClick={(e) => {
                                 e.stopPropagation();

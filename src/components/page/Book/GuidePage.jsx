@@ -262,6 +262,17 @@ const GuidePage = ({
                                 <div className="grid grid-cols-1 gap-4">
                                     <div>
                                         <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
+                                            ID
+                                        </label>
+                                        <input
+                                            name="id"
+                                            value={formPlace.id}
+                                            className="w-full p-2 rounded-lg border border-gray-200 outline-none text-base disabled:opacity-50"
+                                            disabled={true}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
                                             名稱 *
                                         </label>
                                         <input

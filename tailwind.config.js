@@ -1,5 +1,8 @@
 export default {
     darkMode: ["class"],
+    future: {
+        hoverOnlyWhenSupported: true,
+    },
     mode: "jit",
     plugin: [],
     purge: {
