@@ -104,7 +104,7 @@ const PlaceCard = ({
                     {place.name}
                 </h3>
                 <p className="text-xs text-gray-400 font-medium mb-2 print:text-gray-600">
-                    {place.engName}
+                    {place.eng_name}
                 </p>
                 <div className="flex flex-wrap gap-2 mb-4 print:hidden">
                     {Array.isArray(place.tags) &&
