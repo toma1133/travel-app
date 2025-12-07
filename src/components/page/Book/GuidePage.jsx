@@ -29,7 +29,7 @@ const GuidePage = ({
         name: "",
         engName: "",
         image: "",
-        desc: "",
+        description: "",
         tips: "",
         tags: "", // 輸入時用逗號分隔，儲存時轉陣列
         info: {
@@ -320,8 +320,8 @@ const GuidePage = ({
                                         介紹
                                     </label>
                                     <textarea
-                                        name="desc"
-                                        value={formPlace.desc}
+                                        name="description"
+                                        value={formPlace.description}
                                         onChange={handleInputChange}
                                         rows="3"
                                         placeholder="關於這個地點的簡短介紹..."

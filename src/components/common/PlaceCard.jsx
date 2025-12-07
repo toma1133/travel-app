@@ -118,7 +118,7 @@ const PlaceCard = ({
                         ))}
                 </div>
                 <p className="text-sm text-gray-600 leading-relaxed mb-4 text-justify print:text-sm print:text-gray-700">
-                    {place.desc}
+                    {place.description}
                 </p>
                 <div className="bg-[#F9F8F6] p-3 rounded text-xs space-y-2 text-gray-600 print:bg-white print:border print:border-gray-200 print:text-gray-700">
                     {/* Tips */}
