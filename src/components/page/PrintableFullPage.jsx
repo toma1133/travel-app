@@ -17,7 +17,7 @@ const PrintableFullPage = ({ tripData, theme }) => (
                 行程表
             </h3>
             <ItineraryPage
-                tripData={tripData}
+                itinerary={tripData.itinerary}
                 theme={theme}
                 isPrinting={true}
             />
@@ -27,7 +27,9 @@ const PrintableFullPage = ({ tripData, theme }) => (
                 消費總覽
             </h3>
             <BudgetPage
-                tripData={tripData}
+                budgetItems={tripData.budgetItems}
+                settings={tripData.settings_config}
+                paymentMethods={tripData.paymentMethods}
                 setTripData={() => {}}
                 theme={theme}
                 isPrinting={true}
@@ -37,13 +39,23 @@ const PrintableFullPage = ({ tripData, theme }) => (
             <h3 className="text-lg font-[Noto_Sans_TC] font-bold mb-4">
                 景點誌
             </h3>
-            <GuidePage tripData={tripData} theme={theme} isPrinting={true} />
+            <GuidePage
+                places={tripData.places}
+                theme={theme}
+                isPrinting={true}
+            />
         </div>
         <div className="mt-8 break-before-page">
             <h3 className="text-lg font-[Noto_Sans_TC] font-bold mb-4">
                 預訂資訊
             </h3>
-            <InfoPage tripData={tripData} theme={theme} isPrinting={true} />
+            <InfoPage
+                accommodations={tripData.accommodation}
+                flights={tripData.flights}
+                carRentals={tripData.carRentals}
+                theme={theme}
+                isPrinting={true}
+            />
         </div>
     </div>
 );

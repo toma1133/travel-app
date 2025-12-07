@@ -86,6 +86,29 @@ const SettingsModal = ({
         onClose();
     };
 
+    const movePaymentItem = (arr, from, to) => {
+        const newArr = [...arr];
+        const item = newArr.splice(from, 1)[0];
+        newArr.splice(to, 0, item);
+        return newArr;
+    };
+
+    const handlePaymentMoveUp = (index) => {
+        if (index > 0) {
+            setLocalPaymentMethods((prev) =>
+                movePaymentItem(prev, index, index - 1),
+            );
+        }
+    };
+
+    const handlePaymentMoveDown = (index) => {
+        if (index < paymentMethods.length - 1) {
+            setLocalPaymentMethods((prev) =>
+                movePaymentItem(prev, index, index + 1),
+            );
+        }
+    };
+
     if (!isOpen) return null;
 
     return (
@@ -174,13 +197,15 @@ const SettingsModal = ({
                                 新增
                             </button>
                         </div>
-                        <div className="max-h-40 overflow-y-auto no-scrollbar scroll-smooth">
+                        <div className="max-h-50 overflow-y-auto no-scrollbar scroll-smooth">
                             <PaymentSettingList
                                 settings={localSettings}
                                 paymentMethods={localPaymentMethods}
                                 onPaymentChange={handlePaymentChange}
                                 onPaymentRemove={removeMethod}
                                 onDragPaymentItem={handleDragPaymentItem}
+                                onPaymentMoveUp={handlePaymentMoveUp}
+                                onPaymentMoveDown={handlePaymentMoveDown}
                             />
                         </div>
                     </div>

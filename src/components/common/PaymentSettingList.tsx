@@ -11,8 +11,8 @@ import {
     sortableKeyboardCoordinates,
     verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import PaymentSettingItem from "./PaymentSettingItem";
 import { useEffect, useRef } from "react";
+import PaymentSettingItem from "./PaymentSettingItem";
 
 const PaymentSettingList = ({
     settings,
@@ -20,6 +20,8 @@ const PaymentSettingList = ({
     onPaymentChange,
     onPaymentRemove,
     onDragPaymentItem,
+    onPaymentMoveUp,
+    onPaymentMoveDown,
 }) => {
     const prevPaymentLength = useRef(paymentMethods.length);
     const endRef = useRef(null);
@@ -57,6 +59,8 @@ const PaymentSettingList = ({
                             index={index}
                             onPaymentChange={onPaymentChange}
                             onPaymentRemove={onPaymentRemove}
+                            onPaymentMoveUp={onPaymentMoveUp}
+                            onPaymentMoveDown={onPaymentMoveDown}
                         />
                     ))}
                 <div ref={endRef} />

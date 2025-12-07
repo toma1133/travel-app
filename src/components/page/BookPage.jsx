@@ -26,6 +26,15 @@ const BookPage = ({
     onDeleteBudgetItem,
     onEditSettings,
     onResetSettings,
+    onAddPlace,
+    onUpdatePlace,
+    onDeletePlace,
+    onAddActivity,
+    onEditActivity,
+    onDeleteActivity,
+    onAddDay,
+    onEditDay,
+    onDeleteDay,
 }) => {
     const [activeTab, setActiveTab] = useState(initialTab || "cover");
     const [targetPlace, setTargetPlace] = useState(null);
@@ -66,6 +75,9 @@ const BookPage = ({
                         places={places}
                         theme={theme}
                         isPrinting={false}
+                        onAddPlace={onAddPlace}
+                        onUpdatePlace={onUpdatePlace}
+                        onDeletePlace={onDeletePlace}
                     />
                 );
             case "itinerary":
@@ -75,6 +87,12 @@ const BookPage = ({
                         itinerary={itinerary}
                         isPrinting={false}
                         onNavigateToPlace={handleNavigateToPlace}
+                        onAddActivity={onAddActivity}
+                        onEditActivity={onEditActivity}
+                        onDeleteActivity={onDeleteActivity}
+                        onAddDay={onAddDay}
+                        onEditDay={onEditDay}
+                        onDeleteDay={onDeleteDay}
                     />
                 );
             case "budget":

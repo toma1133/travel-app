@@ -28,13 +28,7 @@ const ItemModal = ({
     const [paymentId, setPaymentId] = useState(
         Array.isArray(paymentMethods) ? paymentMethods[0]?.id : null,
     );
-    const [date, setDate] = useState(
-        new Date().toLocaleDateString("zh-TW", {
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-        }),
-    );
+    const [date, setDate] = useState(new Date().toISOString().substring(0, 10));
 
     useEffect(() => {
         (async () => {
@@ -52,11 +46,7 @@ const ItemModal = ({
                 );
                 setDate(
                     initialData.date ||
-                        new Date().toLocaleDateString("zh-TW", {
-                            year: "numeric",
-                            month: "2-digit",
-                            day: "2-digit",
-                        }),
+                        new Date().toISOString().substring(0, 10),
                 );
             } else {
                 setId(null);
@@ -65,13 +55,7 @@ const ItemModal = ({
                 setCategory("food");
                 setCurrency(settings.localCurrency);
                 setPaymentId(paymentMethods[0]?.id);
-                setDate(
-                    new Date().toLocaleDateString("zh-TW", {
-                        year: "numeric",
-                        month: "2-digit",
-                        day: "2-digit",
-                    }),
-                );
+                setDate(new Date().toISOString().substring(0, 10));
             }
         })();
     }, [isOpen, initialData, settings]);
@@ -223,7 +207,7 @@ const ItemModal = ({
                             日期
                         </label>
                         <input
-                            type="text"
+                            type="date"
                             value={date}
                             onChange={(e) => setDate(e.target.value)}
                             className="w-full bg-transparent border-b border-gray-300 py-2 outline-none font-[Noto_Sans_TC]"

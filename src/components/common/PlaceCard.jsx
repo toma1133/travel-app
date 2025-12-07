@@ -1,6 +1,13 @@
-import { Star, Clock, MapPin } from "lucide-react";
+import { Star, Clock, MapPin, Pencil, Trash2 } from "lucide-react";
 
-const PlaceCard = ({ place, isHighlighted, theme, isPrinting }) => {
+const PlaceCard = ({
+    place,
+    isHighlighted,
+    theme,
+    isPrinting,
+    onEdit,
+    onDelete,
+}) => {
     const getPlaceTypeName = (param) => {
         switch (param) {
             case "sight":
@@ -16,7 +23,7 @@ const PlaceCard = ({ place, isHighlighted, theme, isPrinting }) => {
 
     return (
         <div
-            id={`place-${place.id}`}
+            id={place.id}
             className={`
                 bg-white rounded-lg overflow-hidden shadow-sm border transition-all duration-500 group
                 ${
@@ -46,6 +53,32 @@ const PlaceCard = ({ place, isHighlighted, theme, isPrinting }) => {
                         {getPlaceTypeName(place.type)}
                     </span>
                 </div>
+
+                {/* 編輯與刪除按鈕 (僅非列印模式顯示) */}
+                {!isPrinting && (
+                    <div className="absolute top-3 right-3 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onEdit(place);
+                            }}
+                            className="p-1.5 bg-white/90 backdrop-blur rounded-full text-gray-600 hover:text-blue-600 hover:bg-white shadow-sm transition-colors"
+                            title="編輯"
+                        >
+                            <Pencil size={14} />
+                        </button>
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onDelete(place);
+                            }}
+                            className="p-1.5 bg-white/90 backdrop-blur rounded-full text-gray-600 hover:text-red-600 hover:bg-white shadow-sm transition-colors"
+                            title="刪除"
+                        >
+                            <Trash2 size={14} />
+                        </button>
+                    </div>
+                )}
             </div>
             <div className="p-5 print:p-4">
                 <h3
@@ -59,14 +92,15 @@ const PlaceCard = ({ place, isHighlighted, theme, isPrinting }) => {
                     {place.engName}
                 </p>
                 <div className="flex flex-wrap gap-2 mb-4 print:hidden">
-                    {place.tags.map((tag) => (
-                        <span
-                            key={tag}
-                            className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded"
-                        >
-                            #{tag}
-                        </span>
-                    ))}
+                    {Array.isArray(place.tags) &&
+                        place.tags.map((tag) => (
+                            <span
+                                key={tag}
+                                className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded"
+                            >
+                                #{tag}
+                            </span>
+                        ))}
                 </div>
                 <p className="text-sm text-gray-600 leading-relaxed mb-4 text-justify print:text-sm print:text-gray-700">
                     {place.desc}
@@ -89,13 +123,15 @@ const PlaceCard = ({ place, isHighlighted, theme, isPrinting }) => {
                             </span>
                         </div>
                     )}
-                    <div className="flex items-center">
-                        <Clock
-                            size={14}
-                            className="mr-2 text-gray-400 shrink-0 print:text-gray-500"
-                        />
-                        <span>{place.info.open}</span>
-                    </div>
+                    {place.info.open && (
+                        <div className="flex items-center">
+                            <Clock
+                                size={14}
+                                className="mr-2 text-gray-400 shrink-0 print:text-gray-500"
+                            />
+                            <span>{place.info.open}</span>
+                        </div>
+                    )}
                     {place.info.loc && (
                         <div className="flex items-center">
                             <MapPin

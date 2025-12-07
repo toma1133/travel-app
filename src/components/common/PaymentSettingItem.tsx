@@ -1,4 +1,4 @@
-import { GripVertical, Trash2 } from "lucide-react";
+import { ArrowUp, ArrowDown, GripVertical, Trash2 } from "lucide-react";
 import { useSortable, defaultAnimateLayoutChanges } from "@dnd-kit/sortable";
 
 const PaymentSettingItem = ({
@@ -8,6 +8,8 @@ const PaymentSettingItem = ({
     index,
     onPaymentChange,
     onPaymentRemove,
+    onPaymentMoveUp,
+    onPaymentMoveDown,
 }) => {
     const {
         attributes,
@@ -60,7 +62,22 @@ const PaymentSettingItem = ({
                         className="w-full bg-transparent border-b border-gray-300 py-2 outline-none font-[Noto_Sans_TC] text-base"
                         placeholder="名稱"
                     />
-                </div>
+                </div>{" "}
+                {/* 上下箭頭 */}
+                <button
+                    type="button"
+                    onClick={() => onPaymentMoveUp(index)}
+                    className="p-1 text-gray-400 hover:text-blue-500"
+                >
+                    <ArrowUp size={14} />
+                </button>
+                <button
+                    type="button"
+                    onClick={() => onPaymentMoveDown(index)}
+                    className="p-1 text-gray-400 hover:text-blue-500"
+                >
+                    <ArrowDown size={14} />
+                </button>
                 {method.id !== "cash" && method.type !== "cash" && (
                     <button
                         type="button"

@@ -103,7 +103,12 @@ const AppContent = () => {
 
         try {
             const promises = [
-                supabase.from("places").select("*").eq("trip_id", trip.id),
+                supabase
+                    .from("places")
+                    .select("*")
+                    .eq("trip_id", trip.id)
+                    .order("type", { ascending: true })
+                    .order("id", { ascending: true }),
                 supabase
                     .from("itinerary_days")
                     .select("*")
@@ -323,6 +328,330 @@ const AppContent = () => {
         setDetailLoading(false);
     };
 
+    const handleAddPlaceItem = async (placeItem: any) => {
+        if (!activeTrip || !session) return;
+
+        setDetailLoading(true);
+        const { error } = await supabase.from("places").insert({
+            trip_id: activeTrip.id,
+            type: placeItem.type,
+            name: placeItem.name,
+            eng_name: placeItem.eng_name,
+            description: placeItem.description,
+            image_url: placeItem.image_url,
+            tags:
+                typeof placeItem.tags === "string"
+                    ? placeItem.tags
+                          .split(",")
+                          .map((t) => t.trim())
+                          .filter((t) => t)
+                    : placeItem.tags,
+            tips: placeItem.tips,
+            info: placeItem.info,
+            user_id: session.user.id,
+        });
+
+        // refresh
+        const { data } = await supabase
+            .from("places")
+            .select("*")
+            .eq("trip_id", activeTrip.id)
+            .order("type", { ascending: true })
+            .order("id", { ascending: true });
+
+        setActivePlaces(data);
+        setDetailLoading(false);
+    };
+
+    const handleUpdatePlaceItem = async (placeItem: any) => {
+        if (!activeTrip || !session) return;
+
+        setDetailLoading(true);
+        const { error } = await supabase
+            .from("places")
+            .update({
+                type: placeItem.type,
+                name: placeItem.name,
+                eng_name: placeItem.eng_name,
+                description: placeItem.description,
+                image_url: placeItem.image_url,
+                tags:
+                    typeof placeItem.tags === "string"
+                        ? placeItem.tags
+                              .split(",")
+                              .map((t) => t.trim())
+                              .filter((t) => t)
+                        : placeItem.tags,
+                tips: placeItem.tips,
+                info: placeItem.info,
+            })
+            .eq("id", placeItem.id);
+
+        // refresh
+        const { data } = await supabase
+            .from("places")
+            .select("*")
+            .eq("trip_id", activeTrip.id)
+            .order("type", { ascending: true })
+            .order("id", { ascending: true });
+
+        setActivePlaces(data);
+        setDetailLoading(false);
+    };
+
+    const handleDeletePlaceItem = async (placeItemId: any) => {
+        if (!activeTrip || !session) return;
+
+        setDetailLoading(true);
+        const { error } = await supabase
+            .from("places")
+            .delete()
+            .eq("id", placeItemId);
+
+        // refresh
+        const { data } = await supabase
+            .from("places")
+            .select("*")
+            .eq("trip_id", activeTrip.id)
+            .order("type", { ascending: true })
+            .order("id", { ascending: true });
+
+        setActivePlaces(data);
+        setDetailLoading(false);
+    };
+
+    const handleAddActivityItem = async (activityItem: any) => {
+        if (!activeTrip || !session) return;
+
+        setDetailLoading(true);
+
+        const targetActivity = {
+            activityIndex: 0,
+            desc: activityItem.desc,
+            time: activityItem.time,
+            type: activityItem.type,
+            title: activityItem.title,
+            linkId: activityItem.linkId,
+        };
+        const currDayList = activeItinerary.filter(
+            (it) => it.id === activityItem.dayId,
+        );
+
+        if (Array.isArray(currDayList) && currDayList.length === 1) {
+            const currDay = currDayList[0];
+            let targetActivities = [];
+
+            if (!Array.isArray(currDay.activities)) {
+                targetActivities = [targetActivity];
+            } else {
+                targetActivities = [...currDay.activities, targetActivity];
+                targetActivities.sort((a, b) => a.time.localeCompare(b.time));
+                targetActivities = targetActivities.map((activity, index) => ({
+                    ...activity,
+                    activityIndex: index,
+                }));
+            }
+
+            const { error } = await supabase
+                .from("itinerary_days")
+                .update({
+                    activities: targetActivities,
+                })
+                .eq("id", activityItem.dayId);
+        }
+
+        // refresh
+        const { data } = await supabase
+            .from("itinerary_days")
+            .select("*")
+            .eq("trip_id", activeTrip.id)
+            .order("date", { ascending: true })
+            .order("id", { ascending: true });
+
+        setActiveItinerary(data);
+        setDetailLoading(false);
+    };
+
+    const handleEditActivityItem = async (activityItem: any) => {
+        if (!activeTrip || !session) return;
+
+        setDetailLoading(true);
+
+        const targetActivity = {
+            activityIndex: activityItem.activityIndex,
+            desc: activityItem.desc,
+            time: activityItem.time,
+            type: activityItem.type,
+            title: activityItem.title,
+            linkId: activityItem.linkId,
+        };
+        const currDayList = activeItinerary.filter(
+            (it) => it.id === activityItem.dayId,
+        );
+
+        if (Array.isArray(currDayList) && currDayList.length === 1) {
+            const currDay = currDayList[0];
+            let targetActivities = [];
+
+            if (!Array.isArray(currDay.activities)) {
+                targetActivities = [{ ...targetActivity, activityIndex: 1 }];
+            } else {
+                targetActivities = currDay.activities.map((activity) => {
+                    if (activity.activityIndex === activityItem.activityIndex)
+                        return targetActivity;
+                    return activity;
+                });
+                targetActivities.sort((a, b) => a.time.localeCompare(b.time));
+                targetActivities = targetActivities.map((activity, index) => ({
+                    ...activity,
+                    activityIndex: index,
+                }));
+            }
+
+            const { error } = await supabase
+                .from("itinerary_days")
+                .update({
+                    activities: targetActivities,
+                })
+                .eq("id", activityItem.dayId);
+        }
+
+        // refresh
+        const { data } = await supabase
+            .from("itinerary_days")
+            .select("*")
+            .eq("trip_id", activeTrip.id)
+            .order("date", { ascending: true })
+            .order("id", { ascending: true });
+
+        setActiveItinerary(data);
+        setDetailLoading(false);
+    };
+
+    const handleDeleteActivityItem = async ({
+        dayId,
+        activityTitle,
+        activityIndex,
+    }) => {
+        if (!activeTrip || !session) return;
+
+        setDetailLoading(true);
+
+        const currDayList = activeItinerary.filter((it) => it.id === dayId);
+        console.info(dayId);
+        console.info(currDayList);
+
+        if (Array.isArray(currDayList) && currDayList.length === 1) {
+            const currDay = currDayList[0];
+            let targetActivities = [];
+
+            if (!Array.isArray(currDay.activities)) {
+                targetActivities = [];
+            } else {
+                targetActivities = currDay.activities.filter(
+                    (activity) => activity.activityIndex !== activityIndex,
+                );
+                targetActivities.sort((a, b) => a.time.localeCompare(b.time));
+                targetActivities = targetActivities.map((activity, index) => ({
+                    ...activity,
+                    activityIndex: index,
+                }));
+            }
+
+            const { error } = await supabase
+                .from("itinerary_days")
+                .update({
+                    activities: targetActivities,
+                })
+                .eq("id", dayId);
+        }
+
+        // refresh
+        const { data } = await supabase
+            .from("itinerary_days")
+            .select("*")
+            .eq("trip_id", activeTrip.id)
+            .order("date", { ascending: true })
+            .order("id", { ascending: true });
+
+        setActiveItinerary(data);
+        setDetailLoading(false);
+    };
+
+    const handleAddDayItem = async (dayItem: any) => {
+        if (!activeTrip || !session) return;
+
+        setDetailLoading(true);
+        const { error } = await supabase.from("itinerary_days").insert({
+            trip_id: activeTrip.id,
+            day_number: dayItem.day_number,
+            date: dayItem.date,
+            title: dayItem.title,
+            weekday: dayItem.weekday,
+            activities: dayItem.activities,
+            user_id: session.user.id,
+        });
+
+        // refresh
+        const { data } = await supabase
+            .from("itinerary_days")
+            .select("*")
+            .eq("trip_id", activeTrip.id)
+            .order("date", { ascending: true })
+            .order("id", { ascending: true });
+
+        setActiveItinerary(data);
+        setDetailLoading(false);
+    };
+
+    const handleEditDayItem = async (dayItem: any) => {
+        if (!activeTrip || !session) return;
+
+        setDetailLoading(true);
+        const { error } = await supabase
+            .from("itinerary_days")
+            .update({
+                day_number: dayItem.day_number,
+                date: dayItem.date,
+                title: dayItem.title,
+                weekday: dayItem.weekday,
+                activities: dayItem.activities,
+            })
+            .eq("id", dayItem.id);
+
+        // refresh
+        const { data } = await supabase
+            .from("itinerary_days")
+            .select("*")
+            .eq("trip_id", activeTrip.id)
+            .order("date", { ascending: true })
+            .order("id", { ascending: true });
+
+        setActiveItinerary(data);
+        setDetailLoading(false);
+    };
+
+    const handleDeleteDayItem = async (dayId: number) => {
+        if (!activeTrip || !session) return;
+
+        setDetailLoading(true);
+        const { error } = await supabase
+            .from("itinerary_days")
+            .delete()
+            .eq("id", dayId);
+
+        // refresh
+        const { data } = await supabase
+            .from("itinerary_days")
+            .select("*")
+            .eq("trip_id", activeTrip.id)
+            .order("date", { ascending: true })
+            .order("id", { ascending: true });
+
+        setActiveItinerary(data);
+        setDetailLoading(false);
+    };
+
     // Handle Print Action (Now triggered from Bookshelf, passing the trip data)
     const handlePrintFullBook = async (trip) => {
         const promises = [
@@ -483,6 +812,15 @@ const AppContent = () => {
                     onDeleteBudgetItem={handleDeleteBudgetItem}
                     onEditSettings={handleEditSettings}
                     onResetSettings={handleResetSettings}
+                    onAddPlace={handleAddPlaceItem}
+                    onUpdatePlace={handleUpdatePlaceItem}
+                    onDeletePlace={handleDeletePlaceItem}
+                    onAddActivity={handleAddActivityItem}
+                    onEditActivity={handleEditActivityItem}
+                    onDeleteActivity={handleDeleteActivityItem}
+                    onAddDay={handleAddDayItem}
+                    onEditDay={handleEditDayItem}
+                    onDeleteDay={handleDeleteDayItem}
                 />
             ) : (
                 <BookshelfPage
