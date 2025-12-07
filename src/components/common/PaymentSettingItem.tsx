@@ -1,5 +1,4 @@
 import { GripVertical, Trash2 } from "lucide-react";
-import { CSS } from "@dnd-kit/utilities";
 import { useSortable, defaultAnimateLayoutChanges } from "@dnd-kit/sortable";
 
 const PaymentSettingItem = ({
@@ -37,9 +36,8 @@ const PaymentSettingItem = ({
             ref={setNodeRef}
             style={style}
             {...attributes}
-            {...listeners}
             className={`
-                bg-white p-3 mb-1 rounded-lg border border-gray-200 shadow-md space-y-2 cursor-move
+                bg-white p-3 mb-1 rounded-lg border border-gray-200 shadow-md space-y-2
                 ${
                     isDragging
                         ? "opacity-30 border-dashed border-2 border-blue-400"
@@ -51,19 +49,21 @@ const PaymentSettingItem = ({
                 <div className="flex items-center space-x-2 w-3/4">
                     <GripVertical
                         size={16}
-                        className="text-gray-400 flex-shrink-0"
+                        className="text-gray-400 flex-shrink-0 cursor-move"
+                        {...listeners}
                     />
                     <input
                         value={method.name || ""}
                         onChange={(e) =>
                             onPaymentChange(index, "name", e.target.value)
                         }
-                        className="font-bold text-sm bg-transparent border-b border-gray-100 focus:border-blue-300 w-full outline-none p-1 -m-1"
+                        className="w-full bg-transparent border-b border-gray-300 py-2 outline-none font-[Noto_Sans_TC] text-sm"
                         placeholder="名稱"
                     />
                 </div>
                 {method.id !== "cash" && method.type !== "cash" && (
                     <button
+                        type="button"
                         onClick={(e) => {
                             e.stopPropagation(); // Prevent drag interaction when clicking trash
                             onPaymentRemove(index);
@@ -91,7 +91,7 @@ const PaymentSettingItem = ({
                                 parseInt(e.target.value) || 0,
                             )
                         }
-                        className="w-full p-1 bg-gray-50 rounded-md border border-gray-200 font-mono text-xs text-right outline-none focus:border-blue-500"
+                        className="w-full bg-white border border-gray-300 p-3 font-mono text-sm text-right font-bold outline-none focus:border-black"
                         placeholder="無上限填 0"
                     />
                 </div>

@@ -253,6 +253,7 @@ const AppContent = () => {
             })
             .eq("id", activeTrip.id);
 
+        // upsert
         for (const paymentMethod of paymentMethods) {
             await supabase.from("payment_methods").upsert({
                 id: paymentMethod.id,
@@ -264,6 +265,18 @@ const AppContent = () => {
                 order: paymentMethod.order,
                 user_id: session.user.id,
             });
+        }
+
+        // remove
+        const deletePaymentMethods = activePaymentMethods.filter(
+            (ap) => paymentMethods.findIndex((p) => p.id === ap.id) < 0,
+        );
+
+        for (const paymentMethod of deletePaymentMethods) {
+            await supabase
+                .from("payment_methods")
+                .delete()
+                .eq("id", paymentMethod.id);
         }
 
         // refresh

@@ -7,12 +7,12 @@ import {
     useSensors,
 } from "@dnd-kit/core";
 import {
-    arrayMove,
     SortableContext,
     sortableKeyboardCoordinates,
     verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import PaymentSettingItem from "./PaymentSettingItem";
+import { useEffect, useRef } from "react";
 
 const PaymentSettingList = ({
     settings,
@@ -21,12 +21,21 @@ const PaymentSettingList = ({
     onPaymentRemove,
     onDragPaymentItem,
 }) => {
+    const prevPaymentLength = useRef(paymentMethods.length);
+    const endRef = useRef(null);
     const sensors = useSensors(
         useSensor(PointerSensor),
         useSensor(KeyboardSensor, {
             coordinateGetter: sortableKeyboardCoordinates,
         }),
     );
+
+    useEffect(() => {
+        if (paymentMethods.length > prevPaymentLength.current) {
+            endRef.current?.scrollIntoView({ behavior: "smooth" });
+        }
+        prevPaymentLength.current = paymentMethods.length;
+    }, [paymentMethods]);
 
     return (
         <DndContext
@@ -50,6 +59,7 @@ const PaymentSettingList = ({
                             onPaymentRemove={onPaymentRemove}
                         />
                     ))}
+                <div ref={endRef} />
             </SortableContext>
         </DndContext>
     );

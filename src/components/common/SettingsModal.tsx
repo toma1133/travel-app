@@ -16,7 +16,6 @@ const SettingsModal = ({
     const [localPaymentMethods, setLocalPaymentMethods] = useState(
         Array.isArray(paymentMethods) ? paymentMethods : [],
     );
-    const [draggedIndex, setDraggedIndex] = useState(null);
 
     useEffect(() => {
         setLocalSettings(settings);
@@ -25,49 +24,6 @@ const SettingsModal = ({
     useEffect(() => {
         setLocalPaymentMethods(paymentMethods);
     }, [paymentMethods]);
-
-    const handleDragStart = (e, index) => {
-        setDraggedIndex(index);
-        e.dataTransfer.effectAllowed = "move";
-        // Set a small delay to hide the original element after drag starts, avoiding visual flicker
-        setTimeout(() => {
-            e.target.style.opacity = "0.3";
-        }, 0);
-    };
-
-    const handleDragEnter = (index) => {
-        if (draggedIndex === null || draggedIndex === index) return;
-
-        // Create a new array and reorder the elements
-        const newMethods = [...localPaymentMethods];
-        const draggedItem = newMethods[draggedIndex];
-
-        // Perform the move operation
-        newMethods.splice(draggedIndex, 1); // Remove from old position
-        newMethods.splice(index, 0, draggedItem); // Insert into new position
-
-        // Update state and the index of the element currently being dragged over
-        // NOTE: The actual 'order' property update will happen in handleDragEnd
-        setLocalPaymentMethods(newMethods);
-        setDraggedIndex(index);
-    };
-
-    const handleDragEnd = (e) => {
-        // Reset opacity
-        e.target.style.opacity = "1";
-
-        // 1. Finalize the order property based on the current array index
-        const finalizedMethods = localPaymentMethods.map((method, index) => ({
-            ...method,
-            order: index, // Synchronize the explicit 'order' property with the final array index
-        }));
-
-        // 2. Set the state with the finalized 'order' values
-        setLocalPaymentMethods(finalizedMethods);
-
-        // 3. Reset dragged index
-        setDraggedIndex(null);
-    };
 
     const handleDragPaymentItem = ({ active, over }) => {
         if (over && active.id !== over.id) {
@@ -99,6 +55,7 @@ const SettingsModal = ({
     const addMethod = () => {
         const newOrder = localPaymentMethods.length;
         const newMethod = {
+            id: crypto.randomUUID(),
             name: "新卡片",
             type: "credit",
             credit_limit: 0,
@@ -162,7 +119,7 @@ const SettingsModal = ({
                                             homeCurrency: e.target.value,
                                         })
                                     }
-                                    className="w-full p-2 bg-white border border-gray-300 text-center font-mono text-sm"
+                                    className="w-full bg-white border border-gray-300 p-3 font-mono text-2xl text-right font-bold outline-none focus:border-black"
                                 />
                             </div>
                             <div>
@@ -178,7 +135,7 @@ const SettingsModal = ({
                                             localCurrency: e.target.value,
                                         })
                                     }
-                                    className="w-full p-2 bg-white border border-gray-300 text-center font-mono text-sm"
+                                    className="w-full bg-white border border-gray-300 p-3 font-mono text-2xl text-right font-bold outline-none focus:border-black"
                                 />
                             </div>
                         </div>
@@ -210,6 +167,7 @@ const SettingsModal = ({
                                 支付工具與額度
                             </h4>
                             <button
+                                type="button"
                                 onClick={addMethod}
                                 className="text-[10px] underline text-gray-600"
                             >
