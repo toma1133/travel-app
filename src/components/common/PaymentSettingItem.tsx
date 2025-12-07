@@ -57,7 +57,7 @@ const PaymentSettingItem = ({
                         onChange={(e) =>
                             onPaymentChange(index, "name", e.target.value)
                         }
-                        className="w-full bg-transparent border-b border-gray-300 py-2 outline-none font-[Noto_Sans_TC] text-sm"
+                        className="w-full bg-transparent border-b border-gray-300 py-2 outline-none font-[Noto_Sans_TC] text-base"
                         placeholder="名稱"
                     />
                 </div>
@@ -91,7 +91,7 @@ const PaymentSettingItem = ({
                                 parseInt(e.target.value) || 0,
                             )
                         }
-                        className="w-full bg-white border border-gray-300 p-3 font-mono text-sm text-right font-bold outline-none focus:border-black"
+                        className="w-full bg-white border border-gray-300 p-3 font-mono text-base text-right font-bold outline-none focus:border-black"
                         placeholder="無上限填 0"
                     />
                 </div>
