@@ -177,10 +177,11 @@ const GuidePage = ({
                     filteredPlaces.map((place) => (
                         <PlaceCard
                             key={place.id}
+                            theme={theme}
                             place={place}
                             isHighlighted={targetPlaceId === place.id}
-                            theme={theme}
                             isPrinting={isPrinting}
+                            isPreview={false}
                             onEdit={handleOpenEditModal}
                             onDelete={handleDeleteRequest}
                         />

@@ -440,8 +440,8 @@ const ItineraryPage = ({
                                     className="space-y-4"
                                 >
                                     {/* Time and Title */}
-                                    <div className="grid grid-cols-3 gap-4">
-                                        <div className="col-span-1">
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div className="col-span-1 md:col-span-1">
                                             <label className="block text-xs font-bold text-gray-500 uppercase mb-1 flex items-center">
                                                 <Clock
                                                     size={12}
@@ -461,7 +461,7 @@ const ItineraryPage = ({
                                                 className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm font-mono"
                                             />
                                         </div>
-                                        <div className="col-span-2">
+                                        <div className="col-span-1 md:col-span-2">
                                             <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
                                                 標題 *
                                             </label>

@@ -2,10 +2,11 @@ import { useState } from "react";
 import { Star, Clock, MapPin, Pencil, Trash2 } from "lucide-react";
 
 const PlaceCard = ({
+    theme,
     place,
     isHighlighted,
-    theme,
     isPrinting,
+    isPreview,
     onEdit,
     onDelete,
 }) => {
@@ -66,7 +67,7 @@ const PlaceCard = ({
                 </div>
 
                 {/* 編輯與刪除按鈕 (僅非列印模式顯示) */}
-                {!isPrinting && (
+                {!isPrinting && !isPreview && (
                     <div
                         className={`absolute top-3 right-3 flex space-x-2 transition-opacity duration-200
                             ${showActions ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}

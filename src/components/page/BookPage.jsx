@@ -184,7 +184,7 @@ const BookPage = ({
             </div>
             {/* Modal 彈窗 */}
             <Modal isOpen={!!targetPlace} onClose={closePlaceModal}>
-                <PlaceCard place={targetPlace} theme={theme} />
+                <PlaceCard place={targetPlace} theme={theme} isPreview={true} />
             </Modal>
         </div>
     );
