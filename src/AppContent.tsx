@@ -124,7 +124,7 @@ const AppContent = () => {
                     .from("budget_items")
                     .select("*")
                     .eq("trip_id", trip.id)
-                    .order("expense_date", { ascending: true })
+                    .order("expense_date", { ascending: false })
                     .order("id", { ascending: true }),
                 supabase
                     .from("accommodations")

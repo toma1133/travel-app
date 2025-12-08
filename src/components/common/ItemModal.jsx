@@ -45,7 +45,7 @@ const ItemModal = ({
                     initialData.payment_method_id || paymentMethods[0]?.id,
                 );
                 setDate(
-                    initialData.date ||
+                    initialData.expense_date ||
                         new Date().toISOString().substring(0, 10),
                 );
             } else {
