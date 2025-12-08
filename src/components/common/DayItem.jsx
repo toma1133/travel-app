@@ -116,7 +116,7 @@ const DayItem = ({
                                 ></div>
 
                                 {/* 編輯/刪除按鈕：根據 isEditing 永久顯示，或在非編輯模式下 Hover 顯示 */}
-                                {!isPrinting && (
+                                {!isPrinting && isEditing && (
                                     <div
                                         className={`
                                         absolute right-0 top-0 flex space-x-2 bg-white pr-2
