@@ -1,4 +1,5 @@
 import { useState } from "react";
+import moment from "moment";
 import {
     AlertTriangle,
     Calendar,
@@ -30,7 +31,7 @@ const ItineraryPage = ({
     const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
     const [activityModalMode, setActivityModalMode] = useState("create");
     const initialActivityState = {
-        time: "",
+        time: moment().format("HH:mm"),
         title: "",
         desc: "",
         type: "sight",
@@ -39,7 +40,6 @@ const ItineraryPage = ({
         activityIndex: null,
     };
     const [formActivity, setFormActivity] = useState(initialActivityState);
-
     // Delete Confirmation Modal State (for Activity)
     const [isDeleteActivityModalOpen, setIsDeleteActivityModalOpen] =
         useState(false);
@@ -48,17 +48,11 @@ const ItineraryPage = ({
     // --- Day State ---
     const [isDayModalOpen, setIsDayModalOpen] = useState(false);
     const [dayModalMode, setDayModalMode] = useState("create");
-    const getDayOfWeek = (date) => {
-        const dayOfWeek = new Date(date).getDay();
-        return isNaN(dayOfWeek)
-            ? null
-            : ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][dayOfWeek];
-    };
     const initialDayState = {
-        date: new Date().toISOString().substring(0, 10),
+        date: moment().format("YYYY-MM-DD"),
         title: "",
         day_number: 1,
-        weekday: getDayOfWeek(new Date()),
+        weekday: moment().format("ddd"),
     };
     const [formDay, setFormDay] = useState(initialDayState);
     const [isDeleteDayModalOpen, setIsDeleteDayModalOpen] = useState(false);
@@ -84,7 +78,7 @@ const ItineraryPage = ({
     const handleOpenDeleteActivityModal = (
         dayId,
         activityTitle,
-        activityIndex,
+        activityIndex
     ) => {
         setActivityToDelete({ dayId, activityTitle, activityIndex });
         setIsDeleteActivityModalOpen(true);
@@ -147,7 +141,7 @@ const ItineraryPage = ({
         if (name === "date") {
             setFormDay((prev) => ({
                 ...prev,
-                weekday: getDayOfWeek(new Date(value)),
+                weekday: moment(value).format("ddd"),
             }));
         }
     };
@@ -241,7 +235,7 @@ const ItineraryPage = ({
                                 setExpandedDay(
                                     expandedDay === day.day_number
                                         ? null
-                                        : day.day_number,
+                                        : day.day_number
                                 )
                             }
                             onNavigate={onNavigateToPlace}
@@ -418,7 +412,13 @@ const ItineraryPage = ({
                             <div className="flex justify-between items-center p-4 border-b border-gray-100">
                                 <h3 className="text-lg font-bold text-gray-800">
                                     {activityModalMode === "create"
-                                        ? `新增 Day ${itinerary.find((d) => d.id === formActivity.dayId)?.day_number} 活動`
+                                        ? `新增 Day ${
+                                              itinerary.find(
+                                                  (d) =>
+                                                      d.id ===
+                                                      formActivity.dayId
+                                              )?.day_number
+                                          } 活動`
                                         : "編輯活動"}
                                 </h3>
                                 <button

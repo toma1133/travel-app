@@ -35,6 +35,15 @@ const BookPage = ({
     onAddDay,
     onEditDay,
     onDeleteDay,
+    onAddFlight,
+    onEditFlight,
+    onDeleteFlight,
+    onAddAccommodation,
+    onEditAccommodation,
+    onDeleteAccommodation,
+    onAddCarRental,
+    onEditCarRental,
+    onDeleteCarRental,
 }) => {
     const [activeTab, setActiveTab] = useState(initialTab || "cover");
     const [targetPlace, setTargetPlace] = useState(null);
@@ -113,11 +122,20 @@ const BookPage = ({
             case "info":
                 return (
                     <InfoPage
+                        theme={theme}
                         accommodations={accommodations}
                         flights={flights}
                         carRentals={carRentals}
-                        theme={theme}
                         isPrinting={false}
+                        onAddFlight={onAddFlight}
+                        onEditFlight={onEditFlight}
+                        onDeleteFlight={onDeleteFlight}
+                        onAddAccommodation={onAddAccommodation}
+                        onEditAccommodation={onEditAccommodation}
+                        onDeleteAccommodation={onDeleteAccommodation}
+                        onAddCarRental={onAddCarRental}
+                        onEditCarRental={onEditCarRental}
+                        onDeleteCarRental={onDeleteCarRental}
                     />
                 );
             case "cover":

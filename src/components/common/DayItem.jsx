@@ -61,10 +61,21 @@ const DayItem = ({
             {!isPrinting && isEditing && (
                 <div
                     className={`flex space-x-2 bg-white pr-2
-                    ${isEditing ? "opacity-100" : "opacity-0 group-hover:opacity-100"} 
+                    ${
+                        isEditing
+                            ? "opacity-100"
+                            : "opacity-0 group-hover:opacity-100"
+                    } 
                     transition-opacity duration-200
                 `}
                 >
+                    <button
+                        onClick={() => onAddActivity(day.id)}
+                        className={`p-1 text-gray-400 hover:text-blue-500 transition-colors`}
+                        title="新增活動"
+                    >
+                        <Plus size={14} />
+                    </button>
                     <button
                         onClick={() => onEditDay(day)}
                         className="p-1 text-gray-400 hover:text-blue-500 transition-colors"
@@ -91,17 +102,6 @@ const DayItem = ({
         </div>
         {(expanded || isPrinting) && (
             <div className="px-4 pb-6 bg-white relative">
-                {!isPrinting && isEditing && (
-                    <div className="mb-4 pt-2 flex justify-end">
-                        <button
-                            onClick={() => onAddActivity(day.id)}
-                            className={`flex items-center text-xs font-medium text-white px-3 py-1.5 rounded-full shadow-sm ${theme.accent} hover:opacity-90 transition-opacity`}
-                        >
-                            <Plus size={12} className="mr-1" />
-                            新增活動
-                        </button>
-                    </div>
-                )}
                 <div className="space-y-4 ml-2 border-l border-dashed border-gray-200 pl-4">
                     {Array.isArray(day.activities) &&
                         day.activities.map((activity, idx) => (
@@ -115,41 +115,53 @@ const DayItem = ({
                                     }}
                                 ></div>
 
-                                {/* 編輯/刪除按鈕：根據 isEditing 永久顯示，或在非編輯模式下 Hover 顯示 */}
-                                {!isPrinting && isEditing && (
+                                {!isPrinting && (
                                     <div
                                         className={`
                                         absolute right-0 top-0 flex space-x-2 bg-white pr-2
-                                        ${isEditing ? "opacity-100" : "opacity-0 group-hover:opacity-100"} 
                                         transition-opacity duration-200
                                     `}
                                     >
-                                        <button
-                                            onClick={() =>
-                                                onEditActivity(
-                                                    day.id,
-                                                    activity,
-                                                    idx,
-                                                )
-                                            }
-                                            className="p-1 text-gray-400 hover:text-blue-500 transition-colors"
-                                            title="編輯活動"
-                                        >
-                                            <Pencil size={14} />
-                                        </button>
-                                        <button
-                                            onClick={() =>
-                                                onDeleteActivity(
-                                                    day.id,
-                                                    activity.title,
-                                                    idx,
-                                                )
-                                            }
-                                            className="p-1 text-gray-400 hover:text-red-500 transition-colors"
-                                            title="刪除活動"
-                                        >
-                                            <Trash2 size={14} />
-                                        </button>
+                                        {!isEditing && activity.linkId && (
+                                            <button
+                                                onClick={() =>
+                                                    onNavigate(activity.linkId)
+                                                }
+                                                className="p-1 text-gray-400 hover:text-blue-500 transition-colors"
+                                            >
+                                                <BookOpen size={14} />
+                                            </button>
+                                        )}
+                                        {isEditing && (
+                                            <>
+                                                <button
+                                                    onClick={() =>
+                                                        onEditActivity(
+                                                            day.id,
+                                                            activity,
+                                                            idx
+                                                        )
+                                                    }
+                                                    className="p-1 text-gray-400 hover:text-blue-500 transition-colors"
+                                                    title="編輯活動"
+                                                >
+                                                    <Pencil size={14} />
+                                                </button>
+                                                <button
+                                                    onClick={() =>
+                                                        onDeleteActivity(
+                                                            day.id,
+                                                            activity.title,
+                                                            idx
+                                                        )
+                                                    }
+                                                    className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                                                    title="刪除活動"
+                                                >
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            </>
+                                        )}
                                     </div>
                                 )}
 
@@ -170,7 +182,7 @@ const DayItem = ({
                                         {activity.desc}
                                     </p>
                                 )}
-                                {activity.linkId && !isPrinting && (
+                                {/* {activity.linkId && !isPrinting && (
                                     <button
                                         onClick={() =>
                                             onNavigate(activity.linkId)
@@ -180,7 +192,7 @@ const DayItem = ({
                                         <BookOpen size={10} className="mr-1" />
                                         查看詳情
                                     </button>
-                                )}
+                                )} */}
                             </div>
                         ))}
                 </div>

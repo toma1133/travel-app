@@ -52,7 +52,7 @@ const PrintableFullPage = ({ tripData, theme }) => (
             <InfoPage
                 accommodations={tripData.accommodation}
                 flights={tripData.flights}
-                carRentals={tripData.carRentals}
+                carRentals={tripData.carRental}
                 theme={theme}
                 isPrinting={true}
             />

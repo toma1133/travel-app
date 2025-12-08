@@ -65,7 +65,7 @@ const AppContent = () => {
         (async () => {
             try {
                 const storedTripId = localStorage.getItem(
-                    STORAGE_KEYS.activeTripId,
+                    STORAGE_KEYS.activeTripId
                 );
                 if (!storedTripId) {
                     setActiveTrip(null);
@@ -129,9 +129,19 @@ const AppContent = () => {
                 supabase
                     .from("accommodations")
                     .select("*")
-                    .eq("trip_id", trip.id),
-                supabase.from("flights").select("*").eq("trip_id", trip.id),
-                supabase.from("car_rentals").select("*").eq("trip_id", trip.id),
+                    .eq("trip_id", trip.id)
+                    .order("check_in_date", { ascending: true }),
+                supabase
+                    .from("flights")
+                    .select("*")
+                    .eq("trip_id", trip.id)
+                    .order("flight_date", { ascending: true })
+                    .order("departure_time", { ascending: true }),
+                supabase
+                    .from("car_rentals")
+                    .select("*")
+                    .eq("trip_id", trip.id)
+                    .order("pickup_datetime", { ascending: true }),
             ];
 
             const [
@@ -274,7 +284,7 @@ const AppContent = () => {
 
         // remove
         const deletePaymentMethods = activePaymentMethods.filter(
-            (ap) => paymentMethods.findIndex((p) => p.id === ap.id) < 0,
+            (ap) => paymentMethods.findIndex((p) => p.id === ap.id) < 0
         );
 
         for (const paymentMethod of deletePaymentMethods) {
@@ -434,7 +444,7 @@ const AppContent = () => {
             linkId: activityItem.linkId,
         };
         const currDayList = activeItinerary.filter(
-            (it) => it.id === activityItem.dayId,
+            (it) => it.id === activityItem.dayId
         );
 
         if (Array.isArray(currDayList) && currDayList.length === 1) {
@@ -486,7 +496,7 @@ const AppContent = () => {
             linkId: activityItem.linkId,
         };
         const currDayList = activeItinerary.filter(
-            (it) => it.id === activityItem.dayId,
+            (it) => it.id === activityItem.dayId
         );
 
         if (Array.isArray(currDayList) && currDayList.length === 1) {
@@ -538,8 +548,6 @@ const AppContent = () => {
         setDetailLoading(true);
 
         const currDayList = activeItinerary.filter((it) => it.id === dayId);
-        console.info(dayId);
-        console.info(currDayList);
 
         if (Array.isArray(currDayList) && currDayList.length === 1) {
             const currDay = currDayList[0];
@@ -549,7 +557,7 @@ const AppContent = () => {
                 targetActivities = [];
             } else {
                 targetActivities = currDay.activities.filter(
-                    (activity) => activity.activityIndex !== activityIndex,
+                    (activity) => activity.activityIndex !== activityIndex
                 );
                 targetActivities.sort((a, b) => a.time.localeCompare(b.time));
                 targetActivities = targetActivities.map((activity, index) => ({
@@ -649,6 +657,226 @@ const AppContent = () => {
             .order("id", { ascending: true });
 
         setActiveItinerary(data);
+        setDetailLoading(false);
+    };
+
+    const handleAddFlightItem = async (flightItem: any) => {
+        if (!activeTrip || !session) return;
+
+        setDetailLoading(true);
+        const { error } = await supabase.from("flights").insert({
+            trip_id: activeTrip.id,
+            flight_date: flightItem.flight_date,
+            code: flightItem.code,
+            departure_time: flightItem.departure_time,
+            arrival_time: flightItem.arrival_time,
+            departure_loc: flightItem.departure_loc,
+            arrival_loc: flightItem.arrival_loc,
+            user_id: session.user.id,
+        });
+
+        // refresh
+        const { data } = await supabase
+            .from("flights")
+            .select("*")
+            .eq("trip_id", activeTrip.id)
+            .order("flight_date", { ascending: true })
+            .order("departure_time", { ascending: true });
+
+        setActiveFlights(data);
+        setDetailLoading(false);
+    };
+
+    const handleEditFlightItem = async (flightItem: any) => {
+        if (!activeTrip || !session) return;
+
+        setDetailLoading(true);
+        const { error } = await supabase
+            .from("flights")
+            .update({
+                flight_date: flightItem.flight_date,
+                code: flightItem.code,
+                departure_time: flightItem.departure_time,
+                arrival_time: flightItem.arrival_time,
+                departure_loc: flightItem.departure_loc,
+                arrival_loc: flightItem.arrival_loc,
+            })
+            .eq("id", flightItem.id);
+
+        // refresh
+        const { data } = await supabase
+            .from("flights")
+            .select("*")
+            .eq("trip_id", activeTrip.id)
+            .order("flight_date", { ascending: true })
+            .order("departure_time", { ascending: true });
+
+        setActiveFlights(data);
+        setDetailLoading(false);
+    };
+
+    const handleDeleteFlightItem = async (flightId: number) => {
+        if (!activeTrip || !session) return;
+
+        setDetailLoading(true);
+        const { error } = await supabase
+            .from("flights")
+            .delete()
+            .eq("id", flightId);
+
+        // refresh
+        const { data } = await supabase
+            .from("flights")
+            .select("*")
+            .eq("trip_id", activeTrip.id)
+            .order("flight_date", { ascending: true })
+            .order("departure_time", { ascending: true });
+
+        setActiveFlights(data);
+        setDetailLoading(false);
+    };
+
+    const handleAddAccommodationItem = async (accommodationItem: any) => {
+        if (!activeTrip || !session) return;
+
+        setDetailLoading(true);
+        const { error } = await supabase.from("accommodations").insert({
+            trip_id: activeTrip.id,
+            name: accommodationItem.name,
+            check_in_date: accommodationItem.check_in_date,
+            check_out_date: accommodationItem.check_out_date,
+            address: accommodationItem.address,
+            user_id: session.user.id,
+        });
+
+        // refresh
+        const { data } = await supabase
+            .from("accommodations")
+            .select("*")
+            .eq("trip_id", activeTrip.id)
+            .order("check_in_date", { ascending: true });
+
+        setActiveAccommodations(data);
+        setDetailLoading(false);
+    };
+
+    const handleEditAccommodationItem = async (accommodationItem: any) => {
+        if (!activeTrip || !session) return;
+
+        setDetailLoading(true);
+        const { error } = await supabase
+            .from("accommodations")
+            .update({
+                name: accommodationItem.name,
+                check_in_date: accommodationItem.check_in_date,
+                check_out_date: accommodationItem.check_out_date,
+                address: accommodationItem.address,
+            })
+            .eq("id", accommodationItem.id);
+
+        // refresh
+        const { data } = await supabase
+            .from("accommodations")
+            .select("*")
+            .eq("trip_id", activeTrip.id)
+            .order("check_in_date", { ascending: true });
+
+        setActiveAccommodations(data);
+        setDetailLoading(false);
+    };
+
+    const handleDeleteAccommodationItem = async (accommodationId: number) => {
+        if (!activeTrip || !session) return;
+
+        setDetailLoading(true);
+        const { error } = await supabase
+            .from("accommodations")
+            .delete()
+            .eq("id", accommodationId);
+
+        // refresh
+        const { data } = await supabase
+            .from("accommodations")
+            .select("*")
+            .eq("trip_id", activeTrip.id)
+            .order("check_in_date", { ascending: true });
+
+        setActiveAccommodations(data);
+        setDetailLoading(false);
+    };
+
+    const handleAddCarRentalItem = async (carRentalItem: any) => {
+        if (!activeTrip || !session) return;
+
+        setDetailLoading(true);
+        const { error } = await supabase.from("car_rentals").insert({
+            trip_id: activeTrip.id,
+            company: carRentalItem.company,
+            pickup_datetime: carRentalItem.pickup_datetime,
+            dropoff_datetime: carRentalItem.dropoff_datetime,
+            pickup_loc: carRentalItem.pickup_loc,
+            dropoff_loc: carRentalItem.dropoff_loc,
+            model: carRentalItem.model,
+            insurance_plan: carRentalItem.insurance_plan,
+            user_id: session.user.id,
+        });
+
+        // refresh
+        const { data } = await supabase
+            .from("car_rentals")
+            .select("*")
+            .eq("trip_id", activeTrip.id)
+            .order("pickup_datetime", { ascending: true });
+
+        setActiveCarRentals(data);
+        setDetailLoading(false);
+    };
+
+    const handleEditCarRentalItem = async (carRentalItem: any) => {
+        if (!activeTrip || !session) return;
+
+        setDetailLoading(true);
+        const { error } = await supabase
+            .from("car_rentals")
+            .update({
+                company: carRentalItem.company,
+                pickup_datetime: carRentalItem.pickup_datetime,
+                dropoff_datetime: carRentalItem.dropoff_datetime,
+                pickup_loc: carRentalItem.pickup_loc,
+                dropoff_loc: carRentalItem.dropoff_loc,
+                model: carRentalItem.model,
+                insurance_plan: carRentalItem.insurance_plan,
+            })
+            .eq("id", carRentalItem.id);
+
+        // refresh
+        const { data } = await supabase
+            .from("car_rentals")
+            .select("*")
+            .eq("trip_id", activeTrip.id)
+            .order("pickup_datetime", { ascending: true });
+
+        setActiveCarRentals(data);
+        setDetailLoading(false);
+    };
+
+    const handleDeleteCarRentalItem = async (carRentalId: number) => {
+        if (!activeTrip || !session) return;
+
+        setDetailLoading(true);
+        const { error } = await supabase
+            .from("car_rentals")
+            .delete()
+            .eq("id", carRentalId);
+
+        // refresh
+        const { data } = await supabase
+            .from("car_rentals")
+            .select("*")
+            .eq("trip_id", activeTrip.id)
+            .order("pickup_datetime", { ascending: true });
+
+        setActiveCarRentals(data);
         setDetailLoading(false);
     };
 
@@ -821,6 +1049,15 @@ const AppContent = () => {
                     onAddDay={handleAddDayItem}
                     onEditDay={handleEditDayItem}
                     onDeleteDay={handleDeleteDayItem}
+                    onAddFlight={handleAddFlightItem}
+                    onEditFlight={handleEditFlightItem}
+                    onDeleteFlight={handleDeleteFlightItem}
+                    onAddAccommodation={handleAddAccommodationItem}
+                    onEditAccommodation={handleEditAccommodationItem}
+                    onDeleteAccommodation={handleDeleteAccommodationItem}
+                    onAddCarRental={handleAddCarRentalItem}
+                    onEditCarRental={handleEditCarRentalItem}
+                    onDeleteCarRental={handleDeleteCarRentalItem}
                 />
             ) : (
                 <BookshelfPage

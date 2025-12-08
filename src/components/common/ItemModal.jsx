@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import moment from "moment";
 import {
     Banknote,
     Bed,
@@ -26,9 +27,9 @@ const ItemModal = ({
     const [category, setCategory] = useState("food");
     const [currency, setCurrency] = useState(settings.localCurrency);
     const [paymentId, setPaymentId] = useState(
-        Array.isArray(paymentMethods) ? paymentMethods[0]?.id : null,
+        Array.isArray(paymentMethods) ? paymentMethods[0]?.id : null
     );
-    const [date, setDate] = useState(new Date().toISOString().substring(0, 10));
+    const [date, setDate] = useState(moment().format("YYYY-MM-DD"));
 
     useEffect(() => {
         (async () => {
@@ -39,14 +40,13 @@ const ItemModal = ({
                 setTitle(initialData.title || "");
                 setCategory(initialData.category || "food");
                 setCurrency(
-                    initialData.currency_code || settings.localCurrency,
+                    initialData.currency_code || settings.localCurrency
                 );
                 setPaymentId(
-                    initialData.payment_method_id || paymentMethods[0]?.id,
+                    initialData.payment_method_id || paymentMethods[0]?.id
                 );
                 setDate(
-                    initialData.expense_date ||
-                        new Date().toISOString().substring(0, 10),
+                    initialData.expense_date || moment().format("YYYY-MM-DD")
                 );
             } else {
                 setId(null);
@@ -55,7 +55,7 @@ const ItemModal = ({
                 setCategory("food");
                 setCurrency(settings.localCurrency);
                 setPaymentId(paymentMethods[0]?.id);
-                setDate(new Date().toISOString().substring(0, 10));
+                setDate(moment().format("YYYY-MM-DD"));
             }
         })();
     }, [isOpen, initialData, settings]);
