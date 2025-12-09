@@ -41,12 +41,12 @@ const BudgetPage = ({
         ? budgetItems.reduce(
               (sum, item) =>
                   sum + convertToHome(item.amount, item.currency_code),
-              0,
+              0
           )
         : 0;
 
     // 2. Card Usage Logic
-    const calculateCardUsage = () => {
+    const calculateUsage = () => {
         const usage = {};
         if (Array.isArray(paymentMethods))
             paymentMethods.forEach((pm) => (usage[pm.id] = 0));
@@ -56,13 +56,13 @@ const BudgetPage = ({
                 if (usage[item.payment_method_id] !== undefined) {
                     usage[item.payment_method_id] += convertToHome(
                         item.amount,
-                        item.currency_code,
+                        item.currency_code
                     );
                 }
             });
         return usage;
     };
-    const cardUsages = calculateCardUsage();
+    const usages = calculateUsage();
 
     // 3. Chart Logic (Simple Grayscale/Tone Conic)
     const categoryStats =
@@ -180,7 +180,7 @@ const BudgetPage = ({
                     <div className="text-xs text-gray-500 mt-1 print:text-right">
                         ≈ {settings.localCurrency}{" "}
                         {Math.round(
-                            totalSpentHome / settings.exchangeRate,
+                            totalSpentHome / settings.exchangeRate
                         ).toLocaleString()}
                     </div>
                     {/* Legend Mini */}
@@ -227,61 +227,67 @@ const BudgetPage = ({
                     }`}
                 >
                     {Array.isArray(paymentMethods) &&
-                        paymentMethods
-                            .filter((pm) => pm.type === "credit")
-                            .map((pm) => {
-                                const used = cardUsages[pm.id] || 0;
-                                const percent = Math.min(
-                                    (used / pm.credit_limit) * 100,
-                                    100,
-                                );
-                                return (
-                                    <div
-                                        key={pm.id}
-                                        className={`
+                        paymentMethods.map((pm) => {
+                            const used = usages[pm.id] || 0;
+                            const percent = Math.min(
+                                (used / pm.credit_limit) * 100,
+                                100
+                            );
+                            return (
+                                <div
+                                    key={pm.id}
+                                    className={`
                                         ${
                                             isPrinting
                                                 ? "bg-gray-50 p-3 rounded-md border border-gray-200"
                                                 : "bg-white border border-gray-200 p-3 shadow-sm rounded-lg"
                                         }
                                     `}
-                                    >
-                                        <div className="flex justify-between items-center mb-2">
-                                            <div className="flex items-center">
-                                                <CreditCard
-                                                    size={14}
-                                                    className="mr-2 text-gray-400"
-                                                />
-                                                <span className="text-xs font-bold text-gray-700">
-                                                    {pm.name}
-                                                </span>
-                                            </div>
-                                            <span
-                                                className={`text-xs ${
-                                                    theme.mono
-                                                } ${
-                                                    percent > 90
-                                                        ? "text-red-600"
-                                                        : "text-gray-500"
-                                                }`}
-                                            >
-                                                {used.toLocaleString()} /{" "}
-                                                {pm.credit_limit.toLocaleString()}
+                                >
+                                    <div className="flex justify-between items-center mb-2">
+                                        <div className="flex items-center">
+                                            <CreditCard
+                                                size={14}
+                                                className="mr-2 text-gray-400"
+                                            />
+                                            <span className="text-xs font-bold text-gray-700">
+                                                {pm.name}
                                             </span>
                                         </div>
-                                        <div className="w-full bg-gray-100 h-1.5 overflow-hidden">
-                                            <div
-                                                className={`h-full transition-all duration-500 ${
-                                                    percent > 90
-                                                        ? "bg-red-500"
-                                                        : "bg-gray-800"
-                                                }`}
-                                                style={{ width: `${percent}%` }}
-                                            ></div>
-                                        </div>
+                                        <span
+                                            className={`text-xs ${theme.mono} ${
+                                                percent > 90 &&
+                                                pm.credit_limit != 0
+                                                    ? "text-red-600"
+                                                    : "text-gray-500"
+                                            }`}
+                                        >
+                                            {used.toLocaleString()} /{" "}
+                                            {pm.credit_limit === 0
+                                                ? "∞"
+                                                : pm.credit_limit.toLocaleString()}
+                                        </span>
                                     </div>
-                                );
-                            })}
+                                    <div className="w-full bg-gray-100 h-1.5 overflow-hidden">
+                                        <div
+                                            className={`h-full transition-all duration-500 ${
+                                                percent > 90 &&
+                                                pm.credit_limit != 0
+                                                    ? "bg-red-500"
+                                                    : "bg-gray-800"
+                                            }`}
+                                            style={{
+                                                width: `${
+                                                    pm.credit_limit == 0
+                                                        ? 100
+                                                        : percent
+                                                }%`,
+                                            }}
+                                        ></div>
+                                    </div>
+                                </div>
+                            );
+                        })}
                 </div>
             </div>
 
@@ -319,7 +325,7 @@ const BudgetPage = ({
                     budgetItems.map((item) => {
                         const pmName =
                             paymentMethods.find(
-                                (p) => p.id === item.payment_method_id,
+                                (p) => p.id === item.payment_method_id
                             )?.name || "Unknown";
                         return (
                             <button
@@ -417,7 +423,7 @@ const BudgetPage = ({
                                             ≈ {settings.homeCurrency}{" "}
                                             {convertToHome(
                                                 item.amount,
-                                                item.currency_code,
+                                                item.currency_code
                                             ).toLocaleString()}
                                         </div>
                                     )}

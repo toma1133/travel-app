@@ -92,27 +92,25 @@ const PaymentSettingItem = ({
                     </button>
                 )}
             </div>
-            {(method.type === "credit" || method.type === "debit") && (
-                <div className="flex items-center space-x-2 pt-2 ">
-                    <span className="text-[10px] text-gray-500 uppercase">
-                        額度/上限 (
-                        {method.currency || settings.homeCurrency || "---"})
-                    </span>
-                    <input
-                        type="number"
-                        value={method.credit_limit || 0}
-                        onChange={(e) =>
-                            onPaymentChange(
-                                index,
-                                "credit_limit",
-                                parseInt(e.target.value) || 0,
-                            )
-                        }
-                        className="w-full bg-white border border-gray-300 p-3 font-mono text-base text-right font-bold outline-none focus:border-black"
-                        placeholder="無上限填 0"
-                    />
-                </div>
-            )}
+            <div className="flex items-center space-x-2 pt-2 ">
+                <span className="text-[10px] text-gray-500 uppercase">
+                    額度/上限 (
+                    {method.currency || settings.homeCurrency || "---"})
+                </span>
+                <input
+                    type="number"
+                    value={method.credit_limit || 0}
+                    onChange={(e) =>
+                        onPaymentChange(
+                            index,
+                            "credit_limit",
+                            parseInt(e.target.value) || 0
+                        )
+                    }
+                    className="w-full bg-white border border-gray-300 p-3 font-mono text-base text-right font-bold outline-none focus:border-black"
+                    placeholder="無上限填 0"
+                />
+            </div>
         </div>
     );
 };
