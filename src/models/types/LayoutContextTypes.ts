@@ -1,5 +1,7 @@
 import { Dispatch, SetStateAction } from "react";
 
-export type LayoutContextType = {
+type LayoutContextType = {
     setIsPageLoading: Dispatch<SetStateAction<boolean>>;
-}
+};
+
+export default LayoutContextType;

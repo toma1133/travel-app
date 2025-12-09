@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { tripRepo } from "../../services/repositories/TripRepo";
 import type { TripVM } from "../../models/types/TripsTypes";
 
-export function useTripMutations() {
+const useTripMutations = () => {
     const qc = useQueryClient();
     const insert = useMutation({
         mutationFn: (payload: TripVM) => tripRepo.insertTrip(payload),
@@ -27,4 +27,6 @@ export function useTripMutations() {
     });
 
     return { insert, upsert, remove };
-}
+};
+
+export default useTripMutations;

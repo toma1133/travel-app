@@ -1,60 +1,63 @@
-import { NavLink, Outlet, useNavigate, useParams } from "react-router-dom";
+import { useEffect } from "react";
+import { Outlet, useOutletContext, useParams } from "react-router-dom";
 import { BookOpen, Info, Map, PieChart, Sun } from "lucide-react";
-import { useBook } from "../hooks/page/UseBook";
+import useTrip from "../hooks/trip/UseTrip";
+import LayoutContextType from "../models/types/LayoutContextTypes";
 import TabButton from "../components/common/TabButton";
 
 const BookPage = () => {
     const { id: tripId } = useParams<{ id: string }>();
-    const { data, isLoading, error } = useBook(tripId);
-    const navigate = useNavigate();
+    const { data: tripData, isLoading, error } = useTrip(tripId);
+    const { setIsPageLoading } = useOutletContext<LayoutContextType>();
 
-    const handleTabBtnClick = (tabName: string) => {
-        navigate(`/trip/${tripId}/${tabName}`, { replace: false });
-    };
+    useEffect(() => {
+        setIsPageLoading(isLoading);
+        return () => setIsPageLoading(false);
+    }, [isLoading, setIsPageLoading]);
 
     return (
         <>
-            {data && (
+            {tripData && (
                 <>
                     {/* Main Content */}
                     <div className="flex-1 overflow-y-auto no-scrollbar scroll-smooth">
-                        <Outlet />
+                        <Outlet context={{ tripData, setIsPageLoading }} />
                     </div>
                     {/* Styled Bottom Navigation */}
                     <div
-                        className={`border-t border-gray-800 ${data.theme_config?.nav} px-6 pb-safe pt-1 shrink-0 z-40`}
+                        className={`border-t border-gray-800 ${tripData.theme_config?.nav} px-6 pb-safe pt-1 shrink-0 z-40`}
                     >
                         <div className="flex justify-between items-center max-w-sm mx-auto">
                             <TabButton
                                 to={`/trip/${tripId}/cover`}
                                 icon={Sun}
                                 label="首頁"
-                                theme={data.theme_config}
+                                theme={tripData.theme_config}
                                 end
                             />
                             <TabButton
                                 to={`/trip/${tripId}/guide`}
                                 icon={BookOpen}
                                 label="景點"
-                                theme={data.theme_config}
+                                theme={tripData.theme_config}
                             />
                             <TabButton
                                 to={`/trip/${tripId}/itinerary`}
                                 icon={Map}
                                 label="行程"
-                                theme={data.theme_config}
+                                theme={tripData.theme_config}
                             />
                             <TabButton
                                 to={`/trip/${tripId}/budget`}
                                 icon={PieChart}
                                 label="帳本"
-                                theme={data.theme_config}
+                                theme={tripData.theme_config}
                             />
                             <TabButton
                                 to={`/trip/${tripId}/info`}
                                 icon={Info}
                                 label="資訊"
-                                theme={data.theme_config}
+                                theme={tripData.theme_config}
                             />
                         </div>
                     </div>

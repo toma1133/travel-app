@@ -1,10 +1,9 @@
-
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { tripRepo } from "../../services/repositories/TripRepo";
 import { toTripsVM } from "../../services/mappers/TripMapper";
 import type { TripVM } from "../../models/types/TripsTypes";
 
-export function useTrips() {
+const useTrips = () => {
     return useQuery<TripVM[]>({
         queryKey: ["trips"],
         queryFn: async () => {
@@ -12,6 +11,8 @@ export function useTrips() {
             return toTripsVM(rows);
         },
         staleTime: 60_000,
-        placeholderData: keepPreviousData
+        placeholderData: keepPreviousData,
     });
-}
+};
+
+export default useTrips;

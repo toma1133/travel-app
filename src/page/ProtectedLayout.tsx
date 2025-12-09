@@ -1,11 +1,15 @@
 import { useEffect, useState } from "react";
 import { Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
-import { useAuth } from "../hooks/UseAuth";
-import { LayoutContextType } from "../models/types/LayoutContextTypes";
+import useAuth from "../hooks/UseAuth";
+import LayoutContextType from "../models/types/LayoutContextTypes";
 import LoadingMask from "../components/common/LoadingMask";
 
-const ProtectedLayout = ({ isOffline }: { isOffline: boolean }) => {
+type ProtectedLayoutProps = {
+    isOffline: boolean;
+};
+
+const ProtectedLayout = ({ isOffline }: ProtectedLayoutProps) => {
     const { session, loading, signOut } = useAuth();
     const [isDisplayBackBtn, setIsDisplayBackBtn] = useState(false);
     const [isPageLoading, setIsPageLoading] = useState(false);
@@ -14,7 +18,7 @@ const ProtectedLayout = ({ isOffline }: { isOffline: boolean }) => {
 
     useEffect(() => {
         setIsDisplayBackBtn(
-            location.pathname !== "/" && location.pathname !== "/trip"
+            location.pathname !== "/" && location.pathname !== "/trip",
         );
     }, [location]);
 
@@ -54,7 +58,7 @@ const ProtectedLayout = ({ isOffline }: { isOffline: boolean }) => {
                     <span
                         className={`text-xs px-2 py-1 rounded-full ${
                             isOffline
-                                ? "bg-gray-500/20 text-gray-100"
+                                ? "bg-gray-500/20 text-gray-400"
                                 : "bg-green-500/20 text-green-400"
                         }`}
                     >

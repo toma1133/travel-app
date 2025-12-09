@@ -5,6 +5,7 @@ import ProtectedLayout from "./page/ProtectedLayout";
 import BookPage from "./page/BookPage";
 import BookshelfPage from "./page/BookshelfPage";
 import CoverPage from "./page/Book/CoverPage";
+import GuidePage from "./page/Book/GuidePage";
 import "./App.css";
 
 const qc = new QueryClient();
@@ -24,6 +25,7 @@ const AppContent = ({ isOffline }: { isOffline: boolean }) => {
                                 element={<Navigate to="cover" replace />}
                             />
                             <Route path="cover" element={<CoverPage />} />
+                            <Route path="guide" element={<GuidePage />} />
                             <Route
                                 path="*"
                                 element={

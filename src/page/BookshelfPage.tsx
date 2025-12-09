@@ -1,10 +1,10 @@
 import { useEffect } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
-import { useBookshelf } from "../hooks/page/UseBookshelf";
-import { LayoutContextType } from "../models/types/LayoutContextTypes";
+import useTrips from "../hooks/trip/UseTrips";
+import LayoutContextType from "../models/types/LayoutContextTypes";
 
 const BookshelfPage = () => {
-    const { data, isLoading, error } = useBookshelf();
+    const { data, isLoading, error } = useTrips();
     const { setIsPageLoading } = useOutletContext<LayoutContextType>();
     const navigate = useNavigate();
 

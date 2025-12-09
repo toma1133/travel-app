@@ -1,17 +1,27 @@
 import { useState } from "react";
 import { Star, Clock, MapPin, Pencil, Trash2 } from "lucide-react";
+import { TripThemeConf } from "../../models/types/TripsTypes";
+import { PlaceVM } from "../../models/types/PlacesTypes";
+
+type PlaceCardProps = {
+    theme: TripThemeConf | null;
+    place: PlaceVM;
+    isPrinting: boolean | undefined;
+    isPreview: boolean;
+    onEdit: (place: PlaceVM) => void;
+    onDelete: (place: PlaceVM) => void;
+};
 
 const PlaceCard = ({
     theme,
     place,
-    isHighlighted,
     isPrinting,
     isPreview,
     onEdit,
     onDelete,
-}) => {
+}: PlaceCardProps) => {
     const [showActions, setShowActions] = useState(false);
-    const getPlaceTypeName = (param) => {
+    const getPlaceTypeName = (param: string | null) => {
         switch (param) {
             case "sight":
                 return "Sightseeing";
@@ -28,12 +38,7 @@ const PlaceCard = ({
         <div
             id={place.id}
             className={`
-                bg-white rounded-lg overflow-hidden shadow-sm border transition-all duration-500 group
-                ${
-                    isHighlighted && !isPrinting
-                        ? "border-[#8E354A] ring-2 ring-[#8E354A]/20 scale-[1.02]"
-                        : "border-gray-100"
-                }
+                bg-white rounded-lg overflow-hidden shadow-sm border transition-all duration-500 group border-gray-100
                 ${
                     isPrinting
                         ? "print:shadow-none print:border-gray-300 print:mb-4 print:break-inside-avoid-page"
@@ -65,7 +70,6 @@ const PlaceCard = ({
                         {getPlaceTypeName(place.type)}
                     </span>
                 </div>
-
                 {/* 編輯與刪除按鈕 (僅非列印模式顯示) */}
                 {!isPrinting && !isPreview && (
                     <div
@@ -98,7 +102,7 @@ const PlaceCard = ({
             <div className="p-5 print:p-4">
                 <h3
                     className={`text-xl font-bold ${
-                        theme.primary || "text-gray-800"
+                        theme?.primary || "text-gray-800"
                     } font-[Noto_Sans_TC] print:text-lg print:text-gray-900`}
                 >
                     {place.name}
@@ -127,7 +131,7 @@ const PlaceCard = ({
                             <Star
                                 size={14}
                                 className={`mr-2 ${
-                                    theme.accentText || "text-gray-600"
+                                    theme?.accentText || "text-gray-600"
                                 } shrink-0 print:text-gray-500`}
                             />
                             <span>

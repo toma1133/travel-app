@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabaseClient } from "../services/SupabaseClient";
-import { useAuth } from "../hooks/UseAuth";
+import useAuth from "../hooks/UseAuth";
 
 const LoginPage = () => {
     const [email, setEmail] = useState("");

@@ -1,58 +1,62 @@
 import { supabaseClient } from "../SupabaseClient";
-import { toTripInsert, toTripUpdate } from "../mappers/TripMapper";
-import type { TripRow, TripVM } from "../../models/types/TripsTypes";
+import { toPlaceInsert, toPlaceUpdate } from "../mappers/PlaceMapper";
+import type { PlaceRow, PlaceVM } from "../../models/types/PlacesTypes";
 
-export const tripRepo = {
-    async getTrip(id: string | undefined): Promise<TripRow | null> {
+export const placeRepo = {
+    async getPlace(id: string | undefined): Promise<PlaceRow | null> {
         if (id === undefined) return null;
         const { data, error } = await supabaseClient
-            .from("trips")
+            .from("places")
             .select("*")
             .eq("id", id)
             .single();
         if (error) throw error;
         return data ?? null;
     },
-    async listTrips(): Promise<TripRow[]> {
-        const { data, error } = await supabaseClient.from("trips").select("*");
+    async listPlaces(tripId: string | undefined): Promise<PlaceRow[]> {
+        if (tripId === undefined) return [];
+        const { data, error } = await supabaseClient
+            .from("places")
+            .select("*")
+            .eq("trip_id", tripId);
         if (error) throw error;
         return data ?? [];
     },
-    async insertTrip(vm: TripVM) {
-        const payload = toTripInsert(vm);
+    async insertPlace(vm: PlaceVM) {
+        const payload = toPlaceInsert(vm);
         const { data, error } = await supabaseClient
-            .from("trips")
+            .from("places")
             .insert(payload)
             .select("*")
             .single();
         if (error) throw error;
         return data!;
     },
-    async updateTrip(id: string, vmPatch: Partial<TripVM>) {
-        const patch = toTripUpdate(vmPatch);
+    async updatePlace(id: string, vmPatch: Partial<PlaceVM>) {
+        const patch = toPlaceUpdate(vmPatch);
         const { data, error } = await supabaseClient
-            .from("trips")
+            .from("places")
             .update(patch)
             .eq("id", id)
             .select("*")
             .single();
 
         if (error) throw error;
-        return data as TripRow;
+        return data as PlaceRow;
     },
-    async upsertTrip(vm: TripVM) {
-        const payload = toTripInsert(vm);
+    async upsertPlace(vm: PlaceVM) {
+        const payload = toPlaceInsert(vm);
         const { data, error } = await supabaseClient
-            .from("trips")
+            .from("places")
             .upsert(payload)
             .select("*")
             .single();
         if (error) throw error;
         return data!;
     },
-    async deleteTrip(id: string) {
+    async deletePlace(id: string) {
         const { error } = await supabaseClient
-            .from("trips")
+            .from("places")
             .delete()
             .eq("id", id);
         if (error) throw error;
