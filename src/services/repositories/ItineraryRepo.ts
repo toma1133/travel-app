@@ -1,9 +1,17 @@
 import { supabaseClient } from "../SupabaseClient";
-import { toItineraryInsert, toItineraryUpdate } from "../mappers/ItineraryMapper";
+import {
+    toItineraryInsert,
+    toItineraryUpdate,
+} from "../mappers/ItineraryMapper";
 import { ItineraryRow, ItineraryVM } from "../../models/types/ItineraryTypes";
 import IRepo from "./IRepo";
 
-export const itineraryRepo: IRepo<ItineraryRow, ItineraryVM, ItineraryVM, string> = {
+export const itineraryRepo: IRepo<
+    ItineraryRow,
+    ItineraryVM,
+    ItineraryVM,
+    string
+> = {
     async getById(id: string | undefined): Promise<ItineraryRow | null> {
         if (id === undefined || id === null) return null;
         const { data, error } = await supabaseClient
@@ -20,8 +28,8 @@ export const itineraryRepo: IRepo<ItineraryRow, ItineraryVM, ItineraryVM, string
             .from("itinerary_days")
             .select("*")
             .eq("trip_id", parentId)
-            .order("date", { ascending: true, })
-            .order("day_num", { ascending: true, });
+            .order("date", { ascending: true })
+            .order("day_number", { ascending: true });
         if (error) throw error;
         return data ?? [];
     },

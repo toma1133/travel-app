@@ -8,11 +8,12 @@ export type TripSettingConf = {
     exchangeRate: number;
     homeCurrency: string;
     localCurrency: string;
-}
+};
 
 export type TripThemeConf = {
-    [key: string]: string;
-}
+    [key: string]: string | { [key: string]: string };
+    categoryColor: { [key: string]: string };
+};
 
 export type TripVM = Omit<TripRow, "settings_config" | "theme_config"> & {
     settings_config: TripSettingConf | null;

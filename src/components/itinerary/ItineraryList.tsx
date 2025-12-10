@@ -1,71 +1,95 @@
-import { MouseEventHandler, useState } from "react";
-import { Calendar } from "lucide-react";
-import type { ItineraryVM } from "../../models/types/ItineraryTypes";
+import { useRef, useState } from "react";
+import type {
+    ItineraryActivitiy,
+    ItineraryVM,
+} from "../../models/types/ItineraryTypes";
 import type { TripThemeConf } from "../../models/types/TripsTypes";
 import ItineraryItem from "./ItineraryItem";
 
 type ItineraryListProps = {
-    activeDayNum: number;
     isEditing: boolean;
-    isPrinting: boolean;
-    itinerarys: ItineraryVM[];
+    isPrinting?: boolean;
+    itinerarys?: ItineraryVM[];
     theme: TripThemeConf | null;
-    onAddBtnClick: MouseEventHandler<HTMLButtonElement>;
+    onAddActivityBtnClick: (itineraryDay: ItineraryVM) => void;
+    onDeleteActivityBtnClick: (
+        itineraryDay: ItineraryVM,
+        activity: ItineraryActivitiy,
+    ) => void;
+    onDeleteDayBtnClick: (itinerary: ItineraryVM) => void;
+    onEditActivityBtnClick: (
+        itineraryDay: ItineraryVM,
+        activity: ItineraryActivitiy,
+    ) => void;
+    onEditDayBtnClick: (itinerary: ItineraryVM) => void;
+    onViewBtnClick: (linkId: string) => void;
 };
 
 const ItineraryList = ({
-    activeDayNum,
     isEditing,
     isPrinting,
     itinerarys,
     theme,
-    onAddBtnClick,
+    onAddActivityBtnClick,
+    onDeleteActivityBtnClick,
+    onDeleteDayBtnClick,
+    onEditActivityBtnClick,
+    onEditDayBtnClick,
+    onViewBtnClick,
 }: ItineraryListProps) => {
-    const [expandedDay, setExpandedDay] = useState<number | null>(1);
+    const [expandedDayNum, setExpandedDayNum] = useState<number | null>(1);
+    const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+    const handleExpandedBtnClick = (itinerary: ItineraryVM, index: number) => {
+        const newDayNum =
+            expandedDayNum === itinerary.day_number
+                ? null
+                : itinerary.day_number;
+        setExpandedDayNum(newDayNum);
+
+        if (newDayNum !== null && itemRefs.current[index]) {
+            itemRefs.current[index]?.scrollIntoView({
+                behavior: "smooth",
+                block: "end",
+            });
+        }
+    };
 
     return (
         <div
             className={`space-y-4 px-4 ${isPrinting ? "print:space-y-3" : ""}`}
         >
-            {Array.isArray(itinerarys) ? (
+            {Array.isArray(itinerarys) && itinerarys.length > 0 ? (
                 itinerarys.map((itinerary, i) => (
-                    <ItineraryItem
+                    <div
                         key={i}
-                        categoryColor={theme?.categoryColor}
-                        itinerary={itinerary}
-                        theme={theme}
-                        isEditing={isEditing}
-                        isExpanded={activeDayNum === itinerary.day_number}
-                        isPrinting={isPrinting}
-                        onToggle={() =>
-                            setExpandedDay(
-                                expandedDay === itinerary.day_number
-                                    ? null
-                                    : itinerary.day_number
-                            )
-                        }
-                        // onNavigate={onNavigateToPlace}
-                        // onAddActivity={handleOpenCreateActivityModal}
-                        // onEditActivity={handleOpenEditActivityModal}
-                        // onDeleteActivity={handleOpenDeleteActivityModal}
-                        // onEditDay={handleOpenEditDayModal}
-                        // onDeleteDay={handleOpenDeleteDayModal}
-                    />
+                        ref={(el: HTMLDivElement | null) => {
+                            itemRefs.current[i] = el;
+                        }}
+                    >
+                        <ItineraryItem
+                            itinerary={itinerary}
+                            theme={theme}
+                            isEditing={isEditing}
+                            isExpanded={expandedDayNum === itinerary.day_number}
+                            isPrinting={isPrinting}
+                            onExpandedBtnToggle={() =>
+                                handleExpandedBtnClick(itinerary, i)
+                            }
+                            onAddActivityBtnClick={onAddActivityBtnClick}
+                            onDeleteActivityBtnClick={onDeleteActivityBtnClick}
+                            onDeleteDayBtnClick={onDeleteDayBtnClick}
+                            onEditActivityBtnClick={onEditActivityBtnClick}
+                            onEditDayBtnClick={onEditDayBtnClick}
+                            onViewBtnClick={onViewBtnClick}
+                        />
+                    </div>
                 ))
             ) : (
-                // 提示新增日程
-                <div className="text-center py-10 bg-white rounded-lg border border-dashed border-gray-300 mx-4">
-                    <p className="text-gray-500 mb-4">
+                <div className="text-center py-10 bg-white rounded-lg border border-dashed border-gray-300">
+                    <p className="text-gray-500">
                         目前沒有任何日程，請點擊上方按鈕開始規劃！
                     </p>
-                    <button
-                        type="button"
-                        onClick={onAddBtnClick}
-                        className={`flex items-center mx-auto text-xs font-medium text-white px-3 py-1.5 rounded-full shadow-sm ${theme?.accent} hover:opacity-90 transition-opacity`}
-                    >
-                        <Calendar size={12} className="mr-1" />
-                        新增第一個日程
-                    </button>
                 </div>
             )}
         </div>

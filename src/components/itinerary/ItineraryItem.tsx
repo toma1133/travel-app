@@ -6,43 +6,85 @@ import {
     Plus,
     Trash2,
 } from "lucide-react";
+import type {
+    ItineraryActivitiy,
+    ItineraryVM,
+} from "../../models/types/ItineraryTypes";
+import type { TripThemeConf } from "../../models/types/TripsTypes";
 
-type ItineraryItemProps = {};
+type ItineraryItemProps = {
+    itinerary: ItineraryVM;
+    isEditing: boolean;
+    isExpanded: boolean;
+    isPrinting?: boolean;
+    theme: TripThemeConf | null;
+    onAddActivityBtnClick: (itineraryDay: ItineraryVM) => void;
+    onDeleteActivityBtnClick: (
+        itineraryDay: ItineraryVM,
+        activity: ItineraryActivitiy,
+    ) => void;
+    onDeleteDayBtnClick: (itinerary: ItineraryVM) => void;
+    onEditActivityBtnClick: (
+        itineraryDay: ItineraryVM,
+        activity: ItineraryActivitiy,
+    ) => void;
+    onEditDayBtnClick: (itinerary: ItineraryVM) => void;
+    onExpandedBtnToggle: (itinerary: ItineraryVM) => void;
+    onViewBtnClick: (linkId: string) => void;
+};
 
-const ItineraryItem = ({}: ItineraryItemProps) => (
+const ItineraryItem = ({
+    itinerary,
+    isEditing,
+    isExpanded,
+    isPrinting,
+    theme,
+    onAddActivityBtnClick,
+    onDeleteActivityBtnClick,
+    onDeleteDayBtnClick,
+    onEditActivityBtnClick,
+    onEditDayBtnClick,
+    onExpandedBtnToggle,
+    onViewBtnClick,
+}: ItineraryItemProps) => (
     <div
         className={`bg-white rounded-lg shadow-sm border-l-4 border-gray-200 overflow-hidden break-inside-avoid print:shadow-none print:border print:border-gray-300 ${
-            expanded && !isPrinting ? "border-l-[#8E354A]" : "border-l-[E5E7EB]"
+            isExpanded && !isPrinting
+                ? "border-l-[#8E354A]"
+                : "border-l-[E5E7EB]"
         }`}
     >
         <div
             role="button"
-            onClick={isEditing ? () => {} : onToggle}
+            onClick={
+                isEditing ? () => {} : () => onExpandedBtnToggle(itinerary)
+            }
             className={`w-full flex items-center justify-between p-4 bg-white transition-colors ${
                 !isPrinting && !isEditing
                     ? "hover:bg-gray-50"
                     : "print:cursor-default"
             } ${isEditing ? "cursor-default opacity-80" : ""}`}
-            disabled={isPrinting || isEditing}
         >
             <div className="flex items-center">
                 <div className="flex flex-col items-center mr-4 pr-4 border-r border-gray-100">
                     <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest print:text-gray-600">
-                        {day.weekday}
+                        {itinerary.weekday}
                     </span>
                     <span
                         className={`text-2xl font-[Noto_Sans_TC] font-bold ${
-                            theme.primary || "text-gray-900"
+                            theme?.primary || "text-gray-900"
                         } print:text-gray-900`}
                     >
-                        {day.date.split("-")[2]}
+                        {itinerary.date.split("-")[2]}
                     </span>
                 </div>
                 <div className="text-left">
-                    <div className={`font-bold ${theme.primary}`}>
-                        Day {day.day_number}
+                    <div className={`font-bold ${theme?.primary}`}>
+                        Day {itinerary.day_number}
                     </div>
-                    <div className="text-sm text-gray-500">{day.title}</div>
+                    <div className="text-sm text-gray-500">
+                        {itinerary.title}
+                    </div>
                 </div>
             </div>
             {!isPrinting && isEditing && (
@@ -57,21 +99,21 @@ const ItineraryItem = ({}: ItineraryItemProps) => (
                 `}
                 >
                     <button
-                        onClick={() => onAddActivity(day.id)}
+                        onClick={() => onAddActivityBtnClick(itinerary)}
                         className={`p-1 text-gray-400 hover:text-blue-500 transition-colors`}
                         title="新增活動"
                     >
                         <Plus size={14} />
                     </button>
                     <button
-                        onClick={() => onEditDay(day)}
+                        onClick={() => onEditDayBtnClick(itinerary)}
                         className="p-1 text-gray-400 hover:text-blue-500 transition-colors"
                         title="編輯日程"
                     >
                         <Pencil size={14} />
                     </button>
                     <button
-                        onClick={() => onDeleteDay(day)}
+                        onClick={() => onDeleteDayBtnClick(itinerary)}
                         className="p-1 text-gray-400 hover:text-red-500 transition-colors"
                         title="刪除日程"
                     >
@@ -81,27 +123,28 @@ const ItineraryItem = ({}: ItineraryItemProps) => (
             )}
             {!isPrinting &&
                 !isEditing &&
-                (expanded ? (
+                (isExpanded ? (
                     <ChevronUp size={20} className="text-gray-300" />
                 ) : (
                     <ChevronDown size={20} className="text-gray-300" />
                 ))}
         </div>
-        {(expanded || isPrinting) && (
+        {(isExpanded || isPrinting) && (
             <div className="px-4 pb-6 bg-white relative">
                 <div className="space-y-4 ml-2 border-l border-dashed border-gray-200 pl-4">
-                    {Array.isArray(day.activities) &&
-                        day.activities.map((activity, idx) => (
-                            <div key={idx} className="relative">
+                    {Array.isArray(itinerary.activities) &&
+                        itinerary.activities.map((activity, activityIdx) => (
+                            <div key={activityIdx} className="relative">
                                 <div
                                     className={`absolute -left-5 top-1.5 w-2 h-2 rounded-full ring-2 ring-white print:ring-0 print:border print:border-gray-500`}
                                     style={{
                                         backgroundColor:
-                                            categoryColor[activity.type] ||
-                                            categoryColor["shopping"],
+                                            theme?.categoryColor[
+                                                activity.type
+                                            ] ||
+                                            theme?.categoryColor["shopping"],
                                     }}
                                 ></div>
-
                                 {!isPrinting && (
                                     <div
                                         className={`
@@ -112,7 +155,9 @@ const ItineraryItem = ({}: ItineraryItemProps) => (
                                         {!isEditing && activity.linkId && (
                                             <button
                                                 onClick={() =>
-                                                    onNavigate(activity.linkId)
+                                                    onViewBtnClick(
+                                                        activity.linkId,
+                                                    )
                                                 }
                                                 className="p-1 text-gray-400 hover:text-blue-500 transition-colors"
                                             >
@@ -123,10 +168,9 @@ const ItineraryItem = ({}: ItineraryItemProps) => (
                                             <>
                                                 <button
                                                     onClick={() =>
-                                                        onEditActivity(
-                                                            day.id,
+                                                        onEditActivityBtnClick(
+                                                            itinerary,
                                                             activity,
-                                                            idx
                                                         )
                                                     }
                                                     className="p-1 text-gray-400 hover:text-blue-500 transition-colors"
@@ -136,10 +180,9 @@ const ItineraryItem = ({}: ItineraryItemProps) => (
                                                 </button>
                                                 <button
                                                     onClick={() =>
-                                                        onDeleteActivity(
-                                                            day.id,
-                                                            activity.title,
-                                                            idx
+                                                        onDeleteActivityBtnClick(
+                                                            itinerary,
+                                                            activity,
                                                         )
                                                     }
                                                     className="p-1 text-gray-400 hover:text-red-500 transition-colors"
@@ -151,14 +194,13 @@ const ItineraryItem = ({}: ItineraryItemProps) => (
                                         )}
                                     </div>
                                 )}
-
                                 <div className="flex items-baseline">
                                     <span className="font-mono text-xs text-gray-400 w-12 shrink-0 pt-0.5 print:text-gray-600">
                                         {activity.time}
                                     </span>
                                     <span
                                         className={`text-sm font-bold ${
-                                            theme.primary || "text-gray-800"
+                                            theme?.primary || "text-gray-800"
                                         } truncate pr-2 print:text-gray-900`}
                                     >
                                         {activity.title}

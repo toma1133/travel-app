@@ -130,11 +130,11 @@ const InfoPage = ({ isPrinting }: InfoPageProps) => {
             updated_at: null,
             user_id: session ? session.user.id : "",
         }),
-        [tripId, session]
+        [tripId, session],
     );
     const [formFlight, setFormFlight] = useState(initialFlightState);
     const [flightToDelete, setFlightToDelete] = useState<FlightRow | null>(
-        null
+        null,
     );
 
     const handleOpenCreateFlightModal = () => {
@@ -205,10 +205,10 @@ const InfoPage = ({ isPrinting }: InfoPageProps) => {
             updated_at: null,
             user_id: session ? session.user.id : "",
         }),
-        [tripId, session]
+        [tripId, session],
     );
     const [formAccommodation, setFormAccommodation] = useState(
-        initialAccommodationState
+        initialAccommodationState,
     );
     const [accommodationToDelete, setAccommodationToDelete] =
         useState<AccommodationRow | null>(null);
@@ -220,7 +220,7 @@ const InfoPage = ({ isPrinting }: InfoPageProps) => {
     };
 
     const handleOpenEditAccommodationModal = (
-        accommodation: AccommodationRow
+        accommodation: AccommodationRow,
     ) => {
         setAccommodationModalMode("edit");
         setFormAccommodation(accommodation);
@@ -228,7 +228,7 @@ const InfoPage = ({ isPrinting }: InfoPageProps) => {
     };
 
     const handleAccommodationFormInputChange = (
-        e: ChangeEvent<HTMLInputElement>
+        e: ChangeEvent<HTMLInputElement>,
     ) => {
         const { name, value } = e.target;
         setFormAccommodation((prev) => ({ ...prev, [name]: value }));
@@ -262,7 +262,7 @@ const InfoPage = ({ isPrinting }: InfoPageProps) => {
     };
 
     const handleOpenDeleteAccommodationModal = (
-        accommodation: AccommodationRow
+        accommodation: AccommodationRow,
     ) => {
         setAccommodationToDelete(accommodation);
         setDeleteType("accommodation");
@@ -288,7 +288,7 @@ const InfoPage = ({ isPrinting }: InfoPageProps) => {
             updated_at: null,
             user_id: session ? session.user.id : "",
         }),
-        [tripId, session]
+        [tripId, session],
     );
     const [formCarRental, setFormCarRental] = useState(initialCarRentalState);
     const [carRentalToDelete, setCarRentalToDelete] =
@@ -305,10 +305,10 @@ const InfoPage = ({ isPrinting }: InfoPageProps) => {
         setFormCarRental({
             ...carRental,
             pickup_datetime: moment(carRental.pickup_datetime).format(
-                "YYYY-MM-DD HH:mm:ss"
+                "YYYY-MM-DD HH:mm:ss",
             ),
             dropoff_datetime: moment(carRental.dropoff_datetime).format(
-                "YYYY-MM-DD HH:mm:ss"
+                "YYYY-MM-DD HH:mm:ss",
             ),
         });
         setIsCarRentalModalOpen(true);
@@ -327,16 +327,16 @@ const InfoPage = ({ isPrinting }: InfoPageProps) => {
             `租車公司:${carRental.company} 租車車型: ${
                 carRental.model
             } 取車: ${moment(carRental.pickup_datetime).format(
-                "YYYY-MM-DD HH:mm:ss"
+                "YYYY-MM-DD HH:mm:ss",
             )} ${carRental.pickup_loc} 還車: ${moment(
-                carRental.dropoff_datetime
-            ).format("YYYY-MM-DD HH:mm:ss")} ${carRental.dropoff_loc}`
+                carRental.dropoff_datetime,
+            ).format("YYYY-MM-DD HH:mm:ss")} ${carRental.dropoff_loc}`,
         );
         setIsDeleteModalOpen(true);
     };
 
     const handleCarRentalFormInputChange = (
-        e: ChangeEvent<HTMLInputElement>
+        e: ChangeEvent<HTMLInputElement>,
     ) => {
         const { name, value } = e.target;
         setFormCarRental((prev) => ({ ...prev, [name]: value }));
@@ -370,7 +370,7 @@ const InfoPage = ({ isPrinting }: InfoPageProps) => {
                 case "accommodation":
                     if (!accommodationToDelete) return;
                     await removeAccommodation.mutateAsync(
-                        accommodationToDelete.id
+                        accommodationToDelete.id,
                     );
                     break;
                 case "car_rental":
@@ -385,6 +385,8 @@ const InfoPage = ({ isPrinting }: InfoPageProps) => {
 
             setIsDeleteModalOpen(false);
             setFlightToDelete(null);
+            setAccommodationToDelete(null);
+            setCarRentalToDelete(null);
             setDeleteType("");
             setDeleteKey("");
         } catch (err) {
@@ -395,6 +397,8 @@ const InfoPage = ({ isPrinting }: InfoPageProps) => {
     const handleCloseDeleteModal = () => {
         setIsDeleteModalOpen(false);
         setFlightToDelete(null);
+        setAccommodationToDelete(null);
+        setCarRentalToDelete(null);
         setDeleteType("");
         setDeleteKey("");
     };
@@ -504,246 +508,3 @@ const InfoPage = ({ isPrinting }: InfoPageProps) => {
 };
 
 export default InfoPage;
-
-// const InfoPage = ({
-//     carRentals,
-//     onAddCarRental,
-//     onEditCarRental,
-//     onDeleteCarRental,
-// }) => {
-
-//     return (
-//         <div
-//             className={`min-h-full font-[Noto_Sans_TC] text-gray-800 ${
-//                 isPrinting
-//                     ? "p-4 h-auto min-h-[50vh] break-after-page overflow-visible print:bg-white"
-//                     : `${theme.bg || "bg-gray-100"} py-12 pb-24`
-//             }`}
-//         >
-
-//             {/* ==================================== */}
-//             {/* Add/Edit Car Rental Modal */}
-//             {/* ==================================== */}
-//             {isCarRentalModalOpen && (
-//                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in">
-//                     <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm max-h-[90vh] overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
-//                         {/* Modal Header */}
-//                         <div className="flex justify-between items-center p-4 border-b border-gray-100">
-//                             <h3 className="text-lg font-bold text-gray-800">
-//                                 {carRentalModalMode === "create"
-//                                     ? `新增租車`
-//                                     : "編輯租車"}
-//                             </h3>
-//                             <button
-//                                 type="button"
-//                                 onClick={() => setIsCarRentalModalOpen(false)}
-//                                 className="p-1 rounded-full hover:bg-gray-100 text-gray-500 transition-colors"
-//                             >
-//                                 <X size={20} />
-//                             </button>
-//                         </div>
-
-//                         {/* Modal Body - Form */}
-//                         <div className="p-6 overflow-y-auto">
-//                             <form
-//                                 id="car-rental-form"
-//                                 onSubmit={handleCarRentalSubmit}
-//                                 className="space-y-4"
-//                             >
-//                                 {/* Company name */}
-//                                 <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
-//                                     <div className="col-span-2">
-//                                         <label className="block text-xs font-bold text-gray-500 uppercase mb-1 flex items-center">
-//                                             租車公司
-//                                         </label>
-//                                         <input
-//                                             required
-//                                             name="company"
-//                                             value={formCarRental.company}
-//                                             onChange={
-//                                                 handleCarRentalFormInputChange
-//                                             }
-//                                             placeholder="Toyota Rent a Car"
-//                                             className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm font-mono"
-//                                         />
-//                                     </div>
-//                                 </div>
-//                                 {/* Insurance and model */}
-//                                 <div className="grid grid-cols-2 gap-4">
-//                                     <div className="col-span-1 md:col-span-2">
-//                                         <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
-//                                             保險方案
-//                                         </label>
-//                                         <input
-//                                             required
-//                                             type="text"
-//                                             name="insurance_plan"
-//                                             value={formCarRental.insurance_plan}
-//                                             onChange={
-//                                                 handleCarRentalFormInputChange
-//                                             }
-//                                             className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
-//                                         />
-//                                     </div>
-//                                     <div className="col-span-1 md:col-span-2">
-//                                         <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
-//                                             車型
-//                                         </label>
-//                                         <input
-//                                             required
-//                                             type="text"
-//                                             name="model"
-//                                             value={formCarRental.model}
-//                                             onChange={
-//                                                 handleCarRentalFormInputChange
-//                                             }
-//                                             className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
-//                                         />
-//                                     </div>
-//                                 </div>
-//                                 {/* Pickup and Dropoff location */}
-//                                 <div className="grid grid-cols-2 gap-4">
-//                                     <div className="col-span-1 md:col-span-2">
-//                                         <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
-//                                             取車地點
-//                                         </label>
-//                                         <input
-//                                             required
-//                                             type="text"
-//                                             name="pickup_loc"
-//                                             value={formCarRental.pickup_loc}
-//                                             onChange={
-//                                                 handleCarRentalFormInputChange
-//                                             }
-//                                             className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
-//                                         />
-//                                     </div>
-//                                     <div className="col-span-1 md:col-span-2">
-//                                         <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
-//                                             還車地點
-//                                         </label>
-//                                         <input
-//                                             required
-//                                             type="text"
-//                                             name="dropoff_loc"
-//                                             value={formCarRental.dropoff_loc}
-//                                             onChange={
-//                                                 handleCarRentalFormInputChange
-//                                             }
-//                                             className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
-//                                         />
-//                                     </div>
-//                                 </div>
-//                                 {/* Dropoff date and location */}
-//                                 <div className="grid grid-cols-2 gap-4">
-//                                     <div className="col-span-2 md:col-span-2">
-//                                         <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
-//                                             取車日期
-//                                         </label>
-//                                         <input
-//                                             required
-//                                             type="datetime-local"
-//                                             name="pickup_datetime"
-//                                             value={
-//                                                 formCarRental.pickup_datetime
-//                                             }
-//                                             onChange={
-//                                                 handleCarRentalFormInputChange
-//                                             }
-//                                             className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
-//                                         />
-//                                     </div>
-//                                     <div className="col-span-2 md:col-span-2">
-//                                         <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
-//                                             還車日期
-//                                         </label>
-//                                         <input
-//                                             required
-//                                             type="datetime-local"
-//                                             name="dropoff_datetime"
-//                                             value={
-//                                                 formCarRental.dropoff_datetime
-//                                             }
-//                                             onChange={
-//                                                 handleCarRentalFormInputChange
-//                                             }
-//                                             className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
-//                                         />
-//                                     </div>
-//                                 </div>
-//                             </form>
-//                         </div>
-
-//                         {/* Modal Footer */}
-//                         <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-end space-x-3">
-//                             <button
-//                                 type="button"
-//                                 onClick={() => setIsCarRentalModalOpen(false)}
-//                                 className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
-//                             >
-//                                 取消
-//                             </button>
-//                             <button
-//                                 type="submit"
-//                                 form="car-rental-form"
-//                                 className={`px-6 py-2 rounded-lg text-sm font-bold text-white shadow-md hover:shadow-lg transition-all transform active:scale-95 ${theme.accent}`}
-//                             >
-//                                 {carRentalModalMode === "create"
-//                                     ? "新增租車"
-//                                     : "儲存變更"}
-//                             </button>
-//                         </div>
-//                     </div>
-//                 </div>
-//             )}
-
-//             {/* Delete Car Rental Confirmation Modal */}
-//             {isDeleteCarRentalModalOpen && (
-//                 <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
-//                     <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 animate-in zoom-in-95 duration-200">
-//                         <div className="flex items-center space-x-3 mb-4">
-//                             <div className="p-2 bg-red-100 rounded-full text-red-600">
-//                                 <AlertTriangle size={24} />
-//                             </div>
-//                             <h3 className="text-lg font-bold text-gray-900">
-//                                 確定要刪除租車？
-//                             </h3>
-//                         </div>
-//                         <p className="text-sm text-gray-600 mb-6">
-//                             您即將刪除租車：
-//                             <span className="font-bold text-gray-800">
-//                                 {carRentalToDelete.company},{" "}
-//                                 {carRentalToDelete.model}於
-//                                 {carRentalToDelete.pickup_loc}{" "}
-//                                 {moment(
-//                                     carRentalToDelete.pickup_datetime
-//                                 ).format("YYYY-MM-DD HH:mm")}
-//                             </span>
-//                             。此動作無法復原。
-//                         </p>
-//                         <div className="flex justify-end space-x-3">
-//                             <button
-//                                 type="button"
-//                                 onClick={() =>
-//                                     setIsDeleteCarRentalModalOpen(false)
-//                                 }
-//                                 className="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-//                             >
-//                                 取消
-//                             </button>
-//                             <button
-//                                 type="button"
-//                                 onClick={handleConfirmCarRentalDelete}
-//                                 className="px-4 py-2 text-sm font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg shadow-sm transition-colors"
-//                             >
-//                                 確認刪除
-//                             </button>
-//                         </div>
-//                     </div>
-//                 </div>
-//             )}
-//         </div>
-//     );
-// };
-
-// export default InfoPage;

@@ -10,8 +10,8 @@ export type ItineraryActivitiy = {
     desc: string;
     type: string;
     linkId: string;
-    activityIndex: null,
-}
+    activityIndex: number;
+};
 
 export type ItineraryVM = Omit<ItineraryRow, "activities"> & {
     activities: ItineraryActivitiy[] | null;
