@@ -4,6 +4,11 @@ export type PlaceRow = Tables<"places">;
 export type PlaceRowInsert = TablesInsert<"places">;
 export type PlaceRowUpdate = TablesUpdate<"places">;
 
+export type PlaceCategory = {
+    id: string;
+    label: string;
+}
+
 export type PlaceInfo = {
     open?: string | null;
     price?: string | null;

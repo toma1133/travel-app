@@ -1,5 +1,5 @@
 const LoadingMask = () => (
-    <div className="flex justify-center items-center h-full w-full backdrop-blur-md absolute top-0 z-50 animate-in fade-in">
+    <div className="flex justify-center items-center h-full w-full backdrop-blur-md absolute top-0 z-100 animate-in fade-in">
         <svg
             className="text-gray-300 animate-spin"
             viewBox="0 0 64 64"

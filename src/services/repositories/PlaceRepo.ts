@@ -18,7 +18,9 @@ export const placeRepo = {
         const { data, error } = await supabaseClient
             .from("places")
             .select("*")
-            .eq("trip_id", tripId);
+            .eq("trip_id", tripId)
+            .order("type", { ascending: true, })
+            .order("id", { ascending: true, });
         if (error) throw error;
         return data ?? [];
     },
@@ -32,12 +34,13 @@ export const placeRepo = {
         if (error) throw error;
         return data!;
     },
-    async updatePlace(id: string, vmPatch: Partial<PlaceVM>) {
+    async updatePlace(vmPatch: Partial<PlaceVM>) {
+        if (vmPatch.id === null || vmPatch.id === undefined) throw "ID is null";
         const patch = toPlaceUpdate(vmPatch);
         const { data, error } = await supabaseClient
             .from("places")
             .update(patch)
-            .eq("id", id)
+            .eq("id", vmPatch.id)
             .select("*")
             .single();
 

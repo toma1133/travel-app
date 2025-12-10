@@ -11,6 +11,13 @@ const useTripMutations = () => {
             qc.invalidateQueries({ queryKey: ["bookshelf"] });
         },
     });
+    const update = useMutation({
+        mutationFn: (payload: TripVM) => tripRepo.updateTrip(payload),
+        onSuccess: (data) => {
+            qc.invalidateQueries({ queryKey: ["trip", data.id] });
+            qc.invalidateQueries({ queryKey: ["bookshelf"] });
+        },
+    });
     const upsert = useMutation({
         mutationFn: (payload: TripVM) => tripRepo.upsertTrip(payload),
         onSuccess: (data) => {
@@ -26,7 +33,7 @@ const useTripMutations = () => {
         },
     });
 
-    return { insert, upsert, remove };
+    return { insert, update, upsert, remove };
 };
 
 export default useTripMutations;

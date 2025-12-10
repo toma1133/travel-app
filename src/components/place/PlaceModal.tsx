@@ -1,11 +1,12 @@
 import { ChangeEventHandler, FormEventHandler, MouseEventHandler } from "react";
 import { Clock, ImageIcon, MapPin, Tag, X } from "lucide-react";
-import type { PlaceVM } from "../../models/types/PlacesTypes";
+import type { PlaceCategory, PlaceVM } from "../../models/types/PlacesTypes";
 import type { TripThemeConf } from "../../models/types/TripsTypes";
 
 type PlaceModalProps = {
     formData: PlaceVM;
     modalMode: string;
+    placeCategory: PlaceCategory[];
     theme: TripThemeConf | null;
     onCloseClick: MouseEventHandler<HTMLButtonElement>;
     onFormInputChange: ChangeEventHandler<
@@ -17,6 +18,7 @@ type PlaceModalProps = {
 const PlaceModal = ({
     formData,
     modalMode,
+    placeCategory,
     theme,
     onCloseClick,
     onFormInputChange,
@@ -31,6 +33,8 @@ const PlaceModal = ({
                         {modalMode === "create" ? "新增地點" : "編輯地點"}
                     </h3>
                     <button
+                        type="button"
+                        title="Close"
                         onClick={onCloseClick}
                         className="p-1 rounded-full hover:bg-gray-100 text-gray-500 transition-colors"
                     >
@@ -50,11 +54,7 @@ const PlaceModal = ({
                                 類型
                             </label>
                             <div className="grid grid-cols-3 gap-2">
-                                {[
-                                    { id: "sight", label: "觀光" },
-                                    { id: "food", label: "美食" },
-                                    { id: "shopping", label: "購物" },
-                                ].map((type) => (
+                                {placeCategory.map((type) => (
                                     <label
                                         key={type.id}
                                         className={`
@@ -91,6 +91,7 @@ const PlaceModal = ({
                                     value={formData.id}
                                     className="w-full p-2 rounded-lg border border-gray-200 outline-none text-base disabled:opacity-50"
                                     disabled={true}
+                                    placeholder="id"
                                 />
                             </div>
                             <div>

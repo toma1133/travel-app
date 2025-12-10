@@ -7,9 +7,9 @@ type PlaceCardProps = {
     theme: TripThemeConf | null;
     place: PlaceVM;
     isPrinting: boolean | undefined;
+    onDelete: (place: PlaceVM) => void;
     isPreview: boolean;
     onEdit: (place: PlaceVM) => void;
-    onDelete: (place: PlaceVM) => void;
 };
 
 const PlaceCard = ({
@@ -17,8 +17,8 @@ const PlaceCard = ({
     place,
     isPrinting,
     isPreview,
-    onEdit,
     onDelete,
+    onEdit,
 }: PlaceCardProps) => {
     const [showActions, setShowActions] = useState(false);
     const getPlaceTypeName = (param: string | null) => {
@@ -74,9 +74,14 @@ const PlaceCard = ({
                 {!isPrinting && !isPreview && (
                     <div
                         className={`absolute top-3 right-3 flex space-x-2 transition-opacity duration-200
-                            ${showActions ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
+                            ${
+                                showActions
+                                    ? "opacity-100"
+                                    : "opacity-0 group-hover:opacity-100"
+                            }`}
                     >
                         <button
+                            type="button"
                             onClick={(e) => {
                                 e.stopPropagation();
                                 onEdit(place);
@@ -87,6 +92,7 @@ const PlaceCard = ({
                             <Pencil size={14} />
                         </button>
                         <button
+                            type="button"
                             onClick={(e) => {
                                 e.stopPropagation();
                                 onDelete(place);
@@ -142,7 +148,7 @@ const PlaceCard = ({
                             </span>
                         </div>
                     )}
-                    {place.info.open && (
+                    {place?.info?.open && (
                         <div className="flex items-center">
                             <Clock
                                 size={14}
@@ -151,7 +157,7 @@ const PlaceCard = ({
                             <span>{place.info.open}</span>
                         </div>
                     )}
-                    {place.info.loc && (
+                    {place?.info?.loc && (
                         <div className="flex items-center">
                             <MapPin
                                 size={14}

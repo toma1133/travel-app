@@ -28,12 +28,13 @@ export const tripRepo = {
         if (error) throw error;
         return data!;
     },
-    async updateTrip(id: string, vmPatch: Partial<TripVM>) {
+    async updateTrip(vmPatch: Partial<TripVM>) {
+        if (vmPatch.id === null || vmPatch.id === undefined) throw "ID is null";
         const patch = toTripUpdate(vmPatch);
         const { data, error } = await supabaseClient
             .from("trips")
             .update(patch)
-            .eq("id", id)
+            .eq("id", vmPatch.id)
             .select("*")
             .single();
 
