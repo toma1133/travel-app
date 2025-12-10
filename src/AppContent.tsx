@@ -6,6 +6,7 @@ import BookPage from "./page/BookPage";
 import BookshelfPage from "./page/BookshelfPage";
 import CoverPage from "./page/Book/CoverPage";
 import GuidePage from "./page/Book/GuidePage";
+import ItineraryPage from "./page/Book/ItineraryPage";
 import InfoPage from "./page/Book/InfoPage";
 import "./App.css";
 
@@ -27,6 +28,10 @@ const AppContent = ({ isOffline }: { isOffline: boolean }) => {
                             />
                             <Route path="cover" element={<CoverPage />} />
                             <Route path="guide" element={<GuidePage />} />
+                            <Route
+                                path="itinerary"
+                                element={<ItineraryPage />}
+                            />
                             <Route path="info" element={<InfoPage />} />
                             <Route
                                 path="*"

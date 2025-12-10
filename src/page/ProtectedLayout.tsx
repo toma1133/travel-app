@@ -18,7 +18,7 @@ const ProtectedLayout = ({ isOffline }: ProtectedLayoutProps) => {
 
     useEffect(() => {
         setIsDisplayBackBtn(
-            location.pathname !== "/" && location.pathname !== "/trip",
+            location.pathname !== "/" && location.pathname !== "/trip"
         );
     }, [location]);
 

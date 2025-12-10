@@ -12,7 +12,7 @@ import {
     verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { useEffect, useRef } from "react";
-import PaymentSettingItem from "./PaymentSettingItem";
+import PaymentSettingItem from "../budget/PaymentSettingItem";
 
 const PaymentSettingList = ({
     settings,
@@ -29,7 +29,7 @@ const PaymentSettingList = ({
         useSensor(PointerSensor),
         useSensor(KeyboardSensor, {
             coordinateGetter: sortableKeyboardCoordinates,
-        }),
+        })
     );
 
     useEffect(() => {

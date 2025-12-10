@@ -9,9 +9,9 @@ import {
     ShoppingBag,
     Ticket,
 } from "lucide-react";
-import ItemModal from "../../components/common/ItemModal";
+import ItemModal from "../../components/budget/ItemModal";
 import SectionHeader from "../../components/common/SectionHeader";
-import SettingsModal from "../../components/common/SettingsModal";
+import SettingsModal from "../../components/budget/SettingsModal";
 
 const BudgetPage = ({
     theme,

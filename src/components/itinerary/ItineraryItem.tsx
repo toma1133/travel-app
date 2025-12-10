@@ -7,26 +7,13 @@ import {
     Trash2,
 } from "lucide-react";
 
-const DayItem = ({
-    day,
-    expanded,
-    theme,
-    categoryColor,
-    isPrinting,
-    isEditing,
-    onToggle,
-    onNavigate,
-    onAddActivity,
-    onEditActivity,
-    onDeleteActivity,
-    onEditDay,
-    onDeleteDay,
-}) => (
+type ItineraryItemProps = {};
+
+const ItineraryItem = ({}: ItineraryItemProps) => (
     <div
-        className="bg-white rounded-lg shadow-sm border-l-4 border-gray-200 overflow-hidden break-inside-avoid print:shadow-none print:border print:border-gray-300"
-        style={{
-            borderLeftColor: expanded && !isPrinting ? "#8E354A" : "#E5E7EB",
-        }}
+        className={`bg-white rounded-lg shadow-sm border-l-4 border-gray-200 overflow-hidden break-inside-avoid print:shadow-none print:border print:border-gray-300 ${
+            expanded && !isPrinting ? "border-l-[#8E354A]" : "border-l-[E5E7EB]"
+        }`}
     >
         <div
             role="button"
@@ -182,17 +169,6 @@ const DayItem = ({
                                         {activity.desc}
                                     </p>
                                 )}
-                                {/* {activity.linkId && !isPrinting && (
-                                    <button
-                                        onClick={() =>
-                                            onNavigate(activity.linkId)
-                                        }
-                                        className="inline-flex items-center text-[10px] text-[#8E354A] bg-[#8E354A]/5 px-2 py-1 rounded ml-12 hover:bg-[#8E354A]/10 transition-colors"
-                                    >
-                                        <BookOpen size={10} className="mr-1" />
-                                        查看詳情
-                                    </button>
-                                )} */}
                             </div>
                         ))}
                 </div>
@@ -201,4 +177,4 @@ const DayItem = ({
     </div>
 );
 
-export default DayItem;
+export default ItineraryItem;

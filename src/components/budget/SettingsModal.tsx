@@ -14,7 +14,7 @@ const SettingsModal = ({
 }) => {
     const [localSettings, setLocalSettings] = useState(settings);
     const [localPaymentMethods, setLocalPaymentMethods] = useState(
-        Array.isArray(paymentMethods) ? paymentMethods : [],
+        Array.isArray(paymentMethods) ? paymentMethods : []
     );
 
     useEffect(() => {
@@ -36,7 +36,7 @@ const SettingsModal = ({
             const afterDrag = arrayMove(
                 localPaymentMethods,
                 oldIndex,
-                newIndex,
+                newIndex
             );
             const finalizedMethods = afterDrag.map((method, index) => ({
                 ...method,
@@ -96,7 +96,7 @@ const SettingsModal = ({
     const handlePaymentMoveUp = (index) => {
         if (index > 0) {
             setLocalPaymentMethods((prev) =>
-                movePaymentItem(prev, index, index - 1),
+                movePaymentItem(prev, index, index - 1)
             );
         }
     };
@@ -104,7 +104,7 @@ const SettingsModal = ({
     const handlePaymentMoveDown = (index) => {
         if (index < paymentMethods.length - 1) {
             setLocalPaymentMethods((prev) =>
-                movePaymentItem(prev, index, index + 1),
+                movePaymentItem(prev, index, index + 1)
             );
         }
     };
@@ -175,7 +175,7 @@ const SettingsModal = ({
                                     setLocalSettings({
                                         ...localSettings,
                                         exchangeRate: parseFloat(
-                                            e.target.value,
+                                            e.target.value
                                         ),
                                     })
                                 }
