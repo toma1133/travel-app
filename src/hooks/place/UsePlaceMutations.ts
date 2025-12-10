@@ -6,30 +6,31 @@ const usePlaceMutations = () => {
     const qc = useQueryClient();
     const insert = useMutation({
         mutationKey: ["place", "insert"],
-        mutationFn: (payload: PlaceVM) => placeRepo.insertPlace(payload),
+        mutationFn: (payload: PlaceVM) => placeRepo.insert(payload),
         onSuccess: (data) => {
+            qc.invalidateQueries({ queryKey: ["place", data?.id] });
             qc.invalidateQueries({ queryKey: ["places"] });
         },
     });
     const update = useMutation({
         mutationKey: ["place", "update"],
-        mutationFn: (payload: PlaceVM) => placeRepo.updatePlace(payload),
+        mutationFn: (payload: PlaceVM) => placeRepo.update(payload),
         onSuccess: (data) => {
-            qc.invalidateQueries({ queryKey: ["place", data.id] });
+            qc.invalidateQueries({ queryKey: ["place", data?.id] });
             qc.invalidateQueries({ queryKey: ["places"] });
         },
     });
     const upsert = useMutation({
         mutationKey: ["place", "upsert"],
-        mutationFn: (payload: PlaceVM) => placeRepo.upsertPlace(payload),
+        mutationFn: (payload: PlaceVM) => placeRepo.upsert(payload),
         onSuccess: (data) => {
-            qc.invalidateQueries({ queryKey: ["place", data.id] });
+            qc.invalidateQueries({ queryKey: ["place", data?.id] });
             qc.invalidateQueries({ queryKey: ["places"] });
         },
     });
     const remove = useMutation({
         mutationKey: ["place", "remove"],
-        mutationFn: (id: string) => placeRepo.deletePlace(id),
+        mutationFn: (id: string) => placeRepo.delete(id),
         onSuccess: (_, id) => {
             qc.invalidateQueries({ queryKey: ["place", id] });
             qc.invalidateQueries({ queryKey: ["places"] });

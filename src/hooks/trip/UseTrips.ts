@@ -7,7 +7,7 @@ const useTrips = () => {
     return useQuery<TripVM[]>({
         queryKey: ["trips"],
         queryFn: async () => {
-            const rows = await tripRepo.listTrips();
+            const rows = await tripRepo.list();
             return toTripsVM(rows);
         },
         staleTime: 60_000,

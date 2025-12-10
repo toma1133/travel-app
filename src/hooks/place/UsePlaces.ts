@@ -7,7 +7,7 @@ const usePlaces = (tripId: string | undefined) => {
     return useQuery<PlaceVM[]>({
         queryKey: ["places", tripId],
         queryFn: async () => {
-            const rows = await placeRepo.listPlaces(tripId);
+            const rows = await placeRepo.list(tripId);
             return toPlacesVM(rows);
         },
         staleTime: 60_000,

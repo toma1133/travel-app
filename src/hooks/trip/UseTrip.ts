@@ -7,7 +7,7 @@ const useTrip = (id: string | undefined) => {
     return useQuery<TripVM>({
         queryKey: ["trip", id],
         queryFn: async () => {
-            const row = await tripRepo.getTrip(id);
+            const row = await tripRepo.getById(id);
             if (!row) throw new Error("Trip not found");
             return toTripVM(row);
         },

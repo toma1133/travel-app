@@ -29,13 +29,13 @@ export const toPlaceInsert = (vm: PlaceVM): PlaceRowInsert => {
         tags:
             vm.tags !== null
                 ? vm.tags
-                      .split(",")
-                      .map((t) => t.trim())
-                      .filter((t) => t)
+                    .split(",")
+                    .map((t) => t.trim())
+                    .filter((t) => t)
                 : [],
         tips: vm.tips,
         trip_id: vm.trip_id,
-        type: vm.type,
+        type: vm.type || "",
         user_id: vm.user_id,
     };
 };
@@ -50,12 +50,12 @@ export const toPlaceUpdate = (vm: Partial<PlaceVM>): PlaceRowUpdate => {
         tags:
             vm.tags !== null && vm.tags !== undefined
                 ? vm.tags
-                      .split(",")
-                      .map((t) => t.trim())
-                      .filter((t) => t)
+                    .split(",")
+                    .map((t) => t.trim())
+                    .filter((t) => t)
                 : [],
         tips: vm.tips,
         trip_id: vm.trip_id,
-        type: vm.type,
+        type: vm.type || "",
     };
 };

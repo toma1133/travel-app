@@ -8,8 +8,8 @@ import BookLayoutContextType from "../../models/types/BookLayoutContextTypes";
 import LayoutContextType from "../../models/types/LayoutContextTypes";
 import { PlaceCategory, PlaceVM } from "../../models/types/PlacesTypes";
 import SectionHeader from "../../components/common/SectionHeader";
+import DeleteModal from "../../components/common/DeleteModal";
 import PlaceModal from "../../components/place/PlaceModal";
-import PlaceDeleteModal from "../../components/place/PlaceDeleteModal";
 import PlaceFilter from "../../components/place/PlaceFilter";
 import PlaceCardList from "../../components/place/PlaceCardList";
 
@@ -71,10 +71,8 @@ const GuidePage = ({ isPrinting }: CoverPageProps) => {
         setFilteredPlaces(targetPlaces);
     }, [places, filter]);
 
-    // —— 監聽全頁面的 place 相關 mutation —— //
     const mutatingCount = useIsMutating({ mutationKey: ["place"] });
 
-    // —— 最佳實踐：合併 query/mutation loading，並加入最短顯示時間（避免閃爍） —— //
     useEffect(() => {
         let timer: number | undefined;
         const shouldShow = isLoading || anyPending || mutatingCount > 0;
@@ -148,11 +146,9 @@ const GuidePage = ({ isPrinting }: CoverPageProps) => {
             } else {
                 await update.mutateAsync(placeData);
             }
-            // 成功後重置
             setFormPlace(initialPlaceState);
             setIsModalOpen(false);
         } catch (err) {
-            // 這裡可以加上錯誤提示（toast/snackbar）
             console.error(err);
         }
     };
@@ -213,8 +209,8 @@ const GuidePage = ({ isPrinting }: CoverPageProps) => {
                 isPrinting={isPrinting}
                 places={filteredPlaces}
                 theme={tripData.theme_config}
-                onOpenDeleteModal={handleOpenDeleteModal}
-                onOpenEditModal={handleOpenEditModal}
+                onDeleteBtnClick={handleOpenDeleteModal}
+                onEditBtnClick={handleOpenEditModal}
             />
             {isModalOpen && (
                 <PlaceModal
@@ -230,8 +226,8 @@ const GuidePage = ({ isPrinting }: CoverPageProps) => {
                 />
             )}
             {isDeleteModalOpen && (
-                <PlaceDeleteModal
-                    formData={placeToDelete}
+                <DeleteModal
+                    deleteKey={placeToDelete?.name}
                     onCloseClick={handleCloseDeleteModal}
                     onConfirmClick={handleConfirmDelete}
                 />

@@ -6,16 +6,16 @@ type PlaceCardListProps = {
     isPrinting: boolean | undefined;
     places: PlaceVM[] | null;
     theme: TripThemeConf | null;
-    onOpenDeleteModal: (place: PlaceVM) => void;
-    onOpenEditModal: (place: PlaceVM) => void;
+    onDeleteBtnClick: (place: PlaceVM) => void;
+    onEditBtnClick: (place: PlaceVM) => void;
 };
 
 const PlaceCardList = ({
     isPrinting,
     places,
     theme,
-    onOpenDeleteModal,
-    onOpenEditModal,
+    onDeleteBtnClick,
+    onEditBtnClick,
 }: PlaceCardListProps) => (
     <div className="space-y-6 px-4 print:space-y-4">
         {Array.isArray(places) ? (
@@ -26,8 +26,8 @@ const PlaceCardList = ({
                     place={place}
                     isPrinting={isPrinting}
                     isPreview={false}
-                    onDelete={onOpenDeleteModal}
-                    onEdit={onOpenEditModal}
+                    onDelete={onDeleteBtnClick}
+                    onEdit={onEditBtnClick}
                 />
             ))
         ) : (

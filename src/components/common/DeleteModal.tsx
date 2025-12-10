@@ -1,18 +1,17 @@
 import { MouseEventHandler } from "react";
 import { AlertTriangle } from "lucide-react";
-import type { PlaceVM } from "../../models/types/PlacesTypes";
 
-type PlaceDeleteModalProps = {
-    formData: PlaceVM | null;
+type DeleteModalProps = {
+    deleteKey: string | undefined;
     onCloseClick: MouseEventHandler<HTMLButtonElement>;
     onConfirmClick: MouseEventHandler<HTMLButtonElement>;
 };
 
-const PlaceDeleteModal = ({
-    formData,
+const DeleteModal = ({
+    deleteKey,
     onCloseClick,
     onConfirmClick,
-}: PlaceDeleteModalProps) => {
+}: DeleteModalProps) => {
     return (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
             <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 animate-in zoom-in-95 duration-200">
@@ -26,9 +25,7 @@ const PlaceDeleteModal = ({
                 </div>
                 <p className="text-sm text-gray-600 mb-6">
                     您即將刪除{" "}
-                    <span className="font-bold text-gray-800">
-                        {formData?.name}
-                    </span>
+                    <span className="font-bold text-gray-800">{deleteKey}</span>
                     。此動作無法復原。
                 </p>
                 <div className="flex justify-end space-x-3">
@@ -51,4 +48,4 @@ const PlaceDeleteModal = ({
     );
 };
 
-export default PlaceDeleteModal;
+export default DeleteModal;

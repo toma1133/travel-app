@@ -1,10 +1,11 @@
 import { supabaseClient } from "../SupabaseClient";
 import { toTripInsert, toTripUpdate } from "../mappers/TripMapper";
 import type { TripRow, TripVM } from "../../models/types/TripsTypes";
+import IRepo from "./IRepo";
 
-export const tripRepo = {
-    async getTrip(id: string | undefined): Promise<TripRow | null> {
-        if (id === undefined) return null;
+export const tripRepo: IRepo<TripRow, TripVM, TripVM, string> = {
+    async getById(id: string | undefined): Promise<TripRow | null> {
+        if (id === undefined || id === null) return null;
         const { data, error } = await supabaseClient
             .from("trips")
             .select("*")
@@ -13,45 +14,45 @@ export const tripRepo = {
         if (error) throw error;
         return data ?? null;
     },
-    async listTrips(): Promise<TripRow[]> {
+    async list(parentId: string | undefined): Promise<TripRow[]> {
         const { data, error } = await supabaseClient.from("trips").select("*");
         if (error) throw error;
         return data ?? [];
     },
-    async insertTrip(vm: TripVM) {
-        const payload = toTripInsert(vm);
+    async insert(payload: TripVM): Promise<TripRow | null> {
+        const restoredPayload = toTripInsert(payload);
         const { data, error } = await supabaseClient
             .from("trips")
-            .insert(payload)
+            .insert(restoredPayload)
             .select("*")
             .single();
         if (error) throw error;
         return data!;
     },
-    async updateTrip(vmPatch: Partial<TripVM>) {
-        if (vmPatch.id === null || vmPatch.id === undefined) throw "ID is null";
-        const patch = toTripUpdate(vmPatch);
+    async update(patch: Partial<TripVM>): Promise<TripRow | null> {
+        if (patch.id === null || patch.id === undefined) throw "ID is null";
+        const restoredPatch = toTripUpdate(patch);
         const { data, error } = await supabaseClient
             .from("trips")
-            .update(patch)
-            .eq("id", vmPatch.id)
+            .update(restoredPatch)
+            .eq("id", patch.id)
             .select("*")
             .single();
 
         if (error) throw error;
         return data as TripRow;
     },
-    async upsertTrip(vm: TripVM) {
-        const payload = toTripInsert(vm);
+    async upsert(payload: TripVM): Promise<TripRow | null> {
+        const restoredPayload = toTripInsert(payload);
         const { data, error } = await supabaseClient
             .from("trips")
-            .upsert(payload)
+            .upsert(restoredPayload)
             .select("*")
             .single();
         if (error) throw error;
         return data!;
     },
-    async deleteTrip(id: string) {
+    async delete(id: string): Promise<void> {
         const { error } = await supabaseClient
             .from("trips")
             .delete()

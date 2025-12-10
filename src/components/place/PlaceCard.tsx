@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { Star, Clock, MapPin, Pencil, Trash2 } from "lucide-react";
-import { TripThemeConf } from "../../models/types/TripsTypes";
-import { PlaceVM } from "../../models/types/PlacesTypes";
+import type { PlaceVM } from "../../models/types/PlacesTypes";
+import type { TripThemeConf } from "../../models/types/TripsTypes";
 
 type PlaceCardProps = {
     theme: TripThemeConf | null;
     place: PlaceVM;
     isPrinting: boolean | undefined;
-    onDelete: (place: PlaceVM) => void;
     isPreview: boolean;
+    onDelete: (place: PlaceVM) => void;
     onEdit: (place: PlaceVM) => void;
 };
 

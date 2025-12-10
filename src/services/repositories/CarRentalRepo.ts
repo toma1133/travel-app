@@ -1,57 +1,52 @@
 import { supabaseClient } from "../SupabaseClient";
-import { toPlaceInsert, toPlaceUpdate } from "../mappers/PlaceMapper";
-import type { PlaceRow, PlaceVM } from "../../models/types/PlacesTypes";
+import { CarRentalRow, CarRentalRowInsert, CarRentalRowUpdate } from "../../models/types/CarRentalTypes";
 import IRepo from "./IRepo";
 
-export const placeRepo: IRepo<PlaceRow, PlaceVM, PlaceVM, string> = {
-    async getById(id: string | undefined): Promise<PlaceRow | null> {
+export const carRentalRepo: IRepo<CarRentalRow, CarRentalRowInsert, CarRentalRowUpdate, string> = {
+    async getById(id: string | undefined): Promise<CarRentalRow | null> {
         if (id === undefined || id === null) return null;
         const { data, error } = await supabaseClient
-            .from("places")
+            .from("car_rentals")
             .select("*")
             .eq("id", id)
             .single();
         if (error) throw error;
         return data ?? null;
     },
-    async list(parentId: string | undefined): Promise<PlaceRow[]> {
+    async list(parentId: string | undefined): Promise<CarRentalRow[]> {
         if (parentId === undefined) return [];
         const { data, error } = await supabaseClient
-            .from("places")
+            .from("car_rentals")
             .select("*")
             .eq("trip_id", parentId)
-            .order("type", { ascending: true, })
-            .order("id", { ascending: true, });
+            .order("pickup_datetime", { ascending: true, });
         if (error) throw error;
         return data ?? [];
     },
-    async insert(payload: PlaceVM): Promise<PlaceRow | null> {
-        const restoredPayload = toPlaceInsert(payload);
+    async insert(payload: CarRentalRowInsert): Promise<CarRentalRow | null> {
         const { data, error } = await supabaseClient
-            .from("places")
-            .insert(restoredPayload)
+            .from("car_rentals")
+            .insert(payload)
             .select("*")
             .single();
         if (error) throw error;
         return data!;
     },
-    async update(patch: Partial<PlaceVM>): Promise<PlaceRow | null> {
+    async update(patch: Partial<CarRentalRowUpdate>): Promise<CarRentalRow | null> {
         if (patch.id === null || patch.id === undefined) throw "ID is null";
-        const restoredPatch = toPlaceUpdate(patch);
         const { data, error } = await supabaseClient
-            .from("places")
-            .update(restoredPatch)
+            .from("car_rentals")
+            .update(patch)
             .eq("id", patch.id)
             .select("*")
             .single();
         if (error) throw error;
-        return data as PlaceRow;
+        return data as CarRentalRow;
     },
-    async upsert(payload: PlaceVM): Promise<PlaceRow | null> {
-        const restoredPayload = toPlaceInsert(payload);
+    async upsert(payload: CarRentalRowInsert): Promise<CarRentalRow | null> {
         const { data, error } = await supabaseClient
-            .from("places")
-            .upsert(restoredPayload)
+            .from("car_rentals")
+            .upsert(payload)
             .select("*")
             .single();
         if (error) throw error;
@@ -59,7 +54,7 @@ export const placeRepo: IRepo<PlaceRow, PlaceVM, PlaceVM, string> = {
     },
     async delete(id: string): Promise<void> {
         const { error } = await supabaseClient
-            .from("places")
+            .from("car_rentals")
             .delete()
             .eq("id", id);
         if (error) throw error;

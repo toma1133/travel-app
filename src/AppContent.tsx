@@ -6,6 +6,7 @@ import BookPage from "./page/BookPage";
 import BookshelfPage from "./page/BookshelfPage";
 import CoverPage from "./page/Book/CoverPage";
 import GuidePage from "./page/Book/GuidePage";
+import InfoPage from "./page/Book/InfoPage";
 import "./App.css";
 
 const qc = new QueryClient();
@@ -26,6 +27,7 @@ const AppContent = ({ isOffline }: { isOffline: boolean }) => {
                             />
                             <Route path="cover" element={<CoverPage />} />
                             <Route path="guide" element={<GuidePage />} />
+                            <Route path="info" element={<InfoPage />} />
                             <Route
                                 path="*"
                                 element={

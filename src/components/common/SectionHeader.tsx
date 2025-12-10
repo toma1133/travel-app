@@ -15,7 +15,7 @@ const SectionHeader = ({
     theme,
 }: SectionHeaderProps) => (
     <div
-        className={`shrink-0 flex justify-between items-end px-4 py-4 pb-3 sticky backdrop-blur-md top-0 z-20`}
+        className={`shrink-0 flex justify-between items-center px-4 py-4 pb-3 sticky backdrop-blur-md top-0 z-20`}
     >
         <div className="flex items-center">
             <div>
