@@ -14,9 +14,11 @@ import BudgetPage from "./page/Book/BudgetPage";
 const qc = new QueryClient();
 
 const AppContent = ({ isOffline }: { isOffline: boolean }) => {
+    const basename = import.meta.env.PROD ? "/travel-app" : undefined;
+
     return (
         <QueryClientProvider client={qc}>
-            <BrowserRouter>
+            <BrowserRouter basename={basename}>
                 <Routes>
                     <Route path="/" element={<Navigate to="/trip" replace />} />
                     <Route path="/login" element={<LoginPage />} />
