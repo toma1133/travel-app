@@ -1,7 +1,6 @@
 import {
     ChangeEvent,
     FormEvent,
-    JSX,
     MouseEvent,
     useEffect,
     useMemo,
@@ -19,6 +18,7 @@ import {
     ShoppingBag,
     Ticket,
 } from "lucide-react";
+import moment from "moment";
 import { DragEndEvent } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
 import useAuth from "../../hooks/UseAuth";
@@ -36,6 +36,7 @@ import type {
     TripThemeConf,
     TripVM,
 } from "../../models/types/TripTypes";
+import DeleteModal from "../../components/common/DeleteModal";
 import SectionHeader from "../../components/common/SectionHeader";
 import SettingModal from "../../components/budget/SettingModal";
 import BudgetChart from "../../components/budget/BudgetChart";
@@ -112,10 +113,15 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
         setIsPageLoading,
     ]);
 
+    // --- Common delete modal
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [deleteType, setDeleteType] = useState("");
+    const [deleteKey, setDeleteKey] = useState("");
+
     // Setting Modal
     const [isSettingModalOpen, setIsSettingModalOpen] = useState(false);
     const [formSetting, setFormSetting] = useState<TripSettingConf | null>(
-        null
+        null,
     );
     const [formPaymentMethods, setFormPaymentMethods] = useState<
         PaymentMethodRow[] | undefined
@@ -149,7 +155,8 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
             await updateTrip.mutateAsync(updateTripData);
 
             const deletePaymentMethods = paymentMethods?.filter(
-                (ap) => formPaymentMethods!.findIndex((p) => p.id === ap.id) < 0
+                (ap) =>
+                    formPaymentMethods!.findIndex((p) => p.id === ap.id) < 0,
             );
 
             // upsert payment method
@@ -183,7 +190,7 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
             updated_at: null,
             user_id: session ? session.user.id : "",
         }),
-        [tripId, session]
+        [tripId, session],
     );
 
     const handleDragPaymentItem = (event: DragEndEvent) => {
@@ -208,7 +215,7 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
     const handlePaymentChange = (
         index: number,
         field: string,
-        value: string | number
+        value: string | number,
     ) => {
         const newMethods = [...formPaymentMethods!];
         newMethods[index] = { ...newMethods[index], [field]: value };
@@ -218,7 +225,7 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
     const handleSettingChange = (e: ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setFormSetting(
-            (prev) => ({ ...prev, [name]: value } as TripSettingConf)
+            (prev) => ({ ...prev, [name]: value }) as TripSettingConf,
         );
     };
 
@@ -274,7 +281,24 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
 
     // Budget Modal
     const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false);
-    const [formBudget, setFormBudget] = useState<BudgetRow | null>(null);
+    const initialBudgetState: BudgetRow = useMemo(
+        () => ({
+            amount: 0,
+            category: "food",
+            created_at: null,
+            currency_code: tripData.settings_config?.localCurrency || "",
+            expense_date: moment().format("YYYY-MM-DD"),
+            id: crypto.randomUUID(),
+            payment_method_id: "",
+            title: "",
+            trip_id: tripId || "",
+            updated_at: null,
+            user_id: session ? session.user.id : "",
+        }),
+        [tripId, session],
+    );
+    const [budgetModalMode, setBudgetModalMode] = useState("create"); // 'create' | 'edit'
+    const [formBudget, setFormBudget] = useState<BudgetRow>(initialBudgetState);
     const [budgetCategory] = useState<
         {
             id: string;
@@ -289,13 +313,104 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
         { id: "ticket", name: "門票", icon: Ticket },
         { id: "other", name: "其他", icon: CreditCard },
     ]);
+    const [budgetToDelete, setBudgetToDelete] = useState<BudgetRow | null>(
+        null,
+    );
+
+    const handleAddBudgetBtnClick = () => {
+        setBudgetModalMode("create");
+        setFormBudget(initialBudgetState);
+        setIsBudgetModalOpen(true);
+    };
+
+    const handleEditBudgetBtnClick = (transactionItem: BudgetRow) => {
+        setBudgetModalMode("edit");
+        setFormBudget(transactionItem);
+        setIsBudgetModalOpen(true);
+    };
+
+    const handleCloseBudgetModalClick = () => {
+        setBudgetModalMode("create");
+        setFormBudget(initialBudgetState);
+        setIsBudgetModalOpen(false);
+    };
+
+    const handleBudgetFormDataChange = (
+        name: string,
+        value?: string | number,
+    ) => {
+        setFormBudget((prev) => ({ ...prev, [name]: value }));
+    };
+
+    const handleBudgetFormInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+        setFormBudget((prev) => ({ ...prev, [name]: value }));
+    };
+
+    const handleBudgetFormSubmit = async (e: FormEvent) => {
+        e.preventDefault();
+
+        const budgetData = { ...formBudget };
+
+        try {
+            if (budgetModalMode === "create") {
+                await insertBudget.mutateAsync({
+                    ...budgetData,
+                    id: crypto.randomUUID(),
+                });
+            } else {
+                await updateBudget.mutateAsync(budgetData);
+            }
+            setFormBudget(initialBudgetState);
+            setIsBudgetModalOpen(false);
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const handleOpenDeleteBudgetModal = (budgetItem: BudgetRow) => {
+        setBudgetToDelete(budgetItem);
+        setDeleteType("budget_item");
+        setDeleteKey(`
+            ${moment(budgetItem.expense_date).format(
+                "YYYY-MM-DD",
+            )} ${budgetItem.title}`);
+        setIsDeleteModalOpen(true);
+    };
+
+    // --- Common Modal Handlers ---
+    const handleConfirmDelete = async () => {
+        try {
+            switch (deleteType) {
+                case "budget_item":
+                    if (!budgetToDelete) return;
+                    await removeBudget.mutateAsync(budgetToDelete.id);
+                    break;
+            }
+
+            setIsDeleteModalOpen(false);
+            setIsBudgetModalOpen(false);
+            setBudgetToDelete(null);
+            setDeleteType("");
+            setDeleteKey("");
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const handleCloseDeleteModal = () => {
+        setIsDeleteModalOpen(false);
+        setBudgetToDelete(null);
+        setDeleteType("");
+        setDeleteKey("");
+    };
 
     // Utils
     const convertToHome = (
         amount: number,
         currency: string,
         homeCurrency?: string,
-        exchangeRate?: number
+        exchangeRate?: number,
     ) => {
         if (currency === homeCurrency) return amount;
         return Math.round(amount * exchangeRate!);
@@ -304,7 +419,7 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
     const getChartGradient = (
         totalSpentHome: number,
         categoryStats: { [key: string]: number },
-        theme: TripThemeConf | null
+        theme: TripThemeConf | null,
     ) => {
         if (totalSpentHome === 0) return `conic-gradient(#E5E7EB 0% 100%)`;
         let currentDeg = 0;
@@ -401,14 +516,8 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
                 convertToHome={convertToHome}
                 getCategoryIcon={getCategoryIcon}
                 getCategoryName={getCategoryName}
-                onAddBtnClick={function (
-                    event: MouseEvent<HTMLButtonElement, MouseEvent>
-                ): void {
-                    throw new Error("Function not implemented.");
-                }}
-                onEditBtnClick={function (transactionItem: BudgetRow): void {
-                    throw new Error("Function not implemented.");
-                }}
+                onAddBtnClick={handleAddBudgetBtnClick}
+                onEditBtnClick={handleEditBudgetBtnClick}
             />
             {isSettingModalOpen && (
                 <SettingModal
@@ -427,7 +536,28 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
                     onSubmit={handleSettingModalSubmit}
                 />
             )}
-            {isBudgetModalOpen && <TransactionModal />}
+            {isBudgetModalOpen && (
+                <TransactionModal
+                    categories={budgetCategory}
+                    formData={formBudget}
+                    mode={budgetModalMode}
+                    paymentMethods={paymentMethods}
+                    setting={tripData.settings_config}
+                    theme={tripData.theme_config}
+                    onCloseBtnClick={handleCloseBudgetModalClick}
+                    onFormDataChange={handleBudgetFormDataChange}
+                    onFormInputChange={handleBudgetFormInputChange}
+                    onSubmit={handleBudgetFormSubmit}
+                    onDeleteBtnClick={handleOpenDeleteBudgetModal}
+                />
+            )}
+            {isDeleteModalOpen && (
+                <DeleteModal
+                    deleteKey={deleteKey}
+                    onCloseClick={handleCloseDeleteModal}
+                    onConfirmClick={handleConfirmDelete}
+                />
+            )}
         </div>
     );
 };
