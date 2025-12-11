@@ -9,7 +9,7 @@ import {
     ItineraryActivitiy,
     ItineraryVM,
 } from "../../models/types/ItineraryTypes";
-import { TripThemeConf } from "../../models/types/TripsTypes";
+import { TripThemeConf } from "../../models/types/TripTypes";
 
 type ItineraryCategory = {
     id: string;
@@ -53,6 +53,7 @@ const ItineraryActivityModal = ({
                         type="button"
                         onClick={onCloseBtnClick}
                         className="p-1 rounded-full hover:bg-gray-100 text-gray-500 transition-colors"
+                        title="Close"
                     >
                         <X size={20} />
                     </button>

@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { tripRepo } from "../../services/repositories/TripRepo";
-import type { TripVM } from "../../models/types/TripsTypes";
+import type { TripVM } from "../../models/types/TripTypes";
 
 const useTripMutations = () => {
     const qc = useQueryClient();
@@ -32,8 +32,10 @@ const useTripMutations = () => {
             qc.invalidateQueries({ queryKey: ["bookshelf"] });
         },
     });
+    const anyPending =
+        insert.isPending || update.isPending || upsert.isPending || remove.isPending;
 
-    return { insert, update, upsert, remove };
+    return { insert, update, upsert, remove, anyPending };
 };
 
 export default useTripMutations;

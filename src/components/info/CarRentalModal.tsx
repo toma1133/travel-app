@@ -1,7 +1,7 @@
 import { ChangeEventHandler, FormEventHandler, MouseEventHandler } from "react";
 import { X } from "lucide-react";
 import type { CarRentalRow } from "../../models/types/CarRentalTypes";
-import type { TripThemeConf } from "../../models/types/TripsTypes";
+import type { TripThemeConf } from "../../models/types/TripTypes";
 
 type CarRentalModalProps = {
     formData: CarRentalRow;

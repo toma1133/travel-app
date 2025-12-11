@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { placeRepo } from "../../services/repositories/PlaceRepo";
-import type { PlaceVM } from "../../models/types/PlacesTypes";
+import type { PlaceVM } from "../../models/types/PlaceTypes";
 
 const usePlaceMutations = () => {
     const qc = useQueryClient();

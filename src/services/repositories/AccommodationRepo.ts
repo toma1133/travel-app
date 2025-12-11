@@ -12,7 +12,7 @@ export const accommodationRepo: IRepo<AccommodationRow, AccommodationRowInsert, 
             .eq("id", id)
             .maybeSingle();
         if (error) throw error;
-        return (data as AccommodationRow) ?? null;
+        return data ?? null;
     },
     async list(parentId: string | undefined): Promise<AccommodationRow[]> {
         if (!parentId) return [];
@@ -24,7 +24,7 @@ export const accommodationRepo: IRepo<AccommodationRow, AccommodationRowInsert, 
             .order("id", { ascending: true, });
 
         if (error) throw error;
-        return (data as AccommodationRow[]) ?? [];
+        return data ?? [];
     },
     async insert(payload: AccommodationRowInsert): Promise<AccommodationRow | null> {
         const { data, error } = await supabaseClient
@@ -33,7 +33,7 @@ export const accommodationRepo: IRepo<AccommodationRow, AccommodationRowInsert, 
             .select("*")
             .single();
         if (error) throw error;
-        return data! as AccommodationRow;
+        return data!;
     },
     async update(patch: Partial<AccommodationRowUpdate>): Promise<AccommodationRow | null> {
         if (patch.id === null || patch.id === undefined) throw "ID is null";
@@ -45,7 +45,7 @@ export const accommodationRepo: IRepo<AccommodationRow, AccommodationRowInsert, 
             .single();
 
         if (error) throw error;
-        return data as AccommodationRow;
+        return data;
     },
     async upsert(payload: AccommodationRowInsert): Promise<AccommodationRow | null> {
         const { data, error } = await supabaseClient

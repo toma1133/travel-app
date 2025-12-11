@@ -1,7 +1,7 @@
 import { ChangeEventHandler, FormEventHandler, MouseEventHandler } from "react";
 import { X } from "lucide-react";
 import type { AccommodationRow } from "../../models/types/AccommodationTypes";
-import type { TripThemeConf } from "../../models/types/TripsTypes";
+import type { TripThemeConf } from "../../models/types/TripTypes";
 
 type AccommodationModalProps = {
     formData: AccommodationRow;

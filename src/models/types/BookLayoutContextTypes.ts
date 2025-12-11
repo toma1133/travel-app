@@ -1,5 +1,5 @@
 import { Dispatch, SetStateAction } from "react";
-import { TripVM } from "./TripsTypes";
+import { TripVM } from "./TripTypes";
 
 type BookLayoutContextType = {
     tripData: TripVM;

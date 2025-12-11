@@ -42,7 +42,7 @@ export const flightRepo: IRepo<FlightRow, FlightRowInsert, FlightRowUpdate, stri
             .select("*")
             .single();
         if (error) throw error;
-        return data as FlightRow;
+        return data;
     },
     async upsert(payload: FlightRowInsert): Promise<FlightRow | null> {
         const { data, error } = await supabaseClient

@@ -1,5 +1,5 @@
 import { JSX } from "react";
-import { TripThemeConf } from "../../models/types/TripsTypes";
+import { TripThemeConf } from "../../models/types/TripTypes";
 
 type SectionHeaderProps = {
     title: string;

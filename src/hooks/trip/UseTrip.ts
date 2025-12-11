@@ -1,7 +1,7 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { tripRepo } from "../../services/repositories/TripRepo";
 import { toTripVM } from "../../services/mappers/TripMapper";
-import type { TripVM } from "../../models/types/TripsTypes";
+import type { TripVM } from "../../models/types/TripTypes";
 
 const useTrip = (id: string | undefined) => {
     return useQuery<TripVM>({

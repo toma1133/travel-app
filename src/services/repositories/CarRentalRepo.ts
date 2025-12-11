@@ -41,7 +41,7 @@ export const carRentalRepo: IRepo<CarRentalRow, CarRentalRowInsert, CarRentalRow
             .select("*")
             .single();
         if (error) throw error;
-        return data as CarRentalRow;
+        return data;
     },
     async upsert(payload: CarRentalRowInsert): Promise<CarRentalRow | null> {
         const { data, error } = await supabaseClient

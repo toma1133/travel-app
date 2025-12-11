@@ -1,6 +1,6 @@
 import { supabaseClient } from "../SupabaseClient";
 import { toTripInsert, toTripUpdate } from "../mappers/TripMapper";
-import type { TripRow, TripVM } from "../../models/types/TripsTypes";
+import type { TripRow, TripVM } from "../../models/types/TripTypes";
 import IRepo from "./IRepo";
 
 export const tripRepo: IRepo<TripRow, TripVM, TripVM, string> = {
@@ -40,7 +40,7 @@ export const tripRepo: IRepo<TripRow, TripVM, TripVM, string> = {
             .single();
 
         if (error) throw error;
-        return data as TripRow;
+        return data;
     },
     async upsert(payload: TripVM): Promise<TripRow | null> {
         const restoredPayload = toTripInsert(payload);

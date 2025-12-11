@@ -9,6 +9,7 @@ import GuidePage from "./page/Book/GuidePage";
 import ItineraryPage from "./page/Book/ItineraryPage";
 import InfoPage from "./page/Book/InfoPage";
 import "./App.css";
+import BudgetPage from "./page/Book/BudgetPage";
 
 const qc = new QueryClient();
 
@@ -32,6 +33,7 @@ const AppContent = ({ isOffline }: { isOffline: boolean }) => {
                                 path="itinerary"
                                 element={<ItineraryPage />}
                             />
+                            <Route path="budget" element={<BudgetPage />} />
                             <Route path="info" element={<InfoPage />} />
                             <Route
                                 path="*"

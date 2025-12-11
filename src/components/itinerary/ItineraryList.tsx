@@ -3,7 +3,7 @@ import type {
     ItineraryActivitiy,
     ItineraryVM,
 } from "../../models/types/ItineraryTypes";
-import type { TripThemeConf } from "../../models/types/TripsTypes";
+import type { TripThemeConf } from "../../models/types/TripTypes";
 import ItineraryItem from "./ItineraryItem";
 
 type ItineraryListProps = {
@@ -14,12 +14,12 @@ type ItineraryListProps = {
     onAddActivityBtnClick: (itineraryDay: ItineraryVM) => void;
     onDeleteActivityBtnClick: (
         itineraryDay: ItineraryVM,
-        activity: ItineraryActivitiy,
+        activity: ItineraryActivitiy
     ) => void;
     onDeleteDayBtnClick: (itinerary: ItineraryVM) => void;
     onEditActivityBtnClick: (
         itineraryDay: ItineraryVM,
-        activity: ItineraryActivitiy,
+        activity: ItineraryActivitiy
     ) => void;
     onEditDayBtnClick: (itinerary: ItineraryVM) => void;
     onViewBtnClick: (linkId: string) => void;

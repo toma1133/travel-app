@@ -5,7 +5,7 @@ import type {
     PlaceRowUpdate,
     PlaceInfo,
     PlaceVM,
-} from "../../models/types/PlacesTypes";
+} from "../../models/types/PlaceTypes";
 
 export const toPlaceVM = (row: PlaceRow): PlaceVM => {
     return {

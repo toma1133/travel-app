@@ -10,7 +10,7 @@ import type {
     ItineraryActivitiy,
     ItineraryVM,
 } from "../../models/types/ItineraryTypes";
-import type { TripThemeConf } from "../../models/types/TripsTypes";
+import type { TripThemeConf } from "../../models/types/TripTypes";
 
 type ItineraryItemProps = {
     itinerary: ItineraryVM;
@@ -21,12 +21,12 @@ type ItineraryItemProps = {
     onAddActivityBtnClick: (itineraryDay: ItineraryVM) => void;
     onDeleteActivityBtnClick: (
         itineraryDay: ItineraryVM,
-        activity: ItineraryActivitiy,
+        activity: ItineraryActivitiy
     ) => void;
     onDeleteDayBtnClick: (itinerary: ItineraryVM) => void;
     onEditActivityBtnClick: (
         itineraryDay: ItineraryVM,
-        activity: ItineraryActivitiy,
+        activity: ItineraryActivitiy
     ) => void;
     onEditDayBtnClick: (itinerary: ItineraryVM) => void;
     onExpandedBtnToggle: (itinerary: ItineraryVM) => void;
@@ -55,7 +55,6 @@ const ItineraryItem = ({
         }`}
     >
         <div
-            role="button"
             onClick={
                 isEditing ? () => {} : () => onExpandedBtnToggle(itinerary)
             }
@@ -99,6 +98,7 @@ const ItineraryItem = ({
                 `}
                 >
                     <button
+                        type="button"
                         onClick={() => onAddActivityBtnClick(itinerary)}
                         className={`p-1 text-gray-400 hover:text-blue-500 transition-colors`}
                         title="新增活動"
@@ -106,6 +106,7 @@ const ItineraryItem = ({
                         <Plus size={14} />
                     </button>
                     <button
+                        type="button"
                         onClick={() => onEditDayBtnClick(itinerary)}
                         className="p-1 text-gray-400 hover:text-blue-500 transition-colors"
                         title="編輯日程"
@@ -113,6 +114,7 @@ const ItineraryItem = ({
                         <Pencil size={14} />
                     </button>
                     <button
+                        type="button"
                         onClick={() => onDeleteDayBtnClick(itinerary)}
                         className="p-1 text-gray-400 hover:text-red-500 transition-colors"
                         title="刪除日程"
@@ -154,12 +156,14 @@ const ItineraryItem = ({
                                     >
                                         {!isEditing && activity.linkId && (
                                             <button
+                                                type="button"
                                                 onClick={() =>
                                                     onViewBtnClick(
-                                                        activity.linkId,
+                                                        activity.linkId
                                                     )
                                                 }
                                                 className="p-1 text-gray-400 hover:text-blue-500 transition-colors"
+                                                title="View"
                                             >
                                                 <BookOpen size={14} />
                                             </button>
@@ -167,10 +171,11 @@ const ItineraryItem = ({
                                         {isEditing && (
                                             <>
                                                 <button
+                                                    type="button"
                                                     onClick={() =>
                                                         onEditActivityBtnClick(
                                                             itinerary,
-                                                            activity,
+                                                            activity
                                                         )
                                                     }
                                                     className="p-1 text-gray-400 hover:text-blue-500 transition-colors"
@@ -179,10 +184,11 @@ const ItineraryItem = ({
                                                     <Pencil size={14} />
                                                 </button>
                                                 <button
+                                                    type="button"
                                                     onClick={() =>
                                                         onDeleteActivityBtnClick(
                                                             itinerary,
-                                                            activity,
+                                                            activity
                                                         )
                                                     }
                                                     className="p-1 text-gray-400 hover:text-red-500 transition-colors"

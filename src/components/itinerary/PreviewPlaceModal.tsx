@@ -17,8 +17,10 @@ const PreviewPlaceModal = ({
                 onClick={(e) => e.stopPropagation()}
             >
                 <button
+                    type="button"
                     onClick={onCloseBtnClick}
                     className="absolute top-3 right-3 p-2 text-gray-400 hover:text-gray-700 transition-colors z-10"
+                    title="Close"
                 >
                     <X size={20} />
                 </button>

@@ -1,5 +1,5 @@
-import { PlaceVM } from "../../models/types/PlacesTypes";
-import { TripThemeConf } from "../../models/types/TripsTypes";
+import { PlaceVM } from "../../models/types/PlaceTypes";
+import { TripThemeConf } from "../../models/types/TripTypes";
 import PlaceCard from "./PlaceCard";
 
 type PlaceCardListProps = {

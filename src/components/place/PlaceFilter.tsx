@@ -1,6 +1,6 @@
 import { Plus } from "lucide-react";
-import { PlaceCategory } from "../../models/types/PlacesTypes";
-import { TripThemeConf } from "../../models/types/TripsTypes";
+import { PlaceCategory } from "../../models/types/PlaceTypes";
+import { TripThemeConf } from "../../models/types/TripTypes";
 import { MouseEventHandler } from "react";
 
 type PlaceFilterProps = {

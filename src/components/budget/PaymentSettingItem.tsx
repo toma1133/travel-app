@@ -1,16 +1,34 @@
+import { CSSProperties } from "react";
 import { ArrowUp, ArrowDown, GripVertical, Trash2 } from "lucide-react";
 import { useSortable, defaultAnimateLayoutChanges } from "@dnd-kit/sortable";
+import type { PaymentMethodRow } from "../../models/types/PaymentMethodTypes";
+import type { TripSettingConf } from "../../models/types/TripTypes";
+
+type PaymentSettingItemProps = {
+    id: string;
+    setting: TripSettingConf | null;
+    method: PaymentMethodRow;
+    index: number;
+    onPaymentChange: (
+        index: number,
+        field: string,
+        value: string | number
+    ) => void;
+    onPaymentRemove: (index: number) => void;
+    onPaymentMoveUp: (index: number) => void;
+    onPaymentMoveDown: (index: number) => void;
+};
 
 const PaymentSettingItem = ({
     id,
-    settings,
+    setting,
     method,
     index,
     onPaymentChange,
     onPaymentRemove,
     onPaymentMoveUp,
     onPaymentMoveDown,
-}) => {
+}: PaymentSettingItemProps) => {
     const {
         attributes,
         listeners,
@@ -24,13 +42,13 @@ const PaymentSettingItem = ({
     });
 
     const style = transform
-        ? {
+        ? ({
               transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
               transition,
               willChange: "transform",
               backfaceVisibility: "hidden",
               WebkitFontSmoothing: "antialiased",
-          }
+          } as CSSProperties)
         : undefined;
 
     return (
@@ -68,6 +86,7 @@ const PaymentSettingItem = ({
                     type="button"
                     onClick={() => onPaymentMoveUp(index)}
                     className="p-1 text-gray-400 hover:text-blue-500"
+                    title="Up"
                 >
                     <ArrowUp size={14} />
                 </button>
@@ -75,6 +94,7 @@ const PaymentSettingItem = ({
                     type="button"
                     onClick={() => onPaymentMoveDown(index)}
                     className="p-1 text-gray-400 hover:text-blue-500"
+                    title="down"
                 >
                     <ArrowDown size={14} />
                 </button>
@@ -95,7 +115,7 @@ const PaymentSettingItem = ({
             <div className="flex items-center space-x-2 pt-2 ">
                 <span className="text-[10px] text-gray-500 uppercase">
                     額度/上限 (
-                    {method.currency || settings.homeCurrency || "---"})
+                    {method.currency_code || setting?.homeCurrency || "---"})
                 </span>
                 <input
                     type="number"

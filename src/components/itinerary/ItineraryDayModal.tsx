@@ -1,7 +1,7 @@
 import { ChangeEventHandler, FormEventHandler, MouseEventHandler } from "react";
 import { Calendar, X } from "lucide-react";
 import { ItineraryVM } from "../../models/types/ItineraryTypes";
-import { TripThemeConf } from "../../models/types/TripsTypes";
+import { TripThemeConf } from "../../models/types/TripTypes";
 
 type ItineraryDayModalProps = {
     formData: ItineraryVM;
@@ -32,6 +32,7 @@ const ItineraryDayModal = ({
                         type="button"
                         onClick={onCloseBtnClick}
                         className="p-1 rounded-full hover:bg-gray-100 text-gray-500 transition-colors"
+                        title="Close"
                     >
                         <X size={20} />
                     </button>
@@ -54,6 +55,7 @@ const ItineraryDayModal = ({
                                 value={formData.date}
                                 onChange={onFormInputChange}
                                 className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm font-mono"
+                                placeholder="2025/12/12"
                             />
                         </div>
                         <div>

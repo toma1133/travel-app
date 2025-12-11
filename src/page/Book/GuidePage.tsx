@@ -6,7 +6,7 @@ import usePlaces from "../../hooks/place/UsePlaces";
 import usePlaceMutations from "../../hooks/place/UsePlaceMutations";
 import BookLayoutContextType from "../../models/types/BookLayoutContextTypes";
 import LayoutContextType from "../../models/types/LayoutContextTypes";
-import { PlaceCategory, PlaceVM } from "../../models/types/PlacesTypes";
+import { PlaceCategory, PlaceVM } from "../../models/types/PlaceTypes";
 import SectionHeader from "../../components/common/SectionHeader";
 import DeleteModal from "../../components/common/DeleteModal";
 import PlaceModal from "../../components/place/PlaceModal";

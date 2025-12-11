@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import type { TripThemeConf } from "../../models/types/TripsTypes";
+import type { TripThemeConf } from "../../models/types/TripTypes";
 import type { LucideIcon } from "lucide-react";
 
 type TabButtonProps = {

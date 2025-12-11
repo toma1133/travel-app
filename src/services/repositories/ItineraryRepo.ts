@@ -53,7 +53,7 @@ export const itineraryRepo: IRepo<
             .select("*")
             .single();
         if (error) throw error;
-        return data as ItineraryVM;
+        return data;
     },
     async upsert(payload: ItineraryVM): Promise<ItineraryRow | null> {
         const restoredPayload = toItineraryInsert(payload);

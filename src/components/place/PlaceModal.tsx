@@ -1,7 +1,7 @@
 import { ChangeEventHandler, FormEventHandler, MouseEventHandler } from "react";
 import { Clock, ImageIcon, MapPin, Tag, X } from "lucide-react";
-import type { PlaceCategory, PlaceVM } from "../../models/types/PlacesTypes";
-import type { TripThemeConf } from "../../models/types/TripsTypes";
+import type { PlaceCategory, PlaceVM } from "../../models/types/PlaceTypes";
+import type { TripThemeConf } from "../../models/types/TripTypes";
 
 type PlaceModalProps = {
     formData: PlaceVM;

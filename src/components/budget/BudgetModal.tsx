@@ -11,7 +11,7 @@ import {
     X,
 } from "lucide-react";
 
-const ItemModal = ({
+const BudgetModal = ({
     initialData,
     theme,
     settings,
@@ -253,4 +253,4 @@ const ItemModal = ({
     );
 };
 
-export default ItemModal;
+export default BudgetModal;

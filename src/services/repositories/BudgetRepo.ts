@@ -1,57 +1,54 @@
 import { supabaseClient } from "../SupabaseClient";
-import { toPlaceInsert, toPlaceUpdate } from "../mappers/PlaceMapper";
-import type { PlaceRow, PlaceVM } from "../../models/types/PlaceTypes";
+import type { BudgetRow, BudgetRowInsert, BudgetRowUpdate } from "../../models/types/BudgetTypes";
 import IRepo from "./IRepo";
 
-export const placeRepo: IRepo<PlaceRow, PlaceVM, PlaceVM, string> = {
-    async getById(id: string | undefined): Promise<PlaceRow | null> {
+export const budgetRepo: IRepo<BudgetRow, BudgetRowInsert, BudgetRowUpdate, string> = {
+    async getById(id: string | undefined): Promise<BudgetRow | null> {
         if (id === undefined || id === null) return null;
         const { data, error } = await supabaseClient
-            .from("places")
+            .from("budget_items")
             .select("*")
             .eq("id", id)
             .single();
         if (error) throw error;
         return data ?? null;
     },
-    async list(parentId: string | undefined): Promise<PlaceRow[]> {
+    async list(parentId: string | undefined): Promise<BudgetRow[]> {
         if (parentId === undefined) return [];
         const { data, error } = await supabaseClient
-            .from("places")
+            .from("budget_items")
             .select("*")
             .eq("trip_id", parentId)
-            .order("type", { ascending: true, })
-            .order("id", { ascending: true, });
+            .order("expense_date", { ascending: false, })
+            .order("category", { ascending: true, });
         if (error) throw error;
         return data ?? [];
     },
-    async insert(payload: PlaceVM): Promise<PlaceRow | null> {
-        const restoredPayload = toPlaceInsert(payload);
+    async insert(payload: BudgetRowInsert): Promise<BudgetRow | null> {
         const { data, error } = await supabaseClient
-            .from("places")
-            .insert(restoredPayload)
+            .from("budget_items")
+            .insert(payload)
             .select("*")
             .single();
         if (error) throw error;
         return data!;
     },
-    async update(patch: Partial<PlaceVM>): Promise<PlaceRow | null> {
+    async update(patch: Partial<BudgetRowUpdate>): Promise<BudgetRow | null> {
         if (patch.id === null || patch.id === undefined) throw "ID is null";
-        const restoredPatch = toPlaceUpdate(patch);
         const { data, error } = await supabaseClient
-            .from("places")
-            .update(restoredPatch)
+            .from("budget_items")
+            .update(patch)
             .eq("id", patch.id)
             .select("*")
             .single();
+
         if (error) throw error;
         return data;
     },
-    async upsert(payload: PlaceVM): Promise<PlaceRow | null> {
-        const restoredPayload = toPlaceInsert(payload);
+    async upsert(payload: BudgetRowInsert): Promise<BudgetRow | null> {
         const { data, error } = await supabaseClient
-            .from("places")
-            .upsert(restoredPayload)
+            .from("budget_items")
+            .upsert(payload)
             .select("*")
             .single();
         if (error) throw error;
@@ -59,7 +56,7 @@ export const placeRepo: IRepo<PlaceRow, PlaceVM, PlaceVM, string> = {
     },
     async delete(id: string): Promise<void> {
         const { error } = await supabaseClient
-            .from("places")
+            .from("budget_items")
             .delete()
             .eq("id", id);
         if (error) throw error;

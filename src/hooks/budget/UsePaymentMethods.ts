@@ -1,0 +1,16 @@
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { paymentMethodRepo } from "../../services/repositories/PaymentMethodRepo";
+import type { PaymentMethodRow } from "../../models/types/PaymentMethodTypes";
+
+const usePaymentMethods = (tripId: string | undefined) => {
+    return useQuery<PaymentMethodRow[]>({
+        queryKey: ["payment_methods", tripId],
+        queryFn: async () => {
+            return await paymentMethodRepo.list(tripId);
+        },
+        staleTime: 60_000,
+        placeholderData: keepPreviousData,
+    });
+};
+
+export default usePaymentMethods;

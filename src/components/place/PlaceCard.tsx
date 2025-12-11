@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Star, Clock, MapPin, Pencil, Trash2 } from "lucide-react";
-import type { PlaceVM } from "../../models/types/PlacesTypes";
-import type { TripThemeConf } from "../../models/types/TripsTypes";
+import type { PlaceVM } from "../../models/types/PlaceTypes";
+import type { TripThemeConf } from "../../models/types/TripTypes";
 
 type PlaceCardProps = {
     theme: TripThemeConf | null;

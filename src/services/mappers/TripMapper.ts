@@ -6,7 +6,7 @@ import type {
     TripSettingConf,
     TripThemeConf,
     TripVM,
-} from "../../models/types/TripsTypes";
+} from "../../models/types/TripTypes";
 
 export const toTripVM = (row: TripRow): TripVM => {
     return {
