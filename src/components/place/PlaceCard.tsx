@@ -6,7 +6,7 @@ import type { TripThemeConf } from "../../models/types/TripTypes";
 type PlaceCardProps = {
     theme: TripThemeConf | null;
     place: PlaceVM;
-    isPrinting: boolean | undefined;
+    isPrinting?: boolean;
     isPreview: boolean;
     onDelete: (place: PlaceVM) => void;
     onEdit: (place: PlaceVM) => void;

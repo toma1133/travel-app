@@ -1,21 +1,242 @@
-import { useEffect } from "react";
+import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
+import { useIsMutating } from "@tanstack/react-query";
+import { PlusIcon } from "lucide-react";
+import moment from "moment";
+import useAuth from "../hooks/UseAuth";
+import usePlaces from "../hooks/place/UsePlaces";
+import useTrip from "../hooks/trip/UseTrip";
 import useTrips from "../hooks/trip/UseTrips";
-import LayoutContextType from "../models/types/LayoutContextTypes";
+import useTripMutations from "../hooks/trip/UseTripMutations";
+import type LayoutContextType from "../models/types/LayoutContextTypes";
+import type { TripSettingConf, TripVM } from "../models/types/TripTypes";
+import DeleteModal from "../components/common/DeleteModal";
+import TripCard from "../components/bookshelf/TripCard";
+import TripModal from "../components/bookshelf/TripModal";
+import PrintableFullPage from "./PrintableFullPage";
 
 const BookshelfPage = () => {
-    const { data, isLoading, error } = useTrips();
+    const { session } = useAuth();
+    const {
+        data: trips,
+        isLoading: isTripsLoading,
+        error: tripsError,
+    } = useTrips();
+    const {
+        insert: insertTrip,
+        update: updateTrip,
+        remove: removeTrip,
+        anyPending: anyTripPending,
+    } = useTripMutations();
     const { setIsPageLoading } = useOutletContext<LayoutContextType>();
     const navigate = useNavigate();
 
+    const mutatingCount = useIsMutating({
+        mutationKey: ["trip"],
+    });
+
     useEffect(() => {
-        setIsPageLoading(isLoading);
-        return () => setIsPageLoading(false);
-    }, [isLoading, setIsPageLoading]);
+        let timer: number | undefined;
+        const shouldShow =
+            isTripsLoading || anyTripPending || mutatingCount > 0;
+
+        if (shouldShow) {
+            timer = window.setTimeout(() => setIsPageLoading(true), 150);
+        } else {
+            setIsPageLoading(false);
+        }
+
+        return () => {
+            if (timer) {
+                clearTimeout(timer);
+            }
+            setIsPageLoading(false);
+        };
+    }, [isTripsLoading, anyTripPending, mutatingCount, setIsPageLoading]);
 
     const handleSelectTrip = (tripId: string) => {
         navigate(`/trip/${tripId}`, { replace: false });
     };
+
+    // --- Common delete modal
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [deleteType, setDeleteType] = useState("");
+    const [deleteKey, setDeleteKey] = useState("");
+
+    // Print
+    const [isPrintMode, setIsPrintMode] = useState(false);
+    const [printTripId, setPrintTripId] = useState<string | undefined>(
+        undefined,
+    );
+    const {
+        data: trip,
+        isLoading: isTripLoading,
+        error: tripError,
+    } = useTrip(printTripId);
+    const {
+        data: places,
+        isLoading: isPlacesLoading,
+        error: placesError,
+    } = usePlaces(printTripId);
+
+    useEffect(() => {
+        if (isPrintMode) {
+            setTimeout(() => {
+                window.print();
+                setIsPrintMode(false);
+                setPrintTripId(undefined);
+            }, 500);
+        }
+    }, [isPrintMode]);
+
+    const handlePrintBtnClick = async (trip: TripVM) => {
+        setPrintTripId(trip.id);
+        setIsPrintMode(true);
+    };
+
+    // Trip Modal
+    const [isTripModalOpen, setIsTripModalOpen] = useState(false);
+    const initialTripState: TripVM = useMemo(
+        () => ({
+            cover_image: "",
+            created_at: null,
+            description: "",
+            end_date: moment().format("YYYY-MM-DD"),
+            id: crypto.randomUUID(),
+            settings_config: {
+                exchangeRate: 0.0,
+                homeCurrency: "NT$",
+                localCurrency: "",
+            },
+            start_date: moment().format("YYYY-MM-DD"),
+            subtitle: "",
+            theme_config: {
+                bg: "bg-[#F2F2F0]",
+                nav: "bg-black",
+                card: "bg-white",
+                mono: "font-mono tracking-tight",
+                accent: "bg-[#9F1239]",
+                border: "border-[#E5E7EB]",
+                primary: "text-[#111827]",
+                secondary: "text-[#4B5563]",
+                accentText: "text-[#9F1239]",
+                categoryColor: {
+                    food: "#ebceb1",
+                    stay: "#d0755c",
+                    other: "#798187",
+                    sight: "#576169",
+                    ticket: "#929489",
+                    shopping: "#eee9de",
+                    transport: "#88352b",
+                },
+                navTextActive: "text-white",
+                navTextInactive: "text-[#6B7280]",
+            },
+            title: "",
+            updated_at: null,
+            user_id: session ? session.user.id : "",
+        }),
+        [session],
+    );
+    const [tripModalMode, setTripModalMode] = useState("create"); // 'create' | 'edit'
+    const [formTrip, setFormTrip] = useState<TripVM>(initialTripState);
+    const [tripToDelete, setTripToDelete] = useState<TripVM | null>(null);
+
+    const handleAddTripBtnClick = () => {
+        setTripModalMode("create");
+        setFormTrip(initialTripState);
+        setIsTripModalOpen(true);
+    };
+
+    const handleEditTripBtnClick = (tripItem: TripVM) => {
+        setTripModalMode("edit");
+        setFormTrip(tripItem);
+        setIsTripModalOpen(true);
+    };
+
+    const handleCloseTripModalBtnClick = () => {
+        setTripModalMode("create");
+        setFormTrip(initialTripState);
+        setIsTripModalOpen(false);
+    };
+
+    const handleTripFormInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+        setFormTrip((prev) => ({ ...prev, [name]: value }));
+    };
+
+    const handleTripFormSettingInputChange = (
+        name: string,
+        value: string | number,
+    ) => {
+        setFormTrip((prev) => ({
+            ...prev,
+            settings_config: {
+                ...prev.settings_config,
+                [name]: value,
+            } as TripSettingConf,
+        }));
+    };
+
+    const handleSettingModalSubmit = async (e: FormEvent) => {
+        e.preventDefault();
+
+        const tripData: TripVM = { ...formTrip };
+
+        try {
+            if (tripModalMode === "create") {
+                await insertTrip.mutateAsync({
+                    ...tripData,
+                    id: crypto.randomUUID(),
+                });
+            } else {
+                await updateTrip.mutateAsync(tripData);
+            }
+            setFormTrip(initialTripState);
+            setIsTripModalOpen(false);
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const handleOpenDeleteTripModal = (tripItem: TripVM) => {
+        setTripToDelete(tripItem);
+        setDeleteType("trip");
+        setDeleteKey(
+            `${tripItem.start_date} ~ ${tripItem.end_date} ${tripItem.title}`,
+        );
+        setIsDeleteModalOpen(true);
+    };
+
+    // --- Common Modal Handlers ---
+    const handleConfirmDelete = async () => {
+        try {
+            switch (deleteType) {
+                case "trip":
+                    if (!tripToDelete) return;
+                    await removeTrip.mutateAsync(tripToDelete.id);
+                    break;
+            }
+
+            setIsDeleteModalOpen(false);
+            setTripToDelete(null);
+            setDeleteType("");
+            setDeleteKey("");
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const handleCloseDeleteModal = () => {
+        setIsDeleteModalOpen(false);
+        setTripToDelete(null);
+        setDeleteType("");
+        setDeleteKey("");
+    };
+
+    if (isPrintMode) {
+        return <PrintableFullPage />;
+    }
 
     return (
         <div className="pt-6">
@@ -28,59 +249,45 @@ const BookshelfPage = () => {
                 </p>
             </div>
             <div className="flex-1 px-6 pb-10 space-y-6 overflow-y-auto">
-                {Array.isArray(data) &&
-                    data.map((trip) => (
-                        <div key={trip.id} className="relative w-full">
-                            <button
-                                type="button"
-                                onClick={() => handleSelectTrip(trip.id)}
-                                className="w-full bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow group text-left border border-gray-100"
-                            >
-                                <div className="h-40 relative overflow-hidden">
-                                    {trip.cover_image ? (
-                                        <img
-                                            alt={trip.title}
-                                            src={trip.cover_image}
-                                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                                        />
-                                    ) : (
-                                        <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
-                                            無圖片
-                                        </div>
-                                    )}
-                                    <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors"></div>
-                                    <div className="absolute bottom-4 left-4 text-white">
-                                        <span className="text-[10px] bg-white/20 backdrop-blur-sm px-2 py-1 rounded uppercase tracking-wider mb-2 inline-block">
-                                            {
-                                                trip.settings_config
-                                                    ?.localCurrency
-                                            }{" "}
-                                            Trip
-                                        </span>
-                                        <h3 className="text-xl font-[Noto_Sans_TC] font-bold shadow-black drop-shadow-md">
-                                            {trip.title}
-                                        </h3>
-                                    </div>
-                                </div>
-                                <div className="p-4 flex justify-between items-center">
-                                    <div className="text-xs text-gray-500 font-mono">
-                                        {trip.start_date} - {trip.end_date}
-                                    </div>
-                                    <div className="text-xs font-bold text-gray-300 group-hover:text-[#111827] transition-colors">
-                                        OPEN BOOK &rarr;
-                                    </div>
-                                </div>
-                            </button>
-                        </div>
+                {Array.isArray(trips) &&
+                    trips.map((trip, i) => (
+                        <TripCard
+                            key={i}
+                            trip={trip}
+                            onDeleteBtnClick={handleOpenDeleteTripModal}
+                            onEditBtnClick={handleEditTripBtnClick}
+                            onPrintBtnClick={handlePrintBtnClick}
+                            onTripBtnClick={handleSelectTrip}
+                        />
                     ))}
-                {/* Add New Placeholder */}
-                {/* <button className="w-full border-2 border-dashed border-gray-300 rounded-xl h-32 flex flex-col items-center justify-center text-gray-400 hover:border-gray-400 hover:text-gray-600 transition-colors">
-                <Plus size={24} className="mb-2 opacity-50" />
-                <span className="text-xs font-bold uppercase tracking-widest">
-                    Create New Trip
-                </span>
-            </button> */}
+                <button
+                    onClick={handleAddTripBtnClick}
+                    disabled={isTripsLoading}
+                    className="w-full border-2 border-dashed border-gray-300 rounded-xl h-32 flex flex-col items-center justify-center text-gray-400 hover:border-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    <PlusIcon size={24} className="mb-2 opacity-50" />
+                    <span className="text-xs font-bold uppercase tracking-widest">
+                        創建新旅程
+                    </span>
+                </button>
             </div>
+            {isTripModalOpen && (
+                <TripModal
+                    formData={formTrip}
+                    mode={tripModalMode}
+                    onCloseBtnClick={handleCloseTripModalBtnClick}
+                    onFormChange={handleTripFormInputChange}
+                    onSettingChange={handleTripFormSettingInputChange}
+                    onSubmit={handleSettingModalSubmit}
+                />
+            )}
+            {isDeleteModalOpen && (
+                <DeleteModal
+                    deleteKey={deleteKey}
+                    onCloseClick={handleCloseDeleteModal}
+                    onConfirmClick={handleConfirmDelete}
+                />
+            )}
         </div>
     );
 };

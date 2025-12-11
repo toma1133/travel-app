@@ -64,7 +64,7 @@ const ItineraryPage = ({ isPrinting }: ItineraryPageProps) => {
     // --- Preview Modal Handlers ---
     const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
     const [previewPlaceId, setPreviewPlaceId] = useState<string | undefined>(
-        undefined
+        undefined,
     );
     const {
         data: place,
@@ -134,7 +134,7 @@ const ItineraryPage = ({ isPrinting }: ItineraryPageProps) => {
             user_id: session ? session.user.id : "",
             weekday: moment().format("ddd"),
         }),
-        [tripId, session]
+        [tripId, session],
     );
     const [formDay, setFormDay] = useState(initialDayState);
     const [dayToDelete, setDayToDelete] = useState<ItineraryVM | null>(null);
@@ -161,7 +161,7 @@ const ItineraryPage = ({ isPrinting }: ItineraryPageProps) => {
         setDayToDelete(itineraryDay);
         setDeleteType("day");
         setDeleteKey(
-            `${itineraryDay.date} Day ${itineraryDay.day_number} ${itineraryDay.title}`
+            `${itineraryDay.date} Day ${itineraryDay.day_number} ${itineraryDay.title}`,
         );
         setIsDeleteModalOpen(true);
     };
@@ -212,7 +212,7 @@ const ItineraryPage = ({ isPrinting }: ItineraryPageProps) => {
             linkId: "",
             activityIndex: 0,
         }),
-        [tripId, session]
+        [tripId, session],
     );
     const [dayItemForActivity, setDayItemForActivity] =
         useState<ItineraryVM | null>(null);
@@ -229,7 +229,7 @@ const ItineraryPage = ({ isPrinting }: ItineraryPageProps) => {
 
     const handleOpenEditActivityModal = (
         itineraryDay: ItineraryVM,
-        activity: ItineraryActivitiy
+        activity: ItineraryActivitiy,
     ) => {
         setActivityModalMode("edit");
         setDayItemForActivity(itineraryDay);
@@ -248,19 +248,19 @@ const ItineraryPage = ({ isPrinting }: ItineraryPageProps) => {
 
     const handleOpenDeleteActivityModal = (
         itineraryDay: ItineraryVM,
-        activity: ItineraryActivitiy
+        activity: ItineraryActivitiy,
     ) => {
         setDayItemForActivity(itineraryDay);
         setActivityToDelete(activity);
         setDeleteType("activity");
         setDeleteKey(
-            `${itineraryDay.date} Day ${itineraryDay.day_number} ${activity.title}`
+            `${itineraryDay.date} Day ${itineraryDay.day_number} ${activity.title}`,
         );
         setIsDeleteModalOpen(true);
     };
 
     const handleActivityFormInputChange = async (
-        e: ChangeEvent<HTMLInputElement>
+        e: ChangeEvent<HTMLInputElement>,
     ) => {
         const { name, value } = e.target;
         setFormActivity((prev) => ({ ...prev, [name]: value }));
@@ -291,7 +291,7 @@ const ItineraryPage = ({ isPrinting }: ItineraryPageProps) => {
                     targetActivities = existingActivities.map((activity) =>
                         activity.activityIndex === activityData.activityIndex
                             ? activityData
-                            : activity
+                            : activity,
                     );
                 }
 
@@ -338,16 +338,16 @@ const ItineraryPage = ({ isPrinting }: ItineraryPageProps) => {
                         targetActivities = dayItemForActivity.activities.filter(
                             (activity) =>
                                 activity.activityIndex !==
-                                activityToDelete?.activityIndex
+                                activityToDelete?.activityIndex,
                         );
                         targetActivities.sort((a, b) =>
-                            a.time.localeCompare(b.time)
+                            a.time.localeCompare(b.time),
                         );
                         targetActivities = targetActivities.map(
                             (activity, index) => ({
                                 ...activity,
                                 activityIndex: index,
-                            })
+                            }),
                         );
                     }
 
@@ -391,7 +391,7 @@ const ItineraryPage = ({ isPrinting }: ItineraryPageProps) => {
                 <SectionHeader
                     title="旅程表"
                     subtitle="時間與移動的軌跡"
-                    theme={tripData.theme_config}
+                    theme={tripData?.theme_config}
                     rightAction={
                         <div className="flex justify-center items-center gap-4">
                             <button
@@ -428,7 +428,7 @@ const ItineraryPage = ({ isPrinting }: ItineraryPageProps) => {
                 itinerarys={itinerarys}
                 isEditing={isEditing}
                 isPrinting={isPrinting}
-                theme={tripData.theme_config}
+                theme={tripData?.theme_config}
                 onAddActivityBtnClick={handleOpenCreateActivityModal}
                 onDeleteActivityBtnClick={handleOpenDeleteActivityModal}
                 onDeleteDayBtnClick={handleOpenDeleteDayModal}
@@ -440,7 +440,7 @@ const ItineraryPage = ({ isPrinting }: ItineraryPageProps) => {
                 <ItineraryDayModal
                     formData={formDay}
                     mode={dayModalMode}
-                    theme={tripData.theme_config}
+                    theme={tripData?.theme_config}
                     onCloseBtnClick={handleCloseDayModal}
                     onFormInputChange={handleDayInputChange}
                     onFormSubmit={handleDaySubmit}
@@ -452,7 +452,7 @@ const ItineraryPage = ({ isPrinting }: ItineraryPageProps) => {
                     itinerary={dayItemForActivity}
                     itineraryCategory={itineraryCategory}
                     mode={activityModalMode}
-                    theme={tripData.theme_config}
+                    theme={tripData?.theme_config}
                     onCloseBtnClick={handleCloseActivityModal}
                     onFormInputChange={handleActivityFormInputChange}
                     onFormSubmit={handleActivitySubmit}
@@ -470,7 +470,7 @@ const ItineraryPage = ({ isPrinting }: ItineraryPageProps) => {
                     onCloseBtnClick={handleClosePreviewModal}
                     children={
                         <PlaceCard
-                            theme={tripData.theme_config}
+                            theme={tripData?.theme_config}
                             place={place!}
                             isPrinting={false}
                             isPreview={true}

@@ -18,7 +18,7 @@ const ProtectedLayout = ({ isOffline }: ProtectedLayoutProps) => {
 
     useEffect(() => {
         setIsDisplayBackBtn(
-            location.pathname !== "/" && location.pathname !== "/trip"
+            location.pathname !== "/" && location.pathname !== "/trip",
         );
     }, [location]);
 
@@ -40,7 +40,7 @@ const ProtectedLayout = ({ isOffline }: ProtectedLayoutProps) => {
 
     return (
         <div
-            className={`h-screen w-full bg-[#F9F8F6] font-[Noto_Sans_TC] text-gray-500 overflow-hidden flex flex-col mx-auto max-w-md shadow-2xl relative`}
+            className={`h-screen w-full bg-[#F9F8F6] font-[Noto_Sans_TC] text-gray-500 overflow-hidden flex flex-col mx-auto max-w-md shadow-2xl relative print:hidden`}
         >
             {isPageLoading && <LoadingMask />}
             <nav className="w-full shrink-0 flex justify-end items-end px-6 py-4 pb-3 absolute top-0 z-20">

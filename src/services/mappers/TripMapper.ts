@@ -39,7 +39,7 @@ export const toTripInsert = (vm: TripVM): TripRowInsert => {
 export const toTripUpdate = (vm: Partial<TripVM>): TripRowUpdate => {
     return {
         cover_image: vm.cover_image,
-        description: vm.title,
+        description: vm.description,
         end_date: vm.end_date,
         settings_config: vm.settings_config,
         start_date: vm.start_date,

@@ -1,11 +1,4 @@
-import {
-    ChangeEvent,
-    FormEvent,
-    MouseEvent,
-    useEffect,
-    useMemo,
-    useState,
-} from "react";
+import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import { useOutletContext, useParams } from "react-router-dom";
 import { useIsMutating } from "@tanstack/react-query";
 import {
@@ -138,7 +131,7 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
     };
 
     const handleSettingModalResetBtnClick = () => {
-        setFormSetting(tripData.settings_config);
+        setFormSetting(tripData?.settings_config);
         setFormPaymentMethods(paymentMethods);
     };
 
@@ -181,7 +174,7 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
         () => ({
             created_at: null,
             credit_limit: 0,
-            currency_code: tripData.settings_config?.homeCurrency || "",
+            currency_code: tripData?.settings_config?.homeCurrency || "",
             id: crypto.randomUUID(),
             name: "新卡片",
             order: 0,
