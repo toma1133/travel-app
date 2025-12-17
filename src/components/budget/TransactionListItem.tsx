@@ -1,4 +1,5 @@
 import { JSX } from "react";
+import moment from "moment";
 import type { BudgetRow } from "../../models/types/BudgetTypes";
 import type {
     TripSettingConf,
@@ -78,7 +79,7 @@ const TransactionListItem = ({
                         </span>
                         <span className="mr-2">|</span>
                         <span className="print:text-gray-500">
-                            {budgetItem.expense_date}
+                            {moment(budgetItem.expense_date).format("MM-DD")}
                         </span>
                         <span
                             className={`${

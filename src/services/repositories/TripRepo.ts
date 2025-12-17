@@ -15,7 +15,10 @@ export const tripRepo: IRepo<TripRow, TripVM, TripVM, string> = {
         return data ?? null;
     },
     async list(parentId: string | undefined): Promise<TripRow[]> {
-        const { data, error } = await supabaseClient.from("trips").select("*");
+        const { data, error } = await supabaseClient.from("trips").select("*")
+            .order("end_date", { ascending: false, })
+            .order("start_date", { ascending: false, })
+            .order("id", { ascending: true, });
         if (error) throw error;
         return data ?? [];
     },

@@ -57,7 +57,7 @@ const FlightModal = ({
                                     value={formData.departure_loc || ""}
                                     onChange={onFormInputChange}
                                     placeholder="TPE"
-                                    className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm font-mono"
+                                    className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-base font-mono"
                                 />
                             </div>
                             <div className="col-span-1 md:col-span-2">
@@ -70,7 +70,7 @@ const FlightModal = ({
                                     value={formData.arrival_loc || ""}
                                     onChange={onFormInputChange}
                                     placeholder="KIX"
-                                    className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                    className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-base"
                                 />
                             </div>
                         </div>
@@ -86,12 +86,12 @@ const FlightModal = ({
                                     value={formData.code || ""}
                                     onChange={onFormInputChange}
                                     placeholder="JX800"
-                                    className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm font-mono"
+                                    className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-base font-mono"
                                 />
                             </div>
                             <div className="col-span-1 md:col-span-2">
                                 <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
-                                    目的地
+                                    出發日期
                                 </label>
                                 <input
                                     required
@@ -100,7 +100,7 @@ const FlightModal = ({
                                     value={formData.flight_date || ""}
                                     onChange={onFormInputChange}
                                     placeholder="2023/10/10"
-                                    className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                    className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-base"
                                 />
                             </div>
                         </div>
@@ -117,7 +117,7 @@ const FlightModal = ({
                                     value={formData.departure_time || ""}
                                     onChange={onFormInputChange}
                                     placeholder="08:30"
-                                    className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                    className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-base"
                                 />
                             </div>
                             <div className="col-span-1 md:col-span-2">
@@ -131,7 +131,7 @@ const FlightModal = ({
                                     value={formData.arrival_time || ""}
                                     onChange={onFormInputChange}
                                     placeholder="12:00"
-                                    className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                    className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-base"
                                 />
                             </div>
                         </div>

@@ -120,7 +120,6 @@ const BudgetChart = ({
                 >
                     {Object.entries(categoryStats)
                         .sort(([, a], [, b]) => b - a)
-                        .slice(0, 3)
                         .map(([cat, val]) => (
                             <div
                                 key={cat}

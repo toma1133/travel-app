@@ -78,7 +78,7 @@ const ItineraryActivityModal = ({
                                     value={formData.time}
                                     onChange={onFormInputChange}
                                     placeholder="例如: 09:30"
-                                    className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm font-mono"
+                                    className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-base font-mono"
                                 />
                             </div>
                             <div className="col-span-1 md:col-span-2">
@@ -91,7 +91,7 @@ const ItineraryActivityModal = ({
                                     value={formData.title}
                                     onChange={onFormInputChange}
                                     placeholder="例如：從飯店出發"
-                                    className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                    className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-base"
                                 />
                             </div>
                         </div>
@@ -174,7 +174,7 @@ const ItineraryActivityModal = ({
                                 value={formData.linkId}
                                 onChange={onFormInputChange}
                                 placeholder="例如: new-1701234567890"
-                                className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-xs text-gray-600 font-mono"
+                                className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-base text-gray-600 font-mono"
                             />
                             <p className="text-xs text-gray-400 mt-1">
                                 請輸入景點誌中地點卡片的 ID, 用於快速導航。

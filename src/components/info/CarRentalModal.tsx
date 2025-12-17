@@ -57,7 +57,7 @@ const CarRentalModal = ({
                                     value={formData.company || ""}
                                     onChange={onFormInputChange}
                                     placeholder="Toyota Rent a Car"
-                                    className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm font-mono"
+                                    className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-base font-mono"
                                 />
                             </div>
                         </div>
@@ -74,7 +74,7 @@ const CarRentalModal = ({
                                     value={formData.insurance_plan || ""}
                                     placeholder="全險"
                                     onChange={onFormInputChange}
-                                    className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                    className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-base"
                                 />
                             </div>
                             <div className="col-span-1 md:col-span-2">
@@ -88,7 +88,7 @@ const CarRentalModal = ({
                                     value={formData.model || ""}
                                     placeholder="Toyota Yaris"
                                     onChange={onFormInputChange}
-                                    className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                    className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-base"
                                 />
                             </div>
                         </div>
@@ -105,7 +105,7 @@ const CarRentalModal = ({
                                     value={formData.pickup_loc || ""}
                                     placeholder="機場"
                                     onChange={onFormInputChange}
-                                    className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                    className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-base"
                                 />
                             </div>
                             <div className="col-span-1 md:col-span-2">
@@ -119,7 +119,7 @@ const CarRentalModal = ({
                                     value={formData.dropoff_loc || ""}
                                     placeholder="機場"
                                     onChange={onFormInputChange}
-                                    className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                    className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-base"
                                 />
                             </div>
                         </div>
@@ -136,7 +136,7 @@ const CarRentalModal = ({
                                     value={formData.pickup_datetime || ""}
                                     placeholder="2025/12/12 12:34"
                                     onChange={onFormInputChange}
-                                    className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                    className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-base"
                                 />
                             </div>
                             <div className="col-span-2 md:col-span-2">
@@ -150,7 +150,7 @@ const CarRentalModal = ({
                                     value={formData.dropoff_datetime || ""}
                                     placeholder="2025/12/12 12:34"
                                     onChange={onFormInputChange}
-                                    className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                    className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-base"
                                 />
                             </div>
                         </div>

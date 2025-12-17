@@ -118,11 +118,11 @@ const InfoPage = ({ isPrinting }: InfoPageProps) => {
     const initialFlightState: FlightRow = useMemo(
         () => ({
             arrival_loc: "",
-            arrival_time: moment().format("HH:mm:ss"),
+            arrival_time: moment().format("HH:mm"),
             code: "",
             created_at: null,
             departure_loc: "",
-            departure_time: moment().format("HH:mm:ss"),
+            departure_time: moment().format("HH:mm"),
             flight_date: moment().format("YYYY-MM-DD"),
             id: crypto.randomUUID(),
             trip_id: tripId ?? "",
@@ -130,11 +130,11 @@ const InfoPage = ({ isPrinting }: InfoPageProps) => {
             updated_at: null,
             user_id: session ? session.user.id : "",
         }),
-        [tripId, session],
+        [tripId, session]
     );
     const [formFlight, setFormFlight] = useState(initialFlightState);
     const [flightToDelete, setFlightToDelete] = useState<FlightRow | null>(
-        null,
+        null
     );
 
     const handleOpenCreateFlightModal = () => {
@@ -205,10 +205,10 @@ const InfoPage = ({ isPrinting }: InfoPageProps) => {
             updated_at: null,
             user_id: session ? session.user.id : "",
         }),
-        [tripId, session],
+        [tripId, session]
     );
     const [formAccommodation, setFormAccommodation] = useState(
-        initialAccommodationState,
+        initialAccommodationState
     );
     const [accommodationToDelete, setAccommodationToDelete] =
         useState<AccommodationRow | null>(null);
@@ -220,7 +220,7 @@ const InfoPage = ({ isPrinting }: InfoPageProps) => {
     };
 
     const handleOpenEditAccommodationModal = (
-        accommodation: AccommodationRow,
+        accommodation: AccommodationRow
     ) => {
         setAccommodationModalMode("edit");
         setFormAccommodation(accommodation);
@@ -228,7 +228,7 @@ const InfoPage = ({ isPrinting }: InfoPageProps) => {
     };
 
     const handleAccommodationFormInputChange = (
-        e: ChangeEvent<HTMLInputElement>,
+        e: ChangeEvent<HTMLInputElement>
     ) => {
         const { name, value } = e.target;
         setFormAccommodation((prev) => ({ ...prev, [name]: value }));
@@ -262,7 +262,7 @@ const InfoPage = ({ isPrinting }: InfoPageProps) => {
     };
 
     const handleOpenDeleteAccommodationModal = (
-        accommodation: AccommodationRow,
+        accommodation: AccommodationRow
     ) => {
         setAccommodationToDelete(accommodation);
         setDeleteType("accommodation");
@@ -288,7 +288,7 @@ const InfoPage = ({ isPrinting }: InfoPageProps) => {
             updated_at: null,
             user_id: session ? session.user.id : "",
         }),
-        [tripId, session],
+        [tripId, session]
     );
     const [formCarRental, setFormCarRental] = useState(initialCarRentalState);
     const [carRentalToDelete, setCarRentalToDelete] =
@@ -305,10 +305,10 @@ const InfoPage = ({ isPrinting }: InfoPageProps) => {
         setFormCarRental({
             ...carRental,
             pickup_datetime: moment(carRental.pickup_datetime).format(
-                "YYYY-MM-DD HH:mm:ss",
+                "YYYY-MM-DD HH:mm:ss"
             ),
             dropoff_datetime: moment(carRental.dropoff_datetime).format(
-                "YYYY-MM-DD HH:mm:ss",
+                "YYYY-MM-DD HH:mm:ss"
             ),
         });
         setIsCarRentalModalOpen(true);
@@ -327,16 +327,16 @@ const InfoPage = ({ isPrinting }: InfoPageProps) => {
             `租車公司:${carRental.company} 租車車型: ${
                 carRental.model
             } 取車: ${moment(carRental.pickup_datetime).format(
-                "YYYY-MM-DD HH:mm:ss",
+                "YYYY-MM-DD HH:mm:ss"
             )} ${carRental.pickup_loc} 還車: ${moment(
-                carRental.dropoff_datetime,
-            ).format("YYYY-MM-DD HH:mm:ss")} ${carRental.dropoff_loc}`,
+                carRental.dropoff_datetime
+            ).format("YYYY-MM-DD HH:mm:ss")} ${carRental.dropoff_loc}`
         );
         setIsDeleteModalOpen(true);
     };
 
     const handleCarRentalFormInputChange = (
-        e: ChangeEvent<HTMLInputElement>,
+        e: ChangeEvent<HTMLInputElement>
     ) => {
         const { name, value } = e.target;
         setFormCarRental((prev) => ({ ...prev, [name]: value }));
@@ -370,7 +370,7 @@ const InfoPage = ({ isPrinting }: InfoPageProps) => {
                 case "accommodation":
                     if (!accommodationToDelete) return;
                     await removeAccommodation.mutateAsync(
-                        accommodationToDelete.id,
+                        accommodationToDelete.id
                     );
                     break;
                 case "car_rental":
@@ -416,7 +416,7 @@ const InfoPage = ({ isPrinting }: InfoPageProps) => {
             {!isPrinting && (
                 <SectionHeader
                     title="預訂資訊"
-                    subtitle="航班・住宿・租車"
+                    subtitle="Flight・Hotel・CarRental"
                     theme={tripData.theme_config}
                     rightAction={
                         <div className="flex justify-center items-center gap-4">
@@ -434,7 +434,7 @@ const InfoPage = ({ isPrinting }: InfoPageProps) => {
                                 ) : (
                                     <Settings size={16} className="mr-1" />
                                 )}
-                                {isEditing ? "退出編輯" : "開始編輯"}
+                                {isEditing ? "退出" : "編輯"}
                             </button>
                         </div>
                     }

@@ -20,6 +20,7 @@ export const budgetRepo: IRepo<BudgetRow, BudgetRowInsert, BudgetRowUpdate, stri
             .select("*")
             .eq("trip_id", parentId)
             .order("expense_date", { ascending: false, })
+            .order("updated_at", { ascending: false, })
             .order("category", { ascending: true, });
         if (error) throw error;
         return data ?? [];

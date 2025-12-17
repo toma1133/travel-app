@@ -33,6 +33,7 @@ const TripModal = ({
                         type="button"
                         onClick={onCloseBtnClick}
                         className="p-1 rounded-full hover:bg-gray-100 text-gray-500 transition-colors"
+                        title="Close"
                     >
                         <X size={20} />
                     </button>
@@ -46,7 +47,7 @@ const TripModal = ({
                     >
                         {/* Title */}
                         <div>
-                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
+                            <label className="block text-base font-bold text-gray-500 uppercase mb-1">
                                 標題 *
                             </label>
                             <input
@@ -55,12 +56,12 @@ const TripModal = ({
                                 value={formData.title}
                                 onChange={onFormChange}
                                 placeholder="例如：東京櫻花之旅"
-                                className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm font-bold"
+                                className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-base font-bold"
                             />
                         </div>
                         {/* Subtitle */}
                         <div>
-                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
+                            <label className="block text-base font-bold text-gray-500 uppercase mb-1">
                                 副標題 (可選)
                             </label>
                             <input
@@ -68,7 +69,7 @@ const TripModal = ({
                                 value={formData.subtitle || ""}
                                 onChange={onFormChange}
                                 placeholder="例如：美食、購物、文化探索"
-                                className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm text-gray-600"
+                                className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-base text-gray-600"
                             />
                         </div>
                         {/* Start/End Date */}
@@ -83,7 +84,8 @@ const TripModal = ({
                                     name="start_date"
                                     value={formData.start_date || ""}
                                     onChange={onFormChange}
-                                    className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm font-mono"
+                                    className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-base font-mono"
+                                    placeholder="2025/12/12"
                                 />
                             </div>
                             <div>
@@ -96,7 +98,8 @@ const TripModal = ({
                                     name="end_date"
                                     value={formData.end_date || ""}
                                     onChange={onFormChange}
-                                    className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm font-mono"
+                                    className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-base font-mono"
+                                    placeholder="2025/12/16"
                                 />
                             </div>
                         </div>
@@ -110,7 +113,7 @@ const TripModal = ({
                                 value={formData.cover_image || ""}
                                 onChange={onFormChange}
                                 placeholder="輸入圖片連結..."
-                                className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-xs text-gray-600 font-mono"
+                                className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-600 text-base font-mono"
                             />
                             <p className="text-xs text-gray-400 mt-1">
                                 您可以提供一個圖片 URL 作為旅程封面。
@@ -130,11 +133,11 @@ const TripModal = ({
                                     onChange={(e) =>
                                         onSettingChange(
                                             "homeCurrency",
-                                            e.target.value,
+                                            e.target.value
                                         )
                                     }
                                     placeholder="NT$"
-                                    className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm text-gray-600"
+                                    className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-base text-gray-600"
                                 />
                             </div>
                             <div>
@@ -150,11 +153,11 @@ const TripModal = ({
                                     onChange={(e) =>
                                         onSettingChange(
                                             "localCurrency",
-                                            e.target.value,
+                                            e.target.value
                                         )
                                     }
                                     placeholder="JPY¥"
-                                    className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm text-gray-600"
+                                    className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-base text-gray-600"
                                 />
                             </div>
                             <div className="relative">
@@ -173,10 +176,10 @@ const TripModal = ({
                                     onChange={(e) =>
                                         onSettingChange(
                                             "exchangeRate",
-                                            e.target.value,
+                                            e.target.value
                                         )
                                     }
-                                    className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm text-gray-600"
+                                    className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-base text-gray-600"
                                     placeholder="0.2"
                                 />
                             </div>

@@ -83,7 +83,7 @@ const TransactionModal = ({
                                         onClick={() =>
                                             onFormDataChange(
                                                 "currency_code",
-                                                curr,
+                                                curr
                                             )
                                         }
                                         className={`px-3 py-1 text-xs font-bold transition-colors ${
@@ -112,7 +112,7 @@ const TransactionModal = ({
                                         onClick={() =>
                                             onFormDataChange(
                                                 "payment_method_id",
-                                                paymentMethod.id,
+                                                paymentMethod.id
                                             )
                                         }
                                         className={`flex items-center px-3 py-2 border whitespace-nowrap transition-all
@@ -176,6 +176,7 @@ const TransactionModal = ({
                         </label>
                         <input
                             type="date"
+                            required
                             name="expense_date"
                             value={formData.expense_date!}
                             onChange={onFormInputChange}
@@ -186,15 +187,16 @@ const TransactionModal = ({
                     {/* Title */}
                     <div>
                         <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 block">
-                            備註
+                            標題
                         </label>
                         <input
                             type="text"
+                            required
                             name="title"
                             value={formData.title}
                             onChange={onFormInputChange}
                             className="w-full bg-transparent border-b border-gray-300 py-2 outline-none font-[Noto_Sans_TC]"
-                            placeholder="備註..."
+                            placeholder="標題..."
                         />
                     </div>
                     <div className="flex gap-3 pt-4">
@@ -209,7 +211,10 @@ const TransactionModal = ({
                         )}
                         <button
                             type="submit"
-                            className={`flex-2 py-3 ${theme?.accent} text-white font-bold text-sm shadow-lg hover:opacity-90`}
+                            className={`flex-2 py-3 ${theme?.accent} text-white font-bold text-sm shadow-lg disabled:opacity-50 hover:opacity-90`}
+                            disabled={
+                                !formData.payment_method_id || !formData.title
+                            }
                         >
                             {mode === "create" ? `確認儲存` : "更新紀錄"}
                         </button>

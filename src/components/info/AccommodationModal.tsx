@@ -57,7 +57,7 @@ const AccommodationModal = ({
                                     value={formData.name}
                                     onChange={onFormInputChange}
                                     placeholder="XXX飯店"
-                                    className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm font-mono"
+                                    className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-base font-mono"
                                 />
                             </div>
                         </div>
@@ -74,7 +74,7 @@ const AccommodationModal = ({
                                     value={formData.check_in_date || ""}
                                     placeholder="2025/12/12"
                                     onChange={onFormInputChange}
-                                    className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                    className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-base"
                                 />
                             </div>
                             <div className="col-span-1 md:col-span-2">
@@ -88,7 +88,7 @@ const AccommodationModal = ({
                                     value={formData.check_out_date || ""}
                                     placeholder="2025/12/12"
                                     onChange={onFormInputChange}
-                                    className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                    className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-base"
                                 />
                             </div>
                         </div>
@@ -103,7 +103,7 @@ const AccommodationModal = ({
                                     value={formData.address || ""}
                                     onChange={onFormInputChange}
                                     placeholder="XXX市XXX區"
-                                    className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm font-mono"
+                                    className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-base font-mono"
                                 />
                             </div>
                         </div>

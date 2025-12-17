@@ -45,9 +45,11 @@ const TripCard = ({
                     )}
                     <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors"></div>
                     <div className="absolute bottom-4 left-4 text-white">
-                        <span className="text-[10px] bg-white/20 backdrop-blur-sm px-2 py-1 rounded uppercase tracking-wider mb-2 inline-block">
-                            {trip.settings_config?.localCurrency} Trip
-                        </span>
+                        {new Date(trip.end_date!) < new Date() && (
+                            <span className="text-[10px] bg-white/20 backdrop-blur-sm px-2 py-1 rounded uppercase tracking-wider mb-2 inline-block">
+                                Completed
+                            </span>
+                        )}
                         <h3 className="text-xl font-[Noto_Sans_TC] font-bold shadow-black drop-shadow-md">
                             {trip.title}
                         </h3>
@@ -99,9 +101,13 @@ const TripCard = ({
                     <div className="text-xs text-gray-500 font-mono">
                         {trip.start_date} ~ {trip.end_date}
                     </div>
-                    <div className="text-xs font-bold text-gray-300 group-hover:text-[#111827] transition-colors">
+                    <button
+                        type="button"
+                        onClick={() => onTripBtnClick(trip.id)}
+                        className="text-xs font-bold text-gray-300 group-hover:text-[#111827] transition-colors"
+                    >
                         OPEN BOOK &rarr;
-                    </div>
+                    </button>
                 </div>
             </div>
         </div>

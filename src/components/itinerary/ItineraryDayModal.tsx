@@ -54,7 +54,7 @@ const ItineraryDayModal = ({
                                 name="date"
                                 value={formData.date}
                                 onChange={onFormInputChange}
-                                className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm font-mono"
+                                className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-base font-mono"
                                 placeholder="2025/12/12"
                             />
                         </div>
@@ -69,7 +69,7 @@ const ItineraryDayModal = ({
                                 value={formData.day_number}
                                 onChange={onFormInputChange}
                                 placeholder="0"
-                                className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-base"
                             />
                         </div>
                         <div>
@@ -81,7 +81,7 @@ const ItineraryDayModal = ({
                                 value={formData.title || ""}
                                 onChange={onFormInputChange}
                                 placeholder="例如：清水寺周邊散步"
-                                className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-base"
                             />
                         </div>
                     </form>

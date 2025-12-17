@@ -11,17 +11,19 @@ import useTripMutations from "../hooks/trip/UseTripMutations";
 import type LayoutContextType from "../models/types/LayoutContextTypes";
 import type { TripSettingConf, TripVM } from "../models/types/TripTypes";
 import DeleteModal from "../components/common/DeleteModal";
-import TripCard from "../components/bookshelf/TripCard";
+import SectionHeader from "../components/common/SectionHeader";
+import TripList from "../components/bookshelf/TripList";
 import TripModal from "../components/bookshelf/TripModal";
 import PrintableFullPage from "./PrintableFullPage";
 
 const BookshelfPage = () => {
     const { session } = useAuth();
+    const userId = session?.user?.id;
     const {
         data: trips,
         isLoading: isTripsLoading,
         error: tripsError,
-    } = useTrips();
+    } = useTrips(userId);
     const {
         insert: insertTrip,
         update: updateTrip,
@@ -66,7 +68,7 @@ const BookshelfPage = () => {
     // Print
     const [isPrintMode, setIsPrintMode] = useState(false);
     const [printTripId, setPrintTripId] = useState<string | undefined>(
-        undefined,
+        undefined
     );
     const {
         data: trip,
@@ -136,7 +138,7 @@ const BookshelfPage = () => {
             updated_at: null,
             user_id: session ? session.user.id : "",
         }),
-        [session],
+        [session]
     );
     const [tripModalMode, setTripModalMode] = useState("create"); // 'create' | 'edit'
     const [formTrip, setFormTrip] = useState<TripVM>(initialTripState);
@@ -167,7 +169,7 @@ const BookshelfPage = () => {
 
     const handleTripFormSettingInputChange = (
         name: string,
-        value: string | number,
+        value: string | number
     ) => {
         setFormTrip((prev) => ({
             ...prev,
@@ -203,7 +205,7 @@ const BookshelfPage = () => {
         setTripToDelete(tripItem);
         setDeleteType("trip");
         setDeleteKey(
-            `${tripItem.start_date} ~ ${tripItem.end_date} ${tripItem.title}`,
+            `${tripItem.start_date} ~ ${tripItem.end_date} ${tripItem.title}`
         );
         setIsDeleteModalOpen(true);
     };
@@ -239,38 +241,32 @@ const BookshelfPage = () => {
     }
 
     return (
-        <div className="pt-6">
-            <div className="px-6 py-6">
-                <h1 className="text-2xl font-[Noto_Sans_TC] font-bold text-[#111827]">
-                    我的旅程
-                </h1>
-                <p className="text-xs text-gray-500 font-mono uppercase tracking-widest mt-1">
-                    Travel Collections
-                </p>
-            </div>
-            <div className="flex-1 px-6 pb-10 space-y-6 overflow-y-auto">
-                {Array.isArray(trips) &&
-                    trips.map((trip, i) => (
-                        <TripCard
-                            key={i}
-                            trip={trip}
-                            onDeleteBtnClick={handleOpenDeleteTripModal}
-                            onEditBtnClick={handleEditTripBtnClick}
-                            onPrintBtnClick={handlePrintBtnClick}
-                            onTripBtnClick={handleSelectTrip}
-                        />
-                    ))}
-                <button
-                    onClick={handleAddTripBtnClick}
-                    disabled={isTripsLoading}
-                    className="w-full border-2 border-dashed border-gray-300 rounded-xl h-32 flex flex-col items-center justify-center text-gray-400 hover:border-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                    <PlusIcon size={24} className="mb-2 opacity-50" />
-                    <span className="text-xs font-bold uppercase tracking-widest">
-                        創建新旅程
-                    </span>
-                </button>
-            </div>
+        <div className="flex flex-col pt-12 min-h-0">
+            <SectionHeader
+                title="我的旅程"
+                subtitle="Travel Collections"
+                theme={null}
+                rightAction={
+                    <div className="flex justify-center items-center gap-4">
+                        <button
+                            type="button"
+                            onClick={handleAddTripBtnClick}
+                            disabled={isTripsLoading}
+                            className={`flex items-center text-sm font-medium px-4 py-2 rounded-lg shadow-md hover:opacity-90 transition-opacity`}
+                        >
+                            <PlusIcon size={16} className="mr-1" />
+                            <span>創建新旅程</span>
+                        </button>
+                    </div>
+                }
+            />
+            <TripList
+                trips={trips}
+                onDeleteBtnClick={handleOpenDeleteTripModal}
+                onEditBtnClick={handleEditTripBtnClick}
+                onPrintBtnClick={handlePrintBtnClick}
+                onTripBtnClick={handleSelectTrip}
+            />
             {isTripModalOpen && (
                 <TripModal
                     formData={formTrip}

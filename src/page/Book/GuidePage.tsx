@@ -12,6 +12,7 @@ import DeleteModal from "../../components/common/DeleteModal";
 import PlaceModal from "../../components/place/PlaceModal";
 import PlaceFilter from "../../components/place/PlaceFilter";
 import PlaceCardList from "../../components/place/PlaceCardList";
+import { Plus } from "lucide-react";
 
 type CoverPageProps = {
     isPrinting?: boolean;
@@ -192,8 +193,20 @@ const GuidePage = ({ isPrinting }: CoverPageProps) => {
             {!isPrinting && (
                 <SectionHeader
                     title="景點誌"
-                    subtitle="探索與收藏的美好事物"
+                    subtitle="Scene・Food・Shopping"
                     theme={tripData?.theme_config}
+                    rightAction={
+                        <div className="flex justify-center items-center gap-4">
+                            <button
+                                type="button"
+                                onClick={handleOpenCreateModal}
+                                className={`flex items-center text-sm font-medium text-white px-4 py-2 rounded-lg shadow-md ${tripData?.theme_config?.accent} hover:opacity-90 transition-opacity`}
+                            >
+                                <Plus size={16} className="mr-1" />
+                                <span>新增</span>
+                            </button>
+                        </div>
+                    }
                 />
             )}
             {!isPrinting && (
@@ -202,7 +215,6 @@ const GuidePage = ({ isPrinting }: CoverPageProps) => {
                     placeCategories={placeCategories}
                     theme={tripData.theme_config}
                     onFilterBtnClick={handleFilterBtnClick}
-                    onOpenCreateModal={handleOpenCreateModal}
                 />
             )}
             <PlaceCardList

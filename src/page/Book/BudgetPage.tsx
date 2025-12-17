@@ -7,6 +7,7 @@ import {
     CreditCard,
     LucideIcon,
     Plane,
+    Plus,
     Settings,
     ShoppingBag,
     Ticket,
@@ -114,7 +115,7 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
     // Setting Modal
     const [isSettingModalOpen, setIsSettingModalOpen] = useState(false);
     const [formSetting, setFormSetting] = useState<TripSettingConf | null>(
-        null,
+        null
     );
     const [formPaymentMethods, setFormPaymentMethods] = useState<
         PaymentMethodRow[] | undefined
@@ -148,8 +149,7 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
             await updateTrip.mutateAsync(updateTripData);
 
             const deletePaymentMethods = paymentMethods?.filter(
-                (ap) =>
-                    formPaymentMethods!.findIndex((p) => p.id === ap.id) < 0,
+                (ap) => formPaymentMethods!.findIndex((p) => p.id === ap.id) < 0
             );
 
             // upsert payment method
@@ -183,7 +183,7 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
             updated_at: null,
             user_id: session ? session.user.id : "",
         }),
-        [tripId, session],
+        [tripId, session]
     );
 
     const handleDragPaymentItem = (event: DragEndEvent) => {
@@ -208,7 +208,7 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
     const handlePaymentChange = (
         index: number,
         field: string,
-        value: string | number,
+        value: string | number
     ) => {
         const newMethods = [...formPaymentMethods!];
         newMethods[index] = { ...newMethods[index], [field]: value };
@@ -218,7 +218,7 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
     const handleSettingChange = (e: ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setFormSetting(
-            (prev) => ({ ...prev, [name]: value }) as TripSettingConf,
+            (prev) => ({ ...prev, [name]: value } as TripSettingConf)
         );
     };
 
@@ -282,13 +282,16 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
             currency_code: tripData.settings_config?.localCurrency || "",
             expense_date: moment().format("YYYY-MM-DD"),
             id: crypto.randomUUID(),
-            payment_method_id: "",
+            payment_method_id:
+                Array.isArray(paymentMethods) && paymentMethods.length > 0
+                    ? paymentMethods[0].id
+                    : "",
             title: "",
             trip_id: tripId || "",
             updated_at: null,
             user_id: session ? session.user.id : "",
         }),
-        [tripId, session],
+        [tripId, session]
     );
     const [budgetModalMode, setBudgetModalMode] = useState("create"); // 'create' | 'edit'
     const [formBudget, setFormBudget] = useState<BudgetRow>(initialBudgetState);
@@ -307,7 +310,7 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
         { id: "other", name: "其他", icon: CreditCard },
     ]);
     const [budgetToDelete, setBudgetToDelete] = useState<BudgetRow | null>(
-        null,
+        null
     );
 
     const handleAddBudgetBtnClick = () => {
@@ -330,7 +333,7 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
 
     const handleBudgetFormDataChange = (
         name: string,
-        value?: string | number,
+        value?: string | number
     ) => {
         setFormBudget((prev) => ({ ...prev, [name]: value }));
     };
@@ -365,9 +368,9 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
         setBudgetToDelete(budgetItem);
         setDeleteType("budget_item");
         setDeleteKey(`
-            ${moment(budgetItem.expense_date).format(
-                "YYYY-MM-DD",
-            )} ${budgetItem.title}`);
+            ${moment(budgetItem.expense_date).format("YYYY-MM-DD")} ${
+            budgetItem.title
+        }`);
         setIsDeleteModalOpen(true);
     };
 
@@ -403,7 +406,7 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
         amount: number,
         currency: string,
         homeCurrency?: string,
-        exchangeRate?: number,
+        exchangeRate?: number
     ) => {
         if (currency === homeCurrency) return amount;
         return Math.round(amount * exchangeRate!);
@@ -412,7 +415,7 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
     const getChartGradient = (
         totalSpentHome: number,
         categoryStats: { [key: string]: number },
-        theme: TripThemeConf | null,
+        theme: TripThemeConf | null
     ) => {
         if (totalSpentHome === 0) return `conic-gradient(#E5E7EB 0% 100%)`;
         let currentDeg = 0;
@@ -472,14 +475,26 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
                     subtitle="Spending Analysis"
                     theme={tripData.theme_config}
                     rightAction={
-                        <button
-                            type="button"
-                            onClick={handleSettingModalOpenBtnClick}
-                            className="p-2 text-gray-400 bg-white rounded-full border border-gray-100 hover:text-[#8E354A] shadow-sm"
-                            title="Setting"
-                        >
-                            <Settings size={18} />
-                        </button>
+                        <div className="flex justify-center items-center gap-4">
+                            <button
+                                type="button"
+                                onClick={handleSettingModalOpenBtnClick}
+                                className={`flex items-center text-sm font-medium px-4 py-2 rounded-lg shadow-md hover:opacity-90 transition-opacity`}
+                                title="Setting"
+                            >
+                                <Settings size={16} className="mr-1" />
+                                <span>設定</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleAddBudgetBtnClick}
+                                className={`flex items-center text-sm font-medium text-white px-4 py-2 rounded-lg shadow-md ${tripData?.theme_config?.accent} hover:opacity-90 transition-opacity`}
+                                title="Create"
+                            >
+                                <Plus size={16} className="mr-1" />
+                                <span>新增</span>
+                            </button>
+                        </div>
                     }
                 />
             )}
@@ -501,6 +516,7 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
                 convertToHome={convertToHome}
             />
             <TransactionList
+                categories={budgetCategory}
                 budgetItems={budgets}
                 isPrinting={isPrinting}
                 paymentMethods={paymentMethods}
@@ -509,7 +525,6 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
                 convertToHome={convertToHome}
                 getCategoryIcon={getCategoryIcon}
                 getCategoryName={getCategoryName}
-                onAddBtnClick={handleAddBudgetBtnClick}
                 onEditBtnClick={handleEditBudgetBtnClick}
             />
             {isSettingModalOpen && (

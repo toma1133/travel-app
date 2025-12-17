@@ -59,7 +59,7 @@ const BudgetLimitList = ({
             }`}
         >
             <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 print:text-gray-700 print:text-center print:border-b print:pb-2">
-                支付額度狀態 ({setting?.homeCurrency})
+                支付額度狀態
             </h4>
             <div
                 className={`grid ${

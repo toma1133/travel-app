@@ -3,13 +3,14 @@ import { tripRepo } from "../../services/repositories/TripRepo";
 import { toTripsVM } from "../../services/mappers/TripMapper";
 import type { TripVM } from "../../models/types/TripTypes";
 
-const useTrips = () => {
+const useTrips = (userId: string | undefined) => {
     return useQuery<TripVM[]>({
-        queryKey: ["trips"],
+        queryKey: ["trips", userId],
         queryFn: async () => {
             const rows = await tripRepo.list();
             return toTripsVM(rows);
         },
+        enabled: !!userId,
         staleTime: 60_000,
         placeholderData: keepPreviousData,
     });
