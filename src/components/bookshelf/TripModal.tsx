@@ -56,7 +56,7 @@ const TripModal = ({
                                 value={formData.title}
                                 onChange={onFormChange}
                                 placeholder="例如：東京櫻花之旅"
-                                className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-base font-bold"
+                                className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-base"
                             />
                         </div>
                         {/* Subtitle */}
@@ -119,7 +119,7 @@ const TripModal = ({
                                 您可以提供一個圖片 URL 作為旅程封面。
                             </p>
                         </div>
-                        <div className="grid grid-cols-3 gap-4">
+                        <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
                                     本國幣 (Home)
@@ -133,7 +133,7 @@ const TripModal = ({
                                     onChange={(e) =>
                                         onSettingChange(
                                             "homeCurrency",
-                                            e.target.value
+                                            e.target.value,
                                         )
                                     }
                                     placeholder="NT$"
@@ -153,15 +153,17 @@ const TripModal = ({
                                     onChange={(e) =>
                                         onSettingChange(
                                             "localCurrency",
-                                            e.target.value
+                                            e.target.value,
                                         )
                                     }
                                     placeholder="JPY¥"
                                     className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-base text-gray-600"
                                 />
                             </div>
-                            <div className="relative">
-                                <label className="block text-[10px] text-gray-500 mb-1">
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 mb-1">
                                     匯率 (1{" "}
                                     {formData.settings_config?.localCurrency} =
                                     ? {formData.settings_config?.homeCurrency})
@@ -176,7 +178,7 @@ const TripModal = ({
                                     onChange={(e) =>
                                         onSettingChange(
                                             "exchangeRate",
-                                            e.target.value
+                                            e.target.value,
                                         )
                                     }
                                     className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-base text-gray-600"

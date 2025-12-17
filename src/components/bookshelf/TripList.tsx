@@ -5,6 +5,7 @@ type TripListProps = {
     trips?: TripVM[];
     onDeleteBtnClick: (tripItem: TripVM) => void;
     onEditBtnClick: (tripItem: TripVM) => void;
+    onPermissionBtnClick: (tripItem: TripVM) => void;
     onPrintBtnClick: (tripItem: TripVM) => void;
     onTripBtnClick: (tripId: string) => void;
 };
@@ -13,6 +14,7 @@ const TripList = ({
     trips,
     onDeleteBtnClick,
     onEditBtnClick,
+    onPermissionBtnClick,
     onPrintBtnClick,
     onTripBtnClick,
 }: TripListProps) => {
@@ -25,6 +27,7 @@ const TripList = ({
                         trip={trip}
                         onDeleteBtnClick={onDeleteBtnClick}
                         onEditBtnClick={onEditBtnClick}
+                        onPermissionBtnClick={onPermissionBtnClick}
                         onPrintBtnClick={onPrintBtnClick}
                         onTripBtnClick={onTripBtnClick}
                     />

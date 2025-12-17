@@ -5,13 +5,16 @@ import { PlusIcon } from "lucide-react";
 import moment from "moment";
 import useAuth from "../hooks/UseAuth";
 import usePlaces from "../hooks/place/UsePlaces";
+import useProfiles from "../hooks/profile/UseProfiles";
 import useTrip from "../hooks/trip/UseTrip";
 import useTrips from "../hooks/trip/UseTrips";
+import useTripMembers from "../hooks/tripMember/UseTripMembers";
 import useTripMutations from "../hooks/trip/UseTripMutations";
 import type LayoutContextType from "../models/types/LayoutContextTypes";
 import type { TripSettingConf, TripVM } from "../models/types/TripTypes";
 import DeleteModal from "../components/common/DeleteModal";
 import SectionHeader from "../components/common/SectionHeader";
+import PermissionModal from "../components/bookshelf/PermissionModal";
 import TripList from "../components/bookshelf/TripList";
 import TripModal from "../components/bookshelf/TripModal";
 import PrintableFullPage from "./PrintableFullPage";
@@ -19,6 +22,11 @@ import PrintableFullPage from "./PrintableFullPage";
 const BookshelfPage = () => {
     const { session } = useAuth();
     const userId = session?.user?.id;
+    const {
+        data: profiles,
+        isLoading: isProfilesLoading,
+        error: profilesError,
+    } = useProfiles();
     const {
         data: trips,
         isLoading: isTripsLoading,
@@ -30,17 +38,34 @@ const BookshelfPage = () => {
         remove: removeTrip,
         anyPending: anyTripPending,
     } = useTripMutations();
+    const [targetTrip, setTargetTrip] = useState<TripVM | undefined>(undefined);
+    const {
+        data: tripMembers,
+        isLoading: isTripMembersLoading,
+        error: tripMembersError,
+    } = useTripMembers(targetTrip?.id);
+    const {
+        insert: insertTripMember,
+        update: updateTripMember,
+        remove: removeTripMember,
+        anyPending: anyTripMemberPending,
+    } = useTripMutations();
     const { setIsPageLoading } = useOutletContext<LayoutContextType>();
     const navigate = useNavigate();
 
     const mutatingCount = useIsMutating({
-        mutationKey: ["trip"],
+        mutationKey: ["profiles", "trip", "trip_members"],
     });
 
     useEffect(() => {
         let timer: number | undefined;
         const shouldShow =
-            isTripsLoading || anyTripPending || mutatingCount > 0;
+            isProfilesLoading ||
+            isTripsLoading ||
+            isTripMembersLoading ||
+            anyTripPending ||
+            anyTripMemberPending ||
+            mutatingCount > 0;
 
         if (shouldShow) {
             timer = window.setTimeout(() => setIsPageLoading(true), 150);
@@ -54,7 +79,15 @@ const BookshelfPage = () => {
             }
             setIsPageLoading(false);
         };
-    }, [isTripsLoading, anyTripPending, mutatingCount, setIsPageLoading]);
+    }, [
+        isProfilesLoading,
+        isTripsLoading,
+        isTripMembersLoading,
+        anyTripPending,
+        anyTripMemberPending,
+        mutatingCount,
+        setIsPageLoading,
+    ]);
 
     const handleSelectTrip = (tripId: string) => {
         navigate(`/trip/${tripId}`, { replace: false });
@@ -68,7 +101,7 @@ const BookshelfPage = () => {
     // Print
     const [isPrintMode, setIsPrintMode] = useState(false);
     const [printTripId, setPrintTripId] = useState<string | undefined>(
-        undefined
+        undefined,
     );
     const {
         data: trip,
@@ -95,6 +128,10 @@ const BookshelfPage = () => {
         setPrintTripId(trip.id);
         setIsPrintMode(true);
     };
+
+    if (isPrintMode) {
+        return <PrintableFullPage />;
+    }
 
     // Trip Modal
     const [isTripModalOpen, setIsTripModalOpen] = useState(false);
@@ -138,7 +175,7 @@ const BookshelfPage = () => {
             updated_at: null,
             user_id: session ? session.user.id : "",
         }),
-        [session]
+        [session],
     );
     const [tripModalMode, setTripModalMode] = useState("create"); // 'create' | 'edit'
     const [formTrip, setFormTrip] = useState<TripVM>(initialTripState);
@@ -169,7 +206,7 @@ const BookshelfPage = () => {
 
     const handleTripFormSettingInputChange = (
         name: string,
-        value: string | number
+        value: string | number,
     ) => {
         setFormTrip((prev) => ({
             ...prev,
@@ -205,9 +242,31 @@ const BookshelfPage = () => {
         setTripToDelete(tripItem);
         setDeleteType("trip");
         setDeleteKey(
-            `${tripItem.start_date} ~ ${tripItem.end_date} ${tripItem.title}`
+            `${tripItem.start_date} ~ ${tripItem.end_date} ${tripItem.title}`,
         );
         setIsDeleteModalOpen(true);
+    };
+
+    // --- Permission Modal
+    const [isPermissionModalOpen, setIsPermissionModalOpen] = useState(false);
+
+    const handlePermissionBtnClick = async (tripItem: TripVM) => {
+        setTargetTrip(tripItem);
+        setIsPermissionModalOpen(true);
+    };
+
+    const handleClosePermissionModalClick = async () => {
+        setIsPermissionModalOpen(false);
+        setTargetTrip(undefined);
+    };
+
+    const handlePermissionModalSubmit = async (selectedValues: string[]) => {
+        try {
+            setIsPermissionModalOpen(false);
+            setTargetTrip(undefined);
+        } catch (err) {
+            console.error(err);
+        }
     };
 
     // --- Common Modal Handlers ---
@@ -236,10 +295,6 @@ const BookshelfPage = () => {
         setDeleteKey("");
     };
 
-    if (isPrintMode) {
-        return <PrintableFullPage />;
-    }
-
     return (
         <div className="flex flex-col pt-12 min-h-0">
             <SectionHeader
@@ -264,6 +319,7 @@ const BookshelfPage = () => {
                 trips={trips}
                 onDeleteBtnClick={handleOpenDeleteTripModal}
                 onEditBtnClick={handleEditTripBtnClick}
+                onPermissionBtnClick={handlePermissionBtnClick}
                 onPrintBtnClick={handlePrintBtnClick}
                 onTripBtnClick={handleSelectTrip}
             />
@@ -282,6 +338,15 @@ const BookshelfPage = () => {
                     deleteKey={deleteKey}
                     onCloseClick={handleCloseDeleteModal}
                     onConfirmClick={handleConfirmDelete}
+                />
+            )}
+            {isPermissionModalOpen && (
+                <PermissionModal
+                    profiles={profiles}
+                    trip={targetTrip}
+                    tripMembers={tripMembers}
+                    onCloseBtnClick={handleClosePermissionModalClick}
+                    onSubmit={handlePermissionModalSubmit}
                 />
             )}
         </div>
