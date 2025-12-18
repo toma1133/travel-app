@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { TripVM } from "../../models/types/TripTypes";
 import { Pencil, Printer, Trash2, User } from "lucide-react";
 
 type TripCardProps = {
     trip: TripVM;
+    userId?: string;
     onDeleteBtnClick: (tripItem: TripVM) => void;
     onEditBtnClick: (tripItem: TripVM) => void;
     onPermissionBtnClick: (tripItem: TripVM) => void;
@@ -13,6 +14,7 @@ type TripCardProps = {
 
 const TripCard = ({
     trip,
+    userId,
     onDeleteBtnClick,
     onEditBtnClick,
     onPermissionBtnClick,
@@ -75,17 +77,19 @@ const TripCard = ({
                         >
                             <Printer size={14} />
                         </button> */}
-                        <button
-                            type="button"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                onPermissionBtnClick(trip);
-                            }}
-                            className="p-1.5 bg-white/90 backdrop-blur rounded-full text-gray-600 hover:text-blue-600 hover:bg-white shadow-sm transition-colors"
-                            title="分享"
-                        >
-                            <User size={14} />
-                        </button>
+                        {userId === trip.user_id && (
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onPermissionBtnClick(trip);
+                                }}
+                                className="p-1.5 bg-white/90 backdrop-blur rounded-full text-gray-600 hover:text-blue-600 hover:bg-white shadow-sm transition-colors"
+                                title="分享"
+                            >
+                                <User size={14} />
+                            </button>
+                        )}
                         <button
                             type="button"
                             onClick={(e) => {

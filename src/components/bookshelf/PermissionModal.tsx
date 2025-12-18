@@ -1,38 +1,25 @@
-import { FormEventHandler, MouseEventHandler, useState } from "react";
+import { ChangeEventHandler, FormEventHandler, MouseEventHandler } from "react";
 import { X } from "lucide-react";
 import type { ProfileRow } from "../../models/types/ProfileTypes";
-import type { TripMemberRow } from "../../models/types/TripMemberTypes";
 import type { TripVM } from "../../models/types/TripTypes";
 
 type PermissionModalProps = {
+    formData: { [key: string]: boolean };
     profiles?: ProfileRow[];
     trip?: TripVM;
-    tripMembers?: TripMemberRow[];
     onCloseBtnClick: MouseEventHandler<HTMLButtonElement>;
-    onSubmit: (selectedValues: string[]) => void;
+    onFormChange: ChangeEventHandler<HTMLInputElement>;
+    onSubmit: FormEventHandler<HTMLFormElement>;
 };
 
 const PermissionModal = ({
+    formData,
     profiles,
     trip,
-    tripMembers,
     onCloseBtnClick,
+    onFormChange,
     onSubmit,
 }: PermissionModalProps) => {
-    const [selectedValues, setSelectedValues] = useState(
-        Array.isArray(tripMembers)
-            ? tripMembers.map((member) => member.user_id)
-            : [],
-    );
-
-    const handleCheckboxChange = (value: string) => {
-        setSelectedValues((prev) =>
-            prev.includes(value)
-                ? prev.filter((v) => v !== value)
-                : [...prev, value],
-        );
-    };
-
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in">
             <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
@@ -52,17 +39,13 @@ const PermissionModal = ({
                 </div>
                 {/* Body - Scrollable Form */}
                 <div className="p-6 overflow-y-auto">
-                    <form
-                        id="trip-member-form"
-                        onSubmit={() => onSubmit(selectedValues)}
-                        className="bg-white rounded-lg w-full max-w-md"
-                    >
+                    <form id="trip-member-form" onSubmit={onSubmit}>
                         <div className="space-y-2">
                             {Array.isArray(profiles) &&
                                 profiles
                                     .filter(
                                         (profile) =>
-                                            profile.id !== trip?.user_id,
+                                            profile.id !== trip?.user_id
                                     )
                                     .map((profile, i) => (
                                         <label
@@ -71,19 +54,15 @@ const PermissionModal = ({
                                         >
                                             <input
                                                 type="checkbox"
+                                                name="tripMember"
                                                 value={profile.id}
                                                 checked={
-                                                    !!selectedValues?.find(
-                                                        (memberId) =>
-                                                            memberId ===
-                                                            profile.id,
-                                                    )
+                                                    formData[profile.id] ===
+                                                    undefined
+                                                        ? false
+                                                        : formData[profile.id]
                                                 }
-                                                onChange={() =>
-                                                    handleCheckboxChange(
-                                                        profile.id,
-                                                    )
-                                                }
+                                                onChange={onFormChange}
                                                 className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                                             />
                                             <span className="text-gray-700">

@@ -11,6 +11,7 @@ import useTrips from "../hooks/trip/UseTrips";
 import useTripMembers from "../hooks/tripMember/UseTripMembers";
 import useTripMutations from "../hooks/trip/UseTripMutations";
 import type LayoutContextType from "../models/types/LayoutContextTypes";
+import type { ProfileRow } from "../models/types/ProfileTypes";
 import type { TripSettingConf, TripVM } from "../models/types/TripTypes";
 import DeleteModal from "../components/common/DeleteModal";
 import SectionHeader from "../components/common/SectionHeader";
@@ -18,15 +19,11 @@ import PermissionModal from "../components/bookshelf/PermissionModal";
 import TripList from "../components/bookshelf/TripList";
 import TripModal from "../components/bookshelf/TripModal";
 import PrintableFullPage from "./PrintableFullPage";
+import useTripMemberMutations from "../hooks/tripMember/UseTripMemberMutations";
 
 const BookshelfPage = () => {
     const { session } = useAuth();
     const userId = session?.user?.id;
-    const {
-        data: profiles,
-        isLoading: isProfilesLoading,
-        error: profilesError,
-    } = useProfiles();
     const {
         data: trips,
         isLoading: isTripsLoading,
@@ -39,17 +36,24 @@ const BookshelfPage = () => {
         anyPending: anyTripPending,
     } = useTripMutations();
     const [targetTrip, setTargetTrip] = useState<TripVM | undefined>(undefined);
+
+    const [isPermissionModalOpen, setIsPermissionModalOpen] = useState(false);
+    const {
+        data: profiles,
+        isLoading: isProfilesLoading,
+        error: profilesError,
+    } = useProfiles(isPermissionModalOpen);
     const {
         data: tripMembers,
         isLoading: isTripMembersLoading,
         error: tripMembersError,
-    } = useTripMembers(targetTrip?.id);
+    } = useTripMembers(targetTrip?.id, isPermissionModalOpen);
     const {
         insert: insertTripMember,
         update: updateTripMember,
         remove: removeTripMember,
         anyPending: anyTripMemberPending,
-    } = useTripMutations();
+    } = useTripMemberMutations();
     const { setIsPageLoading } = useOutletContext<LayoutContextType>();
     const navigate = useNavigate();
 
@@ -93,6 +97,87 @@ const BookshelfPage = () => {
         navigate(`/trip/${tripId}`, { replace: false });
     };
 
+    // --- Permission Modal
+    const initialTripMemberState: { [key: string]: boolean } = useMemo(
+        () =>
+            profiles
+                ? profiles
+                      .filter((profile) => targetTrip?.user_id !== profile.id)
+                      .reduce(
+                          (
+                              acc: { [key: string]: boolean },
+                              curr: ProfileRow
+                          ) => {
+                              const isTripMember = !!tripMembers?.find(
+                                  (member) => member.user_id === curr.id
+                              );
+                              return { ...acc, [curr.id]: isTripMember };
+                          },
+                          {} as { [key: string]: boolean }
+                      )
+                : {},
+        [profiles, tripMembers]
+    );
+    const [formTripMembers, setFormTripMembers] = useState<{
+        [key: string]: boolean;
+    }>(initialTripMemberState);
+
+    useEffect(() => {
+        if (isPermissionModalOpen) {
+            setFormTripMembers(initialTripMemberState);
+        }
+    }, [isPermissionModalOpen, initialTripMemberState]);
+
+    const handlePermissionBtnClick = async (tripItem: TripVM) => {
+        setTargetTrip(tripItem);
+        setFormTripMembers(initialTripMemberState);
+        setIsPermissionModalOpen(true);
+    };
+
+    const handleClosePermissionModalClick = async () => {
+        setIsPermissionModalOpen(false);
+        setTargetTrip(undefined);
+    };
+
+    const handleTripMemberFormInputChange = (
+        e: ChangeEvent<HTMLInputElement>
+    ) => {
+        const { name, value } = e.target;
+        setFormTripMembers((prev) => ({ ...prev, [value]: !prev[value] }));
+    };
+
+    const handlePermissionModalSubmit = async (e: FormEvent) => {
+        e.preventDefault();
+
+        const tripMemberData: { [key: string]: boolean } = {
+            ...formTripMembers,
+        };
+
+        try {
+            for (const [key, value] of Object.entries(tripMemberData)) {
+                const existInTripMembers = tripMembers?.find(
+                    (member) =>
+                        member.trip_id === targetTrip?.id &&
+                        member.user_id === key
+                );
+                if (value && !!!existInTripMembers) {
+                    await insertTripMember.mutateAsync({
+                        trip_id: targetTrip!.id,
+                        user_id: key,
+                    });
+                } else if (!value && !!existInTripMembers) {
+                    await removeTripMember.mutateAsync(existInTripMembers.id);
+                }
+            }
+
+            setIsPermissionModalOpen(false);
+            setTargetTrip(undefined);
+            setFormTripMembers(initialTripMemberState);
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
     // --- Common delete modal
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [deleteType, setDeleteType] = useState("");
@@ -101,7 +186,7 @@ const BookshelfPage = () => {
     // Print
     const [isPrintMode, setIsPrintMode] = useState(false);
     const [printTripId, setPrintTripId] = useState<string | undefined>(
-        undefined,
+        undefined
     );
     const {
         data: trip,
@@ -175,7 +260,7 @@ const BookshelfPage = () => {
             updated_at: null,
             user_id: session ? session.user.id : "",
         }),
-        [session],
+        [session]
     );
     const [tripModalMode, setTripModalMode] = useState("create"); // 'create' | 'edit'
     const [formTrip, setFormTrip] = useState<TripVM>(initialTripState);
@@ -206,7 +291,7 @@ const BookshelfPage = () => {
 
     const handleTripFormSettingInputChange = (
         name: string,
-        value: string | number,
+        value: string | number
     ) => {
         setFormTrip((prev) => ({
             ...prev,
@@ -242,31 +327,9 @@ const BookshelfPage = () => {
         setTripToDelete(tripItem);
         setDeleteType("trip");
         setDeleteKey(
-            `${tripItem.start_date} ~ ${tripItem.end_date} ${tripItem.title}`,
+            `${tripItem.start_date} ~ ${tripItem.end_date} ${tripItem.title}`
         );
         setIsDeleteModalOpen(true);
-    };
-
-    // --- Permission Modal
-    const [isPermissionModalOpen, setIsPermissionModalOpen] = useState(false);
-
-    const handlePermissionBtnClick = async (tripItem: TripVM) => {
-        setTargetTrip(tripItem);
-        setIsPermissionModalOpen(true);
-    };
-
-    const handleClosePermissionModalClick = async () => {
-        setIsPermissionModalOpen(false);
-        setTargetTrip(undefined);
-    };
-
-    const handlePermissionModalSubmit = async (selectedValues: string[]) => {
-        try {
-            setIsPermissionModalOpen(false);
-            setTargetTrip(undefined);
-        } catch (err) {
-            console.error(err);
-        }
     };
 
     // --- Common Modal Handlers ---
@@ -317,6 +380,7 @@ const BookshelfPage = () => {
             />
             <TripList
                 trips={trips}
+                userId={userId}
                 onDeleteBtnClick={handleOpenDeleteTripModal}
                 onEditBtnClick={handleEditTripBtnClick}
                 onPermissionBtnClick={handlePermissionBtnClick}
@@ -342,10 +406,11 @@ const BookshelfPage = () => {
             )}
             {isPermissionModalOpen && (
                 <PermissionModal
+                    formData={formTripMembers}
                     profiles={profiles}
                     trip={targetTrip}
-                    tripMembers={tripMembers}
                     onCloseBtnClick={handleClosePermissionModalClick}
+                    onFormChange={handleTripMemberFormInputChange}
                     onSubmit={handlePermissionModalSubmit}
                 />
             )}

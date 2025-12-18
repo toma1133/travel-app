@@ -3,6 +3,7 @@ import TripCard from "./TripCard";
 
 type TripListProps = {
     trips?: TripVM[];
+    userId?: string;
     onDeleteBtnClick: (tripItem: TripVM) => void;
     onEditBtnClick: (tripItem: TripVM) => void;
     onPermissionBtnClick: (tripItem: TripVM) => void;
@@ -12,6 +13,7 @@ type TripListProps = {
 
 const TripList = ({
     trips,
+    userId,
     onDeleteBtnClick,
     onEditBtnClick,
     onPermissionBtnClick,
@@ -25,6 +27,7 @@ const TripList = ({
                     <TripCard
                         key={i}
                         trip={trip}
+                        userId={userId}
                         onDeleteBtnClick={onDeleteBtnClick}
                         onEditBtnClick={onEditBtnClick}
                         onPermissionBtnClick={onPermissionBtnClick}
