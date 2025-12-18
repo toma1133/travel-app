@@ -25,6 +25,7 @@ import type BookLayoutContextType from "../../models/types/BookLayoutContextType
 import type LayoutContextType from "../../models/types/LayoutContextTypes";
 import type { BudgetRow } from "../../models/types/BudgetTypes";
 import type { PaymentMethodRow } from "../../models/types/PaymentMethodTypes";
+import type { TransactionFilterType } from "../../models/types/TransactionFilterTypes";
 import type {
     TripSettingConf,
     TripThemeConf,
@@ -37,6 +38,7 @@ import BudgetChart from "../../components/budget/BudgetChart";
 import BudgetLimitList from "../../components/budget/BudgetLimitList";
 import TransactionList from "../../components/budget/TransactionList";
 import TransactionModal from "../../components/budget/TransactionModal";
+import TransactionFilter from "../../components/budget/TransactionFilter";
 
 type BudgetPageProps = {
     isPrinting?: boolean;
@@ -111,6 +113,64 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [deleteType, setDeleteType] = useState("");
     const [deleteKey, setDeleteKey] = useState("");
+
+    // Utils
+    const convertToHome = (
+        amount: number,
+        currency: string,
+        homeCurrency?: string,
+        exchangeRate?: number
+    ) => {
+        if (currency === homeCurrency) return amount;
+        return Math.round(amount * exchangeRate!);
+    };
+
+    const getChartGradient = (
+        totalSpentHome: number,
+        categoryStats: { [key: string]: number },
+        theme: TripThemeConf | null
+    ) => {
+        if (totalSpentHome === 0) return `conic-gradient(#E5E7EB 0% 100%)`;
+        let currentDeg = 0;
+        const gradients = Object.entries(categoryStats).map(([cat, amount]) => {
+            const percent = amount / totalSpentHome;
+            const deg = percent * 360;
+            const color = theme?.categoryColor[cat] || "#9CA3AF";
+            const str = `${color} ${currentDeg}deg ${currentDeg + deg}deg`;
+            currentDeg += deg;
+            return str;
+        });
+        return `conic-gradient(${gradients.join(", ")})`;
+    };
+
+    const getCategoryName = (cat: string) => {
+        const map: { [key: string]: string } = {
+            transport: "交通",
+            stay: "住宿",
+            food: "餐飲",
+            shopping: "購物",
+            ticket: "門票/活動",
+            other: "其他",
+        };
+        return map[cat] || "其他";
+    };
+
+    const getCategoryIcon = (cat: string) => {
+        switch (cat) {
+            case "transport":
+                return <Plane size={14} />;
+            case "stay":
+                return <Bed size={14} />;
+            case "food":
+                return <Coffee size={14} />;
+            case "shopping":
+                return <ShoppingBag size={14} />;
+            case "ticket":
+                return <Ticket size={14} />;
+            default:
+                return <CreditCard size={14} />;
+        }
+    };
 
     // Setting Modal
     const [isSettingModalOpen, setIsSettingModalOpen] = useState(false);
@@ -374,6 +434,41 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
         setIsDeleteModalOpen(true);
     };
 
+    // --- Filter
+    const initialFilterState: TransactionFilterType = useMemo(
+        () => ({
+            category: "all",
+            payment_method_id: "all",
+        }),
+        []
+    );
+    const [filters, setFilters] = useState(initialFilterState);
+    const filteredBudgets = useMemo(() => {
+        return budgets?.filter((ex) => {
+            const matchCategory =
+                filters.category !== "all"
+                    ? ex.category === filters.category
+                    : true;
+            const matchMethod =
+                filters.payment_method_id !== "all"
+                    ? ex.payment_method_id === filters.payment_method_id
+                    : true;
+            return matchCategory && matchMethod;
+        });
+    }, [budgets, filters]);
+    const filteredPayments = useMemo(() => {
+        return paymentMethods?.filter((ex) => {
+            const matchMethod =
+                filters.payment_method_id !== "all"
+                    ? ex.id === filters.payment_method_id
+                    : true;
+            return matchMethod;
+        });
+    }, [paymentMethods, filters]);
+    const handleFilterChange = (name: string, value?: string | number) => {
+        setFilters((prev) => ({ ...prev, [name]: value }));
+    };
+
     // --- Common Modal Handlers ---
     const handleConfirmDelete = async () => {
         try {
@@ -399,64 +494,6 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
         setBudgetToDelete(null);
         setDeleteType("");
         setDeleteKey("");
-    };
-
-    // Utils
-    const convertToHome = (
-        amount: number,
-        currency: string,
-        homeCurrency?: string,
-        exchangeRate?: number
-    ) => {
-        if (currency === homeCurrency) return amount;
-        return Math.round(amount * exchangeRate!);
-    };
-
-    const getChartGradient = (
-        totalSpentHome: number,
-        categoryStats: { [key: string]: number },
-        theme: TripThemeConf | null
-    ) => {
-        if (totalSpentHome === 0) return `conic-gradient(#E5E7EB 0% 100%)`;
-        let currentDeg = 0;
-        const gradients = Object.entries(categoryStats).map(([cat, amount]) => {
-            const percent = amount / totalSpentHome;
-            const deg = percent * 360;
-            const color = theme?.categoryColor[cat] || "#9CA3AF";
-            const str = `${color} ${currentDeg}deg ${currentDeg + deg}deg`;
-            currentDeg += deg;
-            return str;
-        });
-        return `conic-gradient(${gradients.join(", ")})`;
-    };
-
-    const getCategoryName = (cat: string) => {
-        const map: { [key: string]: string } = {
-            transport: "交通",
-            stay: "住宿",
-            food: "餐飲",
-            shopping: "購物",
-            ticket: "門票/活動",
-            other: "其他",
-        };
-        return map[cat] || "其他";
-    };
-
-    const getCategoryIcon = (cat: string) => {
-        switch (cat) {
-            case "transport":
-                return <Plane size={14} />;
-            case "stay":
-                return <Bed size={14} />;
-            case "food":
-                return <Coffee size={14} />;
-            case "shopping":
-                return <ShoppingBag size={14} />;
-            case "ticket":
-                return <Ticket size={14} />;
-            default:
-                return <CreditCard size={14} />;
-        }
     };
 
     return (
@@ -498,8 +535,17 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
                     }
                 />
             )}
+            {!isPrinting && (
+                <TransactionFilter
+                    categories={budgetCategory}
+                    formData={filters}
+                    paymentMethods={paymentMethods}
+                    totalCount={filteredBudgets?.length}
+                    onFormDataChange={handleFilterChange}
+                />
+            )}
             <BudgetChart
-                budgetItems={budgets}
+                budgetItems={filteredBudgets}
                 isPrinting={isPrinting}
                 setting={tripData.settings_config}
                 theme={tripData.theme_config}
@@ -508,16 +554,16 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
                 getCategoryName={getCategoryName}
             />
             <BudgetLimitList
-                budgetItems={budgets}
+                budgetItems={filteredBudgets}
                 isPrinting={isPrinting}
-                paymentMethods={paymentMethods}
+                paymentMethods={filteredPayments}
                 setting={tripData.settings_config}
                 theme={tripData.theme_config}
                 convertToHome={convertToHome}
             />
             <TransactionList
                 categories={budgetCategory}
-                budgetItems={budgets}
+                budgetItems={filteredBudgets}
                 isPrinting={isPrinting}
                 paymentMethods={paymentMethods}
                 setting={tripData.settings_config}

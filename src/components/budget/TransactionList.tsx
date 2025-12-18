@@ -1,4 +1,4 @@
-import { JSX, useMemo, useState } from "react";
+import { JSX } from "react";
 import { LucideIcon } from "lucide-react";
 import type { BudgetRow } from "../../models/types/BudgetTypes";
 import type { PaymentMethodRow } from "../../models/types/PaymentMethodTypes";
@@ -6,9 +6,7 @@ import type {
     TripSettingConf,
     TripThemeConf,
 } from "../../models/types/TripTypes";
-import type { TransactionFilterType } from "../../models/types/TransactionFilterTypes";
 import TransactionListItem from "./TransactionListItem";
-import TransactionFilter from "./TransactionFilter";
 
 type TransactionListProps = {
     budgetItems?: BudgetRow[];
@@ -34,7 +32,6 @@ type TransactionListProps = {
 
 const TransactionList = ({
     budgetItems,
-    categories,
     isPrinting,
     paymentMethods,
     setting,
@@ -44,51 +41,6 @@ const TransactionList = ({
     getCategoryName,
     onEditBtnClick,
 }: TransactionListProps) => {
-    // --- Filter
-    const initialFilterState: TransactionFilterType = useMemo(
-        () => ({
-            category: "all",
-            payment_method_id: "all",
-        }),
-        []
-    );
-    const [filters, setFilters] = useState(initialFilterState);
-    const filteredBudgets = useMemo(() => {
-        return budgetItems?.filter((ex) => {
-            const matchCategory =
-                filters.category !== "all"
-                    ? ex.category === filters.category
-                    : true;
-            const matchMethod =
-                filters.payment_method_id !== "all"
-                    ? ex.payment_method_id === filters.payment_method_id
-                    : true;
-            return matchCategory && matchMethod;
-        });
-    }, [budgetItems, filters]);
-    const filteredTotalSpentHome = useMemo(() => {
-        return Array.isArray(filteredBudgets)
-            ? filteredBudgets.reduce(
-                  (sum, item) =>
-                      sum +
-                      convertToHome(
-                          item.amount,
-                          item.currency_code,
-                          setting?.homeCurrency,
-                          setting?.exchangeRate
-                      ),
-                  0
-              )
-            : 0;
-    }, [filteredBudgets]);
-    const filteredTotalSpentLocal = useMemo(() => {
-        return Math.round(filteredTotalSpentHome / setting?.exchangeRate!);
-    }, [filteredTotalSpentHome]);
-
-    const handleFilterChange = (name: string, value?: string | number) => {
-        setFilters((prev) => ({ ...prev, [name]: value }));
-    };
-
     return (
         <div
             className={`flex flex-col px-4 justify-center items-center ${
@@ -102,16 +54,6 @@ const TransactionList = ({
                     交易紀錄
                 </h4>
             </div>
-            <TransactionFilter
-                categories={categories}
-                formData={filters}
-                paymentMethods={paymentMethods}
-                setting={setting}
-                totalCount={filteredBudgets?.length}
-                totalSpentHome={filteredTotalSpentHome}
-                totalSpentLocal={filteredTotalSpentLocal}
-                onFormDataChange={handleFilterChange}
-            />
             <div
                 className={`w-full ${
                     isPrinting
@@ -119,8 +61,8 @@ const TransactionList = ({
                         : "space-y-2"
                 }`}
             >
-                {Array.isArray(filteredBudgets) &&
-                    filteredBudgets.map((budgetItem, i) => {
+                {Array.isArray(budgetItems) &&
+                    budgetItems.map((budgetItem, i) => {
                         const pmName =
                             paymentMethods?.find(
                                 (p) => p.id === budgetItem.payment_method_id
