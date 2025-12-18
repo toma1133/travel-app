@@ -117,8 +117,8 @@ const PlaceCard = ({
                     {place.eng_name}
                 </p>
                 <div className="flex flex-wrap gap-2 mb-4 print:hidden">
-                    {Array.isArray(place.tags) &&
-                        place.tags.map((tag) => (
+                    {!!place.tags &&
+                        place.tags.split(",").map((tag) => (
                             <span
                                 key={tag}
                                 className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded"
