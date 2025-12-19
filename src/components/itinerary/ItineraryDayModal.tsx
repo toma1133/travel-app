@@ -1,7 +1,8 @@
 import { ChangeEventHandler, FormEventHandler, MouseEventHandler } from "react";
 import { Calendar, X } from "lucide-react";
-import { ItineraryVM } from "../../models/types/ItineraryTypes";
-import { TripThemeConf } from "../../models/types/TripTypes";
+import type { ItineraryVM } from "../../models/types/ItineraryTypes";
+import type { TripThemeConf } from "../../models/types/TripTypes";
+import FormModal from "../common/FormModal";
 
 type ItineraryDayModalProps = {
     formData: ItineraryVM;
@@ -21,91 +22,69 @@ const ItineraryDayModal = ({
     onFormSubmit,
 }: ItineraryDayModalProps) => {
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in">
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm max-h-[90vh] overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
-                {/* Modal Header */}
-                <div className="flex justify-between items-center p-4 border-b border-gray-100">
-                    <h3 className="text-lg font-bold text-gray-800">
-                        {mode === "create" ? `新增日程` : "編輯日程"}
-                    </h3>
-                    <button
-                        type="button"
-                        onClick={onCloseBtnClick}
-                        className="p-1 rounded-full hover:bg-gray-100 text-gray-500 transition-colors"
-                        title="Close"
-                    >
-                        <X size={20} />
-                    </button>
-                </div>
-                {/* Modal Body - Form */}
-                <div className="p-6 overflow-y-auto">
-                    <form
-                        id="day-form"
-                        onSubmit={onFormSubmit}
-                        className="space-y-4"
-                    >
-                        <div>
-                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1 flex items-center">
-                                <Calendar size={12} className="mr-1" /> 日期 *
-                            </label>
-                            <input
-                                required
-                                type="date"
-                                name="date"
-                                value={formData.date}
-                                onChange={onFormInputChange}
-                                className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-base font-mono"
-                                placeholder="2025/12/12"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
-                                旅遊第幾天
-                            </label>
-                            <input
-                                type="number"
-                                name="day_number"
-                                min="1"
-                                value={formData.day_number}
-                                onChange={onFormInputChange}
-                                placeholder="0"
-                                className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-base"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
-                                當日主題 (可選)
-                            </label>
-                            <input
-                                name="title"
-                                value={formData.title || ""}
-                                onChange={onFormInputChange}
-                                placeholder="例如：清水寺周邊散步"
-                                className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-base"
-                            />
-                        </div>
-                    </form>
-                </div>
-
-                {/* Modal Footer */}
-                <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-end space-x-3">
-                    <button
-                        type="button"
-                        onClick={onCloseBtnClick}
-                        className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
-                    >
-                        取消
-                    </button>
-                    <button
-                        type="submit"
-                        form="day-form"
-                        className={`px-6 py-2 rounded-lg text-sm font-bold text-white shadow-md hover:shadow-lg transition-all transform active:scale-95 ${theme?.accent}`}
-                    >
-                        {mode === "create" ? "新增日程" : "儲存變更"}
-                    </button>
-                </div>
+        <FormModal
+            formId={"itinerary-day-form"}
+            modalTitle={
+                mode === "create"
+                    ? "新增日程"
+                    : `編輯日程 Day ${formData.day_number}`
+            }
+            modalSaveTitle={mode === "create" ? "新增日程" : "儲存變更"}
+            theme={theme}
+            onCloseBtnClick={onCloseBtnClick}
+            onSubmit={onFormSubmit}
+        >
+            <div>
+                <label
+                    htmlFor="date"
+                    className="block font-bold uppercase mb-1 flex items-center text-gray-500 text-xs"
+                >
+                    <Calendar size={12} className="mr-1" /> 日期 *
+                </label>
+                <input
+                    required
+                    type="date"
+                    name="date"
+                    value={formData.date}
+                    onChange={onFormInputChange}
+                    className="w-full bg-transparent border-b border-gray-300 py-2 outline-none font-mono text-base"
+                    placeholder="2025/12/12"
+                />
             </div>
-        </div>
+            <div>
+                <label
+                    htmlFor="day_number"
+                    className="block font-bold uppercase mb-1 flex items-center text-gray-500 text-xs"
+                >
+                    旅遊第幾天 *
+                </label>
+                <input
+                    required
+                    type="number"
+                    name="day_number"
+                    min="1"
+                    value={formData.day_number}
+                    onChange={onFormInputChange}
+                    placeholder="0"
+                    className="w-full bg-transparent border-b border-gray-300 py-2 outline-none font-mono text-base"
+                />
+            </div>
+            <div>
+                <label
+                    htmlFor="title"
+                    className="block font-bold uppercase mb-1 flex items-center text-gray-500 text-xs"
+                >
+                    當日主題
+                </label>
+                <input
+                    name="title"
+                    value={formData.title || ""}
+                    onChange={onFormInputChange}
+                    placeholder="例如：清水寺周邊散步"
+                    className="w-full bg-transparent border-b border-gray-300 py-2 outline-none font-[Noto_Sans_TC] text-base"
+                />
+            </div>
+        </FormModal>
     );
 };
 

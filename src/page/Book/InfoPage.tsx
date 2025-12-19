@@ -277,12 +277,12 @@ const InfoPage = ({ isPrinting }: InfoPageProps) => {
         () => ({
             company: "",
             created_at: null,
-            dropoff_datetime: moment().format("YYYY-MM-DD HH:mm:ss"),
+            dropoff_datetime: moment().format("YYYY-MM-DD HH:mm"),
             dropoff_loc: "",
             model: "",
             id: crypto.randomUUID(),
             insurance_plan: "",
-            pickup_datetime: moment().format("YYYY-MM-DD HH:mm:ss"),
+            pickup_datetime: moment().format("YYYY-MM-DD HH:mm"),
             pickup_loc: "",
             trip_id: tripId ?? "",
             updated_at: null,
@@ -473,7 +473,7 @@ const InfoPage = ({ isPrinting }: InfoPageProps) => {
                     theme={tripData.theme_config}
                     onCloseBtnClick={handleCloseFlightModal}
                     onFormInputChange={handleFlightFormInputChange}
-                    onSubmit={handleFlightFormSubmit}
+                    onFormSubmit={handleFlightFormSubmit}
                 />
             )}
             {isAccommodationModalOpen && (
@@ -483,7 +483,7 @@ const InfoPage = ({ isPrinting }: InfoPageProps) => {
                     theme={tripData.theme_config}
                     onCloseBtnClick={handleCloseAccommodationModal}
                     onFormInputChange={handleAccommodationFormInputChange}
-                    onSubmit={handleAccommodationFormSubmit}
+                    onFormSubmit={handleAccommodationFormSubmit}
                 />
             )}
             {isCarRentalModalOpen && (
@@ -493,7 +493,7 @@ const InfoPage = ({ isPrinting }: InfoPageProps) => {
                     theme={tripData.theme_config}
                     onCloseBtnClick={handleCloseCarRentalModal}
                     onFormInputChange={handleCarRentalFormInputChange}
-                    onSubmit={handleCarRentalFormSubmit}
+                    onFormSubmit={handleCarRentalFormSubmit}
                 />
             )}
             {isDeleteModalOpen && (

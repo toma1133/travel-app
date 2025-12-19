@@ -1,14 +1,16 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Outlet, useOutletContext, useParams } from "react-router-dom";
 import { BookOpen, Info, Map, PieChart, Sun } from "lucide-react";
 import useTrip from "../hooks/trip/UseTrip";
 import LayoutContextType from "../models/types/LayoutContextTypes";
 import TabButton from "../components/common/TabButton";
+import BackToTopButton from "../components/common/BackToTopBtn";
 
 const BookPage = () => {
     const { id: tripId } = useParams<{ id: string }>();
     const { data: tripData, isLoading, error } = useTrip(tripId);
     const { setIsPageLoading } = useOutletContext<LayoutContextType>();
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         setIsPageLoading(isLoading);
@@ -16,16 +18,19 @@ const BookPage = () => {
     }, [isLoading, setIsPageLoading]);
 
     return (
-        <>
+        <div className="w-full h-full overflow-hidden flex flex-col min-h-full">
             {tripData && (
                 <>
                     {/* Main Content */}
-                    <div className="flex-1 overflow-y-auto no-scrollbar scroll-smooth">
+                    <div
+                        className="flex-1 overflow-y-auto no-scrollbar scroll-smooth"
+                        ref={scrollContainerRef}
+                    >
                         <Outlet context={{ tripData, setIsPageLoading }} />
                     </div>
                     {/* Styled Bottom Navigation */}
                     <div
-                        className={`border-t border-gray-800 ${tripData.theme_config?.nav} px-6 pb-safe pt-1 shrink-0 z-40`}
+                        className={`border-t border-gray-800 ${tripData.theme_config?.nav} px-6 pb-safe pt-1 shrink-0 z-40 h-70px`}
                     >
                         <div className="flex justify-between items-center max-w-sm mx-auto">
                             <TabButton
@@ -63,7 +68,13 @@ const BookPage = () => {
                     </div>
                 </>
             )}
-        </>
+            <BackToTopButton
+                showAt={200}
+                size={24}
+                position={{ right: 25, bottom: 100 }}
+                getTarget={() => scrollContainerRef.current}
+            />
+        </div>
     );
 };
 

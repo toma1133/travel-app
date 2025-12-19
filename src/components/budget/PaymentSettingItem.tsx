@@ -57,7 +57,7 @@ const PaymentSettingItem = ({
             style={style}
             {...attributes}
             className={`
-                bg-white p-3 mb-1 rounded-lg border border-gray-200 shadow-md space-y-2
+                bg-white p-2 mb-1 rounded-lg border border-gray-200 shadow-md flex items-center
                 ${
                     isDragging
                         ? "opacity-30 border-dashed border-2 border-blue-400"
@@ -65,23 +65,59 @@ const PaymentSettingItem = ({
                 }
             `}
         >
-            <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2 w-3/4">
-                    <GripVertical
-                        size={16}
-                        className="text-gray-400 flex-shrink-0 cursor-move"
-                        {...listeners}
-                    />
+            <GripVertical
+                size={16}
+                className="text-gray-400 flex-shrink-0 cursor-move"
+                {...listeners}
+            />
+            <div className="flex flex-col space-y-2">
+                <div className="space-x-2 px-2">
+                    <label
+                        htmlFor="name"
+                        className="block font-bold uppercase flex items-center text-gray-500 text-xs"
+                    >
+                        支付名稱
+                    </label>
                     <input
+                        type="text"
+                        name="name"
                         value={method.name || ""}
                         onChange={(e) =>
                             onPaymentChange(index, "name", e.target.value)
                         }
-                        className="w-full bg-transparent border-b border-gray-300 py-2 outline-none font-[Noto_Sans_TC] text-base"
+                        className="w-full bg-transparent border-b border-gray-300 outline-none font-[Noto_Sans_TC] text-base"
                         placeholder="名稱"
                     />
-                </div>{" "}
-                {/* 上下箭頭 */}
+                </div>
+                <div className="space-x-2 px-2">
+                    <label
+                        htmlFor="credit_limit"
+                        className="block font-bold uppercase flex items-center text-gray-500 text-xs"
+                    >
+                        額度/上限 (
+                        {method.currency_code || setting?.homeCurrency || "---"}
+                        )
+                    </label>
+                    <input
+                        type="number"
+                        name="credit_limit"
+                        value={method.credit_limit || 0}
+                        onChange={(e) =>
+                            onPaymentChange(
+                                index,
+                                "credit_limit",
+                                parseInt(e.target.value) || 0
+                            )
+                        }
+                        onFocus={(e) => {
+                            e.currentTarget.select();
+                        }}
+                        className="w-full bg-transparent border-b border-gray-300 outline-none font-mono text-base"
+                        placeholder="無上限填 0"
+                    />
+                </div>
+            </div>
+            <div className="flex items-center justify-between">
                 <button
                     type="button"
                     onClick={() => onPaymentMoveUp(index)}
@@ -98,38 +134,17 @@ const PaymentSettingItem = ({
                 >
                     <ArrowDown size={14} />
                 </button>
-                {method.id !== "cash" && method.type !== "cash" && (
-                    <button
-                        type="button"
-                        onClick={(e) => {
-                            e.stopPropagation(); // Prevent drag interaction when clicking trash
-                            onPaymentRemove(index);
-                        }}
-                        className="text-gray-300 hover:text-red-500 p-1 rounded-full hover:bg-red-50 transition-colors flex-shrink-0"
-                        aria-label="刪除此支付方式"
-                    >
-                        <Trash2 size={14} />
-                    </button>
-                )}
-            </div>
-            <div className="flex items-center space-x-2 pt-2 ">
-                <span className="text-[10px] text-gray-500 uppercase">
-                    額度/上限 (
-                    {method.currency_code || setting?.homeCurrency || "---"})
-                </span>
-                <input
-                    type="number"
-                    value={method.credit_limit || 0}
-                    onChange={(e) =>
-                        onPaymentChange(
-                            index,
-                            "credit_limit",
-                            parseInt(e.target.value) || 0
-                        )
-                    }
-                    className="w-full bg-white border border-gray-300 p-3 font-mono text-base text-right font-bold outline-none focus:border-black"
-                    placeholder="無上限填 0"
-                />
+                <button
+                    type="button"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onPaymentRemove(index);
+                    }}
+                    className="text-gray-300 hover:text-red-500 p-1 rounded-full hover:bg-red-50 transition-colors flex-shrink-0"
+                    aria-label="刪除此支付方式"
+                >
+                    <Trash2 size={14} />
+                </button>
             </div>
         </div>
     );

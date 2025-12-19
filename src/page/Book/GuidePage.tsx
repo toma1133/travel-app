@@ -227,12 +227,12 @@ const GuidePage = ({ isPrinting }: CoverPageProps) => {
             {isModalOpen && (
                 <PlaceModal
                     formData={formPlace}
-                    modalMode={modalMode}
+                    mode={modalMode}
                     placeCategory={placeCategories.filter(
                         (pc) => pc.id !== "all"
                     )}
                     theme={tripData?.theme_config}
-                    onCloseClick={handleCloseEditModal}
+                    onCloseBtnClick={handleCloseEditModal}
                     onFormInputChange={handleInputChange}
                     onFormSubmit={handleSubmit}
                 />

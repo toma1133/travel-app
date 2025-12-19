@@ -587,7 +587,7 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
                     onPaymentRemove={handleRemovePaymentBtnClick}
                     onResetBtnClick={handleSettingModalResetBtnClick}
                     onSettingChange={handleSettingChange}
-                    onSubmit={handleSettingModalSubmit}
+                    onFormSubmit={handleSettingModalSubmit}
                 />
             )}
             {isBudgetModalOpen && (
@@ -599,10 +599,10 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
                     setting={tripData.settings_config}
                     theme={tripData.theme_config}
                     onCloseBtnClick={handleCloseBudgetModalClick}
+                    onDeleteBtnClick={handleOpenDeleteBudgetModal}
                     onFormDataChange={handleBudgetFormDataChange}
                     onFormInputChange={handleBudgetFormInputChange}
-                    onSubmit={handleBudgetFormSubmit}
-                    onDeleteBtnClick={handleOpenDeleteBudgetModal}
+                    onFormSubmit={handleBudgetFormSubmit}
                 />
             )}
             {isDeleteModalOpen && (

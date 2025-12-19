@@ -13,7 +13,7 @@ const DeleteModal = ({
     onConfirmClick,
 }: DeleteModalProps) => {
     return (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
             <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 animate-in zoom-in-95 duration-200">
                 <div className="flex items-center space-x-3 mb-4">
                     <div className="p-2 bg-red-100 rounded-full text-red-600">

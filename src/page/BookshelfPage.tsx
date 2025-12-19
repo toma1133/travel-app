@@ -391,10 +391,11 @@ const BookshelfPage = () => {
                 <TripModal
                     formData={formTrip}
                     mode={tripModalMode}
+                    theme={initialTripState.theme_config}
                     onCloseBtnClick={handleCloseTripModalBtnClick}
                     onFormChange={handleTripFormInputChange}
                     onSettingChange={handleTripFormSettingInputChange}
-                    onSubmit={handleSettingModalSubmit}
+                    onFormSubmit={handleSettingModalSubmit}
                 />
             )}
             {isDeleteModalOpen && (
@@ -409,6 +410,7 @@ const BookshelfPage = () => {
                     formData={formTripMembers}
                     profiles={profiles}
                     trip={targetTrip}
+                    theme={initialTripState.theme_config}
                     onCloseBtnClick={handleClosePermissionModalClick}
                     onFormChange={handleTripMemberFormInputChange}
                     onSubmit={handlePermissionModalSubmit}
