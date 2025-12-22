@@ -27,6 +27,12 @@ const BookPage = () => {
                         ref={scrollContainerRef}
                     >
                         <Outlet context={{ tripData, setIsPageLoading }} />
+                        <BackToTopButton
+                            showAt={200}
+                            size={24}
+                            position={{ right: 25, bottom: 100 }}
+                            getTarget={() => scrollContainerRef.current}
+                        />
                     </div>
                     {/* Styled Bottom Navigation */}
                     <div
@@ -68,12 +74,6 @@ const BookPage = () => {
                     </div>
                 </>
             )}
-            <BackToTopButton
-                showAt={200}
-                size={24}
-                position={{ right: 25, bottom: 100 }}
-                getTarget={() => scrollContainerRef.current}
-            />
         </div>
     );
 };
