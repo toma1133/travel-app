@@ -671,7 +671,7 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
                 className={`flex flex-col px-4 justify-center items-center ${
                     isPrinting
                         ? "border-b-2 border-gray-900 pb-2 mb-0"
-                        : "mb-4 sticky top-0 z-10"
+                        : "mb-4 top-0 z-10"
                 }`}
             >
                 <div className="w-full flex justify-between items-center py-2">
