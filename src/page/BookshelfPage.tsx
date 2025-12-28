@@ -130,7 +130,6 @@ const BookshelfPage = () => {
 
     const handlePermissionBtnClick = async (tripItem: TripVM) => {
         setTargetTrip(tripItem);
-        setFormTripMembers(initialTripMemberState);
         setIsPermissionModalOpen(true);
     };
 
@@ -139,11 +138,11 @@ const BookshelfPage = () => {
         setTargetTrip(undefined);
     };
 
-    const handleTripMemberFormInputChange = (
-        e: ChangeEvent<HTMLInputElement>
-    ) => {
-        const { name, value } = e.target;
-        setFormTripMembers((prev) => ({ ...prev, [value]: !prev[value] }));
+    const handleTripMemberBtnClick = (profile: ProfileRow) => {
+        setFormTripMembers((prev) => ({
+            ...prev,
+            [profile.id]: !prev[profile.id],
+        }));
     };
 
     const handlePermissionModalSubmit = async (e: FormEvent) => {
@@ -412,7 +411,7 @@ const BookshelfPage = () => {
                     trip={targetTrip}
                     theme={initialTripState.theme_config}
                     onCloseBtnClick={handleClosePermissionModalClick}
-                    onFormChange={handleTripMemberFormInputChange}
+                    onSelectBtnClick={handleTripMemberBtnClick}
                     onSubmit={handlePermissionModalSubmit}
                 />
             )}

@@ -9,7 +9,7 @@ type PermissionModalProps = {
     trip?: TripVM;
     theme: TripThemeConf | null;
     onCloseBtnClick: MouseEventHandler<HTMLButtonElement>;
-    onFormChange: ChangeEventHandler<HTMLInputElement>;
+    onSelectBtnClick: (profile: ProfileRow) => void;
     onSubmit: FormEventHandler<HTMLFormElement>;
 };
 
@@ -19,7 +19,7 @@ const PermissionModal = ({
     theme,
     trip,
     onCloseBtnClick,
-    onFormChange,
+    onSelectBtnClick,
     onSubmit,
 }: PermissionModalProps) => {
     return (
@@ -35,28 +35,26 @@ const PermissionModal = ({
                 {Array.isArray(profiles) &&
                     profiles
                         .filter((profile) => profile.id !== trip?.user_id)
-                        .map((profile, i) => (
-                            <label
-                                key={i}
-                                className="flex items-center space-x-2 cursor-pointer"
-                            >
-                                <input
-                                    type="checkbox"
-                                    name="tripMember"
-                                    value={profile.id}
-                                    checked={
-                                        formData[profile.id] === undefined
-                                            ? false
-                                            : formData[profile.id]
-                                    }
-                                    onChange={onFormChange}
-                                    className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                                />
-                                <span className="text-gray-700">
+                        .map((profile, i) => {
+                            const isSelected =
+                                formData[profile.id] === undefined
+                                    ? false
+                                    : formData[profile.id];
+                            return (
+                                <button
+                                    key={i}
+                                    type="button"
+                                    className={`px-4 py-2 rounded-full text-sm font-bold transition-all border border-indigo-100 ${
+                                        isSelected
+                                            ? "bg-indigo-600 text-white shadow-md border-indigo-600"
+                                            : "bg-white text-indigo-400"
+                                    }`}
+                                    onClick={() => onSelectBtnClick(profile)}
+                                >
                                     {profile.username}
-                                </span>
-                            </label>
-                        ))}
+                                </button>
+                            );
+                        })}
             </div>
         </FormModal>
     );

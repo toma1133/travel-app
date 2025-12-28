@@ -2,9 +2,11 @@ import { ChangeEventHandler, FormEventHandler, MouseEventHandler } from "react";
 import { Banknote, CreditCard, LucideIcon, X } from "lucide-react";
 import type { BudgetRow } from "../../models/types/BudgetTypes";
 import type { PaymentMethodRow } from "../../models/types/PaymentMethodTypes";
+import type { ProfileRow } from "../../models/types/ProfileTypes";
 import type {
     TripSettingConf,
     TripThemeConf,
+    TripVM,
 } from "../../models/types/TripTypes";
 import FormModal from "../common/FormModal";
 
@@ -17,8 +19,10 @@ type TransactionModalProps = {
     formData: BudgetRow;
     mode: string;
     paymentMethods?: PaymentMethodRow[];
+    profiles?: ProfileRow[];
     setting: TripSettingConf | null;
     theme: TripThemeConf | null;
+    trip?: TripVM;
     onCloseBtnClick: MouseEventHandler<HTMLButtonElement>;
     onDeleteBtnClick: (budgetItem: BudgetRow) => void;
     onFormDataChange: (name: string, value?: string | number) => void;
@@ -31,8 +35,10 @@ const TransactionModal = ({
     formData,
     mode,
     paymentMethods,
+    profiles,
     setting,
     theme,
+    trip,
     onCloseBtnClick,
     onDeleteBtnClick,
     onFormDataChange,
@@ -55,17 +61,35 @@ const TransactionModal = ({
                 )
             }
             formId={"transaction-form"}
-            modalTitle={"系統設定"}
+            modalTitle={mode === "create" ? "新增帳目" : `編輯帳目`}
             modalSaveTitle={"儲存變更"}
             theme={theme}
             onCloseBtnClick={onCloseBtnClick}
             onSubmit={onFormSubmit}
         >
+            {/* Title */}
+            <div>
+                <label
+                    htmlFor="title"
+                    className="font-bold uppercase mb-1 flex items-center text-gray-500 text-xs"
+                >
+                    標題
+                </label>
+                <input
+                    type="text"
+                    required
+                    name="title"
+                    value={formData.title}
+                    onChange={onFormInputChange}
+                    className="w-full bg-transparent border-b border-gray-300 py-2 outline-none font-[Noto_Sans_TC]"
+                    placeholder="標題..."
+                />
+            </div>
             {/* Amount & Currency */}
             <div>
                 <label
                     htmlFor="amount"
-                    className="block font-bold uppercase mb-1 flex items-center text-gray-500 text-xs"
+                    className="font-bold uppercase mb-1 flex items-center text-gray-500 text-xs"
                 >
                     金額
                 </label>
@@ -111,7 +135,7 @@ const TransactionModal = ({
             <div>
                 <label
                     htmlFor="payment_method"
-                    className="block font-bold uppercase mb-1 flex items-center text-gray-500 text-xs"
+                    className="font-bold uppercase mb-1 flex items-center text-gray-500 text-xs"
                 >
                     支付方式
                 </label>
@@ -148,11 +172,54 @@ const TransactionModal = ({
                         ))}
                 </div>
             </div>
+            {/* Split with */}
+            <div>
+                <label
+                    htmlFor="split_with"
+                    className="font-bold uppercase mb-1 flex items-center justify-between text-gray-500 text-xs"
+                >
+                    分帳夥伴
+                    <span className="text-indigo-500">
+                        {formData.split_with?.length} 人分帳
+                    </span>
+                </label>
+                <div className="flex flex-wrap gap-2">
+                    {Array.isArray(profiles) &&
+                        profiles
+                            .filter(
+                                (profile) => profile.id !== formData.user_id
+                            )
+                            .map((profile, i) => {
+                                const isSelected =
+                                    formData.split_with?.includes(profile.id);
+
+                                return (
+                                    <button
+                                        key={i}
+                                        type="button"
+                                        onClick={() =>
+                                            onFormDataChange(
+                                                "split_with",
+                                                profile.id
+                                            )
+                                        }
+                                        className={`px-4 py-2 rounded-full text-sm font-bold transition-all border border-indigo-100 ${
+                                            isSelected
+                                                ? "bg-indigo-600 text-white shadow-md border-indigo-600"
+                                                : "bg-white text-indigo-400"
+                                        }`}
+                                    >
+                                        {profile.username}
+                                    </button>
+                                );
+                            })}
+                </div>
+            </div>
             {/* Category */}
             <div>
                 <label
                     htmlFor="category"
-                    className="block font-bold uppercase mb-1 flex items-center text-gray-500 text-xs"
+                    className="font-bold uppercase mb-1 flex items-center text-gray-500 text-xs"
                 >
                     分類
                 </label>
@@ -180,7 +247,7 @@ const TransactionModal = ({
             <div>
                 <label
                     htmlFor="expense_date"
-                    className="block font-bold uppercase mb-1 flex items-center text-gray-500 text-xs"
+                    className="font-bold uppercase mb-1 flex items-center text-gray-500 text-xs"
                 >
                     日期
                 </label>
@@ -192,24 +259,6 @@ const TransactionModal = ({
                     onChange={onFormInputChange}
                     className="w-full bg-transparent border-b border-gray-300 py-2 outline-none font-[Noto_Sans_TC]"
                     placeholder="日期"
-                />
-            </div>
-            {/* Title */}
-            <div>
-                <label
-                    htmlFor="title"
-                    className="block font-bold uppercase mb-1 flex items-center text-gray-500 text-xs"
-                >
-                    標題
-                </label>
-                <input
-                    type="text"
-                    required
-                    name="title"
-                    value={formData.title}
-                    onChange={onFormInputChange}
-                    className="w-full bg-transparent border-b border-gray-300 py-2 outline-none font-[Noto_Sans_TC]"
-                    placeholder="標題..."
                 />
             </div>
         </FormModal>

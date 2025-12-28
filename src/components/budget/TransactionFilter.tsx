@@ -1,4 +1,4 @@
-import { Filter, LucideIcon } from "lucide-react";
+import { Filter, Icon, LucideIcon } from "lucide-react";
 import type { PaymentMethodRow } from "../../models/types/PaymentMethodTypes";
 import type { TransactionFilterType } from "../../models/types/TransactionFilterTypes";
 import type { TripSettingConf } from "../../models/types/TripTypes";

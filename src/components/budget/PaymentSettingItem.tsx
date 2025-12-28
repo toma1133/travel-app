@@ -67,14 +67,14 @@ const PaymentSettingItem = ({
         >
             <GripVertical
                 size={16}
-                className="text-gray-400 flex-shrink-0 cursor-move"
+                className="text-gray-400 shrink-0 cursor-move"
                 {...listeners}
             />
             <div className="flex flex-col space-y-2">
                 <div className="space-x-2 px-2">
                     <label
                         htmlFor="name"
-                        className="block font-bold uppercase flex items-center text-gray-500 text-xs"
+                        className="font-bold uppercase flex items-center text-gray-500 text-xs"
                     >
                         支付名稱
                     </label>
@@ -92,7 +92,7 @@ const PaymentSettingItem = ({
                 <div className="space-x-2 px-2">
                     <label
                         htmlFor="credit_limit"
-                        className="block font-bold uppercase flex items-center text-gray-500 text-xs"
+                        className="font-bold uppercase flex items-center text-gray-500 text-xs"
                     >
                         額度/上限 (
                         {method.currency_code || setting?.homeCurrency || "---"}
@@ -140,7 +140,7 @@ const PaymentSettingItem = ({
                         e.stopPropagation();
                         onPaymentRemove(index);
                     }}
-                    className="text-gray-300 hover:text-red-500 p-1 rounded-full hover:bg-red-50 transition-colors flex-shrink-0"
+                    className="text-gray-300 hover:text-red-500 p-1 rounded-full hover:bg-red-50 transition-colors shrink-0"
                     aria-label="刪除此支付方式"
                 >
                     <Trash2 size={14} />

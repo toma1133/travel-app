@@ -1,7 +1,9 @@
 import { JSX } from "react";
+import { Session } from "@supabase/supabase-js";
 import { LucideIcon } from "lucide-react";
 import type { BudgetRow } from "../../models/types/BudgetTypes";
 import type { PaymentMethodRow } from "../../models/types/PaymentMethodTypes";
+import type { ProfileRow } from "../../models/types/ProfileTypes";
 import type {
     TripSettingConf,
     TripThemeConf,
@@ -17,6 +19,8 @@ type TransactionListProps = {
     }[];
     isPrinting?: boolean;
     paymentMethods?: PaymentMethodRow[];
+    profiles?: ProfileRow[];
+    session: Session | null;
     setting: TripSettingConf | null;
     theme: TripThemeConf | null;
     convertToHome: (
@@ -34,6 +38,8 @@ const TransactionList = ({
     budgetItems,
     isPrinting,
     paymentMethods,
+    profiles,
+    session,
     setting,
     theme,
     convertToHome,
@@ -72,6 +78,8 @@ const TransactionList = ({
                                 key={i}
                                 budgetItem={budgetItem}
                                 paymentMethodName={pmName}
+                                profiles={profiles}
+                                session={session}
                                 setting={setting}
                                 theme={theme}
                                 convertToHome={convertToHome}

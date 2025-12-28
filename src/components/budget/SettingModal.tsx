@@ -61,7 +61,7 @@ const SettingModal = ({
                 <div>
                     <label
                         htmlFor="homeCurrency"
-                        className="block font-bold uppercase mb-1 flex items-center text-gray-500 text-xs"
+                        className="font-bold uppercase mb-1 flex items-center text-gray-500 text-xs"
                     >
                         本國幣 (Home)
                     </label>
@@ -77,7 +77,7 @@ const SettingModal = ({
                 <div>
                     <label
                         htmlFor="localCurrency"
-                        className="block font-bold uppercase mb-1 flex items-center text-gray-500 text-xs"
+                        className="font-bold uppercase mb-1 flex items-center text-gray-500 text-xs"
                     >
                         當地幣 (Local)
                     </label>
@@ -93,7 +93,7 @@ const SettingModal = ({
                 <div>
                     <label
                         htmlFor="exchangeRate"
-                        className="block font-bold uppercase mb-1 flex items-center text-gray-500 text-xs"
+                        className="font-bold uppercase mb-1 flex items-center text-gray-500 text-xs"
                     >
                         匯率 (1 {setting?.localCurrency} = ?{" "}
                         {setting?.homeCurrency})

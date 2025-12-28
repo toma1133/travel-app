@@ -56,7 +56,7 @@ const CoverPage = ({ isPrinting }: CoverPageProps) => {
                     <div className="flex items-center justify-center space-x-2 text-xs text-gray-500 border-t border-gray-200 pt-6 mt-auto mb-6">
                         <Calendar size={14} />
                         <span>
-                            {tripData?.start_date} - {tripData?.end_date}
+                            {tripData?.start_date} ~ {tripData?.end_date}
                         </span>
                     </div>
                     <p

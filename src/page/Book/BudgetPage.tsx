@@ -2,7 +2,11 @@ import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import { useOutletContext, useParams } from "react-router-dom";
 import { useIsMutating } from "@tanstack/react-query";
 import {
+    ArrowDownLeft,
+    ArrowRight,
+    ArrowUpRight,
     Bed,
+    CheckCircle2,
     Coffee,
     CreditCard,
     LucideIcon,
@@ -20,6 +24,7 @@ import useBudgets from "../../hooks/budget/UseBudgets";
 import useBudgetMutations from "../../hooks/budget/UseBudgetMutations";
 import usePaymentMethods from "../../hooks/budget/UsePaymentMethods";
 import usePaymentMethodMutations from "../../hooks/budget/UsePaymentMethodMutations";
+import useProfiles from "../../hooks/profile/UseProfiles";
 import useTripMutations from "../../hooks/trip/UseTripMutations";
 import type BookLayoutContextType from "../../models/types/BookLayoutContextTypes";
 import type LayoutContextType from "../../models/types/LayoutContextTypes";
@@ -52,7 +57,7 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
         data: budgets,
         isLoading: isBudgetsLoading,
         error: isBudgetsError,
-    } = useBudgets(tripId);
+    } = useBudgets(tripId, session?.user.id);
     const {
         insert: insertBudget,
         update: updateBudget,
@@ -63,12 +68,17 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
         data: paymentMethods,
         isLoading: isPaymentMethodsLoading,
         error: isPaymentMethodsError,
-    } = usePaymentMethods(tripId);
+    } = usePaymentMethods(tripId, session?.user.id);
     const {
         upsert: upsertPaymentMethod,
         remove: removePaymentMethod,
         anyPending: anyPaymentMethodPending,
     } = usePaymentMethodMutations();
+    const {
+        data: profiles,
+        isLoading: isProfilesLoading,
+        error: profilesError,
+    } = useProfiles(true);
     const { update: updateTrip, anyPending: anyTripPending } =
         useTripMutations();
     const { setIsPageLoading } = useOutletContext<LayoutContextType>();
@@ -82,6 +92,7 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
         const shouldShow =
             isBudgetsLoading ||
             isPaymentMethodsLoading ||
+            isProfilesLoading ||
             anyBudgetPending ||
             anyPaymentMethodPending ||
             anyTripPending ||
@@ -102,6 +113,7 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
     }, [
         isBudgetsLoading,
         isPaymentMethodsLoading,
+        isProfilesLoading,
         anyBudgetPending,
         anyPaymentMethodPending,
         anyTripPending,
@@ -123,6 +135,15 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
     ) => {
         if (currency === homeCurrency) return amount;
         return Math.round(amount * exchangeRate!);
+    };
+    const convertToLocal = (
+        amount: number,
+        currency: string,
+        localCurrency?: string,
+        exchangeRate?: number
+    ) => {
+        if (currency === localCurrency) return amount;
+        return Math.round(amount / exchangeRate!);
     };
 
     const getChartGradient = (
@@ -350,6 +371,7 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
             trip_id: tripId || "",
             updated_at: null,
             user_id: session ? session.user.id : "",
+            split_with: [],
         }),
         [tripId, session]
     );
@@ -395,7 +417,23 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
         name: string,
         value?: string | number
     ) => {
-        setFormBudget((prev) => ({ ...prev, [name]: value }));
+        if (name == "split_with") {
+            if (formBudget.split_with!.indexOf(value!.toString()) > -1) {
+                setFormBudget((prev) => ({
+                    ...prev,
+                    split_with: prev.split_with!.filter(
+                        (x) => x !== value!.toString()
+                    ),
+                }));
+            } else {
+                setFormBudget((prev) => ({
+                    ...prev,
+                    split_with: [...prev.split_with!, value!.toString()],
+                }));
+            }
+        } else {
+            setFormBudget((prev) => ({ ...prev, [name]: value }));
+        }
     };
 
     const handleBudgetFormInputChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -469,6 +507,100 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
         setFilters((prev) => ({ ...prev, [name]: value }));
     };
 
+    // Split
+    const settlements = useMemo(() => {
+        const balances: { [key: string]: number } = {};
+
+        // Reset
+        profiles?.forEach((p) => (balances[p.id] = 0));
+
+        budgets?.forEach((exp) => {
+            const amountInBase = convertToHome(
+                exp.amount,
+                exp.currency_code,
+                tripData.settings_config?.homeCurrency,
+                tripData.settings_config?.exchangeRate
+            );
+            const splitList = [exp.user_id].concat(
+                exp.split_with ? [...exp.split_with] : []
+            );
+            const perPersonAmount =
+                splitList.length > 0
+                    ? amountInBase / splitList.length
+                    : amountInBase;
+
+            if (balances[exp.user_id] !== undefined) {
+                balances[exp.user_id] += amountInBase;
+            }
+
+            splitList.forEach((personId) => {
+                if (balances[personId] !== undefined) {
+                    balances[personId] -= perPersonAmount;
+                }
+            });
+        });
+
+        const transactions: {
+            fromId: string;
+            fromName: string;
+            toId: string;
+            toName: string;
+            amount: number;
+        }[] = [];
+        const creditors: {
+            id: string;
+            name: string;
+            amount: number;
+        }[] = [];
+        const debtors: {
+            id: string;
+            name: string;
+            amount: number;
+        }[] = [];
+
+        Object.keys(balances).forEach((id) => {
+            const profile = profiles?.find((p) => p.id === id);
+            const name = profile ? profile.username : id;
+            const amount = balances[id];
+
+            if (amount > 0.1) {
+                creditors.push({ id, name: name!, amount });
+            } else if (amount < -0.1) {
+                debtors.push({ id, name: name!, amount: Math.abs(amount) });
+            }
+        });
+
+        let i = 0,
+            j = 0;
+        const tDebtors: { id: string; name: string; amount: number }[] =
+            JSON.parse(JSON.stringify(debtors));
+        const tCreditors: { id: string; name: string; amount: number }[] =
+            JSON.parse(JSON.stringify(creditors));
+
+        while (i < tDebtors.length && j < tCreditors.length) {
+            const payAmount = Math.min(
+                tDebtors[i].amount,
+                tCreditors[j].amount
+            );
+
+            transactions.push({
+                fromId: tDebtors[i].id,
+                fromName: tDebtors[i].name,
+                toId: tCreditors[j].id,
+                toName: tCreditors[j].name,
+                amount: payAmount,
+            });
+
+            tDebtors[i].amount -= payAmount;
+            tCreditors[j].amount -= payAmount;
+
+            if (tDebtors[i].amount < 0.1) i++;
+            if (tCreditors[j].amount < 0.1) j++;
+        }
+
+        return transactions;
+    }, [budgets]);
+
     // --- Common Modal Handlers ---
     const handleConfirmDelete = async () => {
         try {
@@ -535,6 +667,112 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
                     }
                 />
             )}
+            <div
+                className={`flex flex-col px-4 justify-center items-center ${
+                    isPrinting
+                        ? "border-b-2 border-gray-900 pb-2 mb-0"
+                        : "mb-4 sticky top-0 z-10"
+                }`}
+            >
+                <div className="w-full flex justify-between items-center py-2">
+                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest">
+                        分帳結算
+                    </h4>
+                </div>
+                <div
+                    className={`w-full ${
+                        isPrinting
+                            ? "text-xs divide-y divide-gray-200 border-b border-gray-200"
+                            : "space-y-2"
+                    }`}
+                >
+                    {settlements.length === 0 ? (
+                        <div className="text-center py-10 flex flex-col items-center gap-3 bg-white">
+                            <div className="w-12 h-12 bg-emerald-50 rounded-full flex items-center justify-center">
+                                <CheckCircle2 className="w-6 h-6 text-emerald-500" />
+                            </div>
+                            <p className="text-slate-400 text-sm font-medium">
+                                恭喜！你目前的帳務已結清
+                            </p>
+                        </div>
+                    ) : (
+                        settlements.map((s, idx) => {
+                            const isIOWE = s.fromId === session?.user.id;
+
+                            return (
+                                <div
+                                    key={idx}
+                                    className={`flex items-center justify-between p-4 rounded-2xl border transition-all bg-white ${
+                                        isIOWE
+                                            ? "bg-rose-50/30 border-rose-100"
+                                            : "bg-emerald-50/30 border-emerald-100"
+                                    }`}
+                                >
+                                    <div className="flex items-center gap-4">
+                                        <div
+                                            className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                                                isIOWE
+                                                    ? "bg-rose-100 text-rose-600"
+                                                    : "bg-emerald-100 text-emerald-600"
+                                            }`}
+                                        >
+                                            {isIOWE ? (
+                                                <ArrowUpRight className="w-5 h-5" />
+                                            ) : (
+                                                <ArrowDownLeft className="w-5 h-5" />
+                                            )}
+                                        </div>
+                                        <div>
+                                            <div className="text-xs font-bold text-slate-400 uppercase tracking-tighter">
+                                                {isIOWE
+                                                    ? "你應支付給"
+                                                    : "你應收回自"}
+                                            </div>
+                                            <div className="font-bold text-slate-800 text-base">
+                                                {isIOWE ? s.toName : s.fromName}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <div
+                                            className={`font-mono font-bold text-lg ${
+                                                isIOWE
+                                                    ? "text-rose-600"
+                                                    : "text-emerald-600"
+                                            }`}
+                                        >
+                                            {
+                                                tripData.settings_config
+                                                    ?.homeCurrency
+                                            }{" "}
+                                            {s.amount.toLocaleString(
+                                                undefined,
+                                                { maximumFractionDigits: 0 }
+                                            )}
+                                        </div>
+                                        <div className="text-[10px] text-slate-400">
+                                            ≈{" "}
+                                            {
+                                                tripData.settings_config
+                                                    ?.localCurrency
+                                            }{" "}
+                                            {convertToLocal(
+                                                s.amount,
+                                                tripData.settings_config
+                                                    ?.homeCurrency!,
+                                                tripData.settings_config
+                                                    ?.localCurrency,
+                                                tripData.settings_config
+                                                    ?.exchangeRate
+                                            ).toLocaleString()}
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })
+                    )}
+                </div>
+            </div>
             {!isPrinting && (
                 <TransactionFilter
                     categories={budgetCategory}
@@ -566,6 +804,8 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
                 budgetItems={filteredBudgets}
                 isPrinting={isPrinting}
                 paymentMethods={paymentMethods}
+                profiles={profiles}
+                session={session}
                 setting={tripData.settings_config}
                 theme={tripData.theme_config}
                 convertToHome={convertToHome}
@@ -596,8 +836,10 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
                     formData={formBudget}
                     mode={budgetModalMode}
                     paymentMethods={paymentMethods}
+                    profiles={profiles}
                     setting={tripData.settings_config}
                     theme={tripData.theme_config}
+                    trip={tripData}
                     onCloseBtnClick={handleCloseBudgetModalClick}
                     onDeleteBtnClick={handleOpenDeleteBudgetModal}
                     onFormDataChange={handleBudgetFormDataChange}
