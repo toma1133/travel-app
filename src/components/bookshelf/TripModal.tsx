@@ -29,6 +29,7 @@ const TripModal = ({
             }
             modalSaveTitle={mode === "create" ? "創建旅程" : "儲存變更"}
             theme={theme}
+            onCancelBtnClick={onCloseBtnClick}
             onCloseBtnClick={onCloseBtnClick}
             onSubmit={onFormSubmit}
         >

@@ -50,6 +50,7 @@ const ItineraryActivityModal = ({
             }
             modalSaveTitle={mode === "create" ? "新增活動" : "儲存變更"}
             theme={theme}
+            onCancelBtnClick={onCloseBtnClick}
             onCloseBtnClick={onCloseBtnClick}
             onSubmit={onFormSubmit}
         >

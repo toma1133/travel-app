@@ -37,7 +37,7 @@ const AccommodationRecord = ({
                 </div>
                 <div className="flex items-start text-xs text-gray-500 mt-1 print:text-gray-600">
                     <MapPin size={12} className="mr-1.5 mt-0.5 shrink-0" />
-                    <span className="truncate">{accommodation.address}</span>
+                    <span className="">{accommodation.address}</span>
                 </div>
             </div>
             {!isPrinting && isEditing && (

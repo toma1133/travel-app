@@ -1,5 +1,4 @@
 import { ChangeEventHandler, FormEventHandler, MouseEventHandler } from "react";
-import { X } from "lucide-react";
 import type { AccommodationRow } from "../../models/types/AccommodationTypes";
 import type { TripThemeConf } from "../../models/types/TripTypes";
 import FormModal from "../common/FormModal";
@@ -27,6 +26,7 @@ const AccommodationModal = ({
             modalTitle={mode === "create" ? `新增住宿` : "編輯住宿"}
             modalSaveTitle={mode === "create" ? "新增住宿" : "儲存變更"}
             theme={theme}
+            onCancelBtnClick={onCloseBtnClick}
             onCloseBtnClick={onCloseBtnClick}
             onSubmit={onFormSubmit}
         >

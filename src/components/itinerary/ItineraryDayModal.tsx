@@ -1,5 +1,5 @@
 import { ChangeEventHandler, FormEventHandler, MouseEventHandler } from "react";
-import { Calendar, X } from "lucide-react";
+import { Calendar } from "lucide-react";
 import type { ItineraryVM } from "../../models/types/ItineraryTypes";
 import type { TripThemeConf } from "../../models/types/TripTypes";
 import FormModal from "../common/FormModal";
@@ -31,6 +31,7 @@ const ItineraryDayModal = ({
             }
             modalSaveTitle={mode === "create" ? "新增日程" : "儲存變更"}
             theme={theme}
+            onCancelBtnClick={onCloseBtnClick}
             onCloseBtnClick={onCloseBtnClick}
             onSubmit={onFormSubmit}
         >

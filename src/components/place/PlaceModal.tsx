@@ -50,6 +50,7 @@ const PlaceModal = ({
             }
             modalSaveTitle={mode === "create" ? "創建地點" : "儲存變更"}
             theme={theme}
+            onCancelBtnClick={onCloseBtnClick}
             onCloseBtnClick={onCloseBtnClick}
             onSubmit={onFormSubmit}
         >

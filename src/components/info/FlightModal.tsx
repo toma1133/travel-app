@@ -26,6 +26,7 @@ const FlightModal = ({
             modalTitle={mode === "create" ? `新增航班` : "編輯航班"}
             modalSaveTitle={mode === "create" ? "新增航班" : "儲存變更"}
             theme={theme}
+            onCancelBtnClick={onCloseBtnClick}
             onCloseBtnClick={onCloseBtnClick}
             onSubmit={onFormSubmit}
         >
