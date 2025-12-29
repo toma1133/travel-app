@@ -1,6 +1,7 @@
 import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import { useOutletContext, useParams } from "react-router-dom";
 import { useIsMutating } from "@tanstack/react-query";
+import { ListIcon, MapIcon, Plus } from "lucide-react";
 import useAuth from "../../hooks/UseAuth";
 import usePlaces from "../../hooks/place/UsePlaces";
 import usePlaceMutations from "../../hooks/place/UsePlaceMutations";
@@ -12,7 +13,7 @@ import DeleteModal from "../../components/common/DeleteModal";
 import PlaceModal from "../../components/place/PlaceModal";
 import PlaceFilter from "../../components/place/PlaceFilter";
 import PlaceCardList from "../../components/place/PlaceCardList";
-import { Plus } from "lucide-react";
+import PlaceMapView from "../../components/place/PlaceMapView";
 
 type CoverPageProps = {
     isPrinting?: boolean;
@@ -26,6 +27,7 @@ const GuidePage = ({ isPrinting }: CoverPageProps) => {
     const { tripData } = useOutletContext<BookLayoutContextType>();
     const { setIsPageLoading } = useOutletContext<LayoutContextType>();
 
+    const [viewMode, setViewMode] = useState<"list" | "map">("list");
     const [placeCategories] = useState<PlaceCategory[]>([
         { id: "all", label: "全部" },
         { id: "sight", label: "觀光" },
@@ -198,6 +200,24 @@ const GuidePage = ({ isPrinting }: CoverPageProps) => {
                     rightAction={
                         <div className="flex justify-center items-center gap-4">
                             <button
+                                onClick={() =>
+                                    setViewMode(
+                                        viewMode === "list" ? "map" : "list"
+                                    )
+                                }
+                                className="p-2 bg-white rounded-lg shadow-sm border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors flex items-center gap-2 text-sm"
+                            >
+                                {viewMode === "list" ? (
+                                    <>
+                                        <MapIcon size={18} /> 地圖
+                                    </>
+                                ) : (
+                                    <>
+                                        <ListIcon size={18} /> 列表
+                                    </>
+                                )}
+                            </button>
+                            <button
                                 type="button"
                                 onClick={handleOpenCreateModal}
                                 className={`flex items-center text-sm font-medium text-white px-4 py-2 rounded-lg shadow-md ${tripData?.theme_config?.accent} hover:opacity-90 transition-opacity`}
@@ -217,13 +237,17 @@ const GuidePage = ({ isPrinting }: CoverPageProps) => {
                     onFilterBtnClick={handleFilterBtnClick}
                 />
             )}
-            <PlaceCardList
-                isPrinting={isPrinting}
-                places={filteredPlaces}
-                theme={tripData.theme_config}
-                onDeleteBtnClick={handleOpenDeleteModal}
-                onEditBtnClick={handleOpenEditModal}
-            />
+            {viewMode === "list" ? (
+                <PlaceCardList
+                    isPrinting={isPrinting}
+                    places={filteredPlaces}
+                    theme={tripData.theme_config}
+                    onDeleteBtnClick={handleOpenDeleteModal}
+                    onEditBtnClick={handleOpenEditModal}
+                />
+            ) : (
+                <PlaceMapView places={filteredPlaces} />
+            )}
             {isModalOpen && (
                 <PlaceModal
                     formData={formPlace}

@@ -1,5 +1,12 @@
 import { useState } from "react";
-import { Star, Clock, MapPin, Pencil, Trash2 } from "lucide-react";
+import {
+    Star,
+    Clock,
+    MapPin,
+    Pencil,
+    Trash2,
+    ExternalLink,
+} from "lucide-react";
 import type { PlaceVM } from "../../models/types/PlaceTypes";
 import type { TripThemeConf } from "../../models/types/TripTypes";
 
@@ -32,6 +39,12 @@ const PlaceCard = ({
             default:
                 return "Other";
         }
+    };
+    const getMapUrl = () => {
+        const query = place.info?.loc || place.name;
+        return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+            query
+        )}`;
     };
 
     return (
@@ -106,16 +119,31 @@ const PlaceCard = ({
                 )}
             </div>
             <div className="p-5 print:p-4">
-                <h3
-                    className={`text-xl font-bold ${
-                        theme?.primary || "text-gray-800"
-                    } font-[Noto_Sans_TC] print:text-lg print:text-gray-900`}
-                >
-                    {place.name}
-                </h3>
-                <p className="text-xs text-gray-400 font-medium mb-2 print:text-gray-600">
-                    {place.eng_name}
-                </p>
+                <div className="flex justify-between items-start">
+                    <div className="flex flex-col justify-between items-start">
+                        <h3
+                            className={`text-xl font-bold ${
+                                theme?.primary || "text-gray-800"
+                            } font-[Noto_Sans_TC] print:text-lg print:text-gray-900`}
+                        >
+                            {place.name}
+                        </h3>
+                        <p className="text-xs text-gray-400 font-medium mb-2 print:text-gray-600">
+                            {place.eng_name}
+                        </p>
+                    </div>
+                    {!isPrinting && (
+                        <a
+                            href={getMapUrl()}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-gray-400 hover:text-blue-500 transition-colors p-1"
+                            title="在 Google Maps 中查看"
+                        >
+                            <ExternalLink size={16} />
+                        </a>
+                    )}
+                </div>
                 <div className="flex flex-wrap gap-2 mb-4 print:hidden">
                     {!!place.tags &&
                         place.tags.split(",").map((tag) => (
@@ -127,7 +155,7 @@ const PlaceCard = ({
                             </span>
                         ))}
                 </div>
-                <p className="text-sm text-gray-600 leading-relaxed mb-4 text-justify print:text-sm print:text-gray-700">
+                <p className="text-sm text-gray-600 leading-relaxed mb-4 text-justify whitespace-pre-wrap print:text-sm print:text-gray-700">
                     {place.description}
                 </p>
                 <div className="bg-[#F9F8F6] p-3 rounded text-xs space-y-2 text-gray-600 print:bg-white print:border print:border-gray-200 print:text-gray-700">
