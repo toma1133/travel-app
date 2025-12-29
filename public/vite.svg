@@ -1,15 +1,31 @@
-<svg width="410" height="404" viewBox="0 0 410 404" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M399.641 59.5246L215.643 388.545C211.844 395.338 202.084 395.378 198.228 388.618L10.5817 59.5563C6.38087 52.1896 12.6802 43.2665 21.0281 44.7586L205.223 77.6824C206.398 77.8924 207.601 77.8904 208.776 77.6763L389.119 44.8058C397.439 43.2894 403.768 52.1434 399.641 59.5246Z" fill="url(#paint0_linear)"/>
-<path d="M292.965 1.5744L156.801 28.2552C154.563 28.6937 152.906 30.5903 152.771 32.8664L144.395 174.33C144.198 177.662 147.258 180.248 150.51 179.498L188.42 170.749C191.967 169.931 195.172 173.055 194.443 176.622L183.18 231.775C182.422 235.487 185.907 238.661 189.532 237.56L212.947 230.446C216.577 229.344 220.065 232.527 219.297 236.242L201.398 322.875C200.278 328.294 207.486 331.249 210.492 326.603L212.5 323.5L323.454 102.072C325.312 98.3645 322.108 94.137 318.036 94.9228L279.014 102.454C275.347 103.161 272.227 99.746 273.262 96.1583L298.731 7.86689C299.767 4.27314 296.636 0.855181 292.965 1.5744Z" fill="url(#paint1_linear)"/>
-<defs>
-<linearGradient id="paint0_linear" x1="6.00017" y1="32.9999" x2="235" y2="344" gradientUnits="userSpaceOnUse">
-<stop stop-color="#41D1FF"/>
-<stop offset="1" stop-color="#BD34FE"/>
-</linearGradient>
-<linearGradient id="paint1_linear" x1="194.651" y1="8.81818" x2="236.076" y2="292.989" gradientUnits="userSpaceOnUse">
-<stop stop-color="#FFEA83"/>
-<stop offset="0.0833333" stop-color="#FFDD35"/>
-<stop offset="1" stop-color="#FFA800"/>
-</linearGradient>
-</defs>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="skyGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#4FACFE;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#00F2FE;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="landGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#43e97b;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#38f9d7;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <circle cx="256" cy="256" r="240" fill="url(#skyGradient)"/>
+
+  <circle cx="380" cy="130" r="40" fill="#FFD700" opacity="0.9"/>
+  
+  <path d="M140,160 Q160,130 190,160 T240,160 T290,140 T340,170" stroke="white" stroke-width="12" fill="none" opacity="0.4" stroke-linecap="round"/>
+  <path d="M80,220 Q110,200 140,220 T200,210" stroke="white" stroke-width="10" fill="none" opacity="0.3" stroke-linecap="round"/>
+
+  <path d="M16,256 Q128,350 256,280 Q384,210 496,256 L496,400 A240,240 0 0,1 16,400 Z" fill="url(#landGradient)"/>
+  
+  <path d="M100,320 C100,150 350,100 400,280" stroke="white" stroke-width="10" fill="none" stroke-dasharray="20,15" stroke-linecap="round"/>
+
+  <path d="M80,330 L120,310 L125,295 L135,298 L130,310 L150,315 L145,325 L125,320 L115,340 L100,335 Z" fill="white"/>
+
+  <g transform="translate(385, 265)">
+    <path d="M0,0 C-15,-25 -15,-40 0,-55 C15,-40 15,-25 0,0 Z" fill="#FF5F6D"/>
+    <circle cx="0" cy="-35" r="8" fill="white"/>
+  </g>
+
 </svg>
