@@ -1,12 +1,11 @@
 import { ChangeEventHandler, FormEventHandler, MouseEventHandler } from "react";
-import { Banknote, CreditCard, LucideIcon, X } from "lucide-react";
+import { Banknote, CreditCard, LucideIcon } from "lucide-react";
 import type { BudgetRow } from "../../models/types/BudgetTypes";
 import type { PaymentMethodRow } from "../../models/types/PaymentMethodTypes";
 import type { ProfileRow } from "../../models/types/ProfileTypes";
 import type {
     TripSettingConf,
     TripThemeConf,
-    TripVM,
 } from "../../models/types/TripTypes";
 import FormModal from "../common/FormModal";
 
@@ -22,7 +21,6 @@ type TransactionModalProps = {
     profiles?: ProfileRow[];
     setting: TripSettingConf | null;
     theme: TripThemeConf | null;
-    trip?: TripVM;
     onCloseBtnClick: MouseEventHandler<HTMLButtonElement>;
     onDeleteBtnClick: (budgetItem: BudgetRow) => void;
     onFormDataChange: (name: string, value?: string | number) => void;
@@ -38,7 +36,6 @@ const TransactionModal = ({
     profiles,
     setting,
     theme,
-    trip,
     onCloseBtnClick,
     onDeleteBtnClick,
     onFormDataChange,
@@ -64,6 +61,7 @@ const TransactionModal = ({
             modalTitle={mode === "create" ? "新增帳目" : `編輯帳目`}
             modalSaveTitle={"儲存變更"}
             theme={theme}
+            onCancelBtnClick={onCloseBtnClick}
             onCloseBtnClick={onCloseBtnClick}
             onSubmit={onFormSubmit}
         >

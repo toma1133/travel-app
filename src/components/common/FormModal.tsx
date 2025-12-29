@@ -9,8 +9,9 @@ type FormModalProps = {
     modalTitle: string;
     modalSaveTitle: string;
     theme: TripThemeConf | null;
+    onCancelBtnClick: MouseEventHandler<HTMLButtonElement>;
     onCloseBtnClick: MouseEventHandler<HTMLButtonElement>;
-    onSubmit: FormEventHandler<HTMLFormElement>;
+    onSubmit?: FormEventHandler<HTMLFormElement>;
 };
 
 const FormModal = ({
@@ -20,6 +21,7 @@ const FormModal = ({
     modalTitle,
     modalSaveTitle,
     theme,
+    onCancelBtnClick,
     onCloseBtnClick,
     onSubmit,
 }: FormModalProps) => {
@@ -51,7 +53,7 @@ const FormModal = ({
                     <div className="p-4 border-t border-gray-100 flex justify-end space-x-3">
                         <button
                             type="button"
-                            onClick={onCloseBtnClick}
+                            onClick={onCancelBtnClick}
                             className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
                             title="取消"
                         >

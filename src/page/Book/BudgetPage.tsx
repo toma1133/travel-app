@@ -2,19 +2,17 @@ import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import { useOutletContext, useParams } from "react-router-dom";
 import { useIsMutating } from "@tanstack/react-query";
 import {
-    ArrowDownLeft,
-    ArrowRight,
-    ArrowUpRight,
     Bed,
-    CheckCircle2,
     Coffee,
     CreditCard,
+    Filter,
     LucideIcon,
     Plane,
     Plus,
     Settings,
     ShoppingBag,
     Ticket,
+    Wallet,
 } from "lucide-react";
 import moment from "moment";
 import { DragEndEvent } from "@dnd-kit/core";
@@ -44,6 +42,8 @@ import BudgetLimitList from "../../components/budget/BudgetLimitList";
 import TransactionList from "../../components/budget/TransactionList";
 import TransactionModal from "../../components/budget/TransactionModal";
 import TransactionFilter from "../../components/budget/TransactionFilter";
+import SplitInfoModal from "../../components/budget/SplitInfoModal";
+import TransactionFilterModal from "../../components/budget/TransactionFilterModal";
 
 type BudgetPageProps = {
     isPrinting?: boolean;
@@ -473,14 +473,18 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
     };
 
     // --- Filter
+    const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
     const initialFilterState: TransactionFilterType = useMemo(
         () => ({
             category: "all",
             payment_method_id: "all",
+            start_date: moment().format("YYYY-MM-DD"),
+            end_date: moment().format("YYYY-MM-DD"),
         }),
         []
     );
     const [filters, setFilters] = useState(initialFilterState);
+    const [formFilter, setFormFilter] = useState(initialFilterState);
     const filteredBudgets = useMemo(() => {
         return budgets?.filter((ex) => {
             const matchCategory =
@@ -504,102 +508,40 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
         });
     }, [paymentMethods, filters]);
     const handleFilterChange = (name: string, value?: string | number) => {
-        setFilters((prev) => ({ ...prev, [name]: value }));
+        setFormFilter((prev) => ({ ...prev, [name]: value }));
+    };
+    const handleFilterModalOpenBtnClick = () => {
+        setIsFilterModalOpen(true);
+    };
+    const handleFilterModalCancelBtnClick = () => {
+        setIsFilterModalOpen(false);
+    };
+    const handleCloseFilterModalClick = () => {
+        setIsFilterModalOpen(false);
+    };
+    const handleFilterFormSubmit = async (e: FormEvent) => {
+        e.preventDefault();
+
+        const filterData = { ...formFilter };
+
+        try {
+            setFilters(filterData);
+            setIsFilterModalOpen(false);
+        } catch (err) {
+            console.error(err);
+        }
     };
 
-    // Split
-    const settlements = useMemo(() => {
-        const balances: { [key: string]: number } = {};
+    // Split info
+    const [isSplitInfoModalOpen, setSplitInfoModalOpen] = useState(false);
 
-        // Reset
-        profiles?.forEach((p) => (balances[p.id] = 0));
+    const handleSplitInfoModalOpenBtnClick = () => {
+        setSplitInfoModalOpen(true);
+    };
 
-        budgets?.forEach((exp) => {
-            const amountInBase = convertToHome(
-                exp.amount,
-                exp.currency_code,
-                tripData.settings_config?.homeCurrency,
-                tripData.settings_config?.exchangeRate
-            );
-            const splitList = [exp.user_id].concat(
-                exp.split_with ? [...exp.split_with] : []
-            );
-            const perPersonAmount =
-                splitList.length > 0
-                    ? amountInBase / splitList.length
-                    : amountInBase;
-
-            if (balances[exp.user_id] !== undefined) {
-                balances[exp.user_id] += amountInBase;
-            }
-
-            splitList.forEach((personId) => {
-                if (balances[personId] !== undefined) {
-                    balances[personId] -= perPersonAmount;
-                }
-            });
-        });
-
-        const transactions: {
-            fromId: string;
-            fromName: string;
-            toId: string;
-            toName: string;
-            amount: number;
-        }[] = [];
-        const creditors: {
-            id: string;
-            name: string;
-            amount: number;
-        }[] = [];
-        const debtors: {
-            id: string;
-            name: string;
-            amount: number;
-        }[] = [];
-
-        Object.keys(balances).forEach((id) => {
-            const profile = profiles?.find((p) => p.id === id);
-            const name = profile ? profile.username : id;
-            const amount = balances[id];
-
-            if (amount > 0.1) {
-                creditors.push({ id, name: name!, amount });
-            } else if (amount < -0.1) {
-                debtors.push({ id, name: name!, amount: Math.abs(amount) });
-            }
-        });
-
-        let i = 0,
-            j = 0;
-        const tDebtors: { id: string; name: string; amount: number }[] =
-            JSON.parse(JSON.stringify(debtors));
-        const tCreditors: { id: string; name: string; amount: number }[] =
-            JSON.parse(JSON.stringify(creditors));
-
-        while (i < tDebtors.length && j < tCreditors.length) {
-            const payAmount = Math.min(
-                tDebtors[i].amount,
-                tCreditors[j].amount
-            );
-
-            transactions.push({
-                fromId: tDebtors[i].id,
-                fromName: tDebtors[i].name,
-                toId: tCreditors[j].id,
-                toName: tCreditors[j].name,
-                amount: payAmount,
-            });
-
-            tDebtors[i].amount -= payAmount;
-            tCreditors[j].amount -= payAmount;
-
-            if (tDebtors[i].amount < 0.1) i++;
-            if (tCreditors[j].amount < 0.1) j++;
-        }
-
-        return transactions;
-    }, [budgets]);
+    const handleCloseSplitInfoModalClick = () => {
+        setSplitInfoModalOpen(false);
+    };
 
     // --- Common Modal Handlers ---
     const handleConfirmDelete = async () => {
@@ -647,12 +589,27 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
                         <div className="flex justify-center items-center gap-4">
                             <button
                                 type="button"
+                                onClick={handleSplitInfoModalOpenBtnClick}
+                                className={`flex items-center text-sm font-medium bg-emerald-50 text-emerald-600 px-4 py-2 rounded-lg shadow-md hover:opacity-90 transition-opacity`}
+                                title="Wallet"
+                            >
+                                <Wallet size={16} className="mr-1" />
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleFilterModalOpenBtnClick}
+                                className={`flex items-center text-sm font-medium bg-white text-blue px-4 py-2 rounded-lg shadow-md hover:opacity-90 transition-opacity`}
+                                title="Filter"
+                            >
+                                <Filter size={16} className="mr-1" />
+                            </button>
+                            <button
+                                type="button"
                                 onClick={handleSettingModalOpenBtnClick}
-                                className={`flex items-center text-sm font-medium px-4 py-2 rounded-lg shadow-md hover:opacity-90 transition-opacity`}
+                                className={`flex items-center text-sm font-medium px-4 py-2 rounded-lg shadow-md ${tripData?.theme_config?.card} hover:opacity-90 transition-opacity`}
                                 title="Setting"
                             >
                                 <Settings size={16} className="mr-1" />
-                                <span>設定</span>
                             </button>
                             <button
                                 type="button"
@@ -661,124 +618,16 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
                                 title="Create"
                             >
                                 <Plus size={16} className="mr-1" />
-                                <span>新增</span>
                             </button>
                         </div>
                     }
                 />
             )}
-            <div
-                className={`flex flex-col px-4 justify-center items-center ${
-                    isPrinting
-                        ? "border-b-2 border-gray-900 pb-2 mb-0"
-                        : "mb-4 top-0 z-10"
-                }`}
-            >
-                <div className="w-full flex justify-between items-center py-2">
-                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest">
-                        分帳結算
-                    </h4>
-                </div>
-                <div
-                    className={`w-full ${
-                        isPrinting
-                            ? "text-xs divide-y divide-gray-200 border-b border-gray-200"
-                            : "space-y-2"
-                    }`}
-                >
-                    {settlements.length === 0 ? (
-                        <div className="text-center py-10 flex flex-col items-center gap-3 bg-white">
-                            <div className="w-12 h-12 bg-emerald-50 rounded-full flex items-center justify-center">
-                                <CheckCircle2 className="w-6 h-6 text-emerald-500" />
-                            </div>
-                            <p className="text-slate-400 text-sm font-medium">
-                                恭喜！你目前的帳務已結清
-                            </p>
-                        </div>
-                    ) : (
-                        settlements.map((s, idx) => {
-                            const isIOWE = s.fromId === session?.user.id;
-
-                            return (
-                                <div
-                                    key={idx}
-                                    className={`flex items-center justify-between p-4 rounded-2xl border transition-all bg-white ${
-                                        isIOWE
-                                            ? "bg-rose-50/30 border-rose-100"
-                                            : "bg-emerald-50/30 border-emerald-100"
-                                    }`}
-                                >
-                                    <div className="flex items-center gap-4">
-                                        <div
-                                            className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                                                isIOWE
-                                                    ? "bg-rose-100 text-rose-600"
-                                                    : "bg-emerald-100 text-emerald-600"
-                                            }`}
-                                        >
-                                            {isIOWE ? (
-                                                <ArrowUpRight className="w-5 h-5" />
-                                            ) : (
-                                                <ArrowDownLeft className="w-5 h-5" />
-                                            )}
-                                        </div>
-                                        <div>
-                                            <div className="text-xs font-bold text-slate-400 uppercase tracking-tighter">
-                                                {isIOWE
-                                                    ? "你應支付給"
-                                                    : "你應收回自"}
-                                            </div>
-                                            <div className="font-bold text-slate-800 text-base">
-                                                {isIOWE ? s.toName : s.fromName}
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="text-right">
-                                        <div
-                                            className={`font-mono font-bold text-lg ${
-                                                isIOWE
-                                                    ? "text-rose-600"
-                                                    : "text-emerald-600"
-                                            }`}
-                                        >
-                                            {
-                                                tripData.settings_config
-                                                    ?.homeCurrency
-                                            }{" "}
-                                            {s.amount.toLocaleString(
-                                                undefined,
-                                                { maximumFractionDigits: 0 }
-                                            )}
-                                        </div>
-                                        <div className="text-[10px] text-slate-400">
-                                            ≈{" "}
-                                            {
-                                                tripData.settings_config
-                                                    ?.localCurrency
-                                            }{" "}
-                                            {convertToLocal(
-                                                s.amount,
-                                                tripData.settings_config
-                                                    ?.homeCurrency!,
-                                                tripData.settings_config
-                                                    ?.localCurrency,
-                                                tripData.settings_config
-                                                    ?.exchangeRate
-                                            ).toLocaleString()}
-                                        </div>
-                                    </div>
-                                </div>
-                            );
-                        })
-                    )}
-                </div>
-            </div>
             {!isPrinting && (
                 <TransactionFilter
                     categories={budgetCategory}
                     formData={filters}
                     paymentMethods={paymentMethods}
-                    totalCount={filteredBudgets?.length}
                     onFormDataChange={handleFilterChange}
                 />
             )}
@@ -788,6 +637,7 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
                 setting={tripData.settings_config}
                 theme={tripData.theme_config}
                 convertToHome={convertToHome}
+                convertToLocal={convertToLocal}
                 getChartGradient={getChartGradient}
                 getCategoryName={getCategoryName}
             />
@@ -839,12 +689,35 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
                     profiles={profiles}
                     setting={tripData.settings_config}
                     theme={tripData.theme_config}
-                    trip={tripData}
                     onCloseBtnClick={handleCloseBudgetModalClick}
                     onDeleteBtnClick={handleOpenDeleteBudgetModal}
                     onFormDataChange={handleBudgetFormDataChange}
                     onFormInputChange={handleBudgetFormInputChange}
                     onFormSubmit={handleBudgetFormSubmit}
+                />
+            )}
+            {isSplitInfoModalOpen && (
+                <SplitInfoModal
+                    budgets={budgets}
+                    profiles={profiles}
+                    session={session}
+                    setting={tripData.settings_config}
+                    theme={tripData.theme_config}
+                    convertToHome={convertToHome}
+                    convertToLocal={convertToLocal}
+                    onCloseBtnClick={handleCloseSplitInfoModalClick}
+                />
+            )}
+            {isFilterModalOpen && (
+                <TransactionFilterModal
+                    categories={budgetCategory}
+                    formData={formFilter}
+                    paymentMethods={paymentMethods}
+                    theme={tripData.theme_config}
+                    onFormDataChange={handleFilterChange}
+                    onCancelBtnClick={handleFilterModalCancelBtnClick}
+                    onCloseBtnClick={handleCloseFilterModalClick}
+                    onFormSubmit={handleFilterFormSubmit}
                 />
             )}
             {isDeleteModalOpen && (

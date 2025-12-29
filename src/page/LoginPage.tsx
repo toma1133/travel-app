@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabaseClient } from "../services/SupabaseClient";
-import useAuth from "../hooks/UseAuth";
+import LoadingMask from "../components/common/LoadingMask";
 
 const LoginPage = () => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
-    const { loading } = useAuth();
+    const [loading, setLoading] = useState(false);
     const location = useLocation();
     const navigate = useNavigate();
 
@@ -16,6 +16,8 @@ const LoginPage = () => {
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        setLoading(true);
         setError("");
 
         const { error } = await supabaseClient.auth.signInWithPassword({
@@ -23,10 +25,16 @@ const LoginPage = () => {
             password,
         });
 
-        if (error) setError(error.message);
+        setLoading(false);
 
-        navigate(returnTo, { replace: true });
+        if (error) {
+            setError(error.message);
+        } else {
+            navigate(returnTo, { replace: true });
+        }
     };
+
+    if (loading) return <LoadingMask />;
 
     return (
         <div className="flex min-h-screen items-center justify-center bg-[#F2F2F0]">
@@ -77,9 +85,6 @@ const LoginPage = () => {
                         {loading ? "登入中..." : "登入"}
                     </button>
                 </form>
-                <div className="mt-4 text-center text-xs text-gray-400">
-                    (若無 Supabase 帳號，請確認後端已開啟註冊功能)
-                </div>
             </div>
         </div>
     );

@@ -59,6 +59,9 @@ const TransactionList = ({
                 <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest">
                     交易紀錄
                 </h4>
+                <span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold">
+                    共 {budgetItems?.length} 筆
+                </span>
             </div>
             <div
                 className={`w-full ${

@@ -16,6 +16,12 @@ type BudgetChartProps = {
         homeCurrency?: string,
         exchangeRate?: number
     ) => number;
+    convertToLocal: (
+        amount: number,
+        currency: string,
+        localCurrency?: string,
+        exchangeRate?: number
+    ) => number;
     getChartGradient: (
         totalSpentHome: number,
         categoryStats: { [key: string]: number },
@@ -30,6 +36,7 @@ const BudgetChart = ({
     setting,
     theme,
     convertToHome,
+    convertToLocal,
     getChartGradient,
     getCategoryName,
 }: BudgetChartProps) => {
@@ -72,70 +79,66 @@ const BudgetChart = ({
     }, [budgetItems]);
 
     return (
-        <div
-            className={`flex flex-row px-4 items-center justify-between ${
-                isPrinting ? "mb-6 border border-gray-300 p-4" : "mb-10"
-            }`}
-        >
-            <div className="relative w-32 h-32 shrink-0">
-                {/* Chart Ring */}
-                <div
-                    className="w-full h-full rounded-full print:border print:border-gray-400"
-                    style={{
-                        background: getChartGradient(
-                            totalSpentHome,
-                            categoryStats,
-                            theme
-                        ),
-                        mask: "radial-gradient(transparent 60%, black 61%)",
-                        WebkitMask:
-                            "radial-gradient(transparent 60%, black 61%)",
-                    }}
-                ></div>
-                {/* Center Text */}
-                <div className="absolute inset-0 flex items-center justify-center flex-col">
-                    <span className="text-[10px] text-gray-400 uppercase tracking-wider print:text-gray-600">
-                        總支出
-                    </span>
-                    <span className={`text-sm font-bold ${theme?.mono}`}>
-                        {setting?.homeCurrency}
-                    </span>
+        <div className="px-4 mt-6 mb-8">
+            <div className="bg-slate-900 rounded-lg p-8 text-white shadow-2xl shadow-slate-200 relative overflow-hidden">
+                <div className="relative z-10 flex justify-between items-start">
+                    <div>
+                        <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-2">
+                            總支出
+                        </p>
+                        <div className="flex items-baseline gap-1">
+                            <span className="text-slate-500 text-xl font-mono">
+                                {setting?.homeCurrency}
+                            </span>
+                            <h2 className="text-5xl font-light font-mono tracking-tighter">
+                                {totalSpentHome.toLocaleString()}
+                            </h2>
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1 print:text-right">
+                            ≈ {setting?.localCurrency}{" "}
+                            {convertToLocal(
+                                totalSpentHome,
+                                setting?.homeCurrency!,
+                                setting?.localCurrency,
+                                setting?.exchangeRate
+                            ).toLocaleString()}
+                        </div>
+                    </div>
                 </div>
-            </div>
-            <div className="flex-1 pl-6 text-right">
-                <div className="text-5xl font-light tracking-tighter text-gray-900 font-mono print:text-right">
-                    {totalSpentHome.toLocaleString()}
-                </div>
-                <div className="text-xs text-gray-500 mt-1 print:text-right">
-                    ≈ {setting?.localCurrency}{" "}
-                    {Math.round(
-                        totalSpentHome / setting?.exchangeRate!
-                    ).toLocaleString()}
-                </div>
-                {/* Legend Mini */}
-                <div
-                    className={`flex flex-wrap justify-end gap-2 mt-4 ${
-                        isPrinting ? "border-t border-gray-300 pt-4" : ""
-                    }`}
-                >
-                    {Object.entries(categoryStats)
-                        .sort(([, a], [, b]) => b - a)
-                        .map(([cat, val]) => (
-                            <div
-                                key={cat}
-                                className="flex items-center text-[10px] text-gray-500"
-                            >
+                <div className="grid grid-cols-3 gap-4 mt-4">
+                    {Object.entries(categoryStats).length > 1 &&
+                        Object.entries(categoryStats)
+                            .sort(([, a], [, b]) => b - a)
+                            .map(([cat, val]) => (
                                 <div
-                                    className="w-2 h-2 rounded-full mr-1"
-                                    style={{
-                                        backgroundColor:
-                                            theme?.categoryColor[cat],
-                                    }}
-                                ></div>
-                                {getCategoryName(cat)}
-                                {Math.round((val / totalSpentHome) * 100)}%
-                            </div>
-                        ))}
+                                    key={cat}
+                                    className="flex flex-col items-start justify-center"
+                                >
+                                    <div className="flex items-center justify-center gap-2 mb-2">
+                                        <span className="text-xs text-slate-400 font-bold uppercase">
+                                            {getCategoryName(cat)}
+                                        </span>
+                                        <span className="text-xs font-mono text-rose-400 font-bold">
+                                            {Math.round(
+                                                (val / totalSpentHome) * 100
+                                            )}
+                                            %
+                                        </span>
+                                    </div>
+                                    <div className="w-24 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                                        <div
+                                            className="h-full transition-all duration-1000"
+                                            style={{
+                                                backgroundColor:
+                                                    theme?.categoryColor[cat],
+                                                width: `${Math.round(
+                                                    (val / totalSpentHome) * 100
+                                                )}%`,
+                                            }}
+                                        ></div>
+                                    </div>
+                                </div>
+                            ))}
                 </div>
             </div>
         </div>

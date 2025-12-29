@@ -2,7 +2,7 @@ import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import { useOutletContext, useParams } from "react-router-dom";
 import { useIsMutating } from "@tanstack/react-query";
 import moment from "moment";
-import { Calendar, Lock, Settings } from "lucide-react";
+import { Lock, Plus, Settings } from "lucide-react";
 import useAuth from "../../hooks/UseAuth";
 import useItinerarys from "../../hooks/itinerary/UseItinerarys";
 import useItineraryMutations from "../../hooks/itinerary/UseItineraryMutations";
@@ -414,9 +414,9 @@ const ItineraryPage = ({ isPrinting }: ItineraryPageProps) => {
                                 type="button"
                                 onClick={handleOpenCreateDayModal}
                                 className={`flex items-center text-sm font-medium text-white px-4 py-2 rounded-lg shadow-md ${tripData?.theme_config?.accent} hover:opacity-90 transition-opacity`}
+                                title="新增"
                             >
-                                <Calendar size={16} className="mr-1" />
-                                <span>新增</span>
+                                <Plus size={16} className="mr-1" />
                             </button>
                         </div>
                     }

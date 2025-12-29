@@ -1,5 +1,11 @@
 import { useEffect, useState } from "react";
-import { Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
+import {
+    Navigate,
+    Outlet,
+    ScrollRestoration,
+    useLocation,
+    useNavigate,
+} from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import useAuth from "../hooks/UseAuth";
 import LayoutContextType from "../models/types/LayoutContextTypes";
@@ -77,6 +83,7 @@ const ProtectedLayout = ({ isOffline }: ProtectedLayoutProps) => {
             <Outlet
                 context={{ setIsPageLoading } satisfies LayoutContextType}
             />
+            <ScrollRestoration />
         </div>
     );
 };

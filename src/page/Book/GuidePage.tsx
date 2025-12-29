@@ -201,9 +201,9 @@ const GuidePage = ({ isPrinting }: CoverPageProps) => {
                                 type="button"
                                 onClick={handleOpenCreateModal}
                                 className={`flex items-center text-sm font-medium text-white px-4 py-2 rounded-lg shadow-md ${tripData?.theme_config?.accent} hover:opacity-90 transition-opacity`}
+                                title="新增"
                             >
                                 <Plus size={16} className="mr-1" />
-                                <span>新增</span>
                             </button>
                         </div>
                     }
