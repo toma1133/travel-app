@@ -18,10 +18,17 @@ const PlaceMapController = ({
 
     const handleFitBounds = () => {
         if (places && places.length > 0) {
-            const bounds = L.latLngBounds(
-                places.map((place) => [place.lat!, place.lng!])
-            );
-            map.fitBounds(bounds, { padding: [50, 50] });
+            const validCoords = places
+                .filter(
+                    (p): p is typeof p & { lat: number; lng: number } =>
+                        typeof p.lat === "number" && typeof p.lng === "number"
+                )
+                .map((p) => [p.lat, p.lng] as [number, number]);
+
+            if (validCoords.length > 0) {
+                const bounds = L.latLngBounds(validCoords);
+                map.fitBounds(bounds, { padding: [50, 50] });
+            }
         }
     };
 
