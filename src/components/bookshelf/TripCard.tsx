@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { TripVM } from "../../models/types/TripTypes";
-import { Pencil, Printer, Trash2, User } from "lucide-react";
+import { Pencil, Trash2, User } from "lucide-react";
 
 type TripCardProps = {
     trip: TripVM;

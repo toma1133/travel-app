@@ -46,7 +46,7 @@ const FormModal = ({
                         </button>
                     </div>
                     {/* Body - Scrollable Form */}
-                    <div className="overflow-y-auto no-scrollbar space-y-3 px-6 max-h-[50vh]">
+                    <div className="overflow-y-auto no-scrollbar space-y-3 px-6 max-h-[75vh]">
                         {children}
                     </div>
                     {/* Footer */}

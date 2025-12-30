@@ -217,7 +217,7 @@ const PlaceModal = ({
                     value={formData?.info?.loc || ""}
                     onChange={onFormInputChange}
                     placeholder="例如：京都市東山區..."
-                    className="w-full p1.5 bg-transparent border-b border-gray-300 py-2 outline-none font-[Noto_Sans_TC] text-base"
+                    className="w-full bg-transparent border-b border-gray-300 py-2 outline-none font-[Noto_Sans_TC] text-base"
                 />
             </div>
             <div>
@@ -232,7 +232,7 @@ const PlaceModal = ({
                     value={formData.tags || ""}
                     onChange={onFormInputChange}
                     placeholder="例如：世界遺產, 必去, 拍照"
-                    className="w-full p1.5 bg-transparent border-b border-gray-300 py-2 outline-none font-[Noto_Sans_TC] text-base"
+                    className="w-full bg-transparent border-b border-gray-300 py-2 outline-none font-[Noto_Sans_TC] text-base"
                 />
             </div>
             <div>
@@ -247,7 +247,42 @@ const PlaceModal = ({
                     value={formData.tips || ""}
                     onChange={onFormInputChange}
                     placeholder="例如：建議早上去..."
-                    className="w-full p-1.5 bg-transparent border-b border-gray-300 py-2 outline-none font-[Noto_Sans_TC] text-base"
+                    className="w-full bg-transparent border-b border-gray-300 py-2 outline-none font-[Noto_Sans_TC] text-base"
+                />
+            </div>
+            {/* Lat and lng */}
+            <div>
+                <label
+                    htmlFor="lat"
+                    className="block font-bold uppercase mb-1 flex items-center text-gray-500 text-xs"
+                >
+                    緯度
+                </label>
+                <input
+                    type="number"
+                    step="1"
+                    name="lat"
+                    value={formData.lat || 23.973875}
+                    onChange={onFormInputChange}
+                    className="w-full bg-transparent border-b border-gray-300 py-2 outline-none font-[Noto_Sans_TC] text-base text-black"
+                    placeholder="0.0"
+                />
+            </div>
+            <div>
+                <label
+                    htmlFor="lat"
+                    className="block font-bold uppercase mb-1 flex items-center text-gray-500 text-xs"
+                >
+                    經度
+                </label>
+                <input
+                    type="number"
+                    step="1"
+                    name="lng"
+                    value={formData.lng || 120.982025}
+                    onChange={onFormInputChange}
+                    className="w-full bg-transparent border-b border-gray-300 py-2 outline-none font-[Noto_Sans_TC] text-base text-black"
+                    placeholder="0.0"
                 />
             </div>
         </FormModal>

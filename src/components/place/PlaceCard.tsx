@@ -17,6 +17,7 @@ type PlaceCardProps = {
     isPreview: boolean;
     onDelete: (place: PlaceVM) => void;
     onEdit: (place: PlaceVM) => void;
+    onTagBtnClick: (tag: string) => void;
 };
 
 const PlaceCard = ({
@@ -26,6 +27,7 @@ const PlaceCard = ({
     isPreview,
     onDelete,
     onEdit,
+    onTagBtnClick,
 }: PlaceCardProps) => {
     const [showActions, setShowActions] = useState(false);
     const getPlaceTypeName = (param: string | null) => {
@@ -41,7 +43,12 @@ const PlaceCard = ({
         }
     };
     const getMapUrl = () => {
-        const query = place.info?.loc || place.name;
+        let query = "";
+        if (place.lat && place.lng) {
+            query = `${place.lat},${place.lng}`;
+        } else {
+            query = place.info?.loc || place.name;
+        }
         return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
             query
         )}`;
@@ -147,12 +154,14 @@ const PlaceCard = ({
                 <div className="flex flex-wrap gap-2 mb-4 print:hidden">
                     {!!place.tags &&
                         place.tags.split(",").map((tag) => (
-                            <span
+                            <button
                                 key={tag}
-                                className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded"
+                                type="button"
+                                onClick={() => onTagBtnClick(tag.trim())}
+                                className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded hover:bg-gray-200 hover:text-gray-800 transition-colors"
                             >
-                                #{tag}
-                            </span>
+                                #{tag.trim()}
+                            </button>
                         ))}
                 </div>
                 <p className="text-sm text-gray-600 leading-relaxed mb-4 text-justify whitespace-pre-wrap print:text-sm print:text-gray-700">

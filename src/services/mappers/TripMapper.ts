@@ -33,6 +33,8 @@ export const toTripInsert = (vm: TripVM): TripRowInsert => {
         theme_config: vm.theme_config,
         title: vm.title,
         user_id: vm.user_id,
+        lat: vm.lat,
+        lng: vm.lng,
     };
 };
 
@@ -46,5 +48,7 @@ export const toTripUpdate = (vm: Partial<TripVM>): TripRowUpdate => {
         subtitle: vm.subtitle,
         theme_config: vm.theme_config,
         title: vm.title,
+        lat: vm.lat,
+        lng: vm.lng,
     };
 };

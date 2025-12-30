@@ -258,6 +258,8 @@ const BookshelfPage = () => {
             title: "",
             updated_at: null,
             user_id: session ? session.user.id : "",
+            lat: 23.973875,
+            lng: 120.982025,
         }),
         [session]
     );
@@ -301,7 +303,7 @@ const BookshelfPage = () => {
         }));
     };
 
-    const handleSettingModalSubmit = async (e: FormEvent) => {
+    const handleTripModalSubmit = async (e: FormEvent) => {
         e.preventDefault();
 
         const tripData: TripVM = { ...formTrip };
@@ -394,7 +396,7 @@ const BookshelfPage = () => {
                     onCloseBtnClick={handleCloseTripModalBtnClick}
                     onFormChange={handleTripFormInputChange}
                     onSettingChange={handleTripFormSettingInputChange}
-                    onFormSubmit={handleSettingModalSubmit}
+                    onFormSubmit={handleTripModalSubmit}
                 />
             )}
             {isDeleteModalOpen && (

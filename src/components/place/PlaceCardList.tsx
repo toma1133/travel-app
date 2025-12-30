@@ -8,6 +8,7 @@ type PlaceCardListProps = {
     theme: TripThemeConf | null;
     onDeleteBtnClick: (place: PlaceVM) => void;
     onEditBtnClick: (place: PlaceVM) => void;
+    onTagBtnClick: (tag: string) => void;
 };
 
 const PlaceCardList = ({
@@ -16,8 +17,9 @@ const PlaceCardList = ({
     theme,
     onDeleteBtnClick,
     onEditBtnClick,
+    onTagBtnClick,
 }: PlaceCardListProps) => (
-    <div className="space-y-6 px-4 print:space-y-4">
+    <div className="space-y-6 print:space-y-4">
         {Array.isArray(places) ? (
             places.map((place) => (
                 <PlaceCard
@@ -28,6 +30,7 @@ const PlaceCardList = ({
                     isPreview={false}
                     onDelete={onDeleteBtnClick}
                     onEdit={onEditBtnClick}
+                    onTagBtnClick={onTagBtnClick}
                 />
             ))
         ) : (

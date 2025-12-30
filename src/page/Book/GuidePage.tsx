@@ -38,6 +38,7 @@ const GuidePage = ({ isPrinting }: CoverPageProps) => {
     const [filteredPlaces, setFilteredPlaces] = useState<PlaceVM[] | null>(
         null
     );
+    const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
     // Create & edit
     const initialPlaceState: PlaceVM = useMemo(
@@ -55,6 +56,8 @@ const GuidePage = ({ isPrinting }: CoverPageProps) => {
             type: "sight",
             user_id: session ? session.user.id : "",
             updated_at: "",
+            lat: 23.973875,
+            lng: 120.982025,
         }),
         [tripId, session]
     );
@@ -68,11 +71,28 @@ const GuidePage = ({ isPrinting }: CoverPageProps) => {
     const [placeToDelete, setPlaceToDelete] = useState<PlaceVM | null>(null);
 
     useEffect(() => {
-        const targetPlaces = Array.isArray(places)
-            ? places.filter((p) => filter === "all" || p.type === filter)
-            : [];
+        if (!Array.isArray(places)) {
+            setFilteredPlaces([]);
+            return;
+        }
+
+        const targetPlaces = places.filter((p) => {
+            // 檢查類型
+            const matchType = filter === "all" || p.type === filter;
+
+            // 檢查標籤 (必須包含所有選取的標籤)
+            const placeTags = p.tags
+                ? p.tags.split(",").map((t) => t.trim())
+                : [];
+            const matchTags =
+                selectedTags.length === 0 ||
+                selectedTags.every((tag) => placeTags.includes(tag));
+
+            return matchType && matchTags;
+        });
+
         setFilteredPlaces(targetPlaces);
-    }, [places, filter]);
+    }, [places, filter, selectedTags]);
 
     const mutatingCount = useIsMutating({ mutationKey: ["place"] });
 
@@ -182,14 +202,24 @@ const GuidePage = ({ isPrinting }: CoverPageProps) => {
         setFilter(category);
     };
 
+    const handleTagClick = (tag: string) => {
+        if (!selectedTags.includes(tag)) {
+            setSelectedTags([...selectedTags, tag]);
+        }
+    };
+
+    const handleRemoveTag = (tag: string) => {
+        setSelectedTags(selectedTags.filter((t) => t !== tag));
+    };
+
     return (
         <div
-            className={`min-h-full font-[Noto_Sans_TC] text-gray-800 ${
+            className={`min-h-full font-[Noto_Sans_TC] text-gray-800 flex flex-col ${
                 isPrinting
                     ? "p-0 h-auto min-h-[50vh] break-after-page overflow-visible print:bg-white"
                     : `${
                           tripData?.theme_config?.bg || "bg-gray-100"
-                      } pt-12 pb-24`
+                      } pt-12 pb-6`
             }`}
         >
             {!isPrinting && (
@@ -223,7 +253,7 @@ const GuidePage = ({ isPrinting }: CoverPageProps) => {
                                 className={`flex items-center text-sm font-medium text-white px-4 py-2 rounded-lg shadow-md ${tripData?.theme_config?.accent} hover:opacity-90 transition-opacity`}
                                 title="新增"
                             >
-                                <Plus size={16} className="mr-1" />
+                                <Plus size={16} />
                             </button>
                         </div>
                     }
@@ -233,21 +263,26 @@ const GuidePage = ({ isPrinting }: CoverPageProps) => {
                 <PlaceFilter
                     activeFilterId={filter}
                     placeCategories={placeCategories}
+                    selectedTags={selectedTags}
                     theme={tripData.theme_config}
                     onFilterBtnClick={handleFilterBtnClick}
+                    onRemoveTagBtnClick={handleRemoveTag}
                 />
             )}
-            {viewMode === "list" ? (
-                <PlaceCardList
-                    isPrinting={isPrinting}
-                    places={filteredPlaces}
-                    theme={tripData.theme_config}
-                    onDeleteBtnClick={handleOpenDeleteModal}
-                    onEditBtnClick={handleOpenEditModal}
-                />
-            ) : (
-                <PlaceMapView places={filteredPlaces} />
-            )}
+            <div className="flex-1 flex flex-col px-4 items-center justify-center">
+                {viewMode === "list" ? (
+                    <PlaceCardList
+                        isPrinting={isPrinting}
+                        places={filteredPlaces}
+                        theme={tripData.theme_config}
+                        onDeleteBtnClick={handleOpenDeleteModal}
+                        onEditBtnClick={handleOpenEditModal}
+                        onTagBtnClick={handleTagClick}
+                    />
+                ) : (
+                    <PlaceMapView places={filteredPlaces} trip={tripData} />
+                )}
+            </div>
             {isModalOpen && (
                 <PlaceModal
                     formData={formPlace}

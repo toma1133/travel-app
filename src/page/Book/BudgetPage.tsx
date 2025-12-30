@@ -593,7 +593,7 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
                                 className={`flex items-center text-sm font-medium bg-emerald-50 text-emerald-600 px-4 py-2 rounded-lg shadow-md hover:opacity-90 transition-opacity`}
                                 title="Wallet"
                             >
-                                <Wallet size={16} className="mr-1" />
+                                <Wallet size={16} />
                             </button>
                             <button
                                 type="button"
@@ -601,7 +601,7 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
                                 className={`flex items-center text-sm font-medium bg-white text-blue px-4 py-2 rounded-lg shadow-md hover:opacity-90 transition-opacity`}
                                 title="Filter"
                             >
-                                <Filter size={16} className="mr-1" />
+                                <Filter size={16} />
                             </button>
                             <button
                                 type="button"
@@ -609,7 +609,7 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
                                 className={`flex items-center text-sm font-medium px-4 py-2 rounded-lg shadow-md ${tripData?.theme_config?.card} hover:opacity-90 transition-opacity`}
                                 title="Setting"
                             >
-                                <Settings size={16} className="mr-1" />
+                                <Settings size={16} />
                             </button>
                             <button
                                 type="button"
@@ -617,7 +617,7 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
                                 className={`flex items-center text-sm font-medium text-white px-4 py-2 rounded-lg shadow-md ${tripData?.theme_config?.accent} hover:opacity-90 transition-opacity`}
                                 title="Create"
                             >
-                                <Plus size={16} className="mr-1" />
+                                <Plus size={16} />
                             </button>
                         </div>
                     }
