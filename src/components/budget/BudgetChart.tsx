@@ -52,7 +52,7 @@ const BudgetChart = ({
                       (sum, item) =>
                           sum +
                           convertToHome(
-                              item.amount,
+                              item.split_with?.length! > 0 ? item.amount / (item.split_with?.length! + 1) : item.amount,
                               item.currency_code,
                               setting?.homeCurrency,
                               setting?.exchangeRate
@@ -66,7 +66,7 @@ const BudgetChart = ({
             setCategoryStats(
                 budgetItems.reduce((acc: { [key: string]: number }, item) => {
                     const homeAmount = convertToHome(
-                        item.amount,
+                        item.split_with?.length! > 0 ? item.amount / (item.split_with?.length! + 1) : item.amount,
                         item.currency_code,
                         setting?.homeCurrency,
                         setting?.exchangeRate
