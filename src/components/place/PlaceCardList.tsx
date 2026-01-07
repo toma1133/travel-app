@@ -19,7 +19,7 @@ const PlaceCardList = ({
     onEditBtnClick,
     onTagBtnClick,
 }: PlaceCardListProps) => (
-    <div className="space-y-6 print:space-y-4">
+    <div className="w-full space-y-6 print:space-y-4">
         {Array.isArray(places) ? (
             places.map((place) => (
                 <PlaceCard

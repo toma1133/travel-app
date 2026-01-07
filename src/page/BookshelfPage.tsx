@@ -287,7 +287,15 @@ const BookshelfPage = () => {
 
     const handleTripFormInputChange = (e: ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
-        setFormTrip((prev) => ({ ...prev, [name]: value }));
+
+        if (name === "lat" || name === "lng") {
+            setFormTrip((prev) => ({
+                ...prev,
+                [name]: value === "" ? 0 : +value,
+            }));
+        } else {
+            setFormTrip((prev) => ({ ...prev, [name]: value }));
+        }
     };
 
     const handleTripFormSettingInputChange = (

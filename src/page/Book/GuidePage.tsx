@@ -130,6 +130,11 @@ const GuidePage = ({ isPrinting }: CoverPageProps) => {
                 },
             };
             setFormPlace(newFormPlace);
+        } else if (name === "lat" || name === "lng") {
+            setFormPlace((prev) => ({
+                ...prev,
+                [name]: value === "" ? 0 : +value,
+            }));
         } else {
             setFormPlace((prev) => ({ ...prev, [name]: value }));
         }
