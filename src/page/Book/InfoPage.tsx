@@ -27,6 +27,8 @@ import type { FlightRow } from "../../models/types/FlightTypes";
 import type BookLayoutContextType from "../../models/types/BookLayoutContextTypes";
 import type LayoutContextType from "../../models/types/LayoutContextTypes";
 import type { PlaceVM } from "../../models/types/PlaceTypes";
+import { placeRepo } from "../../services/repositories/PlaceRepo";
+import { toPlaceVM } from "../../services/mappers/PlaceMapper";
 
 type InfoPageProps = {
     isPrinting?: boolean;
@@ -113,28 +115,23 @@ const InfoPage = ({ isPrinting }: InfoPageProps) => {
 
     // --- Preview Modal Handlers ---
     const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
-    const [previewPlaceId, setPreviewPlaceId] = useState<string | undefined>(
-        undefined
-    );
-    const {
-        data: place,
-        isLoading: isPlaceLoading,
-        error: placeError,
-    } = usePlace(previewPlaceId);
+    const [place, setPlace] = useState<PlaceVM | undefined>(undefined);
 
-    const handleOpenPreviewModal = (linkId: string) => {
-        setPreviewPlaceId(linkId);
-        // setIsPreviewModalOpen(true);
+    const handleOpenPreviewModal = async (linkId: string) => {
+        setIsPageLoading(true);
+
+        const row = await placeRepo.getById(linkId);
+
+        setIsPageLoading(false);
+        const placeVm = toPlaceVM(row!);
+        setPlace(placeVm);
+        setIsPreviewModalOpen(true);
     };
 
     const handleClosePreviewModal = () => {
         setIsPreviewModalOpen(false);
-        setPreviewPlaceId(undefined);
+        setPlace(undefined);
     };
-
-    useEffect(() => {
-        setIsPreviewModalOpen(place! && !isPlaceLoading);
-    }, [place, isPlaceLoading]);
 
     // --- Common delete modal
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);

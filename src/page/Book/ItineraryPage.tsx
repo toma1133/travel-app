@@ -6,14 +6,8 @@ import { Lock, Plus, Settings } from "lucide-react";
 import useAuth from "../../hooks/UseAuth";
 import useItinerarys from "../../hooks/itinerary/UseItinerarys";
 import useItineraryMutations from "../../hooks/itinerary/UseItineraryMutations";
-import usePlace from "../../hooks/place/UsePlace";
-import type BookLayoutContextType from "../../models/types/BookLayoutContextTypes";
-import type LayoutContextType from "../../models/types/LayoutContextTypes";
-import type {
-    ItineraryActivitiy,
-    ItineraryVM,
-} from "../../models/types/ItineraryTypes";
-import type { PlaceVM } from "../../models/types/PlaceTypes";
+import { placeRepo } from "../../services/repositories/PlaceRepo";
+import { toPlaceVM } from "../../services/mappers/PlaceMapper";
 import SectionHeader from "../../components/common/SectionHeader";
 import DeleteModal from "../../components/common/DeleteModal";
 import ItineraryList from "../../components/itinerary/ItineraryList";
@@ -21,6 +15,13 @@ import ItineraryDayModal from "../../components/itinerary/ItineraryDayModal";
 import ItineraryActivityModal from "../../components/itinerary/ItineraryActivityModal";
 import PreviewPlaceModal from "../../components/itinerary/PreviewPlaceModal";
 import PlaceCard from "../../components/place/PlaceCard";
+import type BookLayoutContextType from "../../models/types/BookLayoutContextTypes";
+import type LayoutContextType from "../../models/types/LayoutContextTypes";
+import type {
+    ItineraryActivitiy,
+    ItineraryVM,
+} from "../../models/types/ItineraryTypes";
+import type { PlaceVM } from "../../models/types/PlaceTypes";
 
 type ItineraryPageProps = {
     isPrinting?: boolean;
@@ -63,31 +64,32 @@ const ItineraryPage = ({ isPrinting }: ItineraryPageProps) => {
 
     // --- Preview Modal Handlers ---
     const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
-    const [previewPlaceId, setPreviewPlaceId] = useState<string | undefined>(
-        undefined
-    );
-    const {
-        data: place,
-        isLoading: isPlaceLoading,
-        error: placeError,
-    } = usePlace(previewPlaceId);
+    const [place, setPlace] = useState<PlaceVM | undefined>(undefined);
+
+    const handleOpenPreviewModal = async (linkId: string) => {
+        setIsPageLoading(true);
+
+        const row = await placeRepo.getById(linkId);
+
+        setIsPageLoading(false);
+        const placeVm = toPlaceVM(row!);
+        setPlace(placeVm);
+        setIsPreviewModalOpen(true);
+    };
 
     const handleClosePreviewModal = () => {
         setIsPreviewModalOpen(false);
-        setPreviewPlaceId(undefined);
+        setPlace(undefined);
     };
 
     const mutatingCount = useIsMutating({
-        mutationKey: ["itinerary_day", "place"],
+        mutationKey: ["itinerary_day"],
     });
 
     useEffect(() => {
         let timer: number | undefined;
         const shouldShow =
-            isItinerarysLoading ||
-            isItineraryPending ||
-            isPlaceLoading ||
-            mutatingCount > 0;
+            isItinerarysLoading || isItineraryPending || mutatingCount > 0;
 
         if (shouldShow) {
             timer = window.setTimeout(() => setIsPageLoading(true), 150);
@@ -104,14 +106,9 @@ const ItineraryPage = ({ isPrinting }: ItineraryPageProps) => {
     }, [
         isItinerarysLoading,
         isItineraryPending,
-        isPlaceLoading,
         mutatingCount,
         setIsPageLoading,
     ]);
-
-    useEffect(() => {
-        setIsPreviewModalOpen(place! && !isPlaceLoading);
-    }, [place, isPlaceLoading]);
 
     // --- Common delete modal
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -314,11 +311,6 @@ const ItineraryPage = ({ isPrinting }: ItineraryPageProps) => {
         } catch (err) {
             console.error(err);
         }
-    };
-
-    const handleOpenPreviewModal = (linkId: string) => {
-        setPreviewPlaceId(linkId);
-        // setIsPreviewModalOpen(true);
     };
 
     // --- Common Modal Handlers ---

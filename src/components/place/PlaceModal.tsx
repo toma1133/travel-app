@@ -62,7 +62,9 @@ const PlaceModal = ({
                 >
                     類型 *
                 </label>
-                <div className={`grid grid-cols-${placeCategory.length} gap-2`}>
+                <div
+                    className={`grid auto-cols-[minmax(0,2fr)] grid-flow-col gap-2`}
+                >
                     {placeCategory.map((type) => (
                         <label
                             key={type.id}
