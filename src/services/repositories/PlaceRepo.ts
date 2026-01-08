@@ -14,23 +14,14 @@ export const placeRepo: IRepo<PlaceRow, PlaceVM, PlaceVM, string> = {
         if (error) throw error;
         return data ?? null;
     },
-    async list(parentId: string | undefined, query: string | undefined): Promise<PlaceRow[]> {
+    async list(parentId: string | undefined): Promise<PlaceRow[]> {
         if (parentId === undefined) return [];
-
-        let queryBuilder = supabaseClient
+        const { data, error } = await supabaseClient
             .from("places")
             .select("*")
             .eq("trip_id", parentId)
             .order("type", { ascending: true, })
             .order("id", { ascending: true, });
-
-        if (query) {
-            queryBuilder = queryBuilder
-                .ilike("name", `%${query}%`)
-                .limit(10);
-        }
-
-        const { data, error } = await queryBuilder;
         if (error) throw error;
         return data ?? [];
     },

@@ -166,7 +166,7 @@ const ItineraryActivityModal = ({
                 </label>
                 <PlaceLinkAutocomplete
                     tripId={itinerary?.trip_id}
-                    name="link_id"
+                    name="linkId"
                     value={formData.linkId}
                     onChange={onFormInputChange}
                 />
