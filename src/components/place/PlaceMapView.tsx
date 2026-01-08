@@ -16,10 +16,10 @@ const PlaceMapView = ({ places, trip }: PlaceMapViewProps) => {
 
     const getPlaceColor = (type: string | null) => {
         switch (type) {
-            case "restaurant":
-                return "#ff5733"; // Red
+            case "food":
+                return "#ffa500"; // Orange
             case "hotel":
-                return "#33c1ff"; // Light Blue
+                return "#ff5733"; // Red
             case "attraction":
                 return "#33ff57"; // Green
             case "shopping":
