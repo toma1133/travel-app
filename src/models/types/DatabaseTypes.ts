@@ -335,6 +335,7 @@ export type Database = {
                     user_id: string;
                     lat: number | null;
                     lng: number | null;
+                    map_url: string | null;
                 };
                 Insert: {
                     created_at?: string | null;
@@ -352,6 +353,7 @@ export type Database = {
                     user_id?: string;
                     lat?: number | null;
                     lng?: number | null;
+                    map_url?: string | null;
                 };
                 Update: {
                     created_at?: string | null;
@@ -369,6 +371,7 @@ export type Database = {
                     user_id?: string;
                     lat?: number | null;
                     lng?: number | null;
+                    map_url?: string | null;
                 };
                 Relationships: [
                     {

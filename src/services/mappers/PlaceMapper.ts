@@ -39,6 +39,7 @@ export const toPlaceInsert = (vm: PlaceVM): PlaceRowInsert => {
         user_id: vm.user_id,
         lat: vm.lat,
         lng: vm.lng,
+        map_url: vm.map_url,
     };
 };
 
@@ -61,5 +62,6 @@ export const toPlaceUpdate = (vm: Partial<PlaceVM>): PlaceRowUpdate => {
         type: vm.type || "",
         lat: vm.lat,
         lng: vm.lng,
+        map_url: vm.map_url,
     };
 };

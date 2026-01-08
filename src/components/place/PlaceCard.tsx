@@ -141,11 +141,11 @@ const PlaceCard = ({
                     </div>
                     {!isPrinting && (
                         <a
-                            href={getMapUrl()}
+                            href={place.map_url || getMapUrl()}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-gray-400 hover:text-blue-500 transition-colors p-1"
-                            title="在 Google Maps 中查看"
+                            title="在 Maps 中查看"
                         >
                             <ExternalLink size={16} />
                         </a>

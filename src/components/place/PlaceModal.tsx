@@ -4,7 +4,7 @@ import {
     MouseEventHandler,
     useState,
 } from "react";
-import { Clock, Copy, ImageIcon, MapPin, Tag, X } from "lucide-react";
+import { Clock, Copy, ImageIcon, MapIcon, MapPin, Tag, X } from "lucide-react";
 import type { PlaceCategory, PlaceVM } from "../../models/types/PlaceTypes";
 import type { TripThemeConf } from "../../models/types/TripTypes";
 import FormModal from "../common/FormModal";
@@ -172,6 +172,22 @@ const PlaceModal = ({
                     className="w-full bg-transparent border-b border-gray-300 py-2 outline-none font-mono text-base"
                 />
             </div>
+            {/* Map Url */}
+            <div>
+                <label
+                    htmlFor="eng_name"
+                    className="block font-bold uppercase mb-1 flex items-center text-gray-500 text-xs"
+                >
+                    <MapIcon size={12} className="mr-1" /> 地圖網址
+                </label>
+                <input
+                    name="map_url"
+                    value={formData.map_url || ""}
+                    onChange={onFormInputChange}
+                    placeholder="https://..."
+                    className="w-full bg-transparent border-b border-gray-300 py-2 outline-none font-mono text-base"
+                />
+            </div>
             {/* Description */}
             <div>
                 <label
@@ -251,7 +267,7 @@ const PlaceModal = ({
                 />
             </div>
             {/* Lat and lng */}
-            <div>
+            {/* <div>
                 <label
                     htmlFor="lat"
                     className="block font-bold uppercase mb-1 flex items-center text-gray-500 text-xs"
@@ -284,7 +300,7 @@ const PlaceModal = ({
                     className="w-full bg-transparent border-b border-gray-300 py-2 outline-none font-[Noto_Sans_TC] text-base text-black"
                     placeholder="0.0"
                 />
-            </div>
+            </div> */}
         </FormModal>
     );
 };

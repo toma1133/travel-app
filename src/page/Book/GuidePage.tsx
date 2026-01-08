@@ -58,6 +58,7 @@ const GuidePage = ({ isPrinting }: CoverPageProps) => {
             updated_at: "",
             lat: 23.973875,
             lng: 120.982025,
+            map_url: "",
         }),
         [tripId, session]
     );
@@ -96,6 +97,96 @@ const GuidePage = ({ isPrinting }: CoverPageProps) => {
 
     const mutatingCount = useIsMutating({ mutationKey: ["place"] });
 
+    const parseUrl = (url: string) => {
+        if (!url.trim()) return null;
+
+        try {
+            // 1. Apple Maps 解析
+            if (url.includes("maps.apple.com")) {
+                let urlObj;
+                try {
+                    urlObj = new URL(url);
+                } catch (e) {
+                    return null;
+                }
+
+                const params = new URLSearchParams(urlObj.search);
+                // Apple Maps 通常使用 'coordinate' 或 'll'
+                const coordinate = params.get("coordinate") || params.get("ll");
+
+                if (coordinate) {
+                    const [lat, lng] = coordinate.split(",");
+
+                    if (lat && lng) {
+                        return {
+                            source: "Apple Maps",
+                            lat: +lat.trim(),
+                            lng: +lng.trim(),
+                            originalUrl: url,
+                        };
+                    }
+                }
+
+                return null;
+            }
+
+            // 2. Google Maps 解析
+            if (url.includes("google") && url.includes("maps")) {
+                // 優先順序 A: 視窗中心點 (@lat,lng) - 使用者範例 1 的情況
+                // Regex: 尋找 @ 之後的數字, 逗號, 數字
+                const atRegex = /@(-?\d+\.\d+),(-?\d+\.\d+)/;
+                const atMatch = url.match(atRegex);
+
+                if (atMatch) {
+                    return {
+                        source: "Google Maps",
+                        lat: +atMatch[1],
+                        lng: +atMatch[2],
+                        originalUrl: url,
+                    };
+                }
+
+                // 優先順序 B: 圖釘資料 (!3d...!4d)
+                // 有時候分享的連結沒有 @，但有 data 參數 (!3d瑋度!4d經度)
+                const latPinRegex = /!3d(-?\d+\.\d+)/;
+                const lngPinRegex = /!4d(-?\d+\.\d+)/;
+
+                const latMatch = url.match(latPinRegex);
+                const lngMatch = url.match(lngPinRegex);
+
+                if (latMatch && lngMatch) {
+                    return {
+                        source: "Google Maps",
+                        lat: +latMatch[1],
+                        lng: +lngMatch[2],
+                        originalUrl: url,
+                    };
+                }
+
+                // 優先順序 C: 搜尋參數 (?q=lat,lng)
+                const urlObj = new URL(url);
+                const q = urlObj.searchParams.get("q");
+
+                if (q && q.includes(",")) {
+                    const [lat, lng] = q.split(",");
+
+                    if (!isNaN(parseFloat(lat)) && !isNaN(parseFloat(lng))) {
+                        return {
+                            source: "Google Maps",
+                            lat: +lat.trim(),
+                            lng: +lng.trim(),
+                            originalUrl: url,
+                        };
+                    }
+                }
+
+                return null;
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
     useEffect(() => {
         let timer: number | undefined;
         const shouldShow = isLoading || anyPending || mutatingCount > 0;
@@ -130,11 +221,18 @@ const GuidePage = ({ isPrinting }: CoverPageProps) => {
                 },
             };
             setFormPlace(newFormPlace);
-        } else if (name === "lat" || name === "lng") {
-            setFormPlace((prev) => ({
-                ...prev,
-                [name]: value === "" ? 0 : +value,
-            }));
+        } else if (name === "map_url") {
+            setFormPlace((prev) => ({ ...prev, [name]: value }));
+
+            const parseResult = parseUrl(value);
+
+            if (parseResult) {
+                setFormPlace((prev) => ({
+                    ...prev,
+                    lat: parseResult.lat,
+                    lng: parseResult.lng,
+                }));
+            }
         } else {
             setFormPlace((prev) => ({ ...prev, [name]: value }));
         }
@@ -173,6 +271,7 @@ const GuidePage = ({ isPrinting }: CoverPageProps) => {
                 });
             } else {
                 await update.mutateAsync(placeData);
+                console.info(placeData);
             }
             setFormPlace(initialPlaceState);
             setIsModalOpen(false);
