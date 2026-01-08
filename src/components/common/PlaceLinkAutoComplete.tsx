@@ -126,7 +126,7 @@ const PlaceLinkAutocomplete: React.FC<PlaceLinkAutocompleteProps> = ({
             <div className="relative">
                 <input
                     name={name}
-                    value={searchTerm}
+                    value={value}
                     onChange={handleInputChange}
                     onFocus={() => setIsOpen(true)}
                     placeholder="搜尋地點名稱..."

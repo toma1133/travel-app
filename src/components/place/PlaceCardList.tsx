@@ -19,7 +19,15 @@ const PlaceCardList = ({
     onEditBtnClick,
     onTagBtnClick,
 }: PlaceCardListProps) => (
-    <div className="w-full space-y-6 print:space-y-4">
+    <div 
+        className={`
+            w-full 
+            /* 螢幕模式: 垂直間距 */
+            space-y-6 
+            /* 列印模式: 移除間距，改用分隔線，看起來像列表 */
+            print:space-y-0 print:divide-y print:divide-gray-200
+        `}
+    >
         {Array.isArray(places) ? (
             places.map((place) => (
                 <PlaceCard
@@ -34,7 +42,7 @@ const PlaceCardList = ({
                 />
             ))
         ) : (
-            <div className="text-center py-10 text-gray-400 text-sm">
+            <div className="text-center py-10 text-gray-400 text-sm print:hidden">
                 此分類尚無地點，點擊右上角新增。
             </div>
         )}

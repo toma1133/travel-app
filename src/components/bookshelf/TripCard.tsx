@@ -1,6 +1,6 @@
 import { useState } from "react";
+import { Pencil, Printer, Trash2, User } from "lucide-react";
 import type { TripVM } from "../../models/types/TripTypes";
-import { Pencil, Trash2, User } from "lucide-react";
 
 type TripCardProps = {
     trip: TripVM;
@@ -66,7 +66,7 @@ const TripCard = ({
                                     : "opacity-0 group-hover:opacity-100"
                             }`}
                     >
-                        {/* <button
+                        <button
                             type="button"
                             onClick={(e) => {
                                 e.stopPropagation();
@@ -76,7 +76,7 @@ const TripCard = ({
                             title="列印"
                         >
                             <Printer size={14} />
-                        </button> */}
+                        </button>
                         {userId === trip.user_id && (
                             <button
                                 type="button"

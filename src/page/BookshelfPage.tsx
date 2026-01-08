@@ -219,10 +219,6 @@ const BookshelfPage = () => {
         setIsPrintMode(true);
     };
 
-    if (isPrintMode) {
-        return <PrintableFullPage />;
-    }
-
     // Trip Modal
     const [isTripModalOpen, setIsTripModalOpen] = useState(false);
     const initialTripState: TripVM = useMemo(
@@ -379,6 +375,10 @@ const BookshelfPage = () => {
         setDeleteType("");
         setDeleteKey("");
     };
+
+    if (isPrintMode) {
+        return <PrintableFullPage tripData={trip} />;
+    }
 
     return (
         <div className="flex flex-col pt-12 min-h-0">

@@ -46,10 +46,13 @@ const ProtectedLayout = ({ isOffline }: ProtectedLayoutProps) => {
 
     return (
         <div
-            className={`h-screen w-full bg-[#F9F8F6] font-[Noto_Sans_TC] text-gray-500 overflow-hidden flex flex-col mx-auto max-w-md shadow-2xl relative print:hidden`}
+            className={`
+                h-screen w-full bg-[#F9F8F6] font-[Noto_Sans_TC] text-gray-500 overflow-hidden flex flex-col 
+                mx-auto max-w-md shadow-2xl relative print:h-auto print:w-full print:max-w-none 
+                print:shadow-none print:overflow-visible print:bg-white`}
         >
             {isPageLoading && <LoadingMask />}
-            <nav className="w-full shrink-0 flex justify-end items-end px-6 py-4 pb-3 absolute top-0 z-20">
+            <nav className="w-full shrink-0 flex justify-end items-end px-6 py-4 pb-3 absolute top-0 z-20 print:hidden">
                 {isDisplayBackBtn && (
                     <button
                         type="button"

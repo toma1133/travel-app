@@ -5,26 +5,31 @@ import { ListIcon, MapIcon, Plus } from "lucide-react";
 import useAuth from "../../hooks/UseAuth";
 import usePlaces from "../../hooks/place/UsePlaces";
 import usePlaceMutations from "../../hooks/place/UsePlaceMutations";
-import BookLayoutContextType from "../../models/types/BookLayoutContextTypes";
-import LayoutContextType from "../../models/types/LayoutContextTypes";
-import { PlaceCategory, PlaceVM } from "../../models/types/PlaceTypes";
 import SectionHeader from "../../components/common/SectionHeader";
 import DeleteModal from "../../components/common/DeleteModal";
 import PlaceModal from "../../components/place/PlaceModal";
 import PlaceFilter from "../../components/place/PlaceFilter";
 import PlaceCardList from "../../components/place/PlaceCardList";
 import PlaceMapView from "../../components/place/PlaceMapView";
+import BookLayoutContextType from "../../models/types/BookLayoutContextTypes";
+import LayoutContextType from "../../models/types/LayoutContextTypes";
+import type { PlaceCategory, PlaceVM } from "../../models/types/PlaceTypes";
+import type { TripVM } from "../../models/types/TripTypes";
 
 type CoverPageProps = {
     isPrinting?: boolean;
+    tripDataOverride?: TripVM;
+    tripIdOverride?: string;
 };
 
-const GuidePage = ({ isPrinting }: CoverPageProps) => {
+const GuidePage = ({ isPrinting, tripDataOverride, tripIdOverride }: CoverPageProps) => {
     const { session } = useAuth();
-    const { id: tripId } = useParams<{ id: string }>();
+    const { id: paramsId } = useParams<{ id: string }>();
+    const tripId = tripIdOverride || paramsId;
     const { data: places, isLoading, error } = usePlaces(tripId);
     const { insert, update, remove, anyPending } = usePlaceMutations();
-    const { tripData } = useOutletContext<BookLayoutContextType>();
+    const contextData = useOutletContext<BookLayoutContextType | null>();
+    const tripData = tripDataOverride || contextData?.tripData;
     const { setIsPageLoading } = useOutletContext<LayoutContextType>();
 
     const [viewMode, setViewMode] = useState<"list" | "map">("list");
@@ -330,7 +335,7 @@ const GuidePage = ({ isPrinting }: CoverPageProps) => {
                 <SectionHeader
                     title="景點誌"
                     subtitle="Scene・Food・Shopping"
-                    theme={tripData?.theme_config}
+                    theme={tripData?.theme_config!}
                     rightAction={
                         <div className="flex justify-center items-center gap-4">
                             <button
@@ -368,23 +373,23 @@ const GuidePage = ({ isPrinting }: CoverPageProps) => {
                     activeFilterId={filter}
                     placeCategories={placeCategories}
                     selectedTags={selectedTags}
-                    theme={tripData.theme_config}
+                    theme={tripData?.theme_config!}
                     onFilterBtnClick={handleFilterBtnClick}
                     onRemoveTagBtnClick={handleRemoveTag}
                 />
             )}
-            <div className="flex-1 flex flex-col px-4 items-center justify-center">
+            <div className={`flex-1 flex flex-col items-center justify-center ${ isPrinting ? "" : "px-4" }`}>
                 {viewMode === "list" ? (
                     <PlaceCardList
                         isPrinting={isPrinting}
                         places={filteredPlaces}
-                        theme={tripData.theme_config}
+                        theme={tripData?.theme_config!}
                         onDeleteBtnClick={handleOpenDeleteModal}
                         onEditBtnClick={handleOpenEditModal}
                         onTagBtnClick={handleTagClick}
                     />
                 ) : (
-                    <PlaceMapView places={filteredPlaces} trip={tripData} />
+                    <PlaceMapView places={filteredPlaces} trip={tripData!} />
                 )}
             </div>
             {isModalOpen && (
@@ -394,7 +399,7 @@ const GuidePage = ({ isPrinting }: CoverPageProps) => {
                     placeCategory={placeCategories.filter(
                         (pc) => pc.id !== "all"
                     )}
-                    theme={tripData?.theme_config}
+                    theme={tripData?.theme_config!}
                     onCloseBtnClick={handleCloseEditModal}
                     onFormInputChange={handleInputChange}
                     onFormSubmit={handleSubmit}

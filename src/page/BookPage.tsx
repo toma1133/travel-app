@@ -1,6 +1,6 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Outlet, useOutletContext, useParams } from "react-router-dom";
-import { BookOpen, Info, Map, PieChart, Sun } from "lucide-react";
+import { BookOpen, Info, Map, PieChart, Printer, Sun, X } from "lucide-react";
 import useTrip from "../hooks/trip/UseTrip";
 import LayoutContextType from "../models/types/LayoutContextTypes";
 import TabButton from "../components/common/TabButton";
@@ -11,12 +11,12 @@ const BookPage = () => {
     const { data: tripData, isLoading, error } = useTrip(tripId);
     const { setIsPageLoading } = useOutletContext<LayoutContextType>();
     const scrollContainerRef = useRef<HTMLDivElement>(null);
-
+    
     useEffect(() => {
         setIsPageLoading(isLoading);
         return () => setIsPageLoading(false);
     }, [isLoading, setIsPageLoading]);
-
+    
     return (
         <div className="w-full h-full overflow-hidden flex flex-col min-h-full">
             {tripData && (

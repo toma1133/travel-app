@@ -1,7 +1,4 @@
 import {
-    BrowserRouter,
-    Routes,
-    Route,
     Navigate,
     createBrowserRouter,
     RouterProvider,

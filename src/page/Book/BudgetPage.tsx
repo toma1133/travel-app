@@ -48,12 +48,16 @@ import type {
 
 type BudgetPageProps = {
     isPrinting?: boolean;
+    tripDataOverride?: TripVM;
+    tripIdOverride?: string;
 };
 
-const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
+const BudgetPage = ({ isPrinting, tripDataOverride, tripIdOverride }: BudgetPageProps) => {
     const { session } = useAuth();
-    const { id: tripId } = useParams<{ id: string }>();
-    const { tripData } = useOutletContext<BookLayoutContextType>();
+    const { id: paramsId } = useParams<{ id: string }>();
+    const tripId = tripIdOverride || paramsId;
+    const contextData = useOutletContext<BookLayoutContextType | null>();
+    const tripData = tripDataOverride || contextData?.tripData;
     const {
         data: budgets,
         isLoading: isBudgetsLoading,
@@ -211,7 +215,7 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
     >([]);
 
     const handleSettingModalOpenBtnClick = () => {
-        setFormSetting(tripData.settings_config);
+        setFormSetting(tripData?.settings_config!);
         setFormPaymentMethods(paymentMethods);
         setIsSettingModalOpen(true);
     };
@@ -221,7 +225,7 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
     };
 
     const handleSettingModalResetBtnClick = () => {
-        setFormSetting(tripData?.settings_config);
+        setFormSetting(tripData?.settings_config!);
         setFormPaymentMethods(paymentMethods);
     };
 
@@ -229,7 +233,7 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
         e.preventDefault();
 
         const updateTripData: TripVM = {
-            ...tripData,
+            ...tripData!,
             settings_config: formSetting,
         };
         const paymentMethodsData: PaymentMethodRow[] = [...formPaymentMethods!];
@@ -368,7 +372,7 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
             amount: 0,
             category: "food",
             created_at: null,
-            currency_code: tripData.settings_config?.localCurrency || "",
+            currency_code: tripData?.settings_config?.localCurrency || "",
             expense_date: moment().format("YYYY-MM-DD"),
             id: crypto.randomUUID(),
             payment_method_id:
@@ -592,7 +596,7 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
                 <SectionHeader
                     title="消費總覽"
                     subtitle="Spending Analysis"
-                    theme={tripData.theme_config}
+                    theme={tripData?.theme_config!}
                     rightAction={
                         <div className="flex justify-center items-center gap-4">
                             <button
@@ -642,8 +646,8 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
             <BudgetChart
                 budgetItems={filteredBudgets}
                 isPrinting={isPrinting}
-                setting={tripData.settings_config}
-                theme={tripData.theme_config}
+                setting={tripData?.settings_config!}
+                theme={tripData?.theme_config!}
                 convertToHome={convertToHome}
                 convertToLocal={convertToLocal}
                 getChartGradient={getChartGradient}
@@ -653,8 +657,8 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
                 budgetItems={filteredBudgets}
                 isPrinting={isPrinting}
                 paymentMethods={filteredPayments}
-                setting={tripData.settings_config}
-                theme={tripData.theme_config}
+                setting={tripData?.settings_config!}
+                theme={tripData?.theme_config!}
                 convertToHome={convertToHome}
             />
             <TransactionList
@@ -663,8 +667,8 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
                 isPrinting={isPrinting}
                 paymentMethods={paymentMethods}
                 session={session}
-                setting={tripData.settings_config}
-                theme={tripData.theme_config}
+                setting={tripData?.settings_config!}
+                theme={tripData?.theme_config!}
                 tripMembers={tripMembers}
                 convertToHome={convertToHome}
                 getCategoryIcon={getCategoryIcon}
@@ -675,7 +679,7 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
                 <SettingModal
                     paymentMethods={formPaymentMethods}
                     setting={formSetting}
-                    theme={tripData.theme_config}
+                    theme={tripData?.theme_config!}
                     onAddPaymentMethodBtnClick={handleAddPaymentBtnClick}
                     onCloseBtnClick={handleSettingModalCloseBtnClick}
                     onDragPaymentItem={handleDragPaymentItem}
@@ -694,8 +698,8 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
                     formData={formBudget}
                     mode={budgetModalMode}
                     paymentMethods={paymentMethods}
-                    setting={tripData.settings_config}
-                    theme={tripData.theme_config}
+                    setting={tripData?.settings_config!}
+                    theme={tripData?.theme_config!}
                     tripMembers={tripMembers}
                     onCloseBtnClick={handleCloseBudgetModalClick}
                     onDeleteBtnClick={handleOpenDeleteBudgetModal}
@@ -709,8 +713,8 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
                     budgets={budgets}
                     profiles={profiles}
                     session={session}
-                    setting={tripData.settings_config}
-                    theme={tripData.theme_config}
+                    setting={tripData?.settings_config!}
+                    theme={tripData?.theme_config!}
                     convertToHome={convertToHome}
                     convertToLocal={convertToLocal}
                     onCloseBtnClick={handleCloseSplitInfoModalClick}
@@ -721,7 +725,7 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
                     categories={budgetCategory}
                     formData={formFilter}
                     paymentMethods={paymentMethods}
-                    theme={tripData.theme_config}
+                    theme={tripData?.theme_config!}
                     onFormDataChange={handleFilterChange}
                     onCancelBtnClick={handleFilterModalCancelBtnClick}
                     onCloseBtnClick={handleCloseFilterModalClick}

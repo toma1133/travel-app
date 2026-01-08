@@ -57,7 +57,7 @@ const ItineraryList = ({
 
     return (
         <div
-            className={`space-y-4 px-4 ${isPrinting ? "print:space-y-3" : ""}`}
+            className={`space-y-4 ${isPrinting ? "print:space-y-6 print:px-0" : "px-4"}`}
         >
             {Array.isArray(itinerarys) && itinerarys.length > 0 ? (
                 itinerarys.map((itinerary, i) => (
@@ -71,7 +71,7 @@ const ItineraryList = ({
                             itinerary={itinerary}
                             theme={theme}
                             isEditing={isEditing}
-                            isExpanded={expandedDayNum === itinerary.day_number}
+                            isExpanded={isPrinting ? true : expandedDayNum === itinerary.day_number}
                             isPrinting={isPrinting}
                             onExpandedBtnToggle={() =>
                                 handleExpandedBtnClick(itinerary, i)

@@ -10,7 +10,6 @@ import useCarRentals from "../../hooks/info/UseCarRentals";
 import useCarRentalMutations from "../../hooks/info/UseCarRentalMutations";
 import useFlights from "../../hooks/info/UseFlights";
 import useFlightMutations from "../../hooks/info/UseFlightMutations";
-import usePlace from "../../hooks/place/UsePlace";
 import SectionHeader from "../../components/common/SectionHeader";
 import DeleteModal from "../../components/common/DeleteModal";
 import FlightList from "../../components/info/FlightList";
@@ -21,22 +20,26 @@ import CarRentalList from "../../components/info/CarRentalList";
 import CarRentalModal from "../../components/info/CarRentalModal";
 import PreviewPlaceModal from "../../components/itinerary/PreviewPlaceModal";
 import PlaceCard from "../../components/place/PlaceCard";
+import { placeRepo } from "../../services/repositories/PlaceRepo";
+import { toPlaceVM } from "../../services/mappers/PlaceMapper";
 import type { AccommodationRow } from "../../models/types/AccommodationTypes";
 import type { CarRentalRow } from "../../models/types/CarRentalTypes";
 import type { FlightRow } from "../../models/types/FlightTypes";
 import type BookLayoutContextType from "../../models/types/BookLayoutContextTypes";
 import type LayoutContextType from "../../models/types/LayoutContextTypes";
 import type { PlaceVM } from "../../models/types/PlaceTypes";
-import { placeRepo } from "../../services/repositories/PlaceRepo";
-import { toPlaceVM } from "../../services/mappers/PlaceMapper";
+import type { TripVM } from "../../models/types/TripTypes";
 
 type InfoPageProps = {
     isPrinting?: boolean;
+    tripDataOverride?: TripVM;
+    tripIdOverride?: string;
 };
 
-const InfoPage = ({ isPrinting }: InfoPageProps) => {
+const InfoPage = ({ isPrinting, tripDataOverride, tripIdOverride }: InfoPageProps) => {
     const { session } = useAuth();
-    const { id: tripId } = useParams<{ id: string }>();
+    const { id: paramsId } = useParams<{ id: string }>();
+    const tripId = tripIdOverride || paramsId;
     const {
         data: flights,
         isLoading: isFlightsLoading,
@@ -70,7 +73,8 @@ const InfoPage = ({ isPrinting }: InfoPageProps) => {
         remove: removeCarRental,
         anyPending: isCarRentalPending,
     } = useCarRentalMutations();
-    const { tripData } = useOutletContext<BookLayoutContextType>();
+    const contextData = useOutletContext<BookLayoutContextType | null>();
+    const tripData = tripDataOverride || contextData?.tripData;
     const { setIsPageLoading } = useOutletContext<LayoutContextType>();
 
     const [isEditing, setIsEditing] = useState(false);
@@ -444,7 +448,7 @@ const InfoPage = ({ isPrinting }: InfoPageProps) => {
                 <SectionHeader
                     title="預訂資訊"
                     subtitle="Flight・Hotel・CarRental"
-                    theme={tripData.theme_config}
+                    theme={tripData?.theme_config!}
                     rightAction={
                         <div className="flex justify-center items-center gap-4">
                             <button
@@ -498,7 +502,7 @@ const InfoPage = ({ isPrinting }: InfoPageProps) => {
                 <FlightModal
                     formData={formFlight}
                     mode={flightModalMode}
-                    theme={tripData.theme_config}
+                    theme={tripData?.theme_config!}
                     onCloseBtnClick={handleCloseFlightModal}
                     onFormInputChange={handleFlightFormInputChange}
                     onFormSubmit={handleFlightFormSubmit}
@@ -508,7 +512,7 @@ const InfoPage = ({ isPrinting }: InfoPageProps) => {
                 <AccommodationModal
                     formData={formAccommodation}
                     mode={accommodationModalMode}
-                    theme={tripData.theme_config}
+                    theme={tripData?.theme_config!}
                     onCloseBtnClick={handleCloseAccommodationModal}
                     onFormInputChange={handleAccommodationFormInputChange}
                     onFormSubmit={handleAccommodationFormSubmit}
@@ -518,7 +522,7 @@ const InfoPage = ({ isPrinting }: InfoPageProps) => {
                 <CarRentalModal
                     formData={formCarRental}
                     mode={carRentalModalMode}
-                    theme={tripData.theme_config}
+                    theme={tripData?.theme_config!}
                     onCloseBtnClick={handleCloseCarRentalModal}
                     onFormInputChange={handleCarRentalFormInputChange}
                     onFormSubmit={handleCarRentalFormSubmit}
@@ -536,7 +540,7 @@ const InfoPage = ({ isPrinting }: InfoPageProps) => {
                     onCloseBtnClick={handleClosePreviewModal}
                     children={
                         <PlaceCard
-                            theme={tripData?.theme_config}
+                            theme={tripData?.theme_config!}
                             place={place!}
                             isPrinting={false}
                             isPreview={true}

@@ -1,5 +1,5 @@
-import type { TripVM } from "../../models/types/TripTypes";
 import TripCard from "./TripCard";
+import type { TripVM } from "../../models/types/TripTypes";
 
 type TripListProps = {
     trips?: TripVM[];

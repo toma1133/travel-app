@@ -22,14 +22,18 @@ import type {
     ItineraryVM,
 } from "../../models/types/ItineraryTypes";
 import type { PlaceVM } from "../../models/types/PlaceTypes";
+import type { TripVM } from "../../models/types/TripTypes";
 
 type ItineraryPageProps = {
     isPrinting?: boolean;
+    tripDataOverride?: TripVM;
+    tripIdOverride?: string;
 };
 
-const ItineraryPage = ({ isPrinting }: ItineraryPageProps) => {
+const ItineraryPage = ({ isPrinting, tripDataOverride, tripIdOverride }: ItineraryPageProps) => {
     const { session } = useAuth();
-    const { id: tripId } = useParams<{ id: string }>();
+    const { id: paramsId } = useParams<{ id: string }>();
+    const tripId = tripIdOverride || paramsId;
     const {
         data: itinerarys,
         isLoading: isItinerarysLoading,
@@ -41,7 +45,8 @@ const ItineraryPage = ({ isPrinting }: ItineraryPageProps) => {
         remove: removeItinerary,
         anyPending: isItineraryPending,
     } = useItineraryMutations();
-    const { tripData } = useOutletContext<BookLayoutContextType>();
+    const contextData = useOutletContext<BookLayoutContextType | null>();
+    const tripData = tripDataOverride || contextData?.tripData;
     const { setIsPageLoading } = useOutletContext<LayoutContextType>();
 
     const [isEditing, setIsEditing] = useState(false);
@@ -383,7 +388,7 @@ const ItineraryPage = ({ isPrinting }: ItineraryPageProps) => {
                 <SectionHeader
                     title="旅程表"
                     subtitle="Itinerary"
-                    theme={tripData?.theme_config}
+                    theme={tripData?.theme_config!}
                     rightAction={
                         <div className="flex justify-center items-center gap-4">
                             <button
@@ -418,7 +423,7 @@ const ItineraryPage = ({ isPrinting }: ItineraryPageProps) => {
                 itinerarys={itinerarys}
                 isEditing={isEditing}
                 isPrinting={isPrinting}
-                theme={tripData?.theme_config}
+                theme={tripData?.theme_config!}
                 onAddActivityBtnClick={handleOpenCreateActivityModal}
                 onDeleteActivityBtnClick={handleOpenDeleteActivityModal}
                 onDeleteDayBtnClick={handleOpenDeleteDayModal}
@@ -430,7 +435,7 @@ const ItineraryPage = ({ isPrinting }: ItineraryPageProps) => {
                 <ItineraryDayModal
                     formData={formDay}
                     mode={dayModalMode}
-                    theme={tripData?.theme_config}
+                    theme={tripData?.theme_config!}
                     onCloseBtnClick={handleCloseDayModal}
                     onFormInputChange={handleDayInputChange}
                     onFormSubmit={handleDaySubmit}
@@ -442,7 +447,7 @@ const ItineraryPage = ({ isPrinting }: ItineraryPageProps) => {
                     itinerary={dayItemForActivity}
                     itineraryCategory={itineraryCategory}
                     mode={activityModalMode}
-                    theme={tripData?.theme_config}
+                    theme={tripData?.theme_config!}
                     onCloseBtnClick={handleCloseActivityModal}
                     onFormInputChange={handleActivityFormInputChange}
                     onFormSubmit={handleActivitySubmit}
@@ -460,7 +465,7 @@ const ItineraryPage = ({ isPrinting }: ItineraryPageProps) => {
                     onCloseBtnClick={handleClosePreviewModal}
                     children={
                         <PlaceCard
-                            theme={tripData?.theme_config}
+                            theme={tripData?.theme_config!}
                             place={place!}
                             isPrinting={false}
                             isPreview={true}
