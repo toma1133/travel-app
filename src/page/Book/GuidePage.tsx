@@ -272,7 +272,6 @@ const GuidePage = ({ isPrinting }: CoverPageProps) => {
                 });
             } else {
                 await update.mutateAsync(placeData);
-                console.info(placeData);
             }
             setFormPlace(initialPlaceState);
             setIsModalOpen(false);
