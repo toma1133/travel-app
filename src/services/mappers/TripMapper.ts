@@ -24,6 +24,7 @@ export const toTripsVM = (rows: TripRow[]): TripVM[] => {
 
 export const toTripInsert = (vm: TripVM): TripRowInsert => {
     return {
+        id: vm.id,
         cover_image: vm.cover_image,
         description: vm.description,
         end_date: vm.end_date,

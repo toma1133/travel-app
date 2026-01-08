@@ -25,6 +25,7 @@ export type Database = {
                     trip_id: string;
                     updated_at: string | null;
                     user_id: string;
+                    link_id: string;
                 };
                 Insert: {
                     address?: string | null;
@@ -36,6 +37,7 @@ export type Database = {
                     trip_id: string;
                     updated_at?: string | null;
                     user_id: string;
+                    link_id?: string;
                 };
                 Update: {
                     address?: string | null;
@@ -47,6 +49,7 @@ export type Database = {
                     trip_id?: string;
                     updated_at?: string | null;
                     user_id?: string;
+                    link_id?: string;
                 };
                 Relationships: [
                     {

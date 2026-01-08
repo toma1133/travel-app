@@ -1,4 +1,4 @@
-import { Calendar, MapPin, Pencil, Trash2 } from "lucide-react";
+import { BookOpen, Calendar, MapPin, Pencil, Trash2 } from "lucide-react";
 import type { AccommodationRow } from "../../models/types/AccommodationTypes";
 
 type AccommodationRecordProps = {
@@ -8,6 +8,7 @@ type AccommodationRecordProps = {
     isPrinting?: boolean;
     onDeleteBtnClick: (accommodation: AccommodationRow) => void;
     onEditBtnClick: (accommodation: AccommodationRow) => void;
+    onViewBtnClick: (linkId: string) => void;
 };
 
 const AccommodationRecord = ({
@@ -17,6 +18,7 @@ const AccommodationRecord = ({
     isPrinting,
     onDeleteBtnClick,
     onEditBtnClick,
+    onViewBtnClick,
 }: AccommodationRecordProps) => {
     return (
         <div
@@ -40,26 +42,42 @@ const AccommodationRecord = ({
                     <span className="">{accommodation.address}</span>
                 </div>
             </div>
-            {!isPrinting && isEditing && (
+            {!isPrinting && (
                 <div
                     className={`flex space-x-2 bg-white pr-2 transition-opacity duration-200`}
                 >
-                    <button
-                        type="button"
-                        onClick={() => onEditBtnClick(accommodation)}
-                        className="p-1 text-gray-400 hover:text-blue-500 transition-colors"
-                        title="編輯住宿"
-                    >
-                        <Pencil size={14} />
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => onDeleteBtnClick(accommodation)}
-                        className="p-1 text-gray-400 hover:text-red-500 transition-colors"
-                        title="刪除住宿"
-                    >
-                        <Trash2 size={14} />
-                    </button>
+                    {!isEditing && accommodation.link_id && (
+                        <button
+                            type="button"
+                            onClick={() =>
+                                onViewBtnClick(accommodation.link_id)
+                            }
+                            className="p-1 text-gray-400 hover:text-blue-500 transition-colors"
+                            title="View"
+                        >
+                            <BookOpen size={14} />
+                        </button>
+                    )}
+                    {isEditing && (
+                        <>
+                            <button
+                                type="button"
+                                onClick={() => onEditBtnClick(accommodation)}
+                                className="p-1 text-gray-400 hover:text-blue-500 transition-colors"
+                                title="編輯住宿"
+                            >
+                                <Pencil size={14} />
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => onDeleteBtnClick(accommodation)}
+                                className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                                title="刪除住宿"
+                            >
+                                <Trash2 size={14} />
+                            </button>
+                        </>
+                    )}
                 </div>
             )}
         </div>

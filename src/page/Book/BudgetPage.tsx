@@ -23,17 +23,8 @@ import useBudgetMutations from "../../hooks/budget/UseBudgetMutations";
 import usePaymentMethods from "../../hooks/budget/UsePaymentMethods";
 import usePaymentMethodMutations from "../../hooks/budget/UsePaymentMethodMutations";
 import useProfiles from "../../hooks/profile/UseProfiles";
+import useTripMembers from "../../hooks/tripMember/UseTripMembers";
 import useTripMutations from "../../hooks/trip/UseTripMutations";
-import type BookLayoutContextType from "../../models/types/BookLayoutContextTypes";
-import type LayoutContextType from "../../models/types/LayoutContextTypes";
-import type { BudgetRow } from "../../models/types/BudgetTypes";
-import type { PaymentMethodRow } from "../../models/types/PaymentMethodTypes";
-import type { TransactionFilterType } from "../../models/types/TransactionFilterTypes";
-import type {
-    TripSettingConf,
-    TripThemeConf,
-    TripVM,
-} from "../../models/types/TripTypes";
 import DeleteModal from "../../components/common/DeleteModal";
 import SectionHeader from "../../components/common/SectionHeader";
 import SettingModal from "../../components/budget/SettingModal";
@@ -44,6 +35,16 @@ import TransactionModal from "../../components/budget/TransactionModal";
 import TransactionFilter from "../../components/budget/TransactionFilter";
 import SplitInfoModal from "../../components/budget/SplitInfoModal";
 import TransactionFilterModal from "../../components/budget/TransactionFilterModal";
+import type BookLayoutContextType from "../../models/types/BookLayoutContextTypes";
+import type LayoutContextType from "../../models/types/LayoutContextTypes";
+import type { BudgetRow } from "../../models/types/BudgetTypes";
+import type { PaymentMethodRow } from "../../models/types/PaymentMethodTypes";
+import type { TransactionFilterType } from "../../models/types/TransactionFilterTypes";
+import type {
+    TripSettingConf,
+    TripThemeConf,
+    TripVM,
+} from "../../models/types/TripTypes";
 
 type BudgetPageProps = {
     isPrinting?: boolean;
@@ -79,6 +80,11 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
         isLoading: isProfilesLoading,
         error: profilesError,
     } = useProfiles(true);
+    const {
+        data: tripMembers,
+        isLoading: isTripMembersLoading,
+        error: tripMembersError,
+    } = useTripMembers(tripId, true);
     const { update: updateTrip, anyPending: anyTripPending } =
         useTripMutations();
     const { setIsPageLoading } = useOutletContext<LayoutContextType>();
@@ -93,6 +99,7 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
             isBudgetsLoading ||
             isPaymentMethodsLoading ||
             isProfilesLoading ||
+            isTripMembersLoading ||
             anyBudgetPending ||
             anyPaymentMethodPending ||
             anyTripPending ||
@@ -114,6 +121,7 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
         isBudgetsLoading,
         isPaymentMethodsLoading,
         isProfilesLoading,
+        isTripMembersLoading,
         anyBudgetPending,
         anyPaymentMethodPending,
         anyTripPending,
@@ -654,10 +662,10 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
                 budgetItems={filteredBudgets}
                 isPrinting={isPrinting}
                 paymentMethods={paymentMethods}
-                profiles={profiles}
                 session={session}
                 setting={tripData.settings_config}
                 theme={tripData.theme_config}
+                tripMembers={tripMembers}
                 convertToHome={convertToHome}
                 getCategoryIcon={getCategoryIcon}
                 getCategoryName={getCategoryName}
@@ -686,9 +694,9 @@ const BudgetPage = ({ isPrinting }: BudgetPageProps) => {
                     formData={formBudget}
                     mode={budgetModalMode}
                     paymentMethods={paymentMethods}
-                    profiles={profiles}
                     setting={tripData.settings_config}
                     theme={tripData.theme_config}
+                    tripMembers={tripMembers}
                     onCloseBtnClick={handleCloseBudgetModalClick}
                     onDeleteBtnClick={handleOpenDeleteBudgetModal}
                     onFormDataChange={handleBudgetFormDataChange}

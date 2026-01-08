@@ -10,11 +10,7 @@ import useCarRentals from "../../hooks/info/UseCarRentals";
 import useCarRentalMutations from "../../hooks/info/UseCarRentalMutations";
 import useFlights from "../../hooks/info/UseFlights";
 import useFlightMutations from "../../hooks/info/UseFlightMutations";
-import type { AccommodationRow } from "../../models/types/AccommodationTypes";
-import type { CarRentalRow } from "../../models/types/CarRentalTypes";
-import type { FlightRow } from "../../models/types/FlightTypes";
-import type BookLayoutContextType from "../../models/types/BookLayoutContextTypes";
-import type LayoutContextType from "../../models/types/LayoutContextTypes";
+import usePlace from "../../hooks/place/UsePlace";
 import SectionHeader from "../../components/common/SectionHeader";
 import DeleteModal from "../../components/common/DeleteModal";
 import FlightList from "../../components/info/FlightList";
@@ -23,6 +19,14 @@ import AccommodationList from "../../components/info/AccommodationList";
 import AccommodationModal from "../../components/info/AccommodationModal";
 import CarRentalList from "../../components/info/CarRentalList";
 import CarRentalModal from "../../components/info/CarRentalModal";
+import PreviewPlaceModal from "../../components/itinerary/PreviewPlaceModal";
+import PlaceCard from "../../components/place/PlaceCard";
+import type { AccommodationRow } from "../../models/types/AccommodationTypes";
+import type { CarRentalRow } from "../../models/types/CarRentalTypes";
+import type { FlightRow } from "../../models/types/FlightTypes";
+import type BookLayoutContextType from "../../models/types/BookLayoutContextTypes";
+import type LayoutContextType from "../../models/types/LayoutContextTypes";
+import type { PlaceVM } from "../../models/types/PlaceTypes";
 
 type InfoPageProps = {
     isPrinting?: boolean;
@@ -106,6 +110,31 @@ const InfoPage = ({ isPrinting }: InfoPageProps) => {
         mutatingCount,
         setIsPageLoading,
     ]);
+
+    // --- Preview Modal Handlers ---
+    const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+    const [previewPlaceId, setPreviewPlaceId] = useState<string | undefined>(
+        undefined
+    );
+    const {
+        data: place,
+        isLoading: isPlaceLoading,
+        error: placeError,
+    } = usePlace(previewPlaceId);
+
+    const handleOpenPreviewModal = (linkId: string) => {
+        setPreviewPlaceId(linkId);
+        // setIsPreviewModalOpen(true);
+    };
+
+    const handleClosePreviewModal = () => {
+        setIsPreviewModalOpen(false);
+        setPreviewPlaceId(undefined);
+    };
+
+    useEffect(() => {
+        setIsPreviewModalOpen(place! && !isPlaceLoading);
+    }, [place, isPlaceLoading]);
 
     // --- Common delete modal
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -204,6 +233,7 @@ const InfoPage = ({ isPrinting }: InfoPageProps) => {
             trip_id: tripId ?? "",
             updated_at: null,
             user_id: session ? session.user.id : "",
+            link_id: "",
         }),
         [tripId, session]
     );
@@ -456,6 +486,7 @@ const InfoPage = ({ isPrinting }: InfoPageProps) => {
                     onAddBtnClick={handleOpenCreateAccommodationModal}
                     onDeleteBtnClick={handleOpenDeleteAccommodationModal}
                     onEditBtnClick={handleOpenEditAccommodationModal}
+                    onViewBtnClick={handleOpenPreviewModal}
                 />
                 <CarRentalList
                     carRentals={carRentals}
@@ -501,6 +532,22 @@ const InfoPage = ({ isPrinting }: InfoPageProps) => {
                     deleteKey={deleteKey}
                     onCloseClick={handleCloseDeleteModal}
                     onConfirmClick={handleConfirmDelete}
+                />
+            )}
+            {isPreviewModalOpen && (
+                <PreviewPlaceModal
+                    onCloseBtnClick={handleClosePreviewModal}
+                    children={
+                        <PlaceCard
+                            theme={tripData?.theme_config}
+                            place={place!}
+                            isPrinting={false}
+                            isPreview={true}
+                            onDelete={(place: PlaceVM) => {}}
+                            onEdit={(place: PlaceVM) => {}}
+                            onTagBtnClick={(tag: string) => {}}
+                        />
+                    }
                 />
             )}
         </div>

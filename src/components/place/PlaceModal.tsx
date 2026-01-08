@@ -62,7 +62,7 @@ const PlaceModal = ({
                 >
                     類型 *
                 </label>
-                <div className="grid grid-cols-3 gap-2">
+                <div className={`grid grid-cols-${placeCategory.length} gap-2`}>
                     {placeCategory.map((type) => (
                         <label
                             key={type.id}

@@ -1,12 +1,14 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { tripMemberRepo } from "../../services/repositories/TripMemberRepo";
-import type { TripMemberRow } from "../../models/types/TripMemberTypes";
+import { toTripMembersVM } from "../../services/mappers/TripMemberMapper";
+import type { TripMemberVM } from "../../models/types/TripMemberTypes";
 
 const useTripMembers = (tripId: string | undefined, modalOpen: boolean) => {
-    return useQuery<TripMemberRow[]>({
+    return useQuery<TripMemberVM[]>({
         queryKey: ["trip_members", tripId],
         queryFn: async () => {
-            return await tripMemberRepo.list(tripId);
+            const rows = await tripMemberRepo.list(tripId);
+            return toTripMembersVM(rows);
         },
         enabled: modalOpen && !!tripId,
         staleTime: 60_000,

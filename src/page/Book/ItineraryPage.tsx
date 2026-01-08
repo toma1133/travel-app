@@ -474,6 +474,7 @@ const ItineraryPage = ({ isPrinting }: ItineraryPageProps) => {
                             isPreview={true}
                             onDelete={(place: PlaceVM) => {}}
                             onEdit={(place: PlaceVM) => {}}
+                            onTagBtnClick={(tag: string) => {}}
                         />
                     }
                 />

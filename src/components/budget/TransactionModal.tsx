@@ -1,13 +1,13 @@
 import { ChangeEventHandler, FormEventHandler, MouseEventHandler } from "react";
 import { Banknote, CreditCard, LucideIcon } from "lucide-react";
+import FormModal from "../common/FormModal";
 import type { BudgetRow } from "../../models/types/BudgetTypes";
 import type { PaymentMethodRow } from "../../models/types/PaymentMethodTypes";
-import type { ProfileRow } from "../../models/types/ProfileTypes";
 import type {
     TripSettingConf,
     TripThemeConf,
 } from "../../models/types/TripTypes";
-import FormModal from "../common/FormModal";
+import type { TripMemberVM } from "../../models/types/TripMemberTypes";
 
 type TransactionModalProps = {
     categories: {
@@ -18,9 +18,9 @@ type TransactionModalProps = {
     formData: BudgetRow;
     mode: string;
     paymentMethods?: PaymentMethodRow[];
-    profiles?: ProfileRow[];
     setting: TripSettingConf | null;
     theme: TripThemeConf | null;
+    tripMembers?: TripMemberVM[];
     onCloseBtnClick: MouseEventHandler<HTMLButtonElement>;
     onDeleteBtnClick: (budgetItem: BudgetRow) => void;
     onFormDataChange: (name: string, value?: string | number) => void;
@@ -33,9 +33,9 @@ const TransactionModal = ({
     formData,
     mode,
     paymentMethods,
-    profiles,
     setting,
     theme,
+    tripMembers,
     onCloseBtnClick,
     onDeleteBtnClick,
     onFormDataChange,
@@ -182,14 +182,17 @@ const TransactionModal = ({
                     </span>
                 </label>
                 <div className="flex flex-wrap gap-2">
-                    {Array.isArray(profiles) &&
-                        profiles
+                    {Array.isArray(tripMembers) &&
+                        tripMembers
                             .filter(
-                                (profile) => profile.id !== formData.user_id
+                                (tripMember) =>
+                                    tripMember.user_id !== formData.user_id
                             )
-                            .map((profile, i) => {
+                            .map((tripMember, i) => {
                                 const isSelected =
-                                    formData.split_with?.includes(profile.id);
+                                    formData.split_with?.includes(
+                                        tripMember.user_id
+                                    );
 
                                 return (
                                     <button
@@ -198,7 +201,7 @@ const TransactionModal = ({
                                         onClick={() =>
                                             onFormDataChange(
                                                 "split_with",
-                                                profile.id
+                                                tripMember.user_id
                                             )
                                         }
                                         className={`px-4 py-2 rounded-full text-sm font-bold transition-all border border-indigo-100 ${
@@ -207,7 +210,7 @@ const TransactionModal = ({
                                                 : "bg-white text-indigo-400"
                                         }`}
                                     >
-                                        {profile.username}
+                                        {tripMember.profiles?.username}
                                     </button>
                                 );
                             })}

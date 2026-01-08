@@ -58,7 +58,13 @@ const BookshelfPage = () => {
     const navigate = useNavigate();
 
     const mutatingCount = useIsMutating({
-        mutationKey: ["profiles", "trip", "trip_members"],
+        mutationKey: [
+            "profiles",
+            "trips",
+            "trip",
+            "trip_members",
+            "trip_member",
+        ],
     });
 
     useEffect(() => {
@@ -318,9 +324,16 @@ const BookshelfPage = () => {
 
         try {
             if (tripModalMode === "create") {
+                var tripId = crypto.randomUUID();
+
                 await insertTrip.mutateAsync({
                     ...tripData,
-                    id: crypto.randomUUID(),
+                    id: tripId,
+                });
+                // Insert creator as trip member
+                await insertTripMember.mutateAsync({
+                    trip_id: tripId,
+                    user_id: session?.user.id!,
                 });
             } else {
                 await updateTrip.mutateAsync(tripData);

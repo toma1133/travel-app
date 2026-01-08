@@ -10,6 +10,7 @@ type AccommodationListProps = {
     onAddBtnClick: MouseEventHandler<HTMLButtonElement>;
     onDeleteBtnClick: (accommodation: AccommodationRow) => void;
     onEditBtnClick: (accommodation: AccommodationRow) => void;
+    onViewBtnClick: (linkId: string) => void;
 };
 
 const AccommodationList = ({
@@ -19,6 +20,7 @@ const AccommodationList = ({
     onAddBtnClick,
     onDeleteBtnClick,
     onEditBtnClick,
+    onViewBtnClick,
 }: AccommodationListProps) => {
     return (
         <div className="bg-white p-5 rounded-lg shadow-sm break-inside-avoid-page print:shadow-none print:border print:border-gray-300 print:p-4">
@@ -57,6 +59,7 @@ const AccommodationList = ({
                         isPrinting={isPrinting}
                         onDeleteBtnClick={onDeleteBtnClick}
                         onEditBtnClick={onEditBtnClick}
+                        onViewBtnClick={onViewBtnClick}
                     />
                 ))}
         </div>

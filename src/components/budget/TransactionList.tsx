@@ -1,14 +1,14 @@
 import { JSX } from "react";
 import { Session } from "@supabase/supabase-js";
 import { LucideIcon } from "lucide-react";
+import TransactionListItem from "./TransactionListItem";
 import type { BudgetRow } from "../../models/types/BudgetTypes";
 import type { PaymentMethodRow } from "../../models/types/PaymentMethodTypes";
-import type { ProfileRow } from "../../models/types/ProfileTypes";
 import type {
     TripSettingConf,
     TripThemeConf,
 } from "../../models/types/TripTypes";
-import TransactionListItem from "./TransactionListItem";
+import type { TripMemberVM } from "../../models/types/TripMemberTypes";
 
 type TransactionListProps = {
     budgetItems?: BudgetRow[];
@@ -19,10 +19,10 @@ type TransactionListProps = {
     }[];
     isPrinting?: boolean;
     paymentMethods?: PaymentMethodRow[];
-    profiles?: ProfileRow[];
     session: Session | null;
     setting: TripSettingConf | null;
     theme: TripThemeConf | null;
+    tripMembers?: TripMemberVM[];
     convertToHome: (
         amount: number,
         currency: string,
@@ -38,10 +38,10 @@ const TransactionList = ({
     budgetItems,
     isPrinting,
     paymentMethods,
-    profiles,
     session,
     setting,
     theme,
+    tripMembers,
     convertToHome,
     getCategoryIcon,
     getCategoryName,
@@ -81,10 +81,10 @@ const TransactionList = ({
                                 key={i}
                                 budgetItem={budgetItem}
                                 paymentMethodName={pmName}
-                                profiles={profiles}
                                 session={session}
                                 setting={setting}
                                 theme={theme}
+                                tripMembers={tripMembers}
                                 convertToHome={convertToHome}
                                 getCategoryIcon={getCategoryIcon}
                                 getCategoryName={getCategoryName}

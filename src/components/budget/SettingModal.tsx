@@ -1,5 +1,4 @@
 import { MouseEventHandler, FormEventHandler, ChangeEventHandler } from "react";
-import { RefreshCw, X } from "lucide-react";
 import { DragEndEvent } from "@dnd-kit/core";
 import type { PaymentMethodRow } from "../../models/types/PaymentMethodTypes";
 import type {
@@ -50,6 +49,7 @@ const SettingModal = ({
             modalTitle={"系統設定"}
             modalSaveTitle={"儲存變更"}
             theme={theme}
+            onCancelBtnClick={onCloseBtnClick}
             onCloseBtnClick={onCloseBtnClick}
             onSubmit={onFormSubmit}
         >

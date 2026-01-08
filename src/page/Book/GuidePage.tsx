@@ -33,6 +33,7 @@ const GuidePage = ({ isPrinting }: CoverPageProps) => {
         { id: "sight", label: "觀光" },
         { id: "food", label: "美食" },
         { id: "shopping", label: "購物" },
+        { id: "hotel", label: "住宿" },
     ]);
     const [filter, setFilter] = useState("all");
     const [filteredPlaces, setFilteredPlaces] = useState<PlaceVM[] | null>(

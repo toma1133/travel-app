@@ -38,6 +38,8 @@ const PlaceCard = ({
                 return "Gourmet";
             case "shopping":
                 return "Shop";
+            case "hotel":
+                return "Hotel";
             default:
                 return "Other";
         }
@@ -139,7 +141,7 @@ const PlaceCard = ({
                             {place.eng_name}
                         </p>
                     </div>
-                    {!isPrinting && (
+                    {!isPrinting && !isPreview && (
                         <a
                             href={place.map_url || getMapUrl()}
                             target="_blank"

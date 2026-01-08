@@ -1,22 +1,22 @@
 import { JSX } from "react";
+import { Users } from "lucide-react";
 import { Session } from "@supabase/supabase-js";
 import moment from "moment";
 import type { BudgetRow } from "../../models/types/BudgetTypes";
-import type { ProfileRow } from "../../models/types/ProfileTypes";
 import type {
     TripSettingConf,
     TripThemeConf,
 } from "../../models/types/TripTypes";
-import { Users } from "lucide-react";
+import type { TripMemberVM } from "../../models/types/TripMemberTypes";
 
 type TransactionListItemProps = {
     budgetItem: BudgetRow;
     isPrinting?: boolean;
     paymentMethodName: string;
-    profiles?: ProfileRow[];
-    theme: TripThemeConf | null;
     session: Session | null;
     setting: TripSettingConf | null;
+    theme: TripThemeConf | null;
+    tripMembers?: TripMemberVM[];
     convertToHome: (
         amount: number,
         currency: string,
@@ -32,10 +32,10 @@ const TransactionListItem = ({
     budgetItem,
     isPrinting,
     paymentMethodName,
-    profiles,
-    theme,
     session,
     setting,
+    theme,
+    tripMembers,
     convertToHome,
     getCategoryIcon,
     getCategoryName,
@@ -44,7 +44,8 @@ const TransactionListItem = ({
     const isCreator = budgetItem.user_id === session?.user.id;
     const members = [budgetItem.user_id, ...(budgetItem?.split_with ?? [])].map(
         (userId) =>
-            profiles?.filter((p) => p.id === userId)[0].username ?? userId
+            tripMembers?.filter((tm) => tm.user_id === userId)[0]?.profiles
+                ?.username ?? userId
     );
     const perPerson = members
         ? budgetItem.amount / members.length

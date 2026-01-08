@@ -3,6 +3,7 @@ import {
     TripMemberRow,
     TripMemberRowInsert,
     TripMemberRowUpdate,
+    TripMemberVM,
 } from "../../models/types/TripMemberTypes";
 import IRepo from "./IRepo";
 
@@ -22,15 +23,21 @@ export const tripMemberRepo: IRepo<
         if (error) throw error;
         return data ?? null;
     },
-    async list(parentId: string | undefined): Promise<TripMemberRow[]> {
+    async list(parentId: string | undefined): Promise<TripMemberVM[]> {
         if (parentId === undefined) return [];
         const { data, error } = await supabaseClient
             .from("trip_members")
-            .select("*")
+            .select(`
+                *,
+                profiles (
+                    username,
+                    email
+                )
+            `)
             .eq("trip_id", parentId)
             .order("joined_at", { ascending: true });
         if (error) throw error;
-        return data ?? [];
+        return (data as unknown as TripMemberVM[]) ?? [];
     },
     async insert(payload: TripMemberRowInsert): Promise<TripMemberRow | null> {
         const { data, error } = await supabaseClient
