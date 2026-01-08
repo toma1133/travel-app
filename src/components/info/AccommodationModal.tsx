@@ -3,6 +3,7 @@ import { ChangeEventHandler, FormEventHandler, MouseEventHandler } from "react";
 import FormModal from "../common/FormModal";
 import type { AccommodationRow } from "../../models/types/AccommodationTypes";
 import type { TripThemeConf } from "../../models/types/TripTypes";
+import PlaceLinkAutocomplete from "../common/PlaceLinkAutoComplete";
 
 type AccommodationModalProps = {
     formData: AccommodationRow;
@@ -107,16 +108,12 @@ const AccommodationModal = ({
                 >
                     <Tag size={12} className="mr-1" /> 連結地點 ID
                 </label>
-                <input
+                <PlaceLinkAutocomplete
+                    tripId={formData.trip_id}
                     name="link_id"
                     value={formData.link_id}
                     onChange={onFormInputChange}
-                    placeholder="例如: new-1701234567890"
-                    className="w-full bg-transparent border-b border-gray-300 py-2 outline-none font-mono text-base resize-none"
                 />
-                <p className="text-xs text-gray-400 mt-1">
-                    請輸入景點誌中地點卡片的 ID, 用於快速導航。
-                </p>
             </div>
         </FormModal>
     );
