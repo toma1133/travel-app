@@ -28,7 +28,7 @@ const CoverPage = ({
             {/* 封面圖區域 */}
             <div
                 className={`relative w-full overflow-hidden ${
-                    isPrinting ? "h-[55%]" : "h-[65%]"
+                    isPrinting ? "h-[50%]" : "h-[65%]"
                 }`}
             >
                 {tripData?.cover_image && (
@@ -60,7 +60,7 @@ const CoverPage = ({
                         flex flex-col relative h-full w-full
                         ${
                             isPrinting
-                                ? "bg-white pt-8 text-center" // 列印: 移除 p-8 改用 pt-8，避免過多留白
+                                ? "bg-white pt-6 text-center"
                                 : "bg-[#F9F8F6] p-8 shadow-2xl rounded-t-sm"
                         }
                     `}
@@ -68,12 +68,17 @@ const CoverPage = ({
                     {!isPrinting && (
                         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-12 h-1 bg-[#8E354A]"></div>
                     )}
-                    <div className="text-center flex-1">
-                        <span
-                            className={`inline-block px-3 py-1 ${tripData?.theme_config?.accent} text-white text-[10px] tracking-widest mb-4 print:text-black print:bg-transparent print:border print:border-gray-300`}
-                        >
-                            TRAVEL ITINERARY
-                        </span>
+
+                    {/* 加入 flex-col justify-center 讓內容垂直置中分布 */}
+                    <div className="text-center flex-1 flex flex-col justify-center">
+                        {/* <div className="text-center flex-1"> */}
+                        <div>
+                            <span
+                                className={`inline-block px-3 py-1 ${tripData?.theme_config?.accent} text-white text-[10px] tracking-widest mb-4 print:text-black print:bg-transparent print:border print:border-gray-300`}
+                            >
+                                TRAVEL ITINERARY
+                            </span>
+                        </div>
                         <h1
                             className={`text-3xl font-[Noto_Sans_TC] font-bold ${tripData?.theme_config?.primary} mb-2 print:text-4xl print:text-black`}
                         >
@@ -86,7 +91,7 @@ const CoverPage = ({
                         </p>
                     </div>
                     {/* 日期與地點資訊 */}
-                    <div className="flex items-center justify-center space-x-6 text-xs text-gray-500 border-t border-gray-200 pt-6 mt-6 mb-6 print:text-sm print:border-gray-300">
+                    <div className="flex items-center justify-center space-x-6 text-xs text-gray-500 border-t border-gray-200 pt-4 mt-4 mb-4 print:text-sm print:border-gray-300">
                         <div className="flex items-center gap-2">
                             <Calendar size={isPrinting ? 16 : 14} />
                             <span>
@@ -100,6 +105,12 @@ const CoverPage = ({
                         {tripData?.description}
                     </p>
                 </div>
+                {isPrinting && (
+                    // [修正 4] 減少底部 padding (pb-8 -> pb-4)
+                    <div className="mt-auto pb-4 text-[10px] text-gray-400 uppercase tracking-widest text-center">
+                        Created by Trip Manager
+                    </div>
+                )}
             </div>
             <style>{`.writing-vertical { writing-mode: vertical-rl; }`}</style>
         </div>
