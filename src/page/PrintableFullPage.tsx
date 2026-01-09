@@ -84,6 +84,7 @@ const PrintableFullPage = ({
                     }
                         
                     html, body {
+                        width: 100%;
                         height: 100%;
                         overflow: visible !important;
                         margin: 0 !important;
@@ -111,7 +112,7 @@ const PrintableFullPage = ({
             <div
                 className={`
                     fixed inset-0 z-[9999] bg-gray-100 overflow-y-auto 
-                    print:static print:inset-auto print:h-auto print:overflow-visible print:block print:bg-white
+                    print:static print:inset-auto print:h-auto print:overflow-visible print:block print:bg-white print:w-full
                 `}
             >
                 {/* Loading 遮罩 */}
@@ -151,8 +152,7 @@ const PrintableFullPage = ({
                 >
                     <div
                         className={`
-                            print:block print:w-[100vw] print:h-[100vh] print:overflow-hidden print:break-after-page 
-                            print:-m-0
+                            print:block print:w-full print:aspect-[210/297] print:overflow-hidden print:break-after-page print:-m-0
                         `}
                     >
                         <CoverPage

@@ -43,7 +43,8 @@ const ItineraryList = ({
     const hasScrolledRef = useRef(false);
 
     useEffect(() => {
-        if (!Array.isArray(itinerarys) || itinerarys.length === 0) return;
+        if (isPrinting || !Array.isArray(itinerarys) || itinerarys.length === 0)
+            return;
 
         // 如果已經定位過，就不再重置 (避免切換編輯模式時亂跳)
         if (hasScrolledRef.current) return;
