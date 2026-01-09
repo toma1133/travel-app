@@ -154,7 +154,6 @@ const PrintableFullPage = ({
                     className={`
                         bg-white text-black min-h-screen w-full mx-auto 
                         max-w-[210mm] p-8 shadow-2xl my-8
-                        min-w-[700px]
                         print:shadow-none print:m-0 print:p-0 print:max-w-none print:w-full
                     `}
                 >
