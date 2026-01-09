@@ -450,8 +450,6 @@ export type Database = {
                     title: string;
                     updated_at: string | null;
                     user_id: string;
-                    lat: number | null;
-                    lng: number | null;
                 };
                 Insert: {
                     cover_image?: string | null;
@@ -466,8 +464,6 @@ export type Database = {
                     title: string;
                     updated_at?: string | null;
                     user_id: string;
-                    lat?: number | null;
-                    lng?: number | null;
                 };
                 Update: {
                     cover_image?: string | null;
@@ -482,8 +478,6 @@ export type Database = {
                     title?: string;
                     updated_at?: string | null;
                     user_id?: string;
-                    lat?: number | null;
-                    lng?: number | null;
                 };
                 Relationships: [];
             };

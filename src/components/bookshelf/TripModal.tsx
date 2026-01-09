@@ -175,41 +175,6 @@ const TripModal = ({
                     placeholder="0.2"
                 />
             </div>
-            {/* Lat and lng */}
-            <div>
-                <label
-                    htmlFor="lat"
-                    className="block font-bold uppercase mb-1 flex items-center text-gray-500 text-xs"
-                >
-                    緯度
-                </label>
-                <input
-                    type="number"
-                    step="1"
-                    name="lat"
-                    value={formData.lat!}
-                    onChange={onFormChange}
-                    className="w-full bg-transparent border-b border-gray-300 py-2 outline-none font-[Noto_Sans_TC] text-base text-black"
-                    placeholder="0.0"
-                />
-            </div>
-            <div>
-                <label
-                    htmlFor="lat"
-                    className="block font-bold uppercase mb-1 flex items-center text-gray-500 text-xs"
-                >
-                    經度
-                </label>
-                <input
-                    type="number"
-                    step="1"
-                    name="lng"
-                    value={formData.lng!}
-                    onChange={onFormChange}
-                    className="w-full bg-transparent border-b border-gray-300 py-2 outline-none font-[Noto_Sans_TC] text-base text-black"
-                    placeholder="0.0"
-                />
-            </div>
         </FormModal>
     );
 };

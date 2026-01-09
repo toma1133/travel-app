@@ -29,9 +29,10 @@ const PermissionModal = ({
             modalSaveTitle={"儲存"}
             theme={theme}
             onCloseBtnClick={onCloseBtnClick}
+            onCancelBtnClick={onCloseBtnClick}
             onSubmit={onSubmit}
         >
-            <div className="space-y-2">
+            <div className="flex flex-wrap gap-2">
                 {Array.isArray(profiles) &&
                     profiles
                         .filter((profile) => profile.id !== trip?.user_id)
