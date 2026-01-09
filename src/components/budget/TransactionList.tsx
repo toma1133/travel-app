@@ -55,11 +55,7 @@ const TransactionList = ({
                     : "mb-4 sticky top-0 z-10" // 螢幕樣式
             }`}
         >
-            <div
-                className={`w-full flex justify-between items-center py-2 ${
-                    isPrinting ? "border-b border-gray-800 mb-2" : ""
-                }`}
-            >
+            <div className={`w-full flex justify-between items-center py-2`}>
                 <h4
                     className={`text-xs font-bold uppercase tracking-widest text-gray-400`}
                 >

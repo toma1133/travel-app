@@ -202,8 +202,7 @@ const BookshelfPage = () => {
         setIsPrintMode(true);
     };
 
-    // 當列印結束（或是使用者取消）時的 callback
-    const handleAfterPrint = () => {
+    const handlePrintCloseBtn = () => {
         setIsPrintMode(false);
         setPrintTripId(undefined);
     };
@@ -373,10 +372,9 @@ const BookshelfPage = () => {
 
         return (
             <PrintableFullPage
-                // [關鍵修正 1] 加入 key，強迫 React 銷毀舊元件，防止資料殘留
                 key={printTripData.id}
                 tripData={printTripData}
-                onPrintComplete={handleAfterPrint} // 傳入 callback
+                onClose={handlePrintCloseBtn} // 傳入 callback
             />
         );
     }
