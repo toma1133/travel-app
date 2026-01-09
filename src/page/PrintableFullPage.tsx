@@ -1,6 +1,5 @@
 import { RefObject, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { useReactToPrint } from "react-to-print";
 import { useIsFetching } from "@tanstack/react-query";
 import { Loader2, Printer, X } from "lucide-react";
 import CoverPage from "./Book/CoverPage";
@@ -34,13 +33,6 @@ const PrintableFullPage = ({ tripData, onClose }: PrintableFullPageProps) => {
     const [isDataReady, setIsDataReady] = useState(false);
     const [isImagesLoaded, setIsImagesLoaded] = useState(false);
 
-    const contentRef = useRef<HTMLDivElement>(null);
-
-    const handlePrintBtnClick = useReactToPrint({
-        contentRef: contentRef,
-        documentTitle: tripData?.title || "Untitled Trip Plan",
-    });
-
     // 1. 等待 API 資料
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -68,8 +60,12 @@ const PrintableFullPage = ({ tripData, onClose }: PrintableFullPageProps) => {
         checkImages();
     }, [isDataReady]);
 
-    const isLoading = !isDataReady || !isImagesLoaded;
-
+    // 3. 觸發列印
+    useEffect(() => {
+        if (isDataReady && isImagesLoaded) {
+            window.print();
+        }
+    }, [isDataReady, isImagesLoaded]);
     // 內容 JSX
     const content = (
         <>
@@ -146,39 +142,18 @@ const PrintableFullPage = ({ tripData, onClose }: PrintableFullPageProps) => {
                         <X size={18} />
                         關閉預覽
                     </button>
-                    <button
-                        type="button"
-                        onClick={() => handlePrintBtnClick()}
-                        disabled={isLoading}
-                        className={`
-                                flex items-center gap-2 px-5 py-2 rounded-full shadow-lg transition-all font-bold text-sm text-white
-                                ${
-                                    isLoading
-                                        ? "bg-gray-400 cursor-not-allowed opacity-50"
-                                        : "bg-gray-900 hover:bg-black hover:scale-105 active:scale-95"
-                                }
-                            `}
-                    >
-                        {isLoading ? (
-                            <Loader2 className="animate-spin" size={18} />
-                        ) : (
-                            <Printer size={18} />
-                        )}
-                        列印
-                    </button>
                 </div>
 
                 {/* --- 主要內容區 (A4 預覽) --- */}
-                <div ref={contentRef} className="print:w-full">
-                    <div
-                        className={`
+                <div
+                    className={`
                             bg-white text-black min-h-screen w-full mx-auto 
                             max-w-[210mm] p-8 shadow-2xl
                             print:shadow-none print:m-0 print:p-0 print:max-w-none print:w-full
                         `}
-                    >
-                        <div
-                            className={`
+                >
+                    <div
+                        className={`
                                 w-full block relative mb-0
                                 aspect-[210/297] overflow-hidden
                                 print:aspect-auto 
@@ -187,62 +162,61 @@ const PrintableFullPage = ({ tripData, onClose }: PrintableFullPageProps) => {
                                 print:break-after-page 
                                 print:-m-0
                             `}
-                        >
-                            <CoverPage
-                                isPrinting={true}
-                                tripDataOverride={tripData}
-                                tripIdOverride={tripId}
-                            />
-                        </div>
-                        <div className="pt-8 print:pt-0 print:block page-content-wrapper print:px-8">
-                            <h3 className="text-lg font-[Noto_Sans_TC] font-bold mb-4">
-                                行程表
-                            </h3>
-                            <ItineraryPage
-                                isPrinting={true}
-                                tripDataOverride={tripData}
-                                tripIdOverride={tripId}
-                            />
-                        </div>
+                    >
+                        <CoverPage
+                            isPrinting={true}
+                            tripDataOverride={tripData}
+                            tripIdOverride={tripId}
+                        />
+                    </div>
+                    <div className="pt-8 print:pt-0 print:block page-content-wrapper print:px-8">
+                        <h3 className="text-lg font-[Noto_Sans_TC] font-bold mb-4">
+                            行程表
+                        </h3>
+                        <ItineraryPage
+                            isPrinting={true}
+                            tripDataOverride={tripData}
+                            tripIdOverride={tripId}
+                        />
+                    </div>
 
-                        <PageBreak />
+                    <PageBreak />
 
-                        <div className="pt-8 print:pt-4 print:block page-content-wrapper print:px-8">
-                            <h3 className="text-lg font-[Noto_Sans_TC] font-bold mb-4">
-                                消費總覽
-                            </h3>
-                            <BudgetPage
-                                isPrinting={true}
-                                tripDataOverride={tripData}
-                                tripIdOverride={tripId}
-                            />
-                        </div>
+                    <div className="pt-8 print:pt-4 print:block page-content-wrapper print:px-8">
+                        <h3 className="text-lg font-[Noto_Sans_TC] font-bold mb-4">
+                            消費總覽
+                        </h3>
+                        <BudgetPage
+                            isPrinting={true}
+                            tripDataOverride={tripData}
+                            tripIdOverride={tripId}
+                        />
+                    </div>
 
-                        <PageBreak />
+                    <PageBreak />
 
-                        <div className="pt-8 print:pt-4 print:block page-content-wrapper print:px-8">
-                            <h3 className="text-lg font-[Noto_Sans_TC] font-bold mb-4">
-                                景點誌
-                            </h3>
-                            <GuidePage
-                                isPrinting={true}
-                                tripDataOverride={tripData}
-                                tripIdOverride={tripId}
-                            />
-                        </div>
+                    <div className="pt-8 print:pt-4 print:block page-content-wrapper print:px-8">
+                        <h3 className="text-lg font-[Noto_Sans_TC] font-bold mb-4">
+                            景點誌
+                        </h3>
+                        <GuidePage
+                            isPrinting={true}
+                            tripDataOverride={tripData}
+                            tripIdOverride={tripId}
+                        />
+                    </div>
 
-                        <PageBreak />
+                    <PageBreak />
 
-                        <div className="pt-8 print:pt-4 print:block page-content-wrapper print:px-8">
-                            <h3 className="text-lg font-[Noto_Sans_TC] font-bold mb-4">
-                                預訂資訊
-                            </h3>
-                            <InfoPage
-                                isPrinting={true}
-                                tripDataOverride={tripData}
-                                tripIdOverride={tripId}
-                            />
-                        </div>
+                    <div className="pt-8 print:pt-4 print:block page-content-wrapper print:px-8">
+                        <h3 className="text-lg font-[Noto_Sans_TC] font-bold mb-4">
+                            預訂資訊
+                        </h3>
+                        <InfoPage
+                            isPrinting={true}
+                            tripDataOverride={tripData}
+                            tripIdOverride={tripId}
+                        />
                     </div>
                 </div>
             </div>
