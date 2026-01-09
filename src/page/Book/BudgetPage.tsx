@@ -586,7 +586,7 @@ const BudgetPage = ({ isPrinting, tripDataOverride, tripIdOverride }: BudgetPage
         <div
             className={`min-h-full font-[Noto_Sans_TC] text-gray-800 ${
                 isPrinting
-                    ? "p-4 h-auto min-h-[50vh] break-after-page overflow-visible print:bg-white"
+                    ? "h-auto min-h-[50vh] break-after-page overflow-visible print:bg-white"
                     : `${
                           tripData?.theme_config?.bg || "bg-gray-100"
                       } py-12 pb-24`

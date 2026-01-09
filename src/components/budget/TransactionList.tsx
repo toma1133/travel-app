@@ -49,27 +49,29 @@ const TransactionList = ({
 }: TransactionListProps) => {
     return (
         <div
-            className={`flex flex-col px-4 justify-center items-center ${
+            className={`flex flex-col justify-center items-center ${
                 isPrinting
-                    ? "border-b-2 border-gray-900 pb-2 mb-0"
-                    : "mb-4 sticky top-0 z-10"
+                    ? "pb-2 mb-0 px-0 mt-4" // 列印樣式
+                    : "px-4 mb-4 sticky top-0 z-10" // 螢幕樣式
             }`}
         >
-            <div className="w-full flex justify-between items-center py-2">
-                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest">
-                    交易紀錄
+            <div className="w-full flex justify-between items-center py-2 print:border-b print:border-gray-800 print:mb-2">
+                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest print:text-black">
+                    交易紀錄 (Transactions)
                 </h4>
-                <span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold">
+                <span className={`text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold ${isPrinting ? "print:hidden" : ""}`}>
                     共 {budgetItems?.length} 筆
                 </span>
             </div>
             <div
                 className={`w-full ${
                     isPrinting
-                        ? "text-xs divide-y divide-gray-200 border-b border-gray-200"
+                        ? "text-xs divide-y divide-gray-300 border-b border-gray-300" // 列印用深一點的分隔線
                         : "space-y-2"
                 }`}
             >
+                {/* ... map Items ... */}
+                {/* Item 傳遞 isPrinting props，TransactionListItem 需要正確接收 */}
                 {Array.isArray(budgetItems) &&
                     budgetItems.map((budgetItem, i) => {
                         const pmName =
@@ -80,6 +82,7 @@ const TransactionList = ({
                             <TransactionListItem
                                 key={i}
                                 budgetItem={budgetItem}
+                                isPrinting={isPrinting}
                                 paymentMethodName={pmName}
                                 session={session}
                                 setting={setting}

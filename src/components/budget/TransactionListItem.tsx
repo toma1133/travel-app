@@ -52,14 +52,14 @@ const TransactionListItem = ({
         : budgetItem.amount;
 
     return (
-        <button
-            type="button"
+        <div
+            role="button"
             onClick={() =>
                 isPrinting || !isCreator ? null : onEditBtnClick(budgetItem)
             }
-            className={`w-full bg-white flex justify-between items-start text-left ${
+            className={`w-full bg-white flex justify-between items-start text-left break-inside-avoid-page ${
                 isPrinting
-                    ? "p-2 border-b border-gray-200"
+                    ? "py-2 border-b border-gray-200"
                     : "group items-center p-4 border border-gray-100 hover:border-gray-400 transition-colors rounded-lg shadow-sm"
             }`}
             title={isCreator ? "Edit" : "View"}
@@ -78,13 +78,8 @@ const TransactionListItem = ({
                     </div>
                 )}
                 <div className={`${isPrinting ? "flex-1" : ""}`}>
-                    <div
-                        className={`text-sm font-bold text-gray-900 ${
-                            !isPrinting
-                                ? "group-hover:text-[#9F1239] transition-colors "
-                                : ""
-                        }`}
-                    >
+                    {/* Title */}
+                    <div className={`text-sm font-bold text-gray-900 ${!isPrinting ? "group-hover:text-[#9F1239] transition-colors" : "print:text-black"}`}>
                         <div className="flex flex-row items-center">
                             <span className="mr-2">{budgetItem.title}</span>
                             {/* {isCreator ? (
@@ -98,56 +93,49 @@ const TransactionListItem = ({
                             )} */}
                         </div>
                     </div>
-                    {/* Sub details row */}
-                    <div className="text-[10px] text-gray-400 mt-0.5 flex items-center print:text-gray-600 print:mt-0">
-                        <span
-                            className={`mr-2 ${
-                                isPrinting ? "font-semibold text-gray-500" : ""
-                            }`}
-                        >
+                    {/* Meta info */}
+                    <div className="text-[10px] text-gray-400 mt-0.5 flex items-center print:text-gray-600 print:mt-1">
+                        <span className={`mr-2 ${isPrinting ? "font-semibold text-gray-700" : ""}`}>
                             {getCategoryName(budgetItem.category)}
                         </span>
-                        <span className="mr-2">|</span>
-                        <span className="print:text-gray-500">
-                            {moment(budgetItem.expense_date).format("MM-DD")}
+                        <span className="mr-2 text-gray-300">|</span>
+                        <span className="print:text-black font-mono">
+                            {moment(budgetItem.expense_date).format("MM/DD")}
                         </span>
-                        <span
-                            className={`${
-                                isPrinting
-                                    ? "hidden"
-                                    : "bg-gray-100 px-1.5 rounded text-gray-500 ml-2"
-                            }`}
-                        >
+                        {/* 螢幕顯示代付者標籤 */}
+                        <span className={`${isPrinting ? "hidden" : "bg-gray-100 px-1.5 rounded text-gray-500 ml-2"}`}>
                             {isCreator
                                 ? paymentMethodName
                                 : `由 ${members[0]} 代付`}
                         </span>
-                    </div>{" "}
-                    {budgetItem.split_with &&
-                        budgetItem.split_with.length > 0 && (
-                            <div className="text-[10px] text-slate-400 flex items-center gap-1">
-                                <Users className="w-3 h-3" /> 成員：
-                                {members.join(", ")}
-                            </div>
-                        )}
+                    </div>
+                    {/* 分帳成員 (列印時可視需求決定是否顯示詳細名單，太長會佔空間) */}
+                    {budgetItem.split_with && budgetItem.split_with.length > 0 && (
+                        <div className="text-[10px] text-slate-400 flex items-center gap-1 print:text-gray-500 print:mt-0.5">
+                            <Users className="w-3 h-3 print:hidden" /> 
+                            <span className="print:hidden">成員：</span> {/* 列印時也許只顯示 (3人) 之類的簡稱 */}
+                            <span className="print:italic">{members.join(", ")}</span>
+                        </div>
+                    )}
+                    {/* 支付方式 (列印顯示) */}
                     {isPrinting && (
-                        <div className="text-[10px] text-gray-500 mt-1">
-                            支付方式: {paymentMethodName}
+                        <div className="text-[10px] text-gray-500 mt-0.5 italic">
+                             {isCreator
+                                ? paymentMethodName
+                                : `由 ${members[0]} 代付`}
                         </div>
                     )}
                 </div>
             </div>
             {/* Amount Column */}
             <div className={`text-right`}>
-                <div
-                    className={`text-sm font-bold ${theme?.mono} text-gray-900`}
-                >
+                <div className={`text-sm font-bold ${theme?.mono} text-gray-900 print:text-black`}>
                     {budgetItem.currency_code}{" "}
                     {budgetItem.amount.toLocaleString()}
                 </div>
-                {/* Home Currency Conversion (Always visible in print for calculation) */}
+                {/* 匯率換算 (列印時非常重要) */}
                 {budgetItem.currency_code !== setting?.homeCurrency && (
-                    <div className="text-[10px] text-gray-400 font-mono">
+                    <div className="text-[10px] text-gray-400 font-mono print:text-gray-600">
                         ≈ {setting?.homeCurrency}{" "}
                         {convertToHome(
                             budgetItem.amount,
@@ -177,7 +165,7 @@ const TransactionListItem = ({
                     </div>
                 )}
             </div>
-        </button>
+        </div>
     );
 };
 

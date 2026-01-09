@@ -79,8 +79,9 @@ const BudgetChart = ({
     }, [budgetItems]);
 
     return (
-        <div className="px-4 mt-6 mb-8">
-            <div className="bg-slate-900 rounded-lg p-8 text-white shadow-2xl shadow-slate-200 relative overflow-hidden">
+        <div className={`px-4 mt-6 mb-8 ${isPrinting ? "print:px-0 print:mb-4" : ""}`}>
+            {/* 螢幕顯示: 原本的深色卡片 (加 print:hidden) */}
+            <div className="bg-slate-900 rounded-lg p-8 text-white shadow-2xl shadow-slate-200 relative overflow-hidden print:hidden">
                 <div className="relative z-10 flex justify-between items-start">
                     <div>
                         <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-2">
@@ -139,6 +140,54 @@ const BudgetChart = ({
                                     </div>
                                 </div>
                             ))}
+                </div>
+            </div>
+            {/* 列印顯示: 簡潔的統計表格 (僅 print 顯示) */}
+            <div className="hidden print:block border border-gray-300 rounded p-4">
+                <div className="flex justify-between items-end border-b border-gray-300 pb-2 mb-4">
+                    <div>
+                        <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest">
+                            Estimated Total
+                        </p>
+                        <div className="flex items-baseline gap-2">
+                            <span className="text-gray-500 text-sm font-mono font-bold">
+                                {setting?.homeCurrency}
+                            </span>
+                            <h2 className="text-3xl font-bold font-mono text-black">
+                                {totalSpentHome.toLocaleString()}
+                            </h2>
+                        </div>
+                    </div>
+                    <div className="text-right text-xs text-gray-500">
+                        ≈ {setting?.localCurrency}{" "}
+                        {convertToLocal(
+                            totalSpentHome,
+                            setting?.homeCurrency!,
+                            setting?.localCurrency,
+                            setting?.exchangeRate
+                        ).toLocaleString()}
+                    </div>
+                </div>
+
+                {/* 分類統計表格 */}
+                <div className="grid grid-cols-2 gap-x-8 gap-y-2">
+                    {Object.entries(categoryStats)
+                        .sort(([, a], [, b]) => b - a)
+                        .map(([cat, val]) => (
+                            <div key={cat} className="flex justify-between items-center text-sm border-b border-gray-100 pb-1">
+                                <span className="font-medium text-gray-700">
+                                    {getCategoryName(cat)}
+                                </span>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-gray-900 font-mono">
+                                        {val.toLocaleString()}
+                                    </span>
+                                    <span className="text-xs text-gray-400 w-8 text-right">
+                                        {Math.round((val / totalSpentHome) * 100)}%
+                                    </span>
+                                </div>
+                            </div>
+                        ))}
                 </div>
             </div>
         </div>
