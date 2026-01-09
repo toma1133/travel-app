@@ -9,7 +9,11 @@ type CoverPageProps = {
     tripIdOverride?: string;
 };
 
-const CoverPage = ({ isPrinting, tripDataOverride, tripIdOverride }: CoverPageProps) => {
+const CoverPage = ({
+    isPrinting,
+    tripDataOverride,
+    tripIdOverride,
+}: CoverPageProps) => {
     const { id: paramsId } = useParams<{ id: string }>();
     const tripId = tripIdOverride || paramsId;
     const contextData = useOutletContext<BookLayoutContextType | null>();
@@ -18,15 +22,13 @@ const CoverPage = ({ isPrinting, tripDataOverride, tripIdOverride }: CoverPagePr
     return (
         <div
             className={`relative flex flex-col w-full ${
-                isPrinting
-                    ? "h-[1000px] break-after-page bg-white" // 列印: 固定一個 A4 高度或自動，確保分頁
-                    : "h-full bg-[#2C3E50]" // 螢幕: 滿版深色
+                isPrinting ? "h-full bg-white" : "h-full bg-[#2C3E50]"
             }`}
         >
             {/* 封面圖區域 */}
             <div
                 className={`relative w-full overflow-hidden ${
-                    isPrinting ? "h-[500px]" : "h-[65%]"
+                    isPrinting ? "h-[55%]" : "h-[65%]"
                 }`}
             >
                 {tripData?.cover_image && (
@@ -48,17 +50,25 @@ const CoverPage = ({ isPrinting, tripDataOverride, tripIdOverride }: CoverPagePr
                 </div> */}
             </div>
             {/* 內容卡片區域 */}
-            <div className={`flex-1 relative z-10 ${isPrinting ? "px-0 -mt-0" : "px-8 -mt-20"}`}>
-                <div className={`
-                        flex flex-col relative h-full
-                        ${isPrinting 
-                            ? "bg-white p-8 pt-12 text-center"  // 列印: 白底、置中、無陰影、無圓角
-                            : "bg-[#F9F8F6] p-8 shadow-2xl rounded-t-sm" // 螢幕: 卡片感
+            <div
+                className={`flex-1 relative z-10 flex flex-col ${
+                    isPrinting ? "px-8" : "px-8 -mt-20"
+                }`}
+            >
+                <div
+                    className={`
+                        flex flex-col relative h-full w-full
+                        ${
+                            isPrinting
+                                ? "bg-white pt-8 text-center" // 列印: 移除 p-8 改用 pt-8，避免過多留白
+                                : "bg-[#F9F8F6] p-8 shadow-2xl rounded-t-sm"
                         }
-                    `}>
-                    {/* 裝飾線條 */}
-                    <div className={`absolute top-0 left-1/2 -translate-x-1/2 w-12 h-1 bg-[#8E354A] ${isPrinting ? "mt-8" : ""}`}></div>
-                    <div className="mt-4 text-center">
+                    `}
+                >
+                    {!isPrinting && (
+                        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-12 h-1 bg-[#8E354A]"></div>
+                    )}
+                    <div className="text-center flex-1">
                         <span
                             className={`inline-block px-3 py-1 ${tripData?.theme_config?.accent} text-white text-[10px] tracking-widest mb-4 print:text-black print:bg-transparent print:border print:border-gray-300`}
                         >

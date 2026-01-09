@@ -14,6 +14,19 @@ type PrintableFullPageProps = {
     onPrintComplete?: () => void;
 };
 
+const PageBreak = () => (
+    <div
+        className="hidden print:block"
+        style={{
+            pageBreakBefore: "always",
+            breakBefore: "page",
+            height: "0",
+            width: "100%",
+            visibility: "hidden",
+        }}
+    />
+);
+
 const PrintableFullPage = ({
     tripData,
     onPrintComplete,
@@ -22,6 +35,7 @@ const PrintableFullPage = ({
     const isFetching = useIsFetching();
     const [isDataReady, setIsDataReady] = useState(false);
     const [isImagesLoaded, setIsImagesLoaded] = useState(false);
+
     // 1. 等待 API 資料
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -63,29 +77,32 @@ const PrintableFullPage = ({
             <style>{`
                 @media print {
                     #root { display: none !important; }
+
+                    @page {
+                        margin: 0mm;
+                        size: auto;
+                    }
+                        
                     html, body {
-                        height: auto !important;
+                        height: 100%;
                         overflow: visible !important;
                         margin: 0 !important;
                         padding: 0 !important;
-                        -webkit-print-color-adjust: exact; /* 強制 Safari 印出背景色 */
+                        display: block !important; /* 關鍵：防止 Flex 干擾 */
                     }
-                    
-                    /* [關鍵修正 1] 定義強制的換頁 Class */
-                    .print-section-break {
-                        page-break-before: always !important; /* Safari/WebKit 舊版語法 */
-                        break-before: page !important;        /* 標準語法 */
-                        display: block !important;            /* 確保 block 佈局 */
-                        
-                        /* [關鍵修正 2] 移除 Margin,避免換頁後上方出現空白 */
+
+                    * {
+                        -webkit-print-color-adjust: exact !important;
+                        print-color-adjust: exact !important;
+                    }
+
+                    h3 {
                         margin-top: 0 !important;
-                        padding-top: 20px; /* 如果需要一點緩衝，用 padding */
+                        padding-top: 0 !important;
                     }
-                    
-                    /* 避免內容被切斷 */
-                    .avoid-break {
-                        page-break-inside: avoid;
-                        break-inside: avoid;
+
+                    .page-content-wrapper {
+                        padding-top: 20px;
                     }
                 }
             `}</style>
@@ -93,16 +110,8 @@ const PrintableFullPage = ({
             {/* 外層容器 */}
             <div
                 className={`
-                    /* --- 螢幕模式 (Preview) --- */
-                    fixed inset-0 z-[9999] bg-white overflow-y-auto 
-                    
-                    /* --- 列印模式 (Print) --- */
-                    /* 關鍵修正：列印時解除 fixed，改為 absolute 蓋在最上面 */
-                    print:absolute print:inset-0 print:z-[9999]
-                    /* 關鍵修正：讓高度自動延伸，允許內容撐開頁面 */
-                    print:h-auto print:overflow-visible
-                    /* 確保背景白紙黑字 */
-                    print:bg-white
+                    fixed inset-0 z-[9999] bg-gray-100 overflow-y-auto 
+                    print:static print:inset-auto print:h-auto print:overflow-visible print:block print:bg-white
                 `}
             >
                 {/* Loading 遮罩 */}
@@ -135,20 +144,25 @@ const PrintableFullPage = ({
                 {/* A4 內容容器 */}
                 <div
                     className={`
-                    bg-white text-black min-h-screen w-full p-8 max-w-[210mm] mx-auto 
-                    
-                    /* 列印時移除 padding 與最大寬度限制，讓瀏覽器控制 */
-                    print:p-0 print:max-w-none print:w-full
-                `}
+                        bg-white text-black min-h-screen w-full mx-auto 
+                        max-w-[210mm] p-8 shadow-2xl my-8
+                        print:shadow-none print:m-0 print:p-0 print:max-w-none print:w-full
+                    `}
                 >
-                    <CoverPage
-                        isPrinting={true}
-                        tripDataOverride={tripData}
-                        tripIdOverride={tripId}
-                    />
+                    <div
+                        className={`
+                            print:block print:w-[100vw] print:h-[100vh] print:overflow-hidden print:break-after-page 
+                            print:-m-0
+                        `}
+                    >
+                        <CoverPage
+                            isPrinting={true}
+                            tripDataOverride={tripData}
+                            tripIdOverride={tripId}
+                        />
+                    </div>
 
-                    {/* [關鍵修正 3] 應用新的 Class，並移除 mt-8 */}
-                    <div className="mt-8 print:mt-0 print-section-break">
+                    <div className="pt-8 print:pt-4 print:block page-content-wrapper print:px-8">
                         <h3 className="text-lg font-[Noto_Sans_TC] font-bold mb-4">
                             行程表
                         </h3>
@@ -158,7 +172,10 @@ const PrintableFullPage = ({
                             tripIdOverride={tripId}
                         />
                     </div>
-                    <div className="mt-8 print:mt-0 print-section-break">
+
+                    <PageBreak />
+
+                    <div className="pt-8 print:pt-4 print:block page-content-wrapper print:px-8">
                         <h3 className="text-lg font-[Noto_Sans_TC] font-bold mb-4">
                             消費總覽
                         </h3>
@@ -168,7 +185,10 @@ const PrintableFullPage = ({
                             tripIdOverride={tripId}
                         />
                     </div>
-                    <div className="mt-8 print:mt-0 print-section-break">
+
+                    <PageBreak />
+
+                    <div className="pt-8 print:pt-4 print:block page-content-wrapper print:px-8">
                         <h3 className="text-lg font-[Noto_Sans_TC] font-bold mb-4">
                             景點誌
                         </h3>
@@ -178,7 +198,10 @@ const PrintableFullPage = ({
                             tripIdOverride={tripId}
                         />
                     </div>
-                    <div className="mt-8 print:mt-0 print-section-break">
+
+                    <PageBreak />
+
+                    <div className="pt-8 print:pt-4 print:block page-content-wrapper print:px-8">
                         <h3 className="text-lg font-[Noto_Sans_TC] font-bold mb-4">
                             預訂資訊
                         </h3>
