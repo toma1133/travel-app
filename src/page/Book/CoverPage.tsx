@@ -36,15 +36,18 @@ const CoverPage = ({
     return (
         <div
             className={`
-                relative w-full bg-white overflow-hidden h-full 
-                print:h-[296mm] print:overflow-hidden print:block
+                w-full bg-white overflow-hidden flex flex-col h-full 
+                print:h-[98vh] print:max-h-[98vh] 
+                print:break-after-page
+                print:break-inside-avoid
             `}
         >
             {/* 封面圖區域 */}
             <div
                 className={`
-                    absolute top-0 left-0 w-full z-0 bg-gray-200 h-[70%]
-                    print:h-[60%]
+                    w-full relative shrink-0
+                    flex-1 min-h-[30%] 
+                    print:h-[55%] print:flex-none
                 `}
             >
                 {tripData?.cover_image ? (
@@ -66,29 +69,24 @@ const CoverPage = ({
             {/* 內容卡片區域 */}
             <div
                 className={`
-                    absolute bottom-0 left-0 w-full z-10 bg-white
-                    flex flex-col
+                    w-full bg-white relative z-10 flex flex-col
+                    h-auto shrink-0
                     ${
                         !isPrinting
-                            ? "rounded-t-[32px] shadow-[0_-10px_30px_rgba(0,0,0,0.15)]"
-                            : "print:shadow-none print:rounded-t-none print:border-t-4 print:border-gray-900"
+                            ? "-mt-10 rounded-t-[32px] shadow-[0_-10px_30px_rgba(0,0,0,0.15)]"
+                            : "print:mt-0 print:shadow-none print:rounded-none print:border-t-4 print:border-gray-900 print:flex-1"
                     }
-                    h-[40%] print:h-[45%]
                 `}
             >
                 {/* 螢幕模式：頂部的小橫條 (裝飾用，也可當作 drag handle) */}
                 {!isPrinting && (
                     <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mt-3 mb-1 shrink-0"></div>
                 )}
-                {/* 內容捲動區：
-                    - 螢幕: 允許捲動 (overflow-y-auto)，防止手機直式時內容太長被切掉
-                    - 列印: 禁止捲動 (overflow-visible/hidden)，防止出現捲軸
-                */}
                 <div
                     className={`
-                    flex-1 flex flex-col items-start justify-start px-8 py-6
-                    ${!isPrinting ? "overflow-y-auto" : "overflow-hidden"}
-                `}
+                        flex flex-col items-start justify-start px-8 py-6
+                        ${!isPrinting ? "" : "overflow-hidden"} 
+                    `}
                 >
                     {/* 上方標籤區 */}
                     <div className="flex items-center gap-3 mb-4 shrink-0">
@@ -101,7 +99,6 @@ const CoverPage = ({
                             {dayCount} DAYS
                         </span>
                     </div>
-
                     {/* 標題區 */}
                     <h1
                         className={`
@@ -111,11 +108,9 @@ const CoverPage = ({
                     >
                         {tripData?.title}
                     </h1>
-
                     <h2 className="text-sm sm:text-base text-gray-400 font-medium tracking-wide uppercase mb-6 print:text-gray-600 print:mb-6 shrink-0">
                         {tripData?.subtitle}
                     </h2>
-
                     {/* 資訊格線區 (Grid) */}
                     <div className="w-full grid grid-cols-2 gap-6 border-t border-gray-100 pt-6 mb-6 print:border-gray-200 shrink-0">
                         {/* 日期 */}
@@ -134,7 +129,6 @@ const CoverPage = ({
                                 to {tripData?.end_date}
                             </div>
                         </div>
-
                         {/* 地點 */}
                         {/* <div className="flex flex-col">
                             <span className="text-[10px] text-gray-400 uppercase tracking-wider font-bold mb-1">

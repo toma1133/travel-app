@@ -154,13 +154,19 @@ const PrintableFullPage = ({
                     className={`
                         bg-white text-black min-h-screen w-full mx-auto 
                         max-w-[210mm] p-8 shadow-2xl my-8
+                        min-w-[700px]
                         print:shadow-none print:m-0 print:p-0 print:max-w-none print:w-full
                     `}
                 >
                     <div
                         className={`
-                            w-full block aspect-[210/297] overflow-hidden relative mb-0
-                            print:w-full print:aspect-[210/297] print:overflow-hidden print:break-after-page print:-m-0
+                            w-full block relative mb-0
+                            aspect-[210/297] overflow-hidden
+                            print:aspect-auto 
+                            print:h-[297mm] 
+                            print:overflow-visible
+                            print:break-after-page 
+                            print:-m-0
                         `}
                     >
                         <CoverPage
