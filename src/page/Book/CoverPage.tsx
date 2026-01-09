@@ -22,7 +22,9 @@ const CoverPage = ({
     return (
         <div
             className={`relative flex flex-col w-full ${
-                isPrinting ? "h-full bg-white" : "h-full bg-[#2C3E50]"
+                isPrinting
+                    ? "h-full bg-white break-inside-avoid page-break-inside-avoid"
+                    : "h-full bg-[#2C3E50]"
             }`}
         >
             {/* 封面圖區域 */}
@@ -68,17 +70,21 @@ const CoverPage = ({
                     {!isPrinting && (
                         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-12 h-1 bg-[#8E354A]"></div>
                     )}
-
-                    {/* 加入 flex-col justify-center 讓內容垂直置中分布 */}
-                    <div className="text-center flex-1 flex flex-col justify-center">
-                        {/* <div className="text-center flex-1"> */}
-                        <div>
-                            <span
-                                className={`inline-block px-3 py-1 ${tripData?.theme_config?.accent} text-white text-[10px] tracking-widest mb-4 print:text-black print:bg-transparent print:border print:border-gray-300`}
-                            >
-                                TRAVEL ITINERARY
-                            </span>
-                        </div>
+                    <div
+                        className={`
+                            text-center flex-1 flex flex-col 
+                            ${
+                                isPrinting
+                                    ? "justify-start pt-8"
+                                    : "justify-center"
+                            }
+                        `}
+                    >
+                        <span
+                            className={`inline-block px-3 py-1 ${tripData?.theme_config?.accent} text-white text-[10px] tracking-widest mb-4 print:text-black print:bg-transparent print:border print:border-gray-300`}
+                        >
+                            TRAVEL ITINERARY
+                        </span>
                         <h1
                             className={`text-3xl font-[Noto_Sans_TC] font-bold ${tripData?.theme_config?.primary} mb-2 print:text-4xl print:text-black`}
                         >
@@ -91,7 +97,15 @@ const CoverPage = ({
                         </p>
                     </div>
                     {/* 日期與地點資訊 */}
-                    <div className="flex items-center justify-center space-x-6 text-xs text-gray-500 border-t border-gray-200 pt-4 mt-4 mb-4 print:text-sm print:border-gray-300">
+                    <div
+                        className="
+                            flex items-center justify-center space-x-6 text-xs text-gray-500 
+                            border-t border-gray-200 
+                            pt-3 mt-1 mb-3
+                            print:text-sm print:border-gray-300
+                            print:break-inside-avoid print:page-break-inside-avoid
+                        "
+                    >
                         <div className="flex items-center gap-2">
                             <Calendar size={isPrinting ? 16 : 14} />
                             <span>
@@ -99,11 +113,16 @@ const CoverPage = ({
                             </span>
                         </div>
                     </div>
-                    <p
-                        className={`text-sm ${tripData?.theme_config?.primary} leading-loose text-justify font-light opacity-90 print:text-gray-800 print:text-base print:leading-8 print:px-8`}
-                    >
-                        {tripData?.description}
-                    </p>
+                    <div className="print:overflow-hidden">
+                        <p
+                            className={`
+                                text-sm ${tripData?.theme_config?.primary} leading-loose text-justify font-light opacity-90 
+                                print:text-gray-800 print:text-base print:leading-7
+                            `}
+                        >
+                            {tripData?.description}
+                        </p>
+                    </div>
                 </div>
             </div>
             <style>{`.writing-vertical { writing-mode: vertical-rl; }`}</style>
