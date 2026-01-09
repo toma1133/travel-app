@@ -52,7 +52,7 @@ const TransactionList = ({
             className={`flex flex-col justify-center items-center ${
                 isPrinting
                     ? "pb-2 mb-0 px-0 mt-4" // 列印樣式
-                    : "px-4 mb-4 sticky top-0 z-10" // 螢幕樣式
+                    : "mb-4 sticky top-0 z-10" // 螢幕樣式
             }`}
         >
             <div className="w-full flex justify-between items-center py-2 print:border-b print:border-gray-800 print:mb-2">

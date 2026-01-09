@@ -52,7 +52,9 @@ const BudgetChart = ({
                       (sum, item) =>
                           sum +
                           convertToHome(
-                              item.split_with?.length! > 0 ? item.amount / (item.split_with?.length! + 1) : item.amount,
+                              item.split_with?.length! > 0
+                                  ? item.amount / (item.split_with?.length! + 1)
+                                  : item.amount,
                               item.currency_code,
                               setting?.homeCurrency,
                               setting?.exchangeRate
@@ -66,7 +68,9 @@ const BudgetChart = ({
             setCategoryStats(
                 budgetItems.reduce((acc: { [key: string]: number }, item) => {
                     const homeAmount = convertToHome(
-                        item.split_with?.length! > 0 ? item.amount / (item.split_with?.length! + 1) : item.amount,
+                        item.split_with?.length! > 0
+                            ? item.amount / (item.split_with?.length! + 1)
+                            : item.amount,
                         item.currency_code,
                         setting?.homeCurrency,
                         setting?.exchangeRate
@@ -79,7 +83,9 @@ const BudgetChart = ({
     }, [budgetItems]);
 
     return (
-        <div className={`px-4 mt-6 mb-8 ${isPrinting ? "print:px-0 print:mb-4" : ""}`}>
+        <div
+            className={`mt-6 mb-8 ${isPrinting ? "print:px-0 print:mb-4" : ""}`}
+        >
             {/* 螢幕顯示: 原本的深色卡片 (加 print:hidden) */}
             <div className="bg-slate-900 rounded-lg p-8 text-white shadow-2xl shadow-slate-200 relative overflow-hidden print:hidden">
                 <div className="relative z-10 flex justify-between items-start">
@@ -174,7 +180,10 @@ const BudgetChart = ({
                     {Object.entries(categoryStats)
                         .sort(([, a], [, b]) => b - a)
                         .map(([cat, val]) => (
-                            <div key={cat} className="flex justify-between items-center text-sm border-b border-gray-100 pb-1">
+                            <div
+                                key={cat}
+                                className="flex justify-between items-center text-sm border-b border-gray-100 pb-1"
+                            >
                                 <span className="font-medium text-gray-700">
                                     {getCategoryName(cat)}
                                 </span>
@@ -183,7 +192,10 @@ const BudgetChart = ({
                                         {val.toLocaleString()}
                                     </span>
                                     <span className="text-xs text-gray-400 w-8 text-right">
-                                        {Math.round((val / totalSpentHome) * 100)}%
+                                        {Math.round(
+                                            (val / totalSpentHome) * 100
+                                        )}
+                                        %
                                     </span>
                                 </div>
                             </div>

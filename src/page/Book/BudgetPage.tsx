@@ -649,38 +649,40 @@ const BudgetPage = ({
                     onFormDataChange={handleFilterChange}
                 />
             )}
-            <BudgetChart
-                budgetItems={filteredBudgets}
-                isPrinting={isPrinting}
-                setting={currentSetting}
-                theme={currentTheme}
-                convertToHome={convertToHome}
-                convertToLocal={convertToLocal}
-                getChartGradient={getChartGradient}
-                getCategoryName={getCategoryName}
-            />
-            <BudgetLimitList
-                budgetItems={filteredBudgets}
-                isPrinting={isPrinting}
-                paymentMethods={filteredPayments}
-                setting={currentSetting}
-                theme={currentTheme}
-                convertToHome={convertToHome}
-            />
-            <TransactionList
-                categories={budgetCategory}
-                budgetItems={filteredBudgets}
-                isPrinting={isPrinting}
-                paymentMethods={paymentMethods}
-                session={session}
-                setting={currentSetting}
-                theme={currentTheme}
-                tripMembers={tripMembers}
-                convertToHome={convertToHome}
-                getCategoryIcon={getCategoryIcon}
-                getCategoryName={getCategoryName}
-                onEditBtnClick={handleEditBudgetBtnClick}
-            />
+            <div className={`${isPrinting ? "" : "px-4"}`}>
+                <BudgetChart
+                    budgetItems={filteredBudgets}
+                    isPrinting={isPrinting}
+                    setting={currentSetting}
+                    theme={currentTheme}
+                    convertToHome={convertToHome}
+                    convertToLocal={convertToLocal}
+                    getChartGradient={getChartGradient}
+                    getCategoryName={getCategoryName}
+                />
+                <BudgetLimitList
+                    budgetItems={filteredBudgets}
+                    isPrinting={isPrinting}
+                    paymentMethods={filteredPayments}
+                    setting={currentSetting}
+                    theme={currentTheme}
+                    convertToHome={convertToHome}
+                />
+                <TransactionList
+                    categories={budgetCategory}
+                    budgetItems={filteredBudgets}
+                    isPrinting={isPrinting}
+                    paymentMethods={paymentMethods}
+                    session={session}
+                    setting={currentSetting}
+                    theme={currentTheme}
+                    tripMembers={tripMembers}
+                    convertToHome={convertToHome}
+                    getCategoryIcon={getCategoryIcon}
+                    getCategoryName={getCategoryName}
+                    onEditBtnClick={handleEditBudgetBtnClick}
+                />
+            </div>
             {isSettingModalOpen && (
                 <SettingModal
                     paymentMethods={formPaymentMethods}

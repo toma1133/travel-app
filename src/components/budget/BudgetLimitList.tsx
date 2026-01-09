@@ -54,7 +54,7 @@ const BudgetLimitList = ({
 
     return (
         <div
-            className={`px-4 ${
+            className={`${
                 // 列印優化: 移除 padding-x 因為父層可能有 padding, 移除外框, 僅保留 margin
                 isPrinting ? "print:px-0 print:mb-6" : "mb-8"
             }`}

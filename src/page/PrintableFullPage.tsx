@@ -62,16 +62,30 @@ const PrintableFullPage = ({
             {/* [新增] 全域樣式修正：列印時隱藏原本的 App root，並修正 body 滾動 */}
             <style>{`
                 @media print {
-                    /* 隱藏原本的 React App 根節點，避免干擾 */
-                    #root {
-                        display: none !important;
-                    }
-                    /* 確保 body 可以延伸，不會被截斷 */
+                    #root { display: none !important; }
                     html, body {
                         height: auto !important;
                         overflow: visible !important;
                         margin: 0 !important;
                         padding: 0 !important;
+                        -webkit-print-color-adjust: exact; /* 強制 Safari 印出背景色 */
+                    }
+                    
+                    /* [關鍵修正 1] 定義強制的換頁 Class */
+                    .print-section-break {
+                        page-break-before: always !important; /* Safari/WebKit 舊版語法 */
+                        break-before: page !important;        /* 標準語法 */
+                        display: block !important;            /* 確保 block 佈局 */
+                        
+                        /* [關鍵修正 2] 移除 Margin,避免換頁後上方出現空白 */
+                        margin-top: 0 !important;
+                        padding-top: 20px; /* 如果需要一點緩衝，用 padding */
+                    }
+                    
+                    /* 避免內容被切斷 */
+                    .avoid-break {
+                        page-break-inside: avoid;
+                        break-inside: avoid;
                     }
                 }
             `}</style>
@@ -133,7 +147,8 @@ const PrintableFullPage = ({
                         tripIdOverride={tripId}
                     />
 
-                    <div className="mt-8 break-before-page">
+                    {/* [關鍵修正 3] 應用新的 Class，並移除 mt-8 */}
+                    <div className="mt-8 print:mt-0 print-section-break">
                         <h3 className="text-lg font-[Noto_Sans_TC] font-bold mb-4">
                             行程表
                         </h3>
@@ -143,7 +158,7 @@ const PrintableFullPage = ({
                             tripIdOverride={tripId}
                         />
                     </div>
-                    <div className="mt-8 break-before-page">
+                    <div className="mt-8 print:mt-0 print-section-break">
                         <h3 className="text-lg font-[Noto_Sans_TC] font-bold mb-4">
                             消費總覽
                         </h3>
@@ -153,7 +168,7 @@ const PrintableFullPage = ({
                             tripIdOverride={tripId}
                         />
                     </div>
-                    <div className="mt-8 break-before-page">
+                    <div className="mt-8 print:mt-0 print-section-break">
                         <h3 className="text-lg font-[Noto_Sans_TC] font-bold mb-4">
                             景點誌
                         </h3>
@@ -163,7 +178,7 @@ const PrintableFullPage = ({
                             tripIdOverride={tripId}
                         />
                     </div>
-                    <div className="mt-8 break-before-page">
+                    <div className="mt-8 print:mt-0 print-section-break">
                         <h3 className="text-lg font-[Noto_Sans_TC] font-bold mb-4">
                             預訂資訊
                         </h3>
