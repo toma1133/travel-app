@@ -19,33 +19,30 @@ const PlaceCardList = ({
     onEditBtnClick,
     onTagBtnClick,
 }: PlaceCardListProps) => (
-    <div 
+    <div
         className={`
             w-full 
-            /* 螢幕模式: 垂直間距 */
-            space-y-6 
-            /* 列印模式: 移除間距，改用分隔線，看起來像列表 */
-            print:space-y-0 print:divide-y print:divide-gray-200
+            ${isPrinting ? "space-y-0 divide-y divide-gray-200" : "space-y-6"}
         `}
     >
-        {Array.isArray(places) ? (
-            places.map((place) => (
-                <PlaceCard
-                    key={place.id}
-                    theme={theme}
-                    place={place}
-                    isPrinting={isPrinting}
-                    isPreview={false}
-                    onDelete={onDeleteBtnClick}
-                    onEdit={onEditBtnClick}
-                    onTagBtnClick={onTagBtnClick}
-                />
-            ))
-        ) : (
-            <div className="text-center py-10 text-gray-400 text-sm print:hidden">
-                此分類尚無地點，點擊右上角新增。
-            </div>
-        )}
+        {Array.isArray(places) && places.length > 0
+            ? places.map((place) => (
+                  <PlaceCard
+                      key={place.id}
+                      theme={theme}
+                      place={place}
+                      isPrinting={isPrinting}
+                      isPreview={false}
+                      onDelete={onDeleteBtnClick}
+                      onEdit={onEditBtnClick}
+                      onTagBtnClick={onTagBtnClick}
+                  />
+              ))
+            : !isPrinting && (
+                  <div className="text-center py-10 text-gray-400 text-sm">
+                      此分類尚無地點，點擊右上角新增。
+                  </div>
+              )}
     </div>
 );
 

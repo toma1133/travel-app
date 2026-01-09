@@ -53,21 +53,17 @@ const BudgetLimitList = ({
     }, [budgetItems, paymentMethods]);
 
     return (
-        <div
-            className={`${
-                // 列印優化: 移除 padding-x 因為父層可能有 padding, 移除外框, 僅保留 margin
-                isPrinting ? "print:px-0 print:mb-6" : "mb-8"
-            }`}
-        >
-            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 print:text-black print:text-xs print:mb-2">
+        <div className={`${isPrinting ? "mb-6" : "mb-8"}`}>
+            <h4
+                className={`text-xs font-bold text-gray-400 uppercase tracking-widest ${
+                    isPrinting ? "mb-2 text-black" : "mb-3"
+                }`}
+            >
                 支付額度狀態
             </h4>
             <div
                 className={`grid ${
-                    // 列印優化: 雙欄排版，增加間距
-                    isPrinting
-                        ? "print:grid print:grid-cols-2 print:gap-4"
-                        : "space-y-3"
+                    isPrinting ? "grid-cols-2 gap-4" : "grid-cols-1 gap-3"
                 }`}
             >
                 {Array.isArray(paymentMethods) &&

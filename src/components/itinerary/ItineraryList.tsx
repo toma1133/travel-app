@@ -85,6 +85,8 @@ const ItineraryList = ({
     }, [itinerarys]);
 
     const handleExpandedBtnClick = (itinerary: ItineraryVM, index: number) => {
+        if (isPrinting) return;
+
         const newDayNum =
             expandedDayNum === itinerary.day_number
                 ? null
@@ -102,49 +104,47 @@ const ItineraryList = ({
     };
 
     return (
-        <div
-            className={`space-y-4 ${
-                isPrinting ? "print:space-y-6 print:px-0" : "px-4"
-            }`}
-        >
-            {Array.isArray(itinerarys) && itinerarys.length > 0 ? (
-                itinerarys.map((itinerary, i) => (
-                    <div
-                        key={i}
-                        ref={(el: HTMLDivElement | null) => {
-                            itemRefs.current[i] = el;
-                        }}
-                        className="scroll-mt-20"
-                    >
-                        <ItineraryItem
-                            itinerary={itinerary}
-                            theme={theme}
-                            isEditing={isEditing}
-                            isExpanded={
-                                isPrinting
-                                    ? true
-                                    : expandedDayNum === itinerary.day_number
-                            }
-                            isPrinting={isPrinting}
-                            onExpandedBtnToggle={() =>
-                                handleExpandedBtnClick(itinerary, i)
-                            }
-                            onAddActivityBtnClick={onAddActivityBtnClick}
-                            onDeleteActivityBtnClick={onDeleteActivityBtnClick}
-                            onDeleteDayBtnClick={onDeleteDayBtnClick}
-                            onEditActivityBtnClick={onEditActivityBtnClick}
-                            onEditDayBtnClick={onEditDayBtnClick}
-                            onViewBtnClick={onViewBtnClick}
-                        />
-                    </div>
-                ))
-            ) : (
-                <div className="text-center py-10 bg-white rounded-lg border border-dashed border-gray-300">
-                    <p className="text-gray-500">
-                        目前沒有任何日程，請點擊上方按鈕開始規劃！
-                    </p>
-                </div>
-            )}
+        <div className={`space-y-4 ${isPrinting ? "space-y-6 px-0" : "px-4"}`}>
+            {Array.isArray(itinerarys) && itinerarys.length > 0
+                ? itinerarys.map((itinerary, i) => (
+                      <div
+                          key={i}
+                          ref={(el: HTMLDivElement | null) => {
+                              itemRefs.current[i] = el;
+                          }}
+                          className="scroll-mt-20"
+                      >
+                          <ItineraryItem
+                              itinerary={itinerary}
+                              theme={theme}
+                              isEditing={isEditing}
+                              isExpanded={
+                                  isPrinting
+                                      ? true
+                                      : expandedDayNum === itinerary.day_number
+                              }
+                              isPrinting={isPrinting}
+                              onExpandedBtnToggle={() =>
+                                  handleExpandedBtnClick(itinerary, i)
+                              }
+                              onAddActivityBtnClick={onAddActivityBtnClick}
+                              onDeleteActivityBtnClick={
+                                  onDeleteActivityBtnClick
+                              }
+                              onDeleteDayBtnClick={onDeleteDayBtnClick}
+                              onEditActivityBtnClick={onEditActivityBtnClick}
+                              onEditDayBtnClick={onEditDayBtnClick}
+                              onViewBtnClick={onViewBtnClick}
+                          />
+                      </div>
+                  ))
+                : !isPrinting && (
+                      <div className="text-center py-10 bg-white rounded-lg border border-dashed border-gray-300">
+                          <p className="text-gray-500">
+                              目前沒有任何日程，請點擊上方按鈕開始規劃！
+                          </p>
+                      </div>
+                  )}
         </div>
     );
 };

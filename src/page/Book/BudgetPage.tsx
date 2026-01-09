@@ -592,7 +592,7 @@ const BudgetPage = ({
         <div
             className={`min-h-full font-[Noto_Sans_TC] text-gray-800 ${
                 isPrinting
-                    ? "h-auto min-h-[50vh] break-after-page overflow-visible print:bg-white"
+                    ? "h-auto min-h-[50vh] break-after-page overflow-visible bg-white" // 移除 print: modifier
                     : `${
                           tripData?.theme_config?.bg || "bg-gray-100"
                       } py-12 pb-24`
@@ -649,7 +649,7 @@ const BudgetPage = ({
                     onFormDataChange={handleFilterChange}
                 />
             )}
-            <div className={`${isPrinting ? "" : "px-4"}`}>
+            <div className={`${isPrinting ? "px-0" : "px-4"}`}>
                 <BudgetChart
                     budgetItems={filteredBudgets}
                     isPrinting={isPrinting}

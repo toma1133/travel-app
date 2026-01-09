@@ -60,46 +60,67 @@ const PlaceCard = ({
         <div
             id={place.id}
             className={`
-                /* 螢幕模式: 卡片樣式 */
-                bg-white rounded-lg overflow-hidden shadow-sm border border-gray-100 transition-all duration-500 group
-                /* 列印模式: 轉為 Flex 橫向佈局 (左圖右文)，移除邊框陰影，避免分頁切斷 */
-                print:flex print:flex-row print:shadow-none print:border-none print:rounded-none print:py-6 print:break-inside-avoid
+                ${
+                    isPrinting
+                        ? "flex flex-row shadow-none border-none rounded-none py-6 break-inside-avoid"
+                        : "bg-white rounded-lg overflow-hidden shadow-sm border border-gray-100 transition-all duration-500 group"
+                }
             `}
             onMouseEnter={() => setShowActions(true)}
             onMouseLeave={() => setShowActions(false)}
             onTouchStart={() => setShowActions(true)}
         >
             {/* 圖片區域 */}
-            <div className={`
+            <div
+                className={`
                     relative overflow-hidden
                     /* 螢幕: 滿寬，高度固定 */
-                    w-full h-48
-                    /* 列印: 左側固定寬度，高度自動，保持比例 */
-                    print:w-32 print:h-32 print:shrink-0 print:mr-6
-                `}> 
+                    ${
+                        isPrinting
+                            ? "w-32 h-32 shrink-0 mr-6 rounded-sm"
+                            : "w-full h-48"
+                    }
+                `}
+            >
                 {place.image_url ? (
                     <img
                         src={place.image_url}
                         alt={place.name}
-                        className={`w-full h-full object-cover ${
-                            !isPrinting
-                                ? "transition-transform duration-700 group-hover:scale-105"
-                                : ""
-                        } print:rounded-sm`} // 列印時給一點小圓角比較精緻
+                        className={`w-full h-full object-cover 
+                            ${
+                                !isPrinting
+                                    ? "transition-transform duration-700 group-hover:scale-105"
+                                    : ""
+                            }
+                        `}
                     />
                 ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gray-50 text-gray-300 text-xs print:bg-gray-100">
+                    <div
+                        className={`w-full h-full flex items-center justify-center text-xs ${
+                            isPrinting
+                                ? "bg-gray-100 text-gray-400"
+                                : "bg-gray-50 text-gray-300"
+                        }`}
+                    >
                         No Image
                     </div>
                 )}
-                {/* 類型標籤: 螢幕顯示在圖上，列印時也可以保留，或者移到標題旁 */}
-                <div className="absolute top-3 left-3 print:top-0 print:left-0">
-                    <span className={`
-                        backdrop-blur-sm text-white text-[10px] px-2 py-1 uppercase tracking-wider
-                        ${isPrinting 
-                            ? "bg-black text-white rounded-br-sm" // 列印時用純黑，對比高 
-                            : "bg-black/60"}
-                    `}>
+                {/* 類型標籤 */}
+                <div
+                    className={`absolute top-0 left-0 ${
+                        !isPrinting && "top-3 left-3"
+                    }`}
+                >
+                    <span
+                        className={`
+                            backdrop-blur-sm text-[10px] px-2 py-1 uppercase tracking-wider
+                            ${
+                                isPrinting
+                                    ? "bg-black text-white rounded-br-sm" // 列印：高對比
+                                    : "bg-black/60 text-white" // 螢幕：半透明
+                            }
+                        `}
+                    >
                         {getPlaceTypeName(place.type)}
                     </span>
                 </div>
@@ -139,9 +160,21 @@ const PlaceCard = ({
                 )}
             </div>
             {/* --- 內容區域 --- */}
-            <div className="p-5 print:p-0 print:flex-1 print:flex print:flex-col">
+            <div
+                className={`
+                    ${
+                        isPrinting
+                            ? "flex-1 flex flex-col p-0" // 列印：填滿右側
+                            : "p-5" // 螢幕：一般內距
+                    }
+                `}
+            >
                 {/* 標題列 */}
-                <div className="flex justify-between items-start mb-2 print:mb-1">
+                <div
+                    className={`flex justify-between items-start ${
+                        isPrinting ? "mb-1" : "mb-2"
+                    }`}
+                >
                     <div className="flex flex-col justify-between items-start">
                         <h3
                             className={`text-xl font-bold ${
@@ -168,9 +201,9 @@ const PlaceCard = ({
                     )}
                 </div>
                 {/* Tags (列印隱藏，保持版面乾淨) */}
-                <div className="flex flex-wrap gap-2 mb-4 print:hidden">
-                    {!!place.tags &&
-                        place.tags.split(",").map((tag) => (
+                {!isPrinting && !!place.tags && (
+                    <div className="flex flex-wrap gap-2 mb-4">
+                        {place.tags.split(",").map((tag) => (
                             <button
                                 key={tag}
                                 type="button"
@@ -180,49 +213,102 @@ const PlaceCard = ({
                                 #{tag.trim()}
                             </button>
                         ))}
-                </div>
+                    </div>
+                )}
                 {/* 描述文字 */}
-                <p className={`
-                    text-sm text-gray-600 leading-relaxed mb-4 text-justify whitespace-pre-wrap
-                    /* 列印優化: 自動伸縮高度 */
-                    print:text-sm print:text-gray-800 print:mb-3 print:flex-1
-                `}>
+                <p
+                    className={`
+                        text-sm leading-relaxed text-justify whitespace-pre-wrap
+                        ${
+                            isPrinting
+                                ? "text-gray-800 mb-3 flex-1" // 列印：深色字，撐開高度
+                                : "text-gray-600 mb-4"
+                        }
+                    `}
+                >
                     {place.description}
-                </p>{/* 資訊區塊 (Footer) */}
-                <div className={`
-                    bg-[#F9F8F6] p-3 rounded text-xs space-y-2 text-gray-600
-                    /* 列印優化: 移除灰色背景，改為緊湊排列 */
-                    print:bg-transparent print:p-0 print:mt-auto print:space-y-1
-                `}>
+                </p>
+                {/* 資訊區塊 (Footer) */}
+                <div
+                    className={`
+                        text-xs space-y-2
+                        ${
+                            isPrinting
+                                ? "bg-transparent p-0 mt-auto space-y-1" // 列印：無背景，置底
+                                : "bg-[#F9F8F6] p-3 rounded text-gray-600" // 螢幕：有背景卡片
+                        }
+                    `}
+                >
                     {place.tips && (
                         <div className="flex items-start">
                             <Star
                                 size={14}
-                                className={`mr-2 ${
-                                    theme?.accentText || "text-gray-600"
-                                } shrink-0 print:text-black print:fill-black`} // 實心星星強調 Tips
+                                className={`
+                                    mr-2 shrink-0
+                                    ${
+                                        isPrinting
+                                            ? "text-black fill-black" // 列印：實心黑星
+                                            : theme?.accentText ||
+                                              "text-gray-600"
+                                    }
+                                `}
                             />
-                            <span className="print:text-black font-medium">
-                                <span className="font-bold text-gray-800 print:text-black">
+                            <span
+                                className={`font-medium ${
+                                    isPrinting ? "text-black" : ""
+                                }`}
+                            >
+                                <span
+                                    className={`font-bold ${
+                                        isPrinting
+                                            ? "text-black"
+                                            : "text-gray-800"
+                                    }`}
+                                >
                                     Tips:
                                 </span>{" "}
                                 {place.tips}
                             </span>
                         </div>
                     )}
-                    
-                    {/* 時間與地點在列印時可以並排顯示 (如果空間夠) 或是換行 */}
-                    <div className="print:flex print:gap-4 print:flex-wrap">
+
+                    <div className={isPrinting ? "flex gap-4 flex-wrap" : ""}>
                         {place?.info?.open && (
                             <div className="flex items-center">
-                                <Clock size={14} className="mr-2 text-gray-400 shrink-0 print:text-gray-600" />
-                                <span className="print:text-gray-700">{place.info.open}</span>
+                                <Clock
+                                    size={14}
+                                    className={`mr-2 shrink-0 ${
+                                        isPrinting
+                                            ? "text-gray-600"
+                                            : "text-gray-400"
+                                    }`}
+                                />
+                                <span
+                                    className={
+                                        isPrinting ? "text-gray-700" : ""
+                                    }
+                                >
+                                    {place.info.open}
+                                </span>
                             </div>
                         )}
                         {place?.info?.loc && (
                             <div className="flex items-center">
-                                <MapPin size={14} className="mr-2 text-gray-400 shrink-0 print:text-gray-600" />
-                                <span className="break-all print:text-gray-700">{place.info.loc}</span>
+                                <MapPin
+                                    size={14}
+                                    className={`mr-2 shrink-0 ${
+                                        isPrinting
+                                            ? "text-gray-600"
+                                            : "text-gray-400"
+                                    }`}
+                                />
+                                <span
+                                    className={`break-all ${
+                                        isPrinting ? "text-gray-700" : ""
+                                    }`}
+                                >
+                                    {place.info.loc}
+                                </span>
                             </div>
                         )}
                     </div>

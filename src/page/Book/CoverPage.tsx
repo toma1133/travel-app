@@ -38,7 +38,6 @@ const CoverPage = ({
             className={`
                 w-full bg-white overflow-hidden flex flex-col h-full 
                 print:h-[98vh] print:max-h-[98vh] 
-                print:break-after-page
                 print:break-inside-avoid
             `}
         >

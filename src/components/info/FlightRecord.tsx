@@ -41,23 +41,50 @@ const FlightRecord = ({
     return (
         <div
             className={`
-                flex justify-between items-start pt-4 mb-4 last:mb-0 
-                ${index !== 0 ? "border-t border-gray-100" : ""}
-                print:border-none print:mb-0 print:py-3
+                flex justify-between items-start 
+                ${
+                    isPrinting
+                        ? "border-none mb-0 py-3"
+                        : `pt-4 mb-4 last:mb-0 ${
+                              index !== 0 ? "border-t border-gray-100" : ""
+                          }`
+                }
             `}
         >
             <div className="flex-1">
                 {/* 地點 */}
-                <div className="font-bold text-gray-800 text-base print:text-black print:text-lg flex items-center gap-2">
+                <div
+                    className={`font-bold flex items-center gap-2 ${
+                        isPrinting
+                            ? "text-black text-lg"
+                            : "text-gray-800 text-base"
+                    }`}
+                >
                     <span>{flight.departure_loc}</span>
-                    <span className="text-gray-400 print:text-gray-600 font-light text-sm">
+                    <span
+                        className={`font-light text-sm ${
+                            isPrinting ? "text-gray-600" : "text-gray-400"
+                        }`}
+                    >
                         ➝
                     </span>
                     <span>{flight.arrival_loc}</span>
                 </div>
                 {/* 日期與代號 */}
-                <div className="text-xs text-gray-400 mt-1 print:text-gray-600 print:text-sm print:mt-0.5 flex gap-3">
-                    <span className="font-mono bg-gray-100 px-1 rounded print:bg-transparent print:p-0 print:font-bold print:text-black">
+                <div
+                    className={`flex gap-3 ${
+                        isPrinting
+                            ? "text-gray-600 text-sm mt-0.5"
+                            : "text-xs text-gray-400 mt-1"
+                    }`}
+                >
+                    <span
+                        className={`font-mono rounded ${
+                            isPrinting
+                                ? "p-0 font-bold text-black"
+                                : "bg-gray-100 px-1"
+                        }`}
+                    >
                         {flight.code}
                     </span>
                     <span>|</span>
@@ -66,17 +93,31 @@ const FlightRecord = ({
             </div>
             {/* 時間區域 */}
             <div className="text-right flex flex-col items-end">
-                <div className="font-mono text-gray-600 font-bold print:text-black print:text-lg">
+                <div
+                    className={`font-mono font-bold ${
+                        isPrinting ? "text-black text-lg" : "text-gray-600"
+                    }`}
+                >
                     {moment(flight.departure_time, "HH:mm:ss").format("HH:mm")}
-                    <span className="mx-1 text-gray-300 print:text-gray-500">
+                    <span
+                        className={`mx-1 ${
+                            isPrinting ? "text-gray-500" : "text-gray-300"
+                        }`}
+                    >
                         -
                     </span>
                     {moment(flight.arrival_time, "HH:mm:ss").format("HH:mm")}
                 </div>
 
-                {/* [新增] 飛行時間 */}
-                <div className="flex items-center gap-1 text-[10px] text-gray-400 mt-1 print:text-gray-600">
-                    <Clock size={10} className="print:hidden" />
+                {/* 飛行時間 */}
+                <div
+                    className={`flex items-center gap-1 mt-1 ${
+                        isPrinting
+                            ? "text-gray-600 text-[10px]"
+                            : "text-gray-400 text-[10px]"
+                    }`}
+                >
+                    {!isPrinting && <Clock size={10} />}
                     <span>{getDuration()}</span>
                 </div>
             </div>

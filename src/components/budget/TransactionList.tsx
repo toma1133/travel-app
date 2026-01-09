@@ -55,19 +55,22 @@ const TransactionList = ({
                     : "mb-4 sticky top-0 z-10" // 螢幕樣式
             }`}
         >
-            <div className="w-full flex justify-between items-center py-2 print:border-b print:border-gray-800 print:mb-2">
-                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest print:text-black">
+            <div
+                className={`w-full flex justify-between items-center py-2 ${
+                    isPrinting ? "border-b border-gray-800 mb-2" : ""
+                }`}
+            >
+                <h4
+                    className={`text-xs font-bold uppercase tracking-widest text-gray-400`}
+                >
                     交易紀錄 (Transactions)
                 </h4>
-                <span
-                    className={`text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold ${
-                        isPrinting ? "print:hidden" : ""
-                    }`}
-                >
-                    共 {budgetItems?.length} 筆
-                </span>
+                {!isPrinting && (
+                    <span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold">
+                        共 {budgetItems?.length} 筆
+                    </span>
+                )}
             </div>
-            {/* [新增] 列印專用的表頭，對齊 Item 的欄位 */}
             {isPrinting && (
                 <div className="w-full flex text-[10px] font-bold text-gray-500 uppercase tracking-wider py-1 border-b border-gray-300">
                     <div className="w-12">Date</div>
@@ -80,7 +83,7 @@ const TransactionList = ({
             <div
                 className={`w-full ${
                     isPrinting
-                        ? "text-xs divide-y divide-gray-300 border-b border-gray-300" // 列印用深一點的分隔線
+                        ? "text-xs divide-y divide-gray-300 border-b border-gray-300"
                         : "space-y-2"
                 }`}
             >

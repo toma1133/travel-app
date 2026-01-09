@@ -330,7 +330,7 @@ const GuidePage = ({
         <div
             className={`min-h-full font-[Noto_Sans_TC] text-gray-800 flex flex-col ${
                 isPrinting
-                    ? "p-0 h-auto min-h-[50vh] break-after-page overflow-visible print:bg-white"
+                    ? "p-0 h-auto min-h-[50vh] break-after-page overflow-visible bg-white"
                     : `${
                           tripData?.theme_config?.bg || "bg-gray-100"
                       } pt-12 pb-6`
@@ -385,7 +385,7 @@ const GuidePage = ({
             )}
             <div
                 className={`flex-1 flex flex-col items-center justify-center ${
-                    isPrinting ? "" : "px-4"
+                    isPrinting ? "px-0" : "px-4"
                 }`}
             >
                 {viewMode === "list" || isPrinting ? (

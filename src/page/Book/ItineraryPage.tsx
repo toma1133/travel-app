@@ -30,7 +30,11 @@ type ItineraryPageProps = {
     tripIdOverride?: string;
 };
 
-const ItineraryPage = ({ isPrinting, tripDataOverride, tripIdOverride }: ItineraryPageProps) => {
+const ItineraryPage = ({
+    isPrinting,
+    tripDataOverride,
+    tripIdOverride,
+}: ItineraryPageProps) => {
     const { session } = useAuth();
     const { id: paramsId } = useParams<{ id: string }>();
     const tripId = tripIdOverride || paramsId;
@@ -378,7 +382,7 @@ const ItineraryPage = ({ isPrinting, tripDataOverride, tripIdOverride }: Itinera
         <div
             className={`min-h-full font-[Noto_Sans_TC] text-gray-800 ${
                 isPrinting
-                    ? "h-auto min-h-[50vh] break-after-page overflow-visible print:bg-white"
+                    ? "h-auto min-h-[50vh] break-after-page overflow-visible bg-white"
                     : `${
                           tripData?.theme_config?.bg || "bg-gray-100"
                       } py-12 pb-24`

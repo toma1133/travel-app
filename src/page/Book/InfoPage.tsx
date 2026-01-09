@@ -442,7 +442,7 @@ const InfoPage = ({
         <div
             className={`min-h-full font-[Noto_Sans_TC] text-gray-800 ${
                 isPrinting
-                    ? "h-auto min-h-[50vh] break-after-page overflow-visible print:bg-white"
+                    ? "h-auto min-h-[50vh] break-after-page overflow-visible bg-white"
                     : `${
                           tripData?.theme_config?.bg || "bg-gray-100"
                       } py-12 pb-24`
@@ -476,8 +476,8 @@ const InfoPage = ({
                 />
             )}
             <div
-                className={`space-y-6 print:space-y-4 ${
-                    isPrinting ? "" : "px-4"
+                className={`space-y-6 ${
+                    isPrinting ? "space-y-4 px-0" : "px-4"
                 }`}
             >
                 <FlightList

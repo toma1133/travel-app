@@ -51,27 +51,26 @@ const TransactionListItem = ({
         ? budgetItem.amount / members.length
         : budgetItem.amount;
 
-    // --- 列印模式專用佈局 (Compact Table Row) ---
+    // --- 1. 列印模式專用佈局 (Compact Table Row) ---
     if (isPrinting) {
         return (
             <div className="w-full flex items-center py-1.5 break-inside-avoid hover:bg-gray-50">
-                {/* 1. 日期 (固定寬度) */}
+                {/* 1. 日期 */}
                 <div className="w-12 font-mono text-gray-600 font-bold shrink-0">
                     {moment(budgetItem.expense_date).format("MM/DD")}
                 </div>
 
-                {/* 2. 分類 (固定寬度, 截斷) */}
+                {/* 2. 分類 */}
                 <div className="w-16 text-[10px] text-gray-500 uppercase tracking-tight truncate shrink-0 pr-2">
                     {getCategoryName(budgetItem.category)}
                 </div>
 
-                {/* 3. 中間區域：標題 + 分帳 (自動填滿) */}
+                {/* 3. 詳細資訊 */}
                 <div className="flex-1 min-w-0 pr-2">
                     <div className="flex items-baseline">
                         <span className="font-bold text-black text-sm truncate mr-2">
                             {budgetItem.title}
                         </span>
-                        {/* 分帳成員顯示在標題旁，字體縮小 */}
                         {budgetItem.split_with &&
                             budgetItem.split_with.length > 0 && (
                                 <span className="text-[10px] text-gray-400 truncate hidden sm:inline-block">
@@ -79,7 +78,9 @@ const TransactionListItem = ({
                                         size={10}
                                         className="inline mr-0.5"
                                     />
-                                    <span className="print:italic">
+                                    <span className="italic">
+                                        {" "}
+                                        {/* 修改：移除 print:italic */}
                                         {members.join(", ")}
                                     </span>
                                 </span>
@@ -87,18 +88,17 @@ const TransactionListItem = ({
                     </div>
                 </div>
 
-                {/* 4. 付款方式 (固定寬度) */}
+                {/* 4. 付款方式 */}
                 <div className="w-20 text-right text-[10px] text-gray-500 truncate shrink-0">
                     {isCreator ? paymentMethodName : `由 ${members[0]} 代付`}
                 </div>
 
-                {/* 5. 金額 (固定寬度) */}
+                {/* 5. 金額 */}
                 <div className="w-24 text-right shrink-0">
-                    <div className={`text-sm font-bold font-mono text-black`}>
+                    <div className="text-sm font-bold font-mono text-black">
                         {budgetItem.currency_code}{" "}
                         {budgetItem.amount.toLocaleString()}
                     </div>
-                    {/* 如果幣別不同，顯示換算，字體極小 */}
                     {budgetItem.currency_code !== setting?.homeCurrency && (
                         <div className="text-[9px] text-gray-400 font-mono leading-none">
                             ≈ {setting?.homeCurrency}{" "}

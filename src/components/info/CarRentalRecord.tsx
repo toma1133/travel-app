@@ -22,35 +22,84 @@ const CarRentalRecord = ({
     return (
         <div
             className={`
-                flex justify-between items-start pt-4 mb-4 last:mb-0 
-                ${index !== 0 ? "border-t border-gray-100" : ""}
-                print:border-none print:mb-0 print:py-4
+                flex justify-between items-start 
+                ${
+                    isPrinting
+                        ? "border-none mb-0 py-4"
+                        : `pt-4 mb-4 last:mb-0 ${
+                              index !== 0 ? "border-t border-gray-100" : ""
+                          }`
+                }
             `}
         >
-            <div className="w-full text-sm px-2 print:px-0">
-                {/* 資訊區塊：列印時用 Grid 排版比較整齊 */}
-                <div className="print:grid print:grid-cols-3 print:gap-4 print:mb-2">
-                    <div className="flex justify-between mb-2 print:flex-col print:mb-0 print:justify-start">
-                        <span className="text-gray-500 print:text-gray-500 print:text-xs print:uppercase">
+            <div className={`w-full text-sm ${isPrinting ? "px-0" : "px-2"}`}>
+                {/* 資訊區塊：列印時轉為 Grid */}
+                <div
+                    className={`${
+                        isPrinting ? "grid grid-cols-3 gap-4 mb-2" : ""
+                    }`}
+                >
+                    {/* 租車公司 */}
+                    <div
+                        className={`flex justify-between mb-2 ${
+                            isPrinting ? "flex-col mb-0 justify-start" : ""
+                        }`}
+                    >
+                        <span
+                            className={`text-gray-500 ${
+                                isPrinting ? "text-xs uppercase" : ""
+                            }`}
+                        >
                             租車公司
                         </span>
-                        <span className="font-bold text-gray-800 print:text-black print:text-base">
+                        <span
+                            className={`font-bold text-gray-800 ${
+                                isPrinting ? "text-black text-base" : ""
+                            }`}
+                        >
                             {carRental.company}
                         </span>
                     </div>
-                    <div className="flex justify-between mb-2 print:flex-col print:mb-0 print:justify-start">
-                        <span className="text-gray-500 print:text-gray-500 print:text-xs print:uppercase">
+                    {/* 車型 */}
+                    <div
+                        className={`flex justify-between mb-2 ${
+                            isPrinting ? "flex-col mb-0 justify-start" : ""
+                        }`}
+                    >
+                        <span
+                            className={`text-gray-500 ${
+                                isPrinting ? "text-xs uppercase" : ""
+                            }`}
+                        >
                             車型
                         </span>
-                        <span className="font-bold text-gray-800 print:text-black print:text-base">
+                        <span
+                            className={`font-bold text-gray-800 ${
+                                isPrinting ? "text-black text-base" : ""
+                            }`}
+                        >
                             {carRental.model}
                         </span>
                     </div>
-                    <div className="flex justify-between mb-2 print:flex-col print:mb-0 print:justify-start">
-                        <span className="text-gray-500 print:text-gray-500 print:text-xs print:uppercase">
+
+                    {/* 保險 */}
+                    <div
+                        className={`flex justify-between mb-2 ${
+                            isPrinting ? "flex-col mb-0 justify-start" : ""
+                        }`}
+                    >
+                        <span
+                            className={`text-gray-500 ${
+                                isPrinting ? "text-xs uppercase" : ""
+                            }`}
+                        >
                             保險
                         </span>
-                        <span className="font-bold text-gray-800 print:text-black print:text-base">
+                        <span
+                            className={`font-bold text-gray-800 ${
+                                isPrinting ? "text-black text-base" : ""
+                            }`}
+                        >
                             {carRental.insurance_plan || "-"}
                         </span>
                     </div>
@@ -58,15 +107,33 @@ const CarRentalRecord = ({
                 {/* 取車/還車區塊 */}
                 <div
                     className={`
-                    p-4 bg-gray-50 rounded text-xs space-y-2 
-                    print:bg-transparent print:border print:border-gray-300 print:rounded-none print:mt-2 print:space-y-1
-                `}
+                        p-4 bg-gray-50 rounded text-xs space-y-2
+                        ${
+                            isPrinting
+                                ? "bg-transparent border border-gray-300 rounded-none mt-2 space-y-1"
+                                : ""
+                        }
+                    `}
                 >
-                    <div className="flex justify-between print:justify-start print:gap-4 items-center">
-                        <span className="text-gray-400 print:text-black print:font-bold print:w-12">
+                    <div
+                        className={`flex items-center ${
+                            isPrinting
+                                ? "justify-start gap-4"
+                                : "justify-between"
+                        }`}
+                    >
+                        <span
+                            className={`text-gray-400 ${
+                                isPrinting ? "text-black font-bold w-12" : ""
+                            }`}
+                        >
                             取車
                         </span>
-                        <span className="text-gray-700 print:text-black print:text-sm">
+                        <span
+                            className={`text-gray-700 ${
+                                isPrinting ? "text-black text-sm" : ""
+                            }`}
+                        >
                             <span className="font-bold mr-2">
                                 {carRental.pickup_loc}
                             </span>
@@ -77,11 +144,25 @@ const CarRentalRecord = ({
                             </span>
                         </span>
                     </div>
-                    <div className="flex justify-between print:justify-start print:gap-4 items-center">
-                        <span className="text-gray-400 print:text-black print:font-bold print:w-12">
+                    <div
+                        className={`flex items-center ${
+                            isPrinting
+                                ? "justify-start gap-4"
+                                : "justify-between"
+                        }`}
+                    >
+                        <span
+                            className={`text-gray-400 ${
+                                isPrinting ? "text-black font-bold w-12" : ""
+                            }`}
+                        >
                             還車
                         </span>
-                        <span className="text-gray-700 print:text-black print:text-sm">
+                        <span
+                            className={`text-gray-700 ${
+                                isPrinting ? "text-black text-sm" : ""
+                            }`}
+                        >
                             <span className="font-bold mr-2">
                                 {carRental.dropoff_loc}
                             </span>

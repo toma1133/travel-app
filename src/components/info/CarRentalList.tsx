@@ -23,15 +23,31 @@ const CarRentalList = ({
     return (
         <div
             className={`
-                bg-white p-5 rounded-lg shadow-sm 
-                break-inside-avoid-page 
-                print:shadow-none print:border print:border-gray-400 print:rounded-none print:p-4 print:mb-4
+                break-inside-avoid-page
+                ${
+                    isPrinting
+                        ? "border border-gray-400 rounded-none p-4 mb-4 bg-white"
+                        : "bg-white p-5 rounded-lg shadow-sm"
+                }
             `}
         >
-            <div className="flex items-center justify-between mb-4 text-[#8E354A] print:text-black print:border-b print:border-gray-200 print:pb-2">
+            <div
+                className={`flex items-center justify-between mb-4 ${
+                    isPrinting
+                        ? "text-black border-b border-gray-200 pb-2"
+                        : "text-[#8E354A]"
+                }`}
+            >
                 <div className="flex items-center">
-                    <Car size={18} className="mr-2 print:text-black" />
-                    <h3 className="font-bold text-sm tracking-wider uppercase print:text-base">
+                    <Car
+                        size={18}
+                        className={`mr-2 ${isPrinting ? "text-black" : ""}`}
+                    />
+                    <h3
+                        className={`font-bold tracking-wider uppercase ${
+                            isPrinting ? "text-base" : "text-sm"
+                        }`}
+                    >
                         Rental Car
                     </h3>
                 </div>
@@ -53,7 +69,11 @@ const CarRentalList = ({
                     </div>
                 )}
             </div>
-            <div className="space-y-0 print:divide-y print:divide-gray-200">
+            <div
+                className={`space-y-0 ${
+                    isPrinting ? "divide-y divide-gray-200" : ""
+                }`}
+            >
                 {Array.isArray(carRentals) &&
                     carRentals.map((carRental, i) => (
                         <CarRentalRecord
@@ -66,8 +86,8 @@ const CarRentalList = ({
                             onEditBtnClick={onEditBtnClick}
                         />
                     ))}
-                {(!carRentals || carRentals.length === 0) && (
-                    <div className="text-center text-gray-400 text-xs py-2 print:hidden">
+                {(!carRentals || carRentals.length === 0) && !isPrinting && (
+                    <div className="text-center text-gray-400 text-xs py-2">
                         尚無租車資訊
                     </div>
                 )}
