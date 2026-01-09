@@ -22,24 +22,35 @@ const AccommodationRecord = ({
 }: AccommodationRecordProps) => {
     return (
         <div
-            className={`flex justify-between items-start pt-4 mb-4 last:mb-0 ${
-                index !== 0
-                    ? "border-t border-gray-100 print:border-gray-200"
-                    : ""
-            }`}
+            className={`
+                flex justify-between items-start pt-4 mb-4 last:mb-0 
+                ${index !== 0 ? "border-t border-gray-100" : ""}
+                print:border-none print:mb-0 print:py-3
+            `}
         >
-            <div>
-                <div className="font-bold text-gray-800 text-sm mb-1 print:text-base">
+            <div className="flex-1 pr-4">
+                <div className="font-bold text-gray-800 text-sm mb-1 print:text-black print:text-lg">
                     {accommodation.name}
                 </div>
-                <div className="flex items-start text-xs text-gray-500 print:text-gray-600">
-                    <Calendar size={12} className="mr-1.5 mt-0.5" />
-                    {accommodation.check_in_date} -{" "}
+                <div className="flex items-center text-xs text-gray-500 print:text-gray-800 print:text-sm print:font-medium">
+                    <Calendar
+                        size={12}
+                        className="mr-1.5 shrink-0 print:text-black"
+                    />
+                    {accommodation.check_in_date}
+                    <span className="mx-1 text-gray-300 print:text-black">
+                        -
+                    </span>
                     {accommodation.check_out_date}
                 </div>
-                <div className="flex items-start text-xs text-gray-500 mt-1 print:text-gray-600">
-                    <MapPin size={12} className="mr-1.5 mt-0.5 shrink-0" />
-                    <span className="">{accommodation.address}</span>
+                <div className="flex items-start text-xs text-gray-500 mt-1 print:text-gray-600 print:mt-1.5">
+                    <MapPin
+                        size={12}
+                        className="mr-1.5 mt-0.5 shrink-0 print:mt-1"
+                    />
+                    <span className="break-words leading-relaxed">
+                        {accommodation.address}
+                    </span>
                 </div>
             </div>
             {!isPrinting && (

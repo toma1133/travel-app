@@ -21,66 +21,81 @@ const CarRentalRecord = ({
 }: CarRentalRecordProps) => {
     return (
         <div
-            className={`flex justify-between items-start pt-4 mb-4 last:mb-0 ${
-                index !== 0
-                    ? "border-t border-gray-100 print:border-gray-200"
-                    : ""
-            }`}
+            className={`
+                flex justify-between items-start pt-4 mb-4 last:mb-0 
+                ${index !== 0 ? "border-t border-gray-100" : ""}
+                print:border-none print:mb-0 print:py-4
+            `}
         >
-            <div className="w-full text-sm px-2">
-                <div className="flex justify-between mb-2">
-                    <span className="text-gray-500 print:text-gray-600">
-                        租車公司
-                    </span>
-                    <span className="font-bold text-gray-800">
-                        {carRental.company}
-                    </span>
-                </div>
-                <div className="flex justify-between mb-2">
-                    <span className="text-gray-500 print:text-gray-600">
-                        車型
-                    </span>
-                    <span className="font-bold text-gray-800">
-                        {carRental.model}
-                    </span>
-                </div>
-                <div className="flex justify-between mb-2">
-                    <span className="text-gray-500 print:text-gray-600">
-                        保險
-                    </span>
-                    <span className="font-bold text-gray-800">
-                        {carRental.insurance_plan}
-                    </span>
-                </div>
-                <div className="p-4 bg-gray-50 rounded text-xs space-y-2 print:bg-white print:border print:border-gray-200 print:mt-4">
-                    <div className="flex justify-between">
-                        <span className="text-gray-400 print:text-gray-600">
-                            取車
+            <div className="w-full text-sm px-2 print:px-0">
+                {/* 資訊區塊：列印時用 Grid 排版比較整齊 */}
+                <div className="print:grid print:grid-cols-3 print:gap-4 print:mb-2">
+                    <div className="flex justify-between mb-2 print:flex-col print:mb-0 print:justify-start">
+                        <span className="text-gray-500 print:text-gray-500 print:text-xs print:uppercase">
+                            租車公司
                         </span>
-                        <span className="text-gray-700 print:text-gray-800">
-                            {carRental.pickup_loc}{" "}
-                            {moment(carRental.pickup_datetime).format(
-                                "YYYY-MM-DD HH:mm"
-                            )}
+                        <span className="font-bold text-gray-800 print:text-black print:text-base">
+                            {carRental.company}
                         </span>
                     </div>
-                    <div className="flex justify-between">
-                        <span className="text-gray-400 print:text-gray-600">
+                    <div className="flex justify-between mb-2 print:flex-col print:mb-0 print:justify-start">
+                        <span className="text-gray-500 print:text-gray-500 print:text-xs print:uppercase">
+                            車型
+                        </span>
+                        <span className="font-bold text-gray-800 print:text-black print:text-base">
+                            {carRental.model}
+                        </span>
+                    </div>
+                    <div className="flex justify-between mb-2 print:flex-col print:mb-0 print:justify-start">
+                        <span className="text-gray-500 print:text-gray-500 print:text-xs print:uppercase">
+                            保險
+                        </span>
+                        <span className="font-bold text-gray-800 print:text-black print:text-base">
+                            {carRental.insurance_plan || "-"}
+                        </span>
+                    </div>
+                </div>
+                {/* 取車/還車區塊 */}
+                <div
+                    className={`
+                    p-4 bg-gray-50 rounded text-xs space-y-2 
+                    print:bg-transparent print:border print:border-gray-300 print:rounded-none print:mt-2 print:space-y-1
+                `}
+                >
+                    <div className="flex justify-between print:justify-start print:gap-4 items-center">
+                        <span className="text-gray-400 print:text-black print:font-bold print:w-12">
+                            取車
+                        </span>
+                        <span className="text-gray-700 print:text-black print:text-sm">
+                            <span className="font-bold mr-2">
+                                {carRental.pickup_loc}
+                            </span>
+                            <span className="font-mono">
+                                {moment(carRental.pickup_datetime).format(
+                                    "YYYY-MM-DD HH:mm"
+                                )}
+                            </span>
+                        </span>
+                    </div>
+                    <div className="flex justify-between print:justify-start print:gap-4 items-center">
+                        <span className="text-gray-400 print:text-black print:font-bold print:w-12">
                             還車
                         </span>
-                        <span className="text-gray-700 print:text-gray-800">
-                            {carRental.dropoff_loc}{" "}
-                            {moment(carRental.dropoff_datetime).format(
-                                "YYYY-MM-DD HH:mm"
-                            )}
+                        <span className="text-gray-700 print:text-black print:text-sm">
+                            <span className="font-bold mr-2">
+                                {carRental.dropoff_loc}
+                            </span>
+                            <span className="font-mono">
+                                {moment(carRental.dropoff_datetime).format(
+                                    "YYYY-MM-DD HH:mm"
+                                )}
+                            </span>
                         </span>
                     </div>
                 </div>
             </div>
             {!isPrinting && isEditing && (
-                <div
-                    className={`flex space-x-2 bg-white pr-2 transition-opacity duration-200`}
-                >
+                <div className="flex space-x-2 bg-white pr-2 transition-opacity duration-200">
                     <button
                         type="button"
                         onClick={() => onEditBtnClick(carRental)}

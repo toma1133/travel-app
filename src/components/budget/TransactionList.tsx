@@ -59,10 +59,24 @@ const TransactionList = ({
                 <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest print:text-black">
                     交易紀錄 (Transactions)
                 </h4>
-                <span className={`text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold ${isPrinting ? "print:hidden" : ""}`}>
+                <span
+                    className={`text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold ${
+                        isPrinting ? "print:hidden" : ""
+                    }`}
+                >
                     共 {budgetItems?.length} 筆
                 </span>
             </div>
+            {/* [新增] 列印專用的表頭，對齊 Item 的欄位 */}
+            {isPrinting && (
+                <div className="w-full flex text-[10px] font-bold text-gray-500 uppercase tracking-wider py-1 border-b border-gray-300">
+                    <div className="w-12">Date</div>
+                    <div className="w-16">Cat.</div>
+                    <div className="flex-1">Details</div>
+                    <div className="w-20 text-right">Payment</div>
+                    <div className="w-24 text-right">Amount</div>
+                </div>
+            )}
             <div
                 className={`w-full ${
                     isPrinting

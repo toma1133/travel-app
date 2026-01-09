@@ -36,7 +36,11 @@ type InfoPageProps = {
     tripIdOverride?: string;
 };
 
-const InfoPage = ({ isPrinting, tripDataOverride, tripIdOverride }: InfoPageProps) => {
+const InfoPage = ({
+    isPrinting,
+    tripDataOverride,
+    tripIdOverride,
+}: InfoPageProps) => {
     const { session } = useAuth();
     const { id: paramsId } = useParams<{ id: string }>();
     const tripId = tripIdOverride || paramsId;
@@ -471,7 +475,11 @@ const InfoPage = ({ isPrinting, tripDataOverride, tripIdOverride }: InfoPageProp
                     }
                 />
             )}
-            <div className="px-4 space-y-6 print:space-y-4">
+            <div
+                className={`space-y-6 print:space-y-4 ${
+                    isPrinting ? "" : "px-4"
+                }`}
+            >
                 <FlightList
                     flights={flights}
                     isEditing={isEditing}

@@ -23,21 +23,22 @@ const AccommodationList = ({
     onViewBtnClick,
 }: AccommodationListProps) => {
     return (
-        <div className="bg-white p-5 rounded-lg shadow-sm break-inside-avoid-page print:shadow-none print:border print:border-gray-300 print:p-4">
-            <div className="flex items-center justify-between mb-4 text-[#8E354A] print:text-gray-700">
-                <div className="flex justify-between">
-                    <Bed size={18} className="mr-2" />
-                    <h3 className="font-bold text-sm tracking-wider uppercase">
+        <div
+            className={`
+                bg-white p-5 rounded-lg shadow-sm 
+                break-inside-avoid-page 
+                print:shadow-none print:border print:border-gray-400 print:rounded-none print:p-4 print:mb-4
+            `}
+        >
+            <div className="flex items-center justify-between mb-4 text-[#8E354A] print:text-black print:border-b print:border-gray-200 print:pb-2">
+                <div className="flex items-center">
+                    <Bed size={18} className="mr-2 print:text-black" />
+                    <h3 className="font-bold text-sm tracking-wider uppercase print:text-base">
                         Hotels
                     </h3>
                 </div>
                 {!isPrinting && isEditing && (
-                    <div
-                        className={`
-                        flex space-x-2 bg-white pr-2
-                        transition-opacity duration-200
-                    `}
-                    >
+                    <div className="flex space-x-2 bg-white pr-2 transition-opacity duration-200">
                         <button
                             type="button"
                             onClick={onAddBtnClick}
@@ -49,19 +50,26 @@ const AccommodationList = ({
                     </div>
                 )}
             </div>
-            {Array.isArray(accommodations) &&
-                accommodations.map((accommodation, i) => (
-                    <AccommodationRecord
-                        key={i}
-                        accommodation={accommodation}
-                        index={i}
-                        isEditing={isEditing}
-                        isPrinting={isPrinting}
-                        onDeleteBtnClick={onDeleteBtnClick}
-                        onEditBtnClick={onEditBtnClick}
-                        onViewBtnClick={onViewBtnClick}
-                    />
-                ))}
+            <div className="space-y-0 print:divide-y print:divide-gray-200">
+                {Array.isArray(accommodations) &&
+                    accommodations.map((accommodation, i) => (
+                        <AccommodationRecord
+                            key={i}
+                            accommodation={accommodation}
+                            index={i}
+                            isEditing={isEditing}
+                            isPrinting={isPrinting}
+                            onDeleteBtnClick={onDeleteBtnClick}
+                            onEditBtnClick={onEditBtnClick}
+                            onViewBtnClick={onViewBtnClick}
+                        />
+                    ))}
+                {(!accommodations || accommodations.length === 0) && (
+                    <div className="text-center text-gray-400 text-xs py-2 print:hidden">
+                        尚無住宿資訊
+                    </div>
+                )}
+            </div>
         </div>
     );
 };

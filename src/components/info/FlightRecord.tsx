@@ -22,28 +22,27 @@ const FlightRecord = ({
     // 計算飛行時間
     const getDuration = () => {
         if (!flight.departure_time || !flight.arrival_time) return "";
-        
+
         const start = moment(flight.departure_time, "HH:mm:ss");
         const end = moment(flight.arrival_time, "HH:mm:ss");
-        
+
         // 處理跨日航班 (假設抵達時間小於起飛時間代表跨日)
         if (end.isBefore(start)) {
             end.add(1, "day");
         }
-        
+
         const diff = moment.duration(end.diff(start));
         const hours = Math.floor(diff.asHours());
         const minutes = diff.minutes();
-        
+
         return `${hours}h ${minutes}m`;
     };
-    
+
     return (
         <div
             className={`
                 flex justify-between items-start pt-4 mb-4 last:mb-0 
                 ${index !== 0 ? "border-t border-gray-100" : ""}
-                /* 列印: 移除 margin, 改用 padding 配合父層的 divide-y */
                 print:border-none print:mb-0 print:py-3
             `}
         >
@@ -51,7 +50,9 @@ const FlightRecord = ({
                 {/* 地點 */}
                 <div className="font-bold text-gray-800 text-base print:text-black print:text-lg flex items-center gap-2">
                     <span>{flight.departure_loc}</span>
-                    <span className="text-gray-400 print:text-gray-600 font-light text-sm">➝</span>
+                    <span className="text-gray-400 print:text-gray-600 font-light text-sm">
+                        ➝
+                    </span>
                     <span>{flight.arrival_loc}</span>
                 </div>
                 {/* 日期與代號 */}
@@ -67,10 +68,12 @@ const FlightRecord = ({
             <div className="text-right flex flex-col items-end">
                 <div className="font-mono text-gray-600 font-bold print:text-black print:text-lg">
                     {moment(flight.departure_time, "HH:mm:ss").format("HH:mm")}
-                    <span className="mx-1 text-gray-300 print:text-gray-500">-</span>
+                    <span className="mx-1 text-gray-300 print:text-gray-500">
+                        -
+                    </span>
                     {moment(flight.arrival_time, "HH:mm:ss").format("HH:mm")}
                 </div>
-                
+
                 {/* [新增] 飛行時間 */}
                 <div className="flex items-center gap-1 text-[10px] text-gray-400 mt-1 print:text-gray-600">
                     <Clock size={10} className="print:hidden" />

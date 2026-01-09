@@ -51,6 +51,71 @@ const TransactionListItem = ({
         ? budgetItem.amount / members.length
         : budgetItem.amount;
 
+    // --- 列印模式專用佈局 (Compact Table Row) ---
+    if (isPrinting) {
+        return (
+            <div className="w-full flex items-center py-1.5 break-inside-avoid hover:bg-gray-50">
+                {/* 1. 日期 (固定寬度) */}
+                <div className="w-12 font-mono text-gray-600 font-bold shrink-0">
+                    {moment(budgetItem.expense_date).format("MM/DD")}
+                </div>
+
+                {/* 2. 分類 (固定寬度, 截斷) */}
+                <div className="w-16 text-[10px] text-gray-500 uppercase tracking-tight truncate shrink-0 pr-2">
+                    {getCategoryName(budgetItem.category)}
+                </div>
+
+                {/* 3. 中間區域：標題 + 分帳 (自動填滿) */}
+                <div className="flex-1 min-w-0 pr-2">
+                    <div className="flex items-baseline">
+                        <span className="font-bold text-black text-sm truncate mr-2">
+                            {budgetItem.title}
+                        </span>
+                        {/* 分帳成員顯示在標題旁，字體縮小 */}
+                        {budgetItem.split_with &&
+                            budgetItem.split_with.length > 0 && (
+                                <span className="text-[10px] text-gray-400 truncate hidden sm:inline-block">
+                                    <Users
+                                        size={10}
+                                        className="inline mr-0.5"
+                                    />
+                                    <span className="print:italic">
+                                        {members.join(", ")}
+                                    </span>
+                                </span>
+                            )}
+                    </div>
+                </div>
+
+                {/* 4. 付款方式 (固定寬度) */}
+                <div className="w-20 text-right text-[10px] text-gray-500 truncate shrink-0">
+                    {isCreator ? paymentMethodName : `由 ${members[0]} 代付`}
+                </div>
+
+                {/* 5. 金額 (固定寬度) */}
+                <div className="w-24 text-right shrink-0">
+                    <div className={`text-sm font-bold font-mono text-black`}>
+                        {budgetItem.currency_code}{" "}
+                        {budgetItem.amount.toLocaleString()}
+                    </div>
+                    {/* 如果幣別不同，顯示換算，字體極小 */}
+                    {budgetItem.currency_code !== setting?.homeCurrency && (
+                        <div className="text-[9px] text-gray-400 font-mono leading-none">
+                            ≈ {setting?.homeCurrency}{" "}
+                            {convertToHome(
+                                budgetItem.amount,
+                                budgetItem.currency_code,
+                                setting?.homeCurrency,
+                                setting?.exchangeRate
+                            ).toLocaleString()}
+                        </div>
+                    )}
+                </div>
+            </div>
+        );
+    }
+
+    // --- 螢幕模式專用佈局 (原本的 Card) ---
     return (
         <div
             role="button"
@@ -79,7 +144,13 @@ const TransactionListItem = ({
                 )}
                 <div className={`${isPrinting ? "flex-1" : ""}`}>
                     {/* Title */}
-                    <div className={`text-sm font-bold text-gray-900 ${!isPrinting ? "group-hover:text-[#9F1239] transition-colors" : "print:text-black"}`}>
+                    <div
+                        className={`text-sm font-bold text-gray-900 ${
+                            !isPrinting
+                                ? "group-hover:text-[#9F1239] transition-colors"
+                                : "print:text-black"
+                        }`}
+                    >
                         <div className="flex flex-row items-center">
                             <span className="mr-2">{budgetItem.title}</span>
                             {/* {isCreator ? (
@@ -95,7 +166,11 @@ const TransactionListItem = ({
                     </div>
                     {/* Meta info */}
                     <div className="text-[10px] text-gray-400 mt-0.5 flex items-center print:text-gray-600 print:mt-1">
-                        <span className={`mr-2 ${isPrinting ? "font-semibold text-gray-700" : ""}`}>
+                        <span
+                            className={`mr-2 ${
+                                isPrinting ? "font-semibold text-gray-700" : ""
+                            }`}
+                        >
                             {getCategoryName(budgetItem.category)}
                         </span>
                         <span className="mr-2 text-gray-300">|</span>
@@ -103,24 +178,36 @@ const TransactionListItem = ({
                             {moment(budgetItem.expense_date).format("MM/DD")}
                         </span>
                         {/* 螢幕顯示代付者標籤 */}
-                        <span className={`${isPrinting ? "hidden" : "bg-gray-100 px-1.5 rounded text-gray-500 ml-2"}`}>
+                        <span
+                            className={`${
+                                isPrinting
+                                    ? "hidden"
+                                    : "bg-gray-100 px-1.5 rounded text-gray-500 ml-2"
+                            }`}
+                        >
                             {isCreator
                                 ? paymentMethodName
                                 : `由 ${members[0]} 代付`}
                         </span>
                     </div>
                     {/* 分帳成員 (列印時可視需求決定是否顯示詳細名單，太長會佔空間) */}
-                    {budgetItem.split_with && budgetItem.split_with.length > 0 && (
-                        <div className="text-[10px] text-slate-400 flex items-center gap-1 print:text-gray-500 print:mt-0.5">
-                            <Users className="w-3 h-3 print:hidden" /> 
-                            <span className="print:hidden">成員：</span> {/* 列印時也許只顯示 (3人) 之類的簡稱 */}
-                            <span className="print:italic">{members.join(", ")}</span>
-                        </div>
-                    )}
+                    {budgetItem.split_with &&
+                        budgetItem.split_with.length > 0 && (
+                            <div className="text-[10px] text-slate-400 flex items-center gap-1 print:text-gray-500 print:mt-0.5">
+                                <Users className="w-3 h-3 print:hidden" />
+                                <span className="print:hidden">
+                                    成員：
+                                </span>{" "}
+                                {/* 列印時也許只顯示 (3人) 之類的簡稱 */}
+                                <span className="print:italic">
+                                    {members.join(", ")}
+                                </span>
+                            </div>
+                        )}
                     {/* 支付方式 (列印顯示) */}
                     {isPrinting && (
                         <div className="text-[10px] text-gray-500 mt-0.5 italic">
-                             {isCreator
+                            {isCreator
                                 ? paymentMethodName
                                 : `由 ${members[0]} 代付`}
                         </div>
@@ -129,7 +216,9 @@ const TransactionListItem = ({
             </div>
             {/* Amount Column */}
             <div className={`text-right`}>
-                <div className={`text-sm font-bold ${theme?.mono} text-gray-900 print:text-black`}>
+                <div
+                    className={`text-sm font-bold ${theme?.mono} text-gray-900 print:text-black`}
+                >
                     {budgetItem.currency_code}{" "}
                     {budgetItem.amount.toLocaleString()}
                 </div>
