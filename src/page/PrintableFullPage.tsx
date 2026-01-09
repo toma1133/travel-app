@@ -159,7 +159,8 @@ const PrintableFullPage = ({
                 >
                     <div
                         className={`
-                            print:block print:w-full print:aspect-[210/297] print:overflow-hidden print:break-after-page print:-m-0
+                            w-full block aspect-[210/297] overflow-hidden relative mb-0
+                            print:w-full print:aspect-[210/297] print:overflow-hidden print:break-after-page print:-m-0
                         `}
                     >
                         <CoverPage
@@ -168,8 +169,7 @@ const PrintableFullPage = ({
                             tripIdOverride={tripId}
                         />
                     </div>
-
-                    <div className="pt-8 print:pt-4 print:block page-content-wrapper print:px-8">
+                    <div className="pt-8 print:pt-0 print:block page-content-wrapper print:px-8">
                         <h3 className="text-lg font-[Noto_Sans_TC] font-bold mb-4">
                             行程表
                         </h3>

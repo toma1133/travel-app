@@ -1,5 +1,5 @@
 import { useOutletContext, useParams } from "react-router-dom";
-import { Calendar } from "lucide-react";
+import { Calendar, MapPin } from "lucide-react";
 import type BookLayoutContextType from "../../models/types/BookLayoutContextTypes";
 import type { TripVM } from "../../models/types/TripTypes";
 
@@ -19,113 +19,159 @@ const CoverPage = ({
     const contextData = useOutletContext<BookLayoutContextType | null>();
     const tripData = tripDataOverride || contextData?.tripData;
 
+    const accentColor = tripData?.theme_config?.accent || "bg-rose-600";
+    const titleColor = tripData?.theme_config?.primary || "text-gray-900";
+
+    const dayCount =
+        tripData?.start_date && tripData?.end_date
+            ? Math.max(
+                  1,
+                  Math.ceil(
+                      (new Date(tripData.end_date).getTime() -
+                          new Date(tripData.start_date).getTime()) /
+                          (1000 * 60 * 60 * 24)
+                  ) + 1
+              )
+            : 1;
     return (
         <div
-            className={`relative flex flex-col w-full ${
-                isPrinting
-                    ? "h-full bg-white break-inside-avoid page-break-inside-avoid"
-                    : "h-full bg-[#2C3E50]"
-            }`}
+            className={`
+                relative w-full bg-white overflow-hidden h-full 
+                print:h-[296mm] print:overflow-hidden print:block
+            `}
         >
             {/* 封面圖區域 */}
             <div
-                className={`relative w-full overflow-hidden ${
-                    isPrinting ? "h-[45%]" : "h-[65%]"
-                }`}
+                className={`
+                    absolute top-0 left-0 w-full z-0 bg-gray-200 h-[70%]
+                    print:h-[60%]
+                `}
             >
-                {tripData?.cover_image && (
+                {tripData?.cover_image ? (
                     <img
                         src={tripData.cover_image}
                         alt="Cover"
-                        className="w-full h-full object-cover opacity-80"
-                        // 列印時不需要 opacity-80，保持原圖清晰
-                        style={{ opacity: isPrinting ? 1 : 0.8 }}
+                        className="w-full h-full object-cover"
+                        style={{ opacity: 1 }}
                     />
+                ) : (
+                    <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400">
+                        No Cover Image
+                    </div>
                 )}
                 {!isPrinting && (
-                    <div className="absolute inset-0 bg-linear-to-t from-[#2C3E50] via-transparent to-transparent"></div>
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/10"></div>
                 )}
-                {/* <div className="absolute top-10 right-8 flex flex-col items-center space-y-4 opacity-70">
-                    <div className="writing-vertical text-white text-lg font-[Noto_Sans_TC] tracking-widest border-r border-white/50 pr-3 h-32">
-                        {tripData?.cover_text}
-                    </div>
-                </div> */}
             </div>
             {/* 內容卡片區域 */}
             <div
-                className={`flex-1 relative z-10 flex flex-col ${
-                    isPrinting ? "px-8" : "px-8 -mt-20"
-                }`}
+                className={`
+                    absolute bottom-0 left-0 w-full z-10 bg-white
+                    flex flex-col
+                    ${
+                        !isPrinting
+                            ? "rounded-t-[32px] shadow-[0_-10px_30px_rgba(0,0,0,0.15)]"
+                            : "print:shadow-none print:rounded-t-none print:border-t-4 print:border-gray-900"
+                    }
+                    h-[40%] print:h-[45%]
+                `}
             >
+                {/* 螢幕模式：頂部的小橫條 (裝飾用，也可當作 drag handle) */}
+                {!isPrinting && (
+                    <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mt-3 mb-1 shrink-0"></div>
+                )}
+                {/* 內容捲動區：
+                    - 螢幕: 允許捲動 (overflow-y-auto)，防止手機直式時內容太長被切掉
+                    - 列印: 禁止捲動 (overflow-visible/hidden)，防止出現捲軸
+                */}
                 <div
                     className={`
-                        flex flex-col relative h-full w-full
-                        ${
-                            isPrinting
-                                ? "bg-white pt-4 text-center"
-                                : "bg-[#F9F8F6] p-8 shadow-2xl rounded-t-sm"
-                        }
-                    `}
+                    flex-1 flex flex-col items-start justify-start px-8 py-6
+                    ${!isPrinting ? "overflow-y-auto" : "overflow-hidden"}
+                `}
                 >
-                    {!isPrinting && (
-                        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-12 h-1 bg-[#8E354A]"></div>
-                    )}
-                    <div
-                        className={`
-                            text-center flex-1 flex flex-col 
-                            ${
-                                isPrinting
-                                    ? "justify-start pt-8"
-                                    : "justify-center"
-                            }
-                        `}
-                    >
+                    {/* 上方標籤區 */}
+                    <div className="flex items-center gap-3 mb-4 shrink-0">
                         <span
-                            className={`inline-block px-3 py-1 ${tripData?.theme_config?.accent} text-white text-[10px] tracking-widest mb-4 print:text-black print:bg-transparent print:border print:border-gray-300`}
+                            className={`px-3 py-1 text-[10px] font-bold tracking-[0.2em] text-white uppercase rounded-full ${accentColor} print:text-white print:bg-black`}
                         >
-                            TRAVEL ITINERARY
+                            TRAVEL PLAN
                         </span>
-                        <h1
-                            className={`text-3xl font-[Noto_Sans_TC] font-bold ${tripData?.theme_config?.primary} mb-2 print:text-4xl print:text-black`}
-                        >
-                            {tripData?.title}
-                        </h1>
-                        <p
-                            className={`text-sm ${tripData?.theme_config?.subtle} font-medium mb-6 uppercase tracking-widest print:text-gray-600`}
-                        >
-                            {tripData?.subtitle}
-                        </p>
+                        <span className="text-xs font-bold text-gray-400 tracking-wider">
+                            {dayCount} DAYS
+                        </span>
                     </div>
-                    {/* 日期與地點資訊 */}
-                    <div
-                        className="
-                            flex items-center justify-center space-x-6 text-xs text-gray-500 
-                            border-t border-gray-200 
-                            pt-3 mt-1 mb-3
-                            print:text-sm print:border-gray-300
-                            print:break-inside-avoid print:page-break-inside-avoid
-                        "
+
+                    {/* 標題區 */}
+                    <h1
+                        className={`
+                        text-3xl sm:text-4xl font-[Noto_Sans_TC] font-black leading-tight mb-2
+                        ${titleColor} print:text-5xl print:text-black
+                    `}
                     >
-                        <div className="flex items-center gap-2">
-                            <Calendar size={isPrinting ? 16 : 14} />
-                            <span>
-                                {tripData?.start_date} ~ {tripData?.end_date}
+                        {tripData?.title}
+                    </h1>
+
+                    <h2 className="text-sm sm:text-base text-gray-400 font-medium tracking-wide uppercase mb-6 print:text-gray-600 print:mb-6 shrink-0">
+                        {tripData?.subtitle}
+                    </h2>
+
+                    {/* 資訊格線區 (Grid) */}
+                    <div className="w-full grid grid-cols-2 gap-6 border-t border-gray-100 pt-6 mb-6 print:border-gray-200 shrink-0">
+                        {/* 日期 */}
+                        <div className="flex flex-col">
+                            <span className="text-[10px] text-gray-400 uppercase tracking-wider font-bold mb-1">
+                                DATE
                             </span>
+                            <div className="flex items-center gap-2 text-sm font-bold text-gray-700 print:text-black">
+                                <Calendar
+                                    size={16}
+                                    className="text-rose-500 print:text-black"
+                                />
+                                <span>{tripData?.start_date}</span>
+                            </div>
+                            <div className="text-xs text-gray-400 pl-6">
+                                to {tripData?.end_date}
+                            </div>
                         </div>
+
+                        {/* 地點 */}
+                        {/* <div className="flex flex-col">
+                            <span className="text-[10px] text-gray-400 uppercase tracking-wider font-bold mb-1">
+                                DESTINATION
+                            </span>
+                            <div className="flex items-center gap-2 text-sm font-bold text-gray-700 print:text-black">
+                                <MapPin
+                                    size={16}
+                                    className="text-rose-500 print:text-black"
+                                />
+                                <span>
+                                    Travel Destination
+                                </span>
+                            </div>
+                        </div> */}
                     </div>
-                    <div className="print:overflow-hidden">
+
+                    {/* 描述文字區 (一般瀏覽與列印皆顯示) */}
+                    <div className="w-full relative pl-4 border-l-2 border-gray-200 print:border-gray-800">
                         <p
                             className={`
-                                text-sm ${tripData?.theme_config?.primary} leading-loose text-justify font-light opacity-90 
-                                print:text-gray-800 print:text-base print:leading-7
-                            `}
+                            text-sm text-gray-500 leading-relaxed font-light text-justify
+                            /* 螢幕: 不截斷，讓他可以捲動看完 */
+                            ${
+                                !isPrinting
+                                    ? ""
+                                    : "line-clamp-4 print:text-gray-800 print:line-clamp-4"
+                            }
+                        `}
                         >
                             {tripData?.description}
                         </p>
                     </div>
+                    {/* 底部留白 (讓捲動時不要貼底) */}
+                    {!isPrinting && <div className="h-8 shrink-0"></div>}
                 </div>
             </div>
-            <style>{`.writing-vertical { writing-mode: vertical-rl; }`}</style>
         </div>
     );
 };
