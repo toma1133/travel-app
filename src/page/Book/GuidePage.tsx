@@ -22,7 +22,11 @@ type CoverPageProps = {
     tripIdOverride?: string;
 };
 
-const GuidePage = ({ isPrinting, tripDataOverride, tripIdOverride }: CoverPageProps) => {
+const GuidePage = ({
+    isPrinting,
+    tripDataOverride,
+    tripIdOverride,
+}: CoverPageProps) => {
     const { session } = useAuth();
     const { id: paramsId } = useParams<{ id: string }>();
     const tripId = tripIdOverride || paramsId;
@@ -30,6 +34,7 @@ const GuidePage = ({ isPrinting, tripDataOverride, tripIdOverride }: CoverPagePr
     const { insert, update, remove, anyPending } = usePlaceMutations();
     const contextData = useOutletContext<BookLayoutContextType | null>();
     const tripData = tripDataOverride || contextData?.tripData;
+    const currentTheme = tripData?.theme_config || null;
     const { setIsPageLoading } = useOutletContext<LayoutContextType>();
 
     const [viewMode, setViewMode] = useState<"list" | "map">("list");
@@ -378,8 +383,12 @@ const GuidePage = ({ isPrinting, tripDataOverride, tripIdOverride }: CoverPagePr
                     onRemoveTagBtnClick={handleRemoveTag}
                 />
             )}
-            <div className={`flex-1 flex flex-col items-center justify-center ${ isPrinting ? "" : "px-4" }`}>
-                {viewMode === "list" ? (
+            <div
+                className={`flex-1 flex flex-col items-center justify-center ${
+                    isPrinting ? "" : "px-4"
+                }`}
+            >
+                {viewMode === "list" || isPrinting ? (
                     <PlaceCardList
                         isPrinting={isPrinting}
                         places={filteredPlaces}

@@ -20,6 +20,7 @@ import TripList from "../components/bookshelf/TripList";
 import TripModal from "../components/bookshelf/TripModal";
 import PrintableFullPage from "./PrintableFullPage";
 import useTripMemberMutations from "../hooks/tripMember/UseTripMemberMutations";
+import LoadingMask from "../components/common/LoadingMask";
 
 const BookshelfPage = () => {
     const { session } = useAuth();
@@ -193,30 +194,18 @@ const BookshelfPage = () => {
     const [printTripId, setPrintTripId] = useState<string | undefined>(
         undefined
     );
-    const {
-        data: trip,
-        isLoading: isTripLoading,
-        error: tripError,
-    } = useTrip(printTripId);
-    const {
-        data: places,
-        isLoading: isPlacesLoading,
-        error: placesError,
-    } = usePlaces(printTripId);
-
-    useEffect(() => {
-        if (isPrintMode) {
-            setTimeout(() => {
-                window.print();
-                setIsPrintMode(false);
-                setPrintTripId(undefined);
-            }, 500);
-        }
-    }, [isPrintMode]);
+    const { data: printTripData, isLoading: isPrintTripLoading } =
+        useTrip(printTripId);
 
     const handlePrintBtnClick = async (trip: TripVM) => {
         setPrintTripId(trip.id);
         setIsPrintMode(true);
+    };
+
+    // 當列印結束（或是使用者取消）時的 callback
+    const handleAfterPrint = () => {
+        setIsPrintMode(false);
+        setPrintTripId(undefined);
     };
 
     // Trip Modal
@@ -377,7 +366,19 @@ const BookshelfPage = () => {
     };
 
     if (isPrintMode) {
-        return <PrintableFullPage tripData={trip} />;
+        // 如果 Trip 資料還在抓，先顯示 Loading
+        if (isPrintTripLoading || !printTripData) {
+            return <LoadingMask />;
+        }
+
+        return (
+            <PrintableFullPage
+                // [關鍵修正 1] 加入 key，強迫 React 銷毀舊元件，防止資料殘留
+                key={printTripData.id}
+                tripData={printTripData}
+                onPrintComplete={handleAfterPrint} // 傳入 callback
+            />
+        );
     }
 
     return (
