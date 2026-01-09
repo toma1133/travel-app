@@ -28,7 +28,7 @@ const CoverPage = ({
             {/* 封面圖區域 */}
             <div
                 className={`relative w-full overflow-hidden ${
-                    isPrinting ? "h-[50%]" : "h-[65%]"
+                    isPrinting ? "h-[45%]" : "h-[65%]"
                 }`}
             >
                 {tripData?.cover_image && (
@@ -60,7 +60,7 @@ const CoverPage = ({
                         flex flex-col relative h-full w-full
                         ${
                             isPrinting
-                                ? "bg-white pt-6 text-center"
+                                ? "bg-white pt-4 text-center"
                                 : "bg-[#F9F8F6] p-8 shadow-2xl rounded-t-sm"
                         }
                     `}
@@ -105,12 +105,6 @@ const CoverPage = ({
                         {tripData?.description}
                     </p>
                 </div>
-                {isPrinting && (
-                    // [修正 4] 減少底部 padding (pb-8 -> pb-4)
-                    <div className="mt-auto pb-4 text-[10px] text-gray-400 uppercase tracking-widest text-center">
-                        Created by Trip Manager
-                    </div>
-                )}
             </div>
             <style>{`.writing-vertical { writing-mode: vertical-rl; }`}</style>
         </div>

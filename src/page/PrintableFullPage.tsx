@@ -79,8 +79,15 @@ const PrintableFullPage = ({
                     #root { display: none !important; }
 
                     @page {
+                        margin-top: 10mm;
+                        margin-bottom: 10mm;
+                        margin-left: 0mm;
+                        margin-right: 0mm;
+                        size: auto; 
+                    }
+                    
+                    @page :first {
                         margin: 0mm;
-                        size: auto;
                     }
                         
                     html, body {
