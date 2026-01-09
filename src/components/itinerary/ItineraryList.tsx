@@ -40,67 +40,84 @@ const ItineraryList = ({
 }: ItineraryListProps) => {
     const [expandedDayNum, setExpandedDayNum] = useState<number | null>(null);
     const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
-    const hasScrolledRef = useRef(false);
-
+    // 用來標記是否為「使用者手動點擊」觸發的展開
+    // 避免與初始載入的自動捲動邏輯衝突
+    const isUserInteractionRef = useRef(false);
+    
+    // 用來標記初始載入是否完成
+    const hasInitialScrolledRef = useRef(false);
+    
+    // 1. 處理初始載入 (自動捲動到今天)
     useEffect(() => {
         if (isPrinting || !Array.isArray(itinerarys) || itinerarys.length === 0)
             return;
 
-        // 如果已經定位過，就不再重置 (避免切換編輯模式時亂跳)
-        if (hasScrolledRef.current) return;
+        if (hasInitialScrolledRef.current) return;
 
         const today = moment().format("YYYY-MM-DD");
-
-        // 找看看有沒有「今天」的行程
         const todayItineraryIndex = itinerarys.findIndex(
             (day) => day.date === today
         );
 
-        let targetDayNum = 1; // 預設第 1 天
+        let targetDayNum = 1;
         let scrollIndex = 0;
 
         if (todayItineraryIndex !== -1) {
-            // 如果有今天，就展開今天
             targetDayNum = itinerarys[todayItineraryIndex].day_number;
             scrollIndex = todayItineraryIndex;
         } else {
-            // 如果沒有今天，預設展開第 1 天
             targetDayNum = itinerarys[0].day_number;
             scrollIndex = 0;
         }
 
         setExpandedDayNum(targetDayNum);
 
-        // [功能 2 & 3] 執行初始捲動
-        // 稍微延遲一點點，確保 DOM 已經渲染完成
+        // 稍微延遲確保 DOM 渲染完畢
         setTimeout(() => {
             if (itemRefs.current[scrollIndex]) {
                 itemRefs.current[scrollIndex]?.scrollIntoView({
                     behavior: "smooth",
                     block: "start",
                 });
-                hasScrolledRef.current = true;
+                hasInitialScrolledRef.current = true;
             }
         }, 300);
-    }, [itinerarys]);
+    }, [itinerarys, isPrinting]);
+
+    // 2. [修正重點] 監聽 expandedDayNum 變化來處理使用者點擊後的捲動
+    useEffect(() => {
+        // 如果不是使用者點擊 (例如初始載入)，則不執行這裡的捲動，避免衝突
+        if (!isUserInteractionRef.current || expandedDayNum === null || !itinerarys) return;
+
+        const index = itinerarys.findIndex(it => it.day_number === expandedDayNum);
+        
+        if (index !== -1 && itemRefs.current[index]) {
+            // 在這裡執行捲動，確保 DOM 已經重新渲染(展開/收合)完畢
+            // 使用 setTimeout 0 讓它排在 Event Loop 最後，確保畫面高度已更新
+            setTimeout(() => {
+                itemRefs.current[index]?.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start",
+                });
+                // 重置標記
+                isUserInteractionRef.current = false; 
+            }, 50); // 給一點點緩衝時間讓 CSS transition (如果有) 開始
+        }
+    }, [expandedDayNum, itinerarys]);
 
     const handleExpandedBtnClick = (itinerary: ItineraryVM, index: number) => {
         if (isPrinting) return;
+
+        // 標記這是使用者觸發的行為
+        isUserInteractionRef.current = true;
 
         const newDayNum =
             expandedDayNum === itinerary.day_number
                 ? null
                 : itinerary.day_number;
+        
+        // 只更新 State，捲動邏輯交給 useEffect
         setExpandedDayNum(newDayNum);
-
-        // [功能 2] 點擊展開時，捲動到該項目
-        if (newDayNum !== null && itemRefs.current[index]) {
-            // 這裡不需要 setTimeout，因為點擊時 DOM 已經存在
-            itemRefs.current[index]?.scrollIntoView({
-                behavior: "smooth",
-                block: "start", // 改為 start 讓它貼頂
-            });
-        }
     };
 
     return (
