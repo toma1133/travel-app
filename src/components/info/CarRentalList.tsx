@@ -26,42 +26,40 @@ const CarRentalList = ({
                 break-inside-avoid-page
                 ${
                     isPrinting
-                        ? "border border-gray-400 rounded-none p-4 mb-4 bg-white"
+                        ? "bg-transparent mb-8"
                         : "bg-white p-5 rounded-lg shadow-sm"
                 }
             `}
         >
             <div
-                className={`flex items-center justify-between mb-4 ${
+                className={`flex items-center justify-between ${
                     isPrinting
-                        ? "text-black border-b border-gray-200 pb-2"
-                        : "text-[#8E354A]"
+                        ? "mb-6 border-b border-black pb-2"
+                        : "mb-4 text-[#8E354A]"
                 }`}
             >
-                <div className="flex items-center">
-                    <Car
-                        size={18}
-                        className={`mr-2 ${isPrinting ? "text-black" : ""}`}
-                    />
-                    <h3
-                        className={`font-bold tracking-wider uppercase ${
-                            isPrinting ? "text-base" : "text-sm"
-                        }`}
-                    >
-                        Rental Car
-                    </h3>
+                <div className="flex items-baseline gap-3">
+                    {isPrinting && (
+                        <span className="text-3xl font-black text-gray-200 leading-none">
+                            03
+                        </span>
+                    )}
+                    <div className="flex items-center">
+                        {!isPrinting && <Car size={18} className="mr-2" />}
+                        <h3
+                            className={`font-bold tracking-wider uppercase ${
+                                isPrinting ? "text-xl text-black" : "text-sm"
+                            }`}
+                        >
+                            Transport
+                        </h3>
+                    </div>
                 </div>
                 {!isPrinting && isEditing && (
-                    <div
-                        className={`
-                                    flex space-x-2 bg-white pr-2
-                                    transition-opacity duration-200
-                                `}
-                    >
+                    <div className="flex space-x-2 bg-white pr-2 transition-opacity duration-200">
                         <button
-                            type="button"
                             onClick={onAddBtnClick}
-                            className={`p-1 text-gray-400 hover:text-blue-500 transition-colors`}
+                            className="p-1 text-gray-400 hover:text-blue-500 transition-colors"
                             title="新增租車"
                         >
                             <Plus size={14} />
@@ -69,9 +67,12 @@ const CarRentalList = ({
                     </div>
                 )}
             </div>
+
             <div
                 className={`space-y-0 ${
-                    isPrinting ? "divide-y divide-gray-200" : ""
+                    isPrinting
+                        ? "grid grid-cols-1 gap-4"
+                        : "divide-y divide-gray-200"
                 }`}
             >
                 {Array.isArray(carRentals) &&

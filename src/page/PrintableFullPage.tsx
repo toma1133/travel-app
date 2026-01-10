@@ -1,7 +1,7 @@
-import { RefObject, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useIsFetching } from "@tanstack/react-query";
-import { Loader2, Printer, X } from "lucide-react";
+import { Info, Loader2, Map, Pin, Wallet, X } from "lucide-react";
 import CoverPage from "./Book/CoverPage";
 import GuidePage from "./Book/GuidePage";
 import ItineraryPage from "./Book/ItineraryPage";
@@ -114,13 +114,13 @@ const PrintableFullPage = ({ tripData, onClose }: PrintableFullPageProps) => {
             {/* 外層容器 */}
             <div
                 className={`
-                    fixed inset-0 z-[9999] bg-gray-100 overflow-y-auto 
+                    fixed inset-0 z-9999 bg-gray-100 overflow-y-auto 
                     print:static print:inset-auto print:h-auto print:overflow-visible print:block print:bg-white print:w-full
                 `}
             >
                 {/* Loading 遮罩 */}
                 {(!isDataReady || !isImagesLoaded) && (
-                    <div className="fixed inset-0 z-[10000] bg-white flex flex-col items-center justify-center">
+                    <div className="fixed inset-0 z-10000 bg-white flex flex-col items-center justify-center">
                         <Loader2
                             size={48}
                             className="animate-spin text-gray-400 mb-4"
@@ -133,7 +133,7 @@ const PrintableFullPage = ({ tripData, onClose }: PrintableFullPageProps) => {
                     </div>
                 )}
 
-                <div className="flex items-center gap-3 fixed top-6 right-6 z-[60] print:hidden">
+                <div className="flex items-center gap-3 fixed top-6 right-6 z-60 print:hidden">
                     <button
                         type="button"
                         onClick={onClose}
@@ -155,12 +155,12 @@ const PrintableFullPage = ({ tripData, onClose }: PrintableFullPageProps) => {
                     <div
                         className={`
                                 w-full block relative mb-0
-                                aspect-[210/297] overflow-hidden
+                                aspect-210/297 overflow-hidden
                                 print:aspect-auto 
                                 print:h-[297mm] 
                                 print:overflow-visible
                                 print:break-after-page 
-                                print:-m-0
+                                print:m-0
                             `}
                     >
                         <CoverPage
@@ -170,9 +170,15 @@ const PrintableFullPage = ({ tripData, onClose }: PrintableFullPageProps) => {
                         />
                     </div>
                     <div className="pt-8 print:pt-0 print:block page-content-wrapper print:px-8">
-                        <h3 className="text-lg font-[Noto_Sans_TC] font-bold mb-4">
-                            行程表
-                        </h3>
+                        <div className="mb-8 border-b-4 border-black pb-4 flex justify-between items-end">
+                            <div>
+                                <h1 className="text-4xl font-black text-black uppercase tracking-tighter">
+                                    Itinerary
+                                </h1>
+                                <p className="text-sm text-gray-500 font-bold uppercase tracking-widest mt-1"></p>
+                            </div>
+                            <Map size={32} className="text-gray-300 mb-1" />
+                        </div>
                         <ItineraryPage
                             isPrinting={true}
                             tripDataOverride={tripData}
@@ -183,9 +189,15 @@ const PrintableFullPage = ({ tripData, onClose }: PrintableFullPageProps) => {
                     <PageBreak />
 
                     <div className="pt-8 print:pt-4 print:block page-content-wrapper print:px-8">
-                        <h3 className="text-lg font-[Noto_Sans_TC] font-bold mb-4">
-                            消費總覽
-                        </h3>
+                        <div className="mb-8 border-b-4 border-black pb-4 flex justify-between items-end">
+                            <div>
+                                <h1 className="text-4xl font-black text-black uppercase tracking-tighter">
+                                    Tranactions
+                                </h1>
+                                <p className="text-sm text-gray-500 font-bold uppercase tracking-widest mt-1"></p>
+                            </div>
+                            <Wallet size={32} className="text-gray-300 mb-1" />
+                        </div>
                         <BudgetPage
                             isPrinting={true}
                             tripDataOverride={tripData}
@@ -196,9 +208,17 @@ const PrintableFullPage = ({ tripData, onClose }: PrintableFullPageProps) => {
                     <PageBreak />
 
                     <div className="pt-8 print:pt-4 print:block page-content-wrapper print:px-8">
-                        <h3 className="text-lg font-[Noto_Sans_TC] font-bold mb-4">
-                            景點誌
-                        </h3>
+                        <div className="mb-8 border-b-4 border-black pb-4 flex justify-between items-end">
+                            <div>
+                                <h1 className="text-4xl font-black text-black uppercase tracking-tighter">
+                                    Places
+                                </h1>
+                                <p className="text-sm text-gray-500 font-bold uppercase tracking-widest mt-1">
+                                    Scene / Restaurant / Shop / Hotel
+                                </p>
+                            </div>
+                            <Pin size={32} className="text-gray-300 mb-1" />
+                        </div>
                         <GuidePage
                             isPrinting={true}
                             tripDataOverride={tripData}
@@ -209,9 +229,17 @@ const PrintableFullPage = ({ tripData, onClose }: PrintableFullPageProps) => {
                     <PageBreak />
 
                     <div className="pt-8 print:pt-4 print:block page-content-wrapper print:px-8">
-                        <h3 className="text-lg font-[Noto_Sans_TC] font-bold mb-4">
-                            預訂資訊
-                        </h3>
+                        <div className="mb-8 border-b-4 border-black pb-4 flex justify-between items-end">
+                            <div>
+                                <h1 className="text-4xl font-black text-black uppercase tracking-tighter">
+                                    Reservations
+                                </h1>
+                                <p className="text-sm text-gray-500 font-bold uppercase tracking-widest mt-1">
+                                    Flight / Hotel / Transport
+                                </p>
+                            </div>
+                            <Info size={32} className="text-gray-300 mb-1" />
+                        </div>
                         <InfoPage
                             isPrinting={true}
                             tripDataOverride={tripData}

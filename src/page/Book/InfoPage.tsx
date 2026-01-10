@@ -2,7 +2,7 @@ import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import { useOutletContext, useParams } from "react-router-dom";
 import { useIsMutating } from "@tanstack/react-query";
 import moment from "moment";
-import { Lock, Settings } from "lucide-react";
+import { Map, Lock, Settings } from "lucide-react";
 import useAuth from "../../hooks/UseAuth";
 import useAccommodations from "../../hooks/info/UseAccommodations";
 import useAccommodationMutations from "../../hooks/info/UseAccommodationMutations";

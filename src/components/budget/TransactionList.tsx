@@ -59,7 +59,7 @@ const TransactionList = ({
                 <h4
                     className={`text-xs font-bold uppercase tracking-widest text-gray-400`}
                 >
-                    交易紀錄 (Transactions)
+                    交易紀錄
                 </h4>
                 {!isPrinting && (
                     <span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold">

@@ -44,17 +44,10 @@ const PlaceCard = ({
                 return "Other";
         }
     };
-    const getMapUrl = () => {
-        let query = "";
-        if (place.lat && place.lng) {
-            query = `${place.lat},${place.lng}`;
-        } else {
-            query = place.info?.loc || place.name;
-        }
-        return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-            query
+    const getMapUrl = () =>
+        `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+            place.info?.loc || place.name
         )}`;
-    };
 
     return (
         <div

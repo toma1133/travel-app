@@ -26,42 +26,42 @@ const FlightList = ({
                 break-inside-avoid-page
                 ${
                     isPrinting
-                        ? "border border-gray-400 rounded-none p-4 mb-4 bg-white"
-                        : "bg-white p-5 rounded-lg shadow-sm"
+                        ? "bg-transparent mb-8" // 列印：透明背景
+                        : "bg-white p-5 rounded-lg shadow-sm" // 螢幕：卡片
                 }
             `}
         >
+            {/* Header */}
             <div
-                className={`flex items-center justify-between mb-4 ${
+                className={`flex items-center justify-between ${
                     isPrinting
-                        ? "text-black border-b border-gray-200 pb-2"
-                        : "text-[#8E354A]"
+                        ? "mb-6 border-b border-black pb-2"
+                        : "mb-4 text-[#8E354A]"
                 }`}
             >
-                <div className="flex items-center">
-                    <Plane
-                        size={18}
-                        className={`mr-2 ${isPrinting ? "text-black" : ""}`}
-                    />
-                    <h3
-                        className={`font-bold tracking-wider uppercase ${
-                            isPrinting ? "text-base" : "text-sm"
-                        }`}
-                    >
-                        Flights
-                    </h3>
+                <div className="flex items-baseline gap-3">
+                    {/* 列印時的章節編號 */}
+                    {isPrinting && (
+                        <span className="text-3xl font-black text-gray-200 leading-none">
+                            01
+                        </span>
+                    )}
+                    <div className="flex items-center">
+                        {!isPrinting && <Plane size={18} className="mr-2" />}
+                        <h3
+                            className={`font-bold tracking-wider uppercase ${
+                                isPrinting ? "text-xl text-black" : "text-sm"
+                            }`}
+                        >
+                            Flights
+                        </h3>
+                    </div>
                 </div>
                 {!isPrinting && isEditing && (
-                    <div
-                        className={`
-                            flex space-x-2 bg-white pr-2
-                            transition-opacity duration-200
-                        `}
-                    >
+                    <div className="flex space-x-2 bg-white pr-2 transition-opacity duration-200">
                         <button
-                            type="button"
                             onClick={onAddBtnClick}
-                            className={`p-1 text-gray-400 hover:text-blue-500 transition-colors`}
+                            className="p-1 text-gray-400 hover:text-blue-500 transition-colors"
                             title="新增航班"
                         >
                             <Plus size={14} />
@@ -69,12 +69,12 @@ const FlightList = ({
                     </div>
                 )}
             </div>
+            {/* List */}
             <div
                 className={`space-y-4 ${
-                    isPrinting ? "space-y-0 divide-y divide-gray-200" : ""
+                    isPrinting ? "space-y-6" : "space-y-0"
                 }`}
             >
-                {" "}
                 {Array.isArray(flights) &&
                     flights.map((flight, i) => (
                         <FlightRecord
