@@ -16,7 +16,7 @@ type PrintableFullPageProps = {
 
 const PageBreak = () => (
     <div
-        className="hidden print:block"
+        className="hidden block"
         style={{
             pageBreakBefore: "always",
             breakBefore: "page",
@@ -66,14 +66,15 @@ const PrintableFullPage = ({ tripData, onClose }: PrintableFullPageProps) => {
             window.print();
         }
     }, [isDataReady, isImagesLoaded]);
+
     // 內容 JSX
     const content = (
         <>
             {/* [新增] 全域樣式修正：列印時隱藏原本的 App root，並修正 body 滾動 */}
             <style>{`
-                @media print {
-                    #root { display: none !important; }
+                #root { display: none !important; }
 
+                @media print {
                     @page {
                         margin-top: 10mm;
                         margin-bottom: 10mm;
@@ -115,7 +116,7 @@ const PrintableFullPage = ({ tripData, onClose }: PrintableFullPageProps) => {
             <div
                 className={`
                     fixed inset-0 z-9999 bg-gray-100 overflow-y-auto 
-                    print:static print:inset-auto print:h-auto print:overflow-visible print:block print:bg-white print:w-full
+                    static inset-auto h-auto overflow-visible block bg-white w-full
                 `}
             >
                 {/* Loading 遮罩 */}
@@ -148,19 +149,19 @@ const PrintableFullPage = ({ tripData, onClose }: PrintableFullPageProps) => {
                 <div
                     className={`
                             bg-white text-black min-h-screen w-full mx-auto 
-                            max-w-[210mm] p-8 shadow-2xl
-                            print:shadow-none print:m-0 print:p-0 print:max-w-none print:w-full
+                            max-w-[210mm] shadow-2xl
+                            shadow-none m-0 p-0 max-w-none w-full
                         `}
                 >
                     <div
                         className={`
                                 w-full block relative mb-0
                                 aspect-210/297 overflow-hidden
-                                print:aspect-auto 
-                                print:h-[297mm] 
-                                print:overflow-visible
-                                print:break-after-page 
-                                print:m-0
+                                aspect-auto 
+                                h-[297mm] 
+                                overflow-visible
+                                break-after-page 
+                                m-0
                             `}
                     >
                         <CoverPage
@@ -169,7 +170,7 @@ const PrintableFullPage = ({ tripData, onClose }: PrintableFullPageProps) => {
                             tripIdOverride={tripId}
                         />
                     </div>
-                    <div className="pt-8 print:pt-0 print:block page-content-wrapper print:px-8">
+                    <div className="pt-4 block page-content-wrapper px-8">
                         <div className="mb-8 border-b-4 border-black pb-4 flex justify-between items-end">
                             <div>
                                 <h1 className="text-4xl font-black text-black uppercase tracking-tighter">
@@ -188,7 +189,7 @@ const PrintableFullPage = ({ tripData, onClose }: PrintableFullPageProps) => {
 
                     <PageBreak />
 
-                    <div className="pt-8 print:pt-4 print:block page-content-wrapper print:px-8">
+                    <div className="pt-4 block page-content-wrapper px-8">
                         <div className="mb-8 border-b-4 border-black pb-4 flex justify-between items-end">
                             <div>
                                 <h1 className="text-4xl font-black text-black uppercase tracking-tighter">
@@ -207,7 +208,7 @@ const PrintableFullPage = ({ tripData, onClose }: PrintableFullPageProps) => {
 
                     <PageBreak />
 
-                    <div className="pt-8 print:pt-4 print:block page-content-wrapper print:px-8">
+                    <div className="pt-4 block page-content-wrapper px-8">
                         <div className="mb-8 border-b-4 border-black pb-4 flex justify-between items-end">
                             <div>
                                 <h1 className="text-4xl font-black text-black uppercase tracking-tighter">
@@ -228,7 +229,7 @@ const PrintableFullPage = ({ tripData, onClose }: PrintableFullPageProps) => {
 
                     <PageBreak />
 
-                    <div className="pt-8 print:pt-4 print:block page-content-wrapper print:px-8">
+                    <div className="pt-4 block page-content-wrapper px-8">
                         <div className="mb-8 border-b-4 border-black pb-4 flex justify-between items-end">
                             <div>
                                 <h1 className="text-4xl font-black text-black uppercase tracking-tighter">

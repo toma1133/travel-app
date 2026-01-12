@@ -79,8 +79,6 @@ const TransactionListItem = ({
                                         className="inline mr-0.5"
                                     />
                                     <span className="italic">
-                                        {" "}
-                                        {/* 修改：移除 print:italic */}
                                         {members.join(", ")}
                                     </span>
                                 </span>
@@ -148,7 +146,7 @@ const TransactionListItem = ({
                         className={`text-sm font-bold text-gray-900 ${
                             !isPrinting
                                 ? "group-hover:text-[#9F1239] transition-colors"
-                                : "print:text-black"
+                                : "text-black"
                         }`}
                     >
                         <div className="flex flex-row items-center">
@@ -165,7 +163,11 @@ const TransactionListItem = ({
                         </div>
                     </div>
                     {/* Meta info */}
-                    <div className="text-[10px] text-gray-400 mt-0.5 flex items-center print:text-gray-600 print:mt-1">
+                    <div
+                        className={`text-[10px] text-gray-400 mt-0.5 flex items-center ${
+                            isPrinting ? "text-gray-600 mt-1" : ""
+                        }`}
+                    >
                         <span
                             className={`mr-2 ${
                                 isPrinting ? "font-semibold text-gray-700" : ""
@@ -174,7 +176,11 @@ const TransactionListItem = ({
                             {getCategoryName(budgetItem.category)}
                         </span>
                         <span className="mr-2 text-gray-300">|</span>
-                        <span className="print:text-black font-mono">
+                        <span
+                            className={`font-mono ${
+                                isPrinting ? "text-black" : ""
+                            }`}
+                        >
                             {moment(budgetItem.expense_date).format("MM/DD")}
                         </span>
                         {/* 螢幕顯示代付者標籤 */}
@@ -193,13 +199,29 @@ const TransactionListItem = ({
                     {/* 分帳成員 (列印時可視需求決定是否顯示詳細名單，太長會佔空間) */}
                     {budgetItem.split_with &&
                         budgetItem.split_with.length > 0 && (
-                            <div className="text-[10px] text-slate-400 flex items-center gap-1 print:text-gray-500 print:mt-0.5">
-                                <Users className="w-3 h-3 print:hidden" />
-                                <span className="print:hidden">
+                            <div
+                                className={`text-[10px] text-slate-400 flex items-center gap-1 ${
+                                    isPrinting ? "text-gray-500 mt-0.5" : ""
+                                }`}
+                            >
+                                <Users
+                                    className={`w-3 h-3 ${
+                                        isPrinting ? "hidden" : ""
+                                    }`}
+                                />
+                                <span
+                                    className={`font-mono ${
+                                        isPrinting ? "hidden" : ""
+                                    }`}
+                                >
                                     成員：
                                 </span>{" "}
                                 {/* 列印時也許只顯示 (3人) 之類的簡稱 */}
-                                <span className="print:italic">
+                                <span
+                                    className={`w-3 h-3 ${
+                                        isPrinting ? "italic" : ""
+                                    }`}
+                                >
                                     {members.join(", ")}
                                 </span>
                             </div>
@@ -217,14 +239,20 @@ const TransactionListItem = ({
             {/* Amount Column */}
             <div className={`text-right`}>
                 <div
-                    className={`text-sm font-bold ${theme?.mono} text-gray-900 print:text-black`}
+                    className={`text-sm font-bold ${
+                        theme?.mono
+                    } text-gray-900 ${isPrinting ? "text-black" : ""}`}
                 >
                     {budgetItem.currency_code}{" "}
                     {budgetItem.amount.toLocaleString()}
                 </div>
                 {/* 匯率換算 (列印時非常重要) */}
                 {budgetItem.currency_code !== setting?.homeCurrency && (
-                    <div className="text-[10px] text-gray-400 font-mono print:text-gray-600">
+                    <div
+                        className={`text-[10px] text-gray-400 font-mono ${
+                            isPrinting ? "text-gray-600" : ""
+                        }`}
+                    >
                         ≈ {setting?.homeCurrency}{" "}
                         {convertToHome(
                             budgetItem.amount,

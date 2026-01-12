@@ -189,7 +189,7 @@ const BudgetChart = ({
                                     key={cat}
                                     className="flex justify-between items-center text-sm border-b border-gray-100 pb-1"
                                 >
-                                    <span className="font-medium text-gray-700">
+                                    <span className="font-medium text-gray-700 truncate">
                                         {getCategoryName(cat)}
                                     </span>
                                     <div className="flex items-center gap-2">

@@ -172,11 +172,17 @@ const PlaceCard = ({
                         <h3
                             className={`text-xl font-bold ${
                                 theme?.primary || "text-gray-800"
-                            } font-[Noto_Sans_TC] print:text-black print:text-lg`}
+                            } font-[Noto_Sans_TC] ${
+                                isPrinting ? "text-black text-lg" : ""
+                            }`}
                         >
                             {place.name}
                         </h3>
-                        <p className="text-xs text-gray-400 font-medium print:text-gray-500">
+                        <p
+                            className={`text-xs text-gray-400 font-medium ${
+                                isPrinting ? "text-gray-500" : ""
+                            }`}
+                        >
                             {place.eng_name}
                         </p>
                     </div>
