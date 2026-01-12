@@ -62,7 +62,16 @@ const CoverPage = ({
                 )}
 
                 {/* 漸層遮罩 */}
-                <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent opacity-60"></div>
+                {/* <div
+                    className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60"
+                    style={{
+                        // 強制在列印時顯示背景圖形 (Safari/Chrome 預設列印不印背景色)
+                        WebkitPrintColorAdjust: "exact",
+                        printColorAdjust: "exact",
+                    }}
+                ></div> */}
+                {/* <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent opacity-60"></div> */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/0 opacity-60"></div>
 
                 {/* [列印裝飾] 雜誌風格浮水印 */}
                 {/* {isPrinting && (
