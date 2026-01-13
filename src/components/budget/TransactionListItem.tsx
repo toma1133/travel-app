@@ -210,17 +210,13 @@ const TransactionListItem = ({
                                     }`}
                                 />
                                 <span
-                                    className={`font-mono ${
-                                        isPrinting ? "hidden" : ""
-                                    }`}
+                                    className={`${isPrinting ? "hidden" : ""}`}
                                 >
                                     成員：
-                                </span>{" "}
+                                </span>
                                 {/* 列印時也許只顯示 (3人) 之類的簡稱 */}
                                 <span
-                                    className={`w-3 h-3 ${
-                                        isPrinting ? "italic" : ""
-                                    }`}
+                                    className={`${isPrinting ? "italic" : ""}`}
                                 >
                                     {members.join(", ")}
                                 </span>
