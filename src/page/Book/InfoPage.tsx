@@ -445,31 +445,31 @@ const InfoPage = ({
                     ? "h-auto min-h-[50vh] break-after-page overflow-visible bg-white"
                     : `${
                           tripData?.theme_config?.bg || "bg-gray-100"
-                      } py-12 pb-24`
+                      } pb-24`
             }`}
         >
             {!isPrinting && (
                 <SectionHeader
-                    title="預訂資訊"
-                    subtitle="Flight・Hotel・CarRental"
+                    title="旅遊資訊"
+                    subtitle="Information"
                     theme={tripData?.theme_config!}
+                    hasBackBtn={true}
                     rightAction={
                         <div className="flex justify-center items-center gap-4">
                             <button
                                 type="button"
                                 onClick={() => setIsEditing(!isEditing)}
-                                className={`flex items-center text-sm font-medium px-4 py-2 rounded-lg shadow-md transition-all ${
+                                className={`flex items-center text-sm font-medium px-3 py-1.5 rounded-lg shadow-md transition-all ${
                                     isEditing
                                         ? "bg-red-500 text-white hover:bg-red-600"
                                         : "bg-white text-gray-600 border border-gray-300 hover:bg-gray-50"
                                 }`}
                             >
                                 {isEditing ? (
-                                    <Lock size={16} className="mr-1" />
+                                    <Lock size={16} />
                                 ) : (
-                                    <Settings size={16} className="mr-1" />
+                                    <Settings size={16} />
                                 )}
-                                {isEditing ? "退出" : "編輯"}
                             </button>
                         </div>
                     }
@@ -477,7 +477,7 @@ const InfoPage = ({
             )}
             <div
                 className={`space-y-6 ${
-                    isPrinting ? "space-y-4 px-0" : "px-4"
+                    isPrinting ? "space-y-4 px-0" : "px-4 mt-6"
                 }`}
             >
                 <FlightList

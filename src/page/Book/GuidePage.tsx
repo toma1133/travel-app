@@ -333,14 +333,15 @@ const GuidePage = ({
                     ? "p-0 h-auto min-h-[50vh] break-after-page overflow-visible bg-white"
                     : `${
                           tripData?.theme_config?.bg || "bg-gray-100"
-                      } pt-12 pb-6`
+                      } pb-6`
             }`}
         >
             {!isPrinting && (
                 <SectionHeader
                     title="景點誌"
-                    subtitle="Scene・Food・Shopping"
+                    subtitle="Scene • Food • Shopping"
                     theme={tripData?.theme_config!}
+                    hasBackBtn={true}
                     rightAction={
                         <div className="flex justify-center items-center gap-4">
                             <button
@@ -349,22 +350,23 @@ const GuidePage = ({
                                         viewMode === "list" ? "map" : "list"
                                     )
                                 }
-                                className="p-2 bg-white rounded-lg shadow-sm border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors flex items-center gap-2 text-sm"
+                                className={`flex items-center text-sm font-medium px-3 py-1.5 rounded-lg shadow-md bg-white hover:opacity-90 transition-opacity`}
+                                title={viewMode === "list" ? "地圖模式" : "列表模式"}
                             >
                                 {viewMode === "list" ? (
                                     <>
-                                        <MapIcon size={18} /> 地圖
+                                        <MapIcon size={16} />
                                     </>
                                 ) : (
                                     <>
-                                        <ListIcon size={18} /> 列表
+                                        <ListIcon size={16} />
                                     </>
                                 )}
                             </button>
                             <button
                                 type="button"
                                 onClick={handleOpenCreateModal}
-                                className={`flex items-center text-sm font-medium text-white px-4 py-2 rounded-lg shadow-md ${tripData?.theme_config?.accent} hover:opacity-90 transition-opacity`}
+                                className={`flex items-center text-sm font-medium text-white px-3 py-1.5 rounded-lg shadow-md ${tripData?.theme_config?.accent} hover:opacity-90 transition-opacity`}
                                 title="新增"
                             >
                                 <Plus size={16} />
@@ -373,21 +375,21 @@ const GuidePage = ({
                     }
                 />
             )}
-            {!isPrinting && (
-                <PlaceFilter
-                    activeFilterId={filter}
-                    placeCategories={placeCategories}
-                    selectedTags={selectedTags}
-                    theme={tripData?.theme_config!}
-                    onFilterBtnClick={handleFilterBtnClick}
-                    onRemoveTagBtnClick={handleRemoveTag}
-                />
-            )}
             <div
-                className={`flex-1 flex flex-col items-center justify-center ${
-                    isPrinting ? "px-0" : "px-4"
+                className={`space-y-6 ${
+                    isPrinting ? "space-y-4 px-0" : "px-4 mt-6"
                 }`}
             >
+                {!isPrinting && (
+                    <PlaceFilter
+                        activeFilterId={filter}
+                        placeCategories={placeCategories}
+                        selectedTags={selectedTags}
+                        theme={tripData?.theme_config!}
+                        onFilterBtnClick={handleFilterBtnClick}
+                        onRemoveTagBtnClick={handleRemoveTag}
+                    />
+                )}
                 {viewMode === "list" || isPrinting ? (
                     <PlaceCardList
                         isPrinting={isPrinting}

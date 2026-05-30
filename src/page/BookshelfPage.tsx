@@ -380,7 +380,7 @@ const BookshelfPage = () => {
     }
 
     return (
-        <div className="flex flex-col pt-12 min-h-0">
+        <div className="flex flex-col min-h-0">
             <SectionHeader
                 title="我的旅程"
                 subtitle="Travel Collections"
@@ -391,10 +391,10 @@ const BookshelfPage = () => {
                             type="button"
                             onClick={handleAddTripBtnClick}
                             disabled={isTripsLoading}
-                            className={`flex items-center text-sm font-medium px-4 py-2 rounded-lg shadow-md hover:opacity-90 transition-opacity`}
+                            className={`flex items-center text-sm font-medium text-white px-3 py-1.5 rounded-lg shadow-md bg-[#9F1239] hover:opacity-90 transition-opacity`}
+                            title="新增"
                         >
-                            <PlusIcon size={16} className="mr-1" />
-                            <span>創建新旅程</span>
+                            <PlusIcon size={16} />
                         </button>
                     </div>
                 }

@@ -3,6 +3,7 @@ import { Calendar } from "lucide-react";
 import moment from "moment";
 import type BookLayoutContextType from "../../models/types/BookLayoutContextTypes";
 import type { TripVM } from "../../models/types/TripTypes";
+import SystemControls from "../../components/common/SystemControls";
 
 type CoverPageProps = {
     isPrinting?: boolean;
@@ -48,6 +49,22 @@ const CoverPage = ({
                     ${isPrinting ? "h-[50%] flex-none" : ""}
                 `}
             >
+                {/* Floating Top Nav for CoverPage */}
+                <nav className={`absolute top-0 right-0 w-full flex justify-between items-center px-4 md:px-8 py-4 z-50 pointer-events-none print:hidden ${isPrinting ? 'hidden' : ''}`}>
+                    <div className="pointer-events-auto">
+                        <button
+                            type="button"
+                            onClick={() => window.history.length > 1 ? window.history.back() : window.location.href = "/"}
+                            className="text-white/90 hover:text-white bg-black/20 backdrop-blur-md p-2 rounded-full border border-white/10 shadow-sm transition-all hover:bg-black/40"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+                        </button>
+                    </div>
+                    <div className="pointer-events-auto">
+                        <SystemControls className="bg-black/20 text-white border-white/10" />
+                    </div>
+                </nav>
+
                 {tripData?.cover_image ? (
                     <img
                         src={tripData.cover_image}

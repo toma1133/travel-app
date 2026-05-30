@@ -33,7 +33,7 @@ const TripCard = ({
             <div
                 role="button"
                 onClick={() => onTripBtnClick(trip.id)}
-                className="w-full bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow group text-left border border-gray-100"
+                className="w-full bg-card rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-shadow duration-300 group text-left border border-border"
             >
                 <div className="h-40 relative overflow-hidden">
                     {trip.cover_image ? (
@@ -43,7 +43,7 @@ const TripCard = ({
                             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                         />
                     ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
+                        <div className="w-full h-full flex items-center justify-center bg-muted text-muted-foreground">
                             無圖片
                         </div>
                     )}
@@ -72,7 +72,7 @@ const TripCard = ({
                                 e.stopPropagation();
                                 onPrintBtnClick(trip);
                             }}
-                            className="p-1.5 bg-white/90 backdrop-blur rounded-full text-gray-600 hover:text-blue-600 hover:bg-white shadow-sm transition-colors"
+                            className="p-1.5 bg-background/80 backdrop-blur-md rounded-full text-foreground/70 hover:text-foreground hover:bg-background shadow-sm transition-colors"
                             title="列印"
                         >
                             <Printer size={14} />
@@ -84,7 +84,7 @@ const TripCard = ({
                                     e.stopPropagation();
                                     onPermissionBtnClick(trip);
                                 }}
-                                className="p-1.5 bg-white/90 backdrop-blur rounded-full text-gray-600 hover:text-blue-600 hover:bg-white shadow-sm transition-colors"
+                                className="p-1.5 bg-background/80 backdrop-blur-md rounded-full text-foreground/70 hover:text-foreground hover:bg-background shadow-sm transition-colors"
                                 title="分享"
                             >
                                 <User size={14} />
@@ -96,7 +96,7 @@ const TripCard = ({
                                 e.stopPropagation();
                                 onEditBtnClick(trip);
                             }}
-                            className="p-1.5 bg-white/90 backdrop-blur rounded-full text-gray-600 hover:text-blue-600 hover:bg-white shadow-sm transition-colors"
+                            className="p-1.5 bg-background/80 backdrop-blur-md rounded-full text-foreground/70 hover:text-foreground hover:bg-background shadow-sm transition-colors"
                             title="編輯"
                         >
                             <Pencil size={14} />
@@ -107,21 +107,21 @@ const TripCard = ({
                                 e.stopPropagation();
                                 onDeleteBtnClick(trip);
                             }}
-                            className="p-1.5 bg-white/90 backdrop-blur rounded-full text-gray-600 hover:text-red-600 hover:bg-white shadow-sm transition-colors"
+                            className="p-1.5 bg-background/80 backdrop-blur-md rounded-full text-destructive/70 hover:text-destructive hover:bg-background shadow-sm transition-colors"
                             title="刪除"
                         >
                             <Trash2 size={14} />
                         </button>
                     </div>
                 </div>
-                <div className="p-4 flex justify-between items-center">
-                    <div className="text-xs text-gray-500 font-mono">
+                <div className="p-5 flex justify-between items-center">
+                    <div className="text-xs text-muted-foreground font-mono">
                         {trip.start_date} ~ {trip.end_date}
                     </div>
                     <button
                         type="button"
                         onClick={() => onTripBtnClick(trip.id)}
-                        className="text-xs font-bold text-gray-300 group-hover:text-[#111827] transition-colors"
+                        className="text-xs font-bold text-muted-foreground/50 group-hover:text-foreground transition-colors"
                     >
                         OPEN BOOK &rarr;
                     </button>

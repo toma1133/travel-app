@@ -83,7 +83,7 @@ const BudgetChart = ({
     }, [budgetItems]);
 
     return (
-        <div className={`mt-6 ${isPrinting ? "mb-4" : "mb-8"}`}>
+        <div className={`${isPrinting ? "mb-4" : "mb-8"}`}>
             {/* 1. 螢幕顯示: 深色卡片 (只在 !isPrinting 時渲染) */}
             {!isPrinting && (
                 <div className="bg-slate-900 rounded-lg p-8 text-white shadow-2xl shadow-slate-200 relative overflow-hidden">

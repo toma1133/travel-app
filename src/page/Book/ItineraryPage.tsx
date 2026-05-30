@@ -385,36 +385,37 @@ const ItineraryPage = ({
                     ? "h-auto min-h-[50vh] break-after-page overflow-visible bg-white"
                     : `${
                           tripData?.theme_config?.bg || "bg-gray-100"
-                      } py-12 pb-24`
+                      } pb-24`
             }`}
         >
             {!isPrinting && (
                 <SectionHeader
-                    title="旅程表"
-                    subtitle="Itinerary"
+                    title="行程表"
+                    subtitle="Timeline"
                     theme={tripData?.theme_config!}
+                    hasBackBtn={true}
                     rightAction={
                         <div className="flex justify-center items-center gap-4">
                             <button
                                 type="button"
                                 onClick={() => setIsEditing(!isEditing)}
-                                className={`flex items-center text-sm font-medium px-4 py-2 rounded-lg shadow-md transition-all ${
+                                className={`flex items-center text-sm font-medium px-3 py-1.5 rounded-lg shadow-md ${tripData?.theme_config?.card} hover:opacity-90 transition-opacity ${
                                     isEditing
                                         ? "bg-red-500 text-white hover:bg-red-600"
                                         : "bg-white text-gray-600 border border-gray-300 hover:bg-gray-50"
                                 }`}
+                                title={isEditing ? "退出" : "編輯"}
                             >
                                 {isEditing ? (
-                                    <Lock size={16} className="mr-1" />
+                                    <Lock size={16} />
                                 ) : (
-                                    <Settings size={16} className="mr-1" />
+                                    <Settings size={16} />
                                 )}
-                                <span>{isEditing ? "退出" : "編輯"}</span>
                             </button>
                             <button
                                 type="button"
                                 onClick={handleOpenCreateDayModal}
-                                className={`flex items-center text-sm font-medium text-white px-4 py-2 rounded-lg shadow-md ${tripData?.theme_config?.accent} hover:opacity-90 transition-opacity`}
+                                className={`flex items-center text-sm font-medium text-white px-3 py-1.5 rounded-lg shadow-md ${tripData?.theme_config?.accent} hover:opacity-90 transition-opacity`}
                                 title="新增"
                             >
                                 <Plus size={16} />
@@ -423,18 +424,24 @@ const ItineraryPage = ({
                     }
                 />
             )}
-            <ItineraryList
-                itinerarys={itinerarys}
-                isEditing={isEditing}
-                isPrinting={isPrinting}
-                theme={tripData?.theme_config!}
-                onAddActivityBtnClick={handleOpenCreateActivityModal}
-                onDeleteActivityBtnClick={handleOpenDeleteActivityModal}
-                onDeleteDayBtnClick={handleOpenDeleteDayModal}
-                onEditActivityBtnClick={handleOpenEditActivityModal}
-                onEditDayBtnClick={handleOpenEditDayModal}
-                onViewBtnClick={handleOpenPreviewModal}
-            />
+            <div
+                className={`space-y-6 ${
+                    isPrinting ? "space-y-4 px-0" : "px-4 mt-6"
+                }`}
+            >
+                <ItineraryList
+                    itinerarys={itinerarys}
+                    isEditing={isEditing}
+                    isPrinting={isPrinting}
+                    theme={tripData?.theme_config!}
+                    onAddActivityBtnClick={handleOpenCreateActivityModal}
+                    onDeleteActivityBtnClick={handleOpenDeleteActivityModal}
+                    onDeleteDayBtnClick={handleOpenDeleteDayModal}
+                    onEditActivityBtnClick={handleOpenEditActivityModal}
+                    onEditDayBtnClick={handleOpenEditDayModal}
+                    onViewBtnClick={handleOpenPreviewModal}
+                />
+            </div>
             {isDayModalOpen && (
                 <ItineraryDayModal
                     formData={formDay}

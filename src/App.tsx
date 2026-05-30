@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import AuthProvider from "./providers/AuthProvider";
+import { ThemeProvider } from "./contexts/ThemeContext";
 import AppContent from "./AppContent";
 
 const App = () => {
@@ -21,9 +22,11 @@ const App = () => {
     }, []);
 
     return (
-        <AuthProvider>
-            <AppContent isOffline={isOffline} />
-        </AuthProvider>
+        <ThemeProvider>
+            <AuthProvider>
+                <AppContent isOffline={isOffline} />
+            </AuthProvider>
+        </ThemeProvider>
     );
 };
 

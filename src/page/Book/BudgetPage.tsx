@@ -595,45 +595,46 @@ const BudgetPage = ({
                     ? "h-auto min-h-[50vh] break-after-page overflow-visible bg-white"
                     : `${
                           tripData?.theme_config?.bg || "bg-gray-100"
-                      } py-12 pb-24`
+                      } pb-24`
             }`}
         >
             {!isPrinting && (
                 <SectionHeader
-                    title="消費總覽"
-                    subtitle="Spending Analysis"
+                    title="帳本"
+                    subtitle="Budget"
                     theme={tripData?.theme_config!}
+                    hasBackBtn={true}
                     rightAction={
                         <div className="flex justify-center items-center gap-4">
                             <button
                                 type="button"
                                 onClick={handleSplitInfoModalOpenBtnClick}
-                                className={`flex items-center text-sm font-medium bg-emerald-50 text-emerald-600 px-4 py-2 rounded-lg shadow-md hover:opacity-90 transition-opacity`}
-                                title="Wallet"
+                                className={`flex items-center text-sm font-medium bg-emerald-50 text-emerald-600 px-3 py-1.5 rounded-lg shadow-md hover:opacity-90 transition-opacity`}
+                                title="結算"
                             >
                                 <Wallet size={16} />
                             </button>
                             <button
                                 type="button"
                                 onClick={handleFilterModalOpenBtnClick}
-                                className={`flex items-center text-sm font-medium bg-white text-blue px-4 py-2 rounded-lg shadow-md hover:opacity-90 transition-opacity`}
-                                title="Filter"
+                                className={`flex items-center text-sm font-medium bg-white text-blue px-3 py-1.5 rounded-lg shadow-md hover:opacity-90 transition-opacity`}
+                                title="交易過濾"
                             >
                                 <Filter size={16} />
                             </button>
                             <button
                                 type="button"
                                 onClick={handleSettingModalOpenBtnClick}
-                                className={`flex items-center text-sm font-medium px-4 py-2 rounded-lg shadow-md ${tripData?.theme_config?.card} hover:opacity-90 transition-opacity`}
-                                title="Setting"
+                                className={`flex items-center text-sm font-medium px-3 py-1.5 rounded-lg shadow-md ${tripData?.theme_config?.card} hover:opacity-90 transition-opacity`}
+                                title="設定"
                             >
                                 <Settings size={16} />
                             </button>
                             <button
                                 type="button"
                                 onClick={handleAddBudgetBtnClick}
-                                className={`flex items-center text-sm font-medium text-white px-4 py-2 rounded-lg shadow-md ${tripData?.theme_config?.accent} hover:opacity-90 transition-opacity`}
-                                title="Create"
+                                className={`flex items-center text-sm font-medium text-white px-3 py-1.5 rounded-lg shadow-md ${tripData?.theme_config?.accent} hover:opacity-90 transition-opacity`}
+                                title="新增"
                             >
                                 <Plus size={16} />
                             </button>
@@ -649,7 +650,7 @@ const BudgetPage = ({
                     onFormDataChange={handleFilterChange}
                 />
             )}
-            <div className={`${isPrinting ? "px-0" : "px-4"}`}>
+            <div className={`${isPrinting ? "px-0" : "px-4 mt-6"}`}>
                 <BudgetChart
                     budgetItems={filteredBudgets}
                     isPrinting={isPrinting}

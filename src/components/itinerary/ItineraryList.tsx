@@ -121,7 +121,7 @@ const ItineraryList = ({
     };
 
     return (
-        <div className={`space-y-4 ${isPrinting ? "space-y-6 px-0" : "px-4"}`}>
+        <div className={`space-y-4 ${isPrinting ? "space-y-6" : ""}`}>
             {Array.isArray(itinerarys) && itinerarys.length > 0
                 ? itinerarys.map((itinerary, i) => (
                       <div
