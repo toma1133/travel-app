@@ -45,10 +45,10 @@ const PermissionModal = ({
                                 <button
                                     key={i}
                                     type="button"
-                                    className={`px-4 py-2 rounded-full text-sm font-bold transition-all border border-indigo-100 ${
+                                    className={`px-4 py-2 rounded-full text-sm font-bold border ${
                                         isSelected
-                                            ? "bg-indigo-600 text-white shadow-md border-indigo-600"
-                                            : "bg-white text-indigo-400"
+                                            ? "bg-primary text-primary-foreground border-primary shadow-md"
+                                            : "bg-background text-muted-foreground border-input hover:bg-accent hover:text-foreground"
                                     }`}
                                     onClick={() => onSelectBtnClick(profile)}
                                 >

@@ -27,34 +27,34 @@ const FormModal = ({
 }: FormModalProps) => {
     return (
         <form id={formId} onSubmit={onSubmit}>
-            <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in">
+            <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-background/80 backdrop-blur-sm animate-in fade-in">
                 <div
-                    className={`${theme?.bg} w-full max-w-sm rounded-t-2xl sm:rounded-none shadow-2xl animate-in slide-in-from-bottom border border-gray-600`}
+                    className={`bg-card w-full max-w-sm rounded-t-3xl sm:rounded-2xl shadow-2xl animate-in slide-in-from-bottom border border-border`}
                 >
                     {/* Header */}
-                    <div className="flex justify-between items-center border-b border-gray-100 p-6">
-                        <h3 className="text-lg font-bold text-gray-800">
+                    <div className="flex justify-between items-center border-b border-border/50 p-6">
+                        <h3 className="text-lg font-bold text-foreground tracking-tight">
                             {modalTitle}
                         </h3>
                         <button
                             type="button"
                             onClick={onCloseBtnClick}
-                            className="p-1 rounded-full hover:bg-gray-100 text-gray-500 transition-colors"
+                            className="p-2 rounded-full hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
                             title="Close"
                         >
                             <X size={20} />
                         </button>
                     </div>
                     {/* Body - Scrollable Form */}
-                    <div className="overflow-y-auto no-scrollbar space-y-3 px-6 max-h-[75vh]">
+                    <div className="overflow-y-auto no-scrollbar space-y-4 p-6 max-h-[75vh]">
                         {children}
                     </div>
                     {/* Footer */}
-                    <div className="p-4 border-t border-gray-100 flex justify-end space-x-3">
+                    <div className="p-4 px-6 border-t border-border/50 flex justify-end items-center gap-3">
                         <button
                             type="button"
                             onClick={onCancelBtnClick}
-                            className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
+                            className="px-4 py-2 text-sm font-medium text-foreground bg-background border border-input hover:bg-accent hover:text-accent-foreground rounded-lg transition-colors"
                             title="取消"
                         >
                             取消
@@ -63,7 +63,7 @@ const FormModal = ({
                         <button
                             type="submit"
                             form={formId}
-                            className={`${theme?.accent} px-6 py-2 rounded-lg text-sm font-bold text-white shadow-md hover:shadow-lg transition-all transform active:scale-95 hover:bg-opacity-90`}
+                            className={`bg-primary px-6 py-2 rounded-lg text-sm font-bold text-primary-foreground shadow-md hover:bg-primary/90 transition-all active:scale-95`}
                             title="Submit"
                         >
                             {modalSaveTitle}

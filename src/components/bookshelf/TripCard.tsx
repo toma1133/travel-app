@@ -22,49 +22,57 @@ const TripCard = ({
     onTripBtnClick,
 }: TripCardProps) => {
     const [showActions, setShowActions] = useState(false);
+    const isCompleted = new Date(trip.end_date!) < new Date();
 
     return (
         <div
-            className="relative w-full"
+            className="relative w-full group cursor-pointer perspective-1000"
             onMouseEnter={() => setShowActions(true)}
             onMouseLeave={() => setShowActions(false)}
             onTouchStart={() => setShowActions(true)}
+            onClick={() => onTripBtnClick(trip.id)}
         >
-            <div
-                role="button"
-                onClick={() => onTripBtnClick(trip.id)}
-                className="w-full bg-card rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-shadow duration-300 group text-left border border-border"
-            >
-                <div className="h-40 relative overflow-hidden">
+            <div className="w-full bg-card rounded-[1.5rem] overflow-hidden shadow-md hover:shadow-2xl transition-all duration-500 ease-out border border-border/50 group-hover:-translate-y-2 flex flex-col">
+                
+                {/* Image Section */}
+                <div className="relative h-48 sm:h-56 overflow-hidden">
                     {trip.cover_image ? (
                         <img
                             alt={trip.title}
                             src={trip.cover_image}
-                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                            className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
                         />
                     ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-muted text-muted-foreground">
-                            無圖片
+                        <div className="w-full h-full flex items-center justify-center bg-muted">
+                            <span className="text-muted-foreground/50 tracking-widest text-sm font-medium">NO COVER</span>
                         </div>
                     )}
-                    <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors"></div>
-                    <div className="absolute bottom-4 left-4 text-white">
-                        {new Date(trip.end_date!) < new Date() && (
-                            <span className="text-[10px] bg-white/20 backdrop-blur-sm px-2 py-1 rounded uppercase tracking-wider mb-2 inline-block">
+                    
+                    {/* Gradient Overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-black/10 opacity-80 group-hover:opacity-90 transition-opacity duration-500"></div>
+                    
+                    {/* Status Badge */}
+                    <div className="absolute top-4 left-4">
+                        {isCompleted ? (
+                            <span className="text-[10px] bg-black/40 text-white/90 backdrop-blur-md border border-white/20 px-3 py-1.5 rounded-full uppercase tracking-wider font-semibold shadow-sm">
                                 Completed
                             </span>
+                        ) : (
+                            <span className="text-[10px] bg-primary/80 text-primary-foreground backdrop-blur-md px-3 py-1.5 rounded-full uppercase tracking-wider font-semibold shadow-sm">
+                                Upcoming
+                            </span>
                         )}
-                        <h3 className="text-xl font-[Noto_Sans_TC] font-bold shadow-black drop-shadow-md">
-                            {trip.title}
-                        </h3>
                     </div>
+
+                    {/* Action Buttons Container - Glass Pill */}
                     <div
-                        className={`absolute top-3 right-3 flex space-x-2 transition-opacity duration-200
+                        className={`absolute top-4 right-4 flex space-x-1 p-1 bg-black/30 backdrop-blur-md rounded-full border border-white/10 transition-all duration-300
                             ${
                                 showActions
-                                    ? "opacity-100"
-                                    : "opacity-0 group-hover:opacity-100"
+                                    ? "opacity-100 translate-y-0"
+                                    : "opacity-0 -translate-y-2 lg:group-hover:opacity-100 lg:group-hover:translate-y-0"
                             }`}
+                        onClick={(e) => e.stopPropagation()}
                     >
                         <button
                             type="button"
@@ -72,10 +80,10 @@ const TripCard = ({
                                 e.stopPropagation();
                                 onPrintBtnClick(trip);
                             }}
-                            className="p-1.5 bg-background/80 backdrop-blur-md rounded-full text-foreground/70 hover:text-foreground hover:bg-background shadow-sm transition-colors"
+                            className="p-2 rounded-full text-white/80 hover:text-white hover:bg-white/20 transition-colors"
                             title="列印"
                         >
-                            <Printer size={14} />
+                            <Printer size={16} />
                         </button>
                         {userId === trip.user_id && (
                             <button
@@ -84,10 +92,10 @@ const TripCard = ({
                                     e.stopPropagation();
                                     onPermissionBtnClick(trip);
                                 }}
-                                className="p-1.5 bg-background/80 backdrop-blur-md rounded-full text-foreground/70 hover:text-foreground hover:bg-background shadow-sm transition-colors"
+                                className="p-2 rounded-full text-white/80 hover:text-white hover:bg-white/20 transition-colors"
                                 title="分享"
                             >
-                                <User size={14} />
+                                <User size={16} />
                             </button>
                         )}
                         <button
@@ -96,10 +104,10 @@ const TripCard = ({
                                 e.stopPropagation();
                                 onEditBtnClick(trip);
                             }}
-                            className="p-1.5 bg-background/80 backdrop-blur-md rounded-full text-foreground/70 hover:text-foreground hover:bg-background shadow-sm transition-colors"
+                            className="p-2 rounded-full text-white/80 hover:text-white hover:bg-white/20 transition-colors"
                             title="編輯"
                         >
-                            <Pencil size={14} />
+                            <Pencil size={16} />
                         </button>
                         <button
                             type="button"
@@ -107,24 +115,40 @@ const TripCard = ({
                                 e.stopPropagation();
                                 onDeleteBtnClick(trip);
                             }}
-                            className="p-1.5 bg-background/80 backdrop-blur-md rounded-full text-destructive/70 hover:text-destructive hover:bg-background shadow-sm transition-colors"
+                            className="p-2 rounded-full text-red-300 hover:text-red-100 hover:bg-red-500/40 transition-colors"
                             title="刪除"
                         >
-                            <Trash2 size={14} />
+                            <Trash2 size={16} />
                         </button>
                     </div>
-                </div>
-                <div className="p-5 flex justify-between items-center">
-                    <div className="text-xs text-muted-foreground font-mono">
-                        {trip.start_date} ~ {trip.end_date}
+
+                    {/* Title inside image at bottom */}
+                    <div className="absolute bottom-4 left-5 right-5 text-white">
+                        <h3 className="text-2xl font-[Noto_Sans_TC] font-bold tracking-tight line-clamp-2 leading-tight drop-shadow-md">
+                            {trip.title}
+                        </h3>
                     </div>
-                    <button
-                        type="button"
-                        onClick={() => onTripBtnClick(trip.id)}
-                        className="text-xs font-bold text-muted-foreground/50 group-hover:text-foreground transition-colors"
-                    >
-                        OPEN BOOK &rarr;
-                    </button>
+                </div>
+
+                {/* Content Details */}
+                <div className="p-5 flex flex-col justify-between bg-card z-10 relative">
+                    <div className="flex justify-between items-end">
+                        <div>
+                            <div className="text-xs font-semibold text-muted-foreground/70 uppercase tracking-widest mb-1">
+                                Duration
+                            </div>
+                            <div className="text-sm font-mono text-foreground font-medium">
+                                {trip.start_date?.replace(/-/g, "/")} &rarr; {trip.end_date?.replace(/-/g, "/")}
+                            </div>
+                        </div>
+                        
+                        {/* Elegant Open Button */}
+                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary transition-colors duration-300">
+                            <span className="text-primary group-hover:text-primary-foreground transition-colors duration-300 font-bold text-lg leading-none mb-0.5">
+                                &rarr;
+                            </span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

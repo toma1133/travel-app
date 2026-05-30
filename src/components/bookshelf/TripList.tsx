@@ -26,7 +26,7 @@ const TripList = ({
 
     return (
         <div 
-            className="flex-1 px-4 md:px-8 pb-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 overflow-y-auto no-scrollbar scroll-smooth content-start relative"
+            className="flex-1 px-4 md:px-8 pb-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6 overflow-y-auto no-scrollbar scroll-smooth content-start relative"
             ref={scrollContainerRef}
         >
             {Array.isArray(trips) &&
