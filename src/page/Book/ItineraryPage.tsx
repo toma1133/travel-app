@@ -380,12 +380,12 @@ const ItineraryPage = ({
 
     return (
         <div
-            className={`min-h-full font-[Noto_Sans_TC] text-gray-800 ${
+            className={`min-h-[100dvh] font-[Noto_Sans_TC] text-foreground flex flex-col ${
                 isPrinting
-                    ? "h-auto min-h-[50vh] break-after-page overflow-visible bg-white"
+                    ? "h-auto break-after-page overflow-visible bg-white"
                     : `${
-                          tripData?.theme_config?.bg || "bg-gray-100"
-                      } pb-24`
+                          tripData?.theme_config?.bg || "bg-background"
+                      } pb-24 lg:pb-6 lg:h-[100dvh] lg:overflow-hidden`
             }`}
         >
             {!isPrinting && (
@@ -399,10 +399,10 @@ const ItineraryPage = ({
                             <button
                                 type="button"
                                 onClick={() => setIsEditing(!isEditing)}
-                                className={`flex items-center text-sm font-medium px-3 py-1.5 rounded-lg shadow-md ${tripData?.theme_config?.card} hover:opacity-90 transition-opacity ${
+                                className={`flex items-center text-sm font-medium px-3 py-1.5 rounded-lg shadow-md transition-all ${
                                     isEditing
-                                        ? "bg-red-500 text-white hover:bg-red-600"
-                                        : "bg-white text-gray-600 border border-gray-300 hover:bg-gray-50"
+                                        ? "bg-destructive text-destructive-foreground hover:bg-destructive/90 border-transparent"
+                                        : "bg-card text-foreground border border-border hover:bg-card/90"
                                 }`}
                                 title={isEditing ? "退出" : "編輯"}
                             >
@@ -425,7 +425,7 @@ const ItineraryPage = ({
                 />
             )}
             <div
-                className={`space-y-6 ${
+                className={`lg:flex-1 lg:flex lg:flex-col lg:overflow-hidden ${
                     isPrinting ? "space-y-4 px-0" : "px-4 mt-6"
                 }`}
             >

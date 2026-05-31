@@ -58,7 +58,7 @@ const ItineraryItem = ({
                 /* 螢幕: 卡片懸浮感、圓角 */
                 ${
                     !isPrinting
-                        ? "bg-white rounded-2xl shadow-sm border border-gray-100 mb-6 transition-all duration-300 hover:shadow-md"
+                        ? "bg-card rounded-2xl shadow-sm border border-border mb-6 transition-all duration-300 hover:shadow-md lg:flex lg:flex-col lg:h-full lg:mb-0 lg:overflow-hidden"
                         : ""
                 }
                 /* 列印: 減少底部間距 (mb-4)，避免分頁斷開 */
@@ -73,7 +73,9 @@ const ItineraryItem = ({
                         : () => onExpandedBtnToggle(itinerary)
                 }
                 className={`
-                    w-full flex items-stretch cursor-pointer overflow-hidden rounded-t-2xl
+                    w-full flex items-stretch overflow-hidden rounded-t-2xl
+                    ${!isPrinting && !isEditing ? "cursor-pointer hover:bg-muted/10" : ""}
+                    ${!isPrinting ? "lg:shrink-0 bg-card z-20 shadow-sm border-b border-border/50" : ""}
                     ${
                         isPrinting
                             ? "cursor-default border-b border-black pb-1 rounded-none"
@@ -89,29 +91,29 @@ const ItineraryItem = ({
                         ${
                             isPrinting
                                 ? "p-2 min-w-[50px]"
-                                : "p-4 min-w-[80px] bg-gray-50 border-r border-gray-100"
+                                : "p-4 min-w-[80px] bg-muted/30 border-r border-border"
                         }
                     `}
                 >
                     <span
-                        className={`font-black uppercase tracking-widest text-gray-400 ${
-                            isPrinting ? "text-[8px] text-black" : "text-[10px]"
+                        className={`font-black uppercase tracking-widest ${
+                            isPrinting ? "text-[8px] text-black" : "text-[10px] text-muted-foreground"
                         }`}
                     >
                         {itinerary.weekday}
                     </span>
                     <span
-                        className={`font-[Noto_Sans_TC] font-black leading-none mt-1 ${primaryTextColor} ${
-                            isPrinting ? "text-xl text-black" : "text-3xl"
+                        className={`font-[Noto_Sans_TC] font-black leading-none mt-1 ${
+                            isPrinting ? "text-xl text-black" : "text-3xl text-foreground"
                         }`}
                     >
                         {itinerary.date.split("-")[2]}
                     </span>
                     <span
-                        className={`text-gray-400 mt-1 ${
+                        className={`mt-1 ${
                             isPrinting
                                 ? "text-[8px] text-gray-600"
-                                : "text-[10px]"
+                                : "text-[10px] text-muted-foreground"
                         }`}
                     >
                         {itinerary.date.split("-")[1]}月
@@ -143,20 +145,20 @@ const ItineraryItem = ({
                             </span>
                             <h3
                                 className={`
-                                    font-bold ${primaryTextColor}
+                                    font-bold 
                                     ${
                                         isPrinting
                                             ? "text-base text-black whitespace-normal"
-                                            : "text-md truncate"
+                                            : "text-md truncate text-foreground"
                                     }
                                 `}
                             >
                                 {itinerary.title || "未命名行程"}
                             </h3>
                         </div>
-                        {/* 螢幕模式：展開/收合箭頭 */}
+                        {/* 螢幕模式：展開/收合箭頭 (桌面版常駐展開，故隱藏箭頭) */}
                         {!isPrinting && !isEditing && (
-                            <div className="text-gray-300 transition-transform duration-300 group-hover:text-gray-500 shrink-0">
+                            <div className="text-muted-foreground transition-transform duration-300 hover:text-foreground shrink-0 lg:hidden">
                                 {isExpanded ? (
                                     <ChevronUp size={20} />
                                 ) : (
@@ -167,14 +169,14 @@ const ItineraryItem = ({
                     </div>
                     {/* 編輯模式下的工具列 (只要 isEditing=true 就顯示，不需 Hover) */}
                     {!isPrinting && isEditing && (
-                        <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1 bg-white pl-2">
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1 p-1 bg-background/60 backdrop-blur-md rounded-full shadow-md border border-border/50 lg:opacity-0 lg:group-hover:opacity-100 transition-all duration-300 z-10">
                             <button
                                 type="button"
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     onAddActivityBtnClick(itinerary);
                                 }}
-                                className="p-2 rounded-full text-gray-400 hover:text-white hover:bg-blue-500 transition-all shadow-sm border border-gray-100 hover:border-transparent"
+                                className="p-2 rounded-full text-muted-foreground hover:text-primary-foreground hover:bg-primary transition-all"
                                 title="新增活動"
                             >
                                 <Plus size={16} />
@@ -185,7 +187,7 @@ const ItineraryItem = ({
                                     e.stopPropagation();
                                     onEditDayBtnClick(itinerary);
                                 }}
-                                className="p-2 rounded-full text-gray-400 hover:text-white hover:bg-gray-600 transition-all shadow-sm border border-gray-100 hover:border-transparent"
+                                className="p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
                                 title="編輯日程"
                             >
                                 <Pencil size={16} />
@@ -196,7 +198,7 @@ const ItineraryItem = ({
                                     e.stopPropagation();
                                     onDeleteDayBtnClick(itinerary);
                                 }}
-                                className="p-2 rounded-full text-gray-400 hover:text-white hover:bg-red-500 transition-all shadow-sm border border-gray-100 hover:border-transparent"
+                                className="p-2 rounded-full text-muted-foreground hover:text-destructive-foreground hover:bg-destructive transition-all"
                                 title="刪除日程"
                             >
                                 <Trash2 size={16} />
@@ -210,13 +212,13 @@ const ItineraryItem = ({
             {(isExpanded || isPrinting) && (
                 <div
                     className={`relative ${
-                        isPrinting ? "pt-2 pb-2" : "pb-6 pt-2"
+                        isPrinting ? "pt-2 pb-2" : "pb-6 pt-2 lg:flex-1 overflow-x-hidden lg:overflow-y-auto lg:custom-scrollbar"
                     }`}
                 >
                     <div className="absolute top-0 bottom-6 left-0 w-14 flex justify-center pointer-events-none">
                         <div
                             className={`w-[2px] h-full ${
-                                !isPrinting ? "bg-gray-100" : "bg-gray-300"
+                                !isPrinting ? "bg-border" : "bg-gray-300"
                             }`}
                         ></div>
                     </div>
@@ -276,6 +278,7 @@ const ItineraryItem = ({
                                                     : ""
                                             }
                                         `}
+
                                     >
                                         <div className="flex items-start gap-3 w-full">
                                             {/* 時間 */}
@@ -287,7 +290,7 @@ const ItineraryItem = ({
                                                     ${
                                                         isPrinting
                                                             ? "text-xs text-black"
-                                                            : "text-sm text-gray-400 group-hover/item:text-gray-600"
+                                                            : "text-sm text-muted-foreground group-hover/item:text-foreground"
                                                     }
                                                 `}
                                                 >
@@ -300,12 +303,10 @@ const ItineraryItem = ({
                                                 <h4
                                                     className={`
                                                     font-bold leading-tight
-                                                    ${primaryTextColor} 
-                                                    /* 列印時標題縮小 */
                                                     ${
                                                         isPrinting
                                                             ? "text-sm text-black"
-                                                            : "text-sm"
+                                                            : "text-sm text-foreground"
                                                     }
                                                 `}
                                                 >
@@ -315,12 +316,12 @@ const ItineraryItem = ({
                                                 {activity.desc && (
                                                     <p
                                                         className={`
-                                                        text-gray-500 leading-relaxed whitespace-pre-wrap
+                                                        leading-relaxed whitespace-pre-wrap
                                                         /* 列印時描述縮小且行距變緊 */
                                                         ${
                                                             isPrinting
                                                                 ? "text-[10px] mt-0.5 text-gray-700"
-                                                                : "text-xs mt-1"
+                                                                : "text-xs mt-1 text-muted-foreground"
                                                         }
                                                     `}
                                                     >
@@ -331,7 +332,8 @@ const ItineraryItem = ({
                                             {!isPrinting && (
                                                 <div
                                                     className={`
-                                                        flex items-center gap-1 transition-opacity duration-200 ml-2
+                                                        flex items-center gap-1 p-0.5 bg-background/60 backdrop-blur-md rounded-full shadow-sm border border-border/50 shrink-0 ml-2 transition-all duration-300
+                                                        lg:opacity-0 lg:-translate-x-2 lg:group-hover/item:opacity-100 lg:group-hover/item:translate-x-0 z-10
                                                     `}
                                                 >
                                                     {!isEditing &&
@@ -343,7 +345,7 @@ const ItineraryItem = ({
                                                                         activity.linkId!
                                                                     )
                                                                 }
-                                                                className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                                                className="p-1.5 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
                                                                 title="查看詳情"
                                                             >
                                                                 <BookOpen
@@ -361,7 +363,7 @@ const ItineraryItem = ({
                                                                         activity
                                                                     )
                                                                 }
-                                                                className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors"
+                                                                className="p-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                                                                 title="編輯活動"
                                                             >
                                                                 <Pencil
@@ -376,7 +378,7 @@ const ItineraryItem = ({
                                                                         activity
                                                                     )
                                                                 }
-                                                                className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                                                                className="p-1.5 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
                                                                 title="刪除活動"
                                                             >
                                                                 <Trash2
@@ -397,7 +399,7 @@ const ItineraryItem = ({
                                 <div className="w-14 shrink-0"></div>{" "}
                                 {/* 佔位符保持對齊 */}
                                 <div className="py-2">
-                                    <p className="text-xs text-gray-400 italic">
+                                    <p className="text-xs text-muted-foreground italic">
                                         尚無活動，點擊上方 + 新增
                                     </p>
                                 </div>

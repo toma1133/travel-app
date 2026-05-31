@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import moment from "moment";
 import ItineraryItem from "./ItineraryItem";
 import type {
@@ -91,6 +91,12 @@ const ItineraryList = ({
 
         const index = itinerarys.findIndex(it => it.day_number === expandedDayNum);
         
+        // 桌面版不進行頁面捲動，避免 Master-Detail 佈局跳動
+        if (window.innerWidth >= 1024) {
+            isUserInteractionRef.current = false;
+            return;
+        }
+
         if (index !== -1 && itemRefs.current[index]) {
             // 在這裡執行捲動，確保 DOM 已經重新渲染(展開/收合)完畢
             // 使用 setTimeout 0 讓它排在 Event Loop 最後，確保畫面高度已更新
@@ -120,48 +126,151 @@ const ItineraryList = ({
         setExpandedDayNum(newDayNum);
     };
 
+    const activeItinerary = useMemo(() => {
+        if (!itinerarys || itinerarys.length === 0) return null;
+        return (
+            itinerarys.find((day) => day.day_number === expandedDayNum) ||
+            itinerarys[0]
+        );
+    }, [itinerarys, expandedDayNum]);
+
     return (
-        <div className={`space-y-4 ${isPrinting ? "space-y-6" : ""}`}>
-            {Array.isArray(itinerarys) && itinerarys.length > 0
-                ? itinerarys.map((itinerary, i) => (
-                      <div
-                          key={i}
-                          ref={(el: HTMLDivElement | null) => {
-                              itemRefs.current[i] = el;
-                          }}
-                          className="scroll-mt-20"
-                      >
-                          <ItineraryItem
-                              itinerary={itinerary}
-                              theme={theme}
-                              isEditing={isEditing}
-                              isExpanded={
-                                  isPrinting
-                                      ? true
-                                      : expandedDayNum === itinerary.day_number
-                              }
-                              isPrinting={isPrinting}
-                              onExpandedBtnToggle={() =>
-                                  handleExpandedBtnClick(itinerary, i)
-                              }
-                              onAddActivityBtnClick={onAddActivityBtnClick}
-                              onDeleteActivityBtnClick={
-                                  onDeleteActivityBtnClick
-                              }
-                              onDeleteDayBtnClick={onDeleteDayBtnClick}
-                              onEditActivityBtnClick={onEditActivityBtnClick}
-                              onEditDayBtnClick={onEditDayBtnClick}
-                              onViewBtnClick={onViewBtnClick}
-                          />
-                      </div>
-                  ))
-                : !isPrinting && (
-                      <div className="text-center py-10 bg-white rounded-lg border border-dashed border-gray-300">
-                          <p className="text-gray-500">
-                              目前沒有任何日程，請點擊上方按鈕開始規劃！
-                          </p>
-                      </div>
-                  )}
+        <div className={`space-y-4 ${isPrinting ? "space-y-6" : ""} lg:h-full lg:flex lg:flex-col lg:min-h-0 lg:space-y-0`}>
+            {Array.isArray(itinerarys) && itinerarys.length > 0 ? (
+                <>
+                    {/* --- Mobile & Print View (Stacked) --- */}
+                    <div
+                        className={`${
+                            !isPrinting ? "lg:hidden" : ""
+                        } space-y-4 ${isPrinting ? "space-y-6" : ""}`}
+                    >
+                        {itinerarys.map((itinerary, i) => (
+                            <div
+                                key={i}
+                                ref={(el: HTMLDivElement | null) => {
+                                    itemRefs.current[i] = el;
+                                }}
+                                className="scroll-mt-20"
+                            >
+                                <ItineraryItem
+                                    itinerary={itinerary}
+                                    theme={theme}
+                                    isEditing={isEditing}
+                                    isExpanded={
+                                        isPrinting
+                                            ? true
+                                            : expandedDayNum ===
+                                              itinerary.day_number
+                                    }
+                                    isPrinting={isPrinting}
+                                    onExpandedBtnToggle={() =>
+                                        handleExpandedBtnClick(itinerary, i)
+                                    }
+                                    onAddActivityBtnClick={
+                                        onAddActivityBtnClick
+                                    }
+                                    onDeleteActivityBtnClick={
+                                        onDeleteActivityBtnClick
+                                    }
+                                    onDeleteDayBtnClick={onDeleteDayBtnClick}
+                                    onEditActivityBtnClick={
+                                        onEditActivityBtnClick
+                                    }
+                                    onEditDayBtnClick={onEditDayBtnClick}
+                                    onViewBtnClick={onViewBtnClick}
+                                />
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* --- Desktop View (Master-Detail) --- */}
+                    {!isPrinting && (
+                        <div className="hidden lg:flex gap-6 items-start lg:flex-1 lg:min-h-0">
+                            {/* Master: Sidebar */}
+                            <div className="w-1/3 xl:w-1/4 h-full overflow-y-auto pr-2 space-y-3 custom-scrollbar shrink-0">
+                                {itinerarys.map((day) => (
+                                    <button
+                                        key={day.id}
+                                        type="button"
+                                        onClick={() =>
+                                            setExpandedDayNum(day.day_number)
+                                        }
+                                        className={`w-full text-left p-4 rounded-2xl border transition-all duration-300 shadow-sm ${
+                                            expandedDayNum === day.day_number
+                                                ? "bg-primary text-primary-foreground border-transparent shadow-md scale-[1.02]"
+                                                : "bg-card text-muted-foreground border-border hover:border-primary/50 hover:bg-muted/30"
+                                        }`}
+                                    >
+                                        <div className="flex justify-between items-center">
+                                            <div>
+                                                <div className="text-[10px] font-bold opacity-70 mb-1 tracking-widest uppercase">
+                                                    {
+                                                        day.date.split("-")[1]
+                                                    }/
+                                                    {
+                                                        day.date.split("-")[2]
+                                                    }{" "}
+                                                    ({day.weekday})
+                                                </div>
+                                                <div
+                                                    className={`text-lg font-black leading-tight ${
+                                                        expandedDayNum ===
+                                                        day.day_number
+                                                            ? "text-primary-foreground"
+                                                            : "text-foreground"
+                                                    }`}
+                                                >
+                                                    DAY {day.day_number}
+                                                </div>
+                                                <div className="text-sm truncate mt-1 opacity-90 font-medium">
+                                                    {day.title ||
+                                                        "未命名行程"}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
+
+                            {/* Detail: Expanded Card */}
+                            <div className="flex-1 min-w-0 h-full">
+                                {activeItinerary && (
+                                    <ItineraryItem
+                                        itinerary={activeItinerary}
+                                        theme={theme}
+                                        isEditing={isEditing}
+                                        isExpanded={true}
+                                        isPrinting={false}
+                                        onExpandedBtnToggle={() => {}}
+                                        onAddActivityBtnClick={
+                                            onAddActivityBtnClick
+                                        }
+                                        onDeleteActivityBtnClick={
+                                            onDeleteActivityBtnClick
+                                        }
+                                        onDeleteDayBtnClick={
+                                            onDeleteDayBtnClick
+                                        }
+                                        onEditActivityBtnClick={
+                                            onEditActivityBtnClick
+                                        }
+                                        onEditDayBtnClick={onEditDayBtnClick}
+                                        onViewBtnClick={onViewBtnClick}
+                                    />
+                                )}
+                            </div>
+                        </div>
+                    )}
+                </>
+            ) : (
+                !isPrinting && (
+                    <div className="text-center py-10 bg-card rounded-xl border border-dashed border-border/50 shadow-sm">
+                        <p className="text-muted-foreground text-sm font-medium">
+                            目前沒有任何日程，請點擊上方 + 新增按鈕開始規劃！
+                        </p>
+                    </div>
+                )
+            )}
         </div>
     );
 };

@@ -59,7 +59,7 @@ const ItineraryActivityModal = ({
             <div>
                 <label
                     htmlFor="time"
-                    className="block font-bold uppercase mb-1 flex items-center text-gray-500 text-xs"
+                    className="block font-bold uppercase mb-1 flex items-center text-muted-foreground text-xs"
                 >
                     <Clock size={12} className="mr-1" /> 時間 *
                 </label>
@@ -70,13 +70,13 @@ const ItineraryActivityModal = ({
                     value={formData.time}
                     onChange={onFormInputChange}
                     placeholder="例如: 09:30"
-                    className="w-full bg-transparent border-b border-gray-300 py-2 outline-none font-mono text-base"
+                    className="w-full bg-transparent text-foreground border-b border-border py-2 outline-none font-mono text-base dark:[color-scheme:dark]"
                 />
             </div>
             <div>
                 <label
                     htmlFor="title"
-                    className="block font-bold uppercase mb-1 flex items-center text-gray-500 text-xs"
+                    className="block font-bold uppercase mb-1 flex items-center text-muted-foreground text-xs"
                 >
                     標題 *
                 </label>
@@ -86,14 +86,14 @@ const ItineraryActivityModal = ({
                     value={formData.title}
                     onChange={onFormInputChange}
                     placeholder="例如：從飯店出發"
-                    className="w-full bg-transparent border-b border-gray-300 py-2 outline-none font-[Noto_Sans_TC] text-base"
+                    className="w-full bg-transparent text-foreground border-b border-border py-2 outline-none font-[Noto_Sans_TC] text-base"
                 />
             </div>
             {/* Type Selection */}
             <div>
                 <label
                     htmlFor="type"
-                    className="block font-bold uppercase mb-1 flex items-center text-gray-500 text-xs"
+                    className="block font-bold uppercase mb-1 flex items-center text-muted-foreground text-xs"
                 >
                     類型 *
                 </label>
@@ -106,7 +106,7 @@ const ItineraryActivityModal = ({
                                 ${
                                     formData.type === category.id
                                         ? `text-white border-transparent`
-                                        : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                                        : "border-border text-muted-foreground hover:bg-muted"
                                 }
                             `}
                             style={
@@ -143,7 +143,7 @@ const ItineraryActivityModal = ({
             <div>
                 <label
                     htmlFor="desc"
-                    className="block font-bold uppercase mb-1 flex items-center text-gray-500 text-xs"
+                    className="block font-bold uppercase mb-1 flex items-center text-muted-foreground text-xs"
                 >
                     詳細說明
                 </label>
@@ -153,14 +153,14 @@ const ItineraryActivityModal = ({
                     onChange={onFormInputChange}
                     rows={2}
                     placeholder="活動的細節或備註..."
-                    className="w-full bg-transparent border-b border-gray-300 py-2 outline-none font-[Noto_Sans_TC] text-base resize-none"
+                    className="w-full bg-transparent text-foreground border-b border-border py-2 outline-none font-[Noto_Sans_TC] text-base resize-none"
                 />
             </div>
             {/* Link ID */}
             <div>
                 <label
                     htmlFor="linkId"
-                    className="block font-bold uppercase mb-1 flex items-center text-gray-500 text-xs"
+                    className="block font-bold uppercase mb-1 flex items-center text-muted-foreground text-xs"
                 >
                     <Tag size={12} className="mr-1" /> 連結地點 ID
                 </label>

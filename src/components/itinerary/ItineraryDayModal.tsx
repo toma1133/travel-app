@@ -38,7 +38,7 @@ const ItineraryDayModal = ({
             <div>
                 <label
                     htmlFor="date"
-                    className="block font-bold uppercase mb-1 flex items-center text-gray-500 text-xs"
+                    className="block font-bold uppercase mb-1 flex items-center text-muted-foreground text-xs"
                 >
                     <Calendar size={12} className="mr-1" /> 日期 *
                 </label>
@@ -48,14 +48,14 @@ const ItineraryDayModal = ({
                     name="date"
                     value={formData.date}
                     onChange={onFormInputChange}
-                    className="w-full bg-transparent border-b border-gray-300 py-2 outline-none font-mono text-base"
+                    className="w-full bg-transparent text-foreground border-b border-border py-2 outline-none font-mono text-base dark:[color-scheme:dark]"
                     placeholder="2025/12/12"
                 />
             </div>
             <div>
                 <label
                     htmlFor="day_number"
-                    className="block font-bold uppercase mb-1 flex items-center text-gray-500 text-xs"
+                    className="block font-bold uppercase mb-1 flex items-center text-muted-foreground text-xs"
                 >
                     旅遊第幾天 *
                 </label>
@@ -67,13 +67,13 @@ const ItineraryDayModal = ({
                     value={formData.day_number}
                     onChange={onFormInputChange}
                     placeholder="0"
-                    className="w-full bg-transparent border-b border-gray-300 py-2 outline-none font-mono text-base"
+                    className="w-full bg-transparent text-foreground border-b border-border py-2 outline-none font-mono text-base"
                 />
             </div>
             <div>
                 <label
                     htmlFor="title"
-                    className="block font-bold uppercase mb-1 flex items-center text-gray-500 text-xs"
+                    className="block font-bold uppercase mb-1 flex items-center text-muted-foreground text-xs"
                 >
                     當日主題
                 </label>
@@ -82,7 +82,7 @@ const ItineraryDayModal = ({
                     value={formData.title || ""}
                     onChange={onFormInputChange}
                     placeholder="例如：清水寺周邊散步"
-                    className="w-full bg-transparent border-b border-gray-300 py-2 outline-none font-[Noto_Sans_TC] text-base"
+                    className="w-full bg-transparent text-foreground border-b border-border py-2 outline-none font-[Noto_Sans_TC] text-base"
                 />
             </div>
         </FormModal>
