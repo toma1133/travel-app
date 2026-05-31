@@ -1,17 +1,37 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import type { PlaceVM } from "../../models/types/PlaceTypes";
-import type { TripVM } from "../../models/types/TripTypes";
 import PlaceMapController from "./PlaceMapController";
+import { useTheme } from "../../contexts/ThemeContext";
 
 type PlaceMapViewProps = {
     places: PlaceVM[] | null;
-    trip: TripVM;
 };
 
-const PlaceMapView = ({ places, trip }: PlaceMapViewProps) => {
-    const [defaultCenter] = useState({ lat: trip.lat!, lng: trip.lng! });
+const PlaceMapView = ({ places }: PlaceMapViewProps) => {
+    const { theme } = useTheme();
+    const isDark = theme === "dark";
+
+    const defaultCenter = useMemo(() => {
+        if (places && places.length > 0) {
+            const validPlaces = places.filter(
+                (p) => typeof p.lat === "number" && typeof p.lng === "number"
+            );
+            if (validPlaces.length > 0) {
+                const avgLat =
+                    validPlaces.reduce((sum, p) => sum + p.lat!, 0) /
+                    validPlaces.length;
+                const avgLng =
+                    validPlaces.reduce((sum, p) => sum + p.lng!, 0) /
+                    validPlaces.length;
+                return { lat: avgLat, lng: avgLng };
+            }
+        }   
+        // Fallback default center (Taipei, Taiwan)
+        return { lat: 25.033, lng: 121.565 };
+    }, [places]);
+
     const [defaultZoom] = useState(13);
 
     const getPlaceColor = (type: string | null) => {
@@ -93,6 +113,7 @@ const PlaceMapView = ({ places, trip }: PlaceMapViewProps) => {
                 places={places}
                 defaultCenter={defaultCenter}
                 defaultZoom={defaultZoom}
+                isDark={isDark}
             />
         </MapContainer>
     );

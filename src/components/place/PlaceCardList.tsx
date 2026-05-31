@@ -22,7 +22,7 @@ const PlaceCardList = ({
     <div
         className={`
             w-full 
-            ${isPrinting ? "space-y-0 divide-y divide-gray-200" : "space-y-6"}
+            ${isPrinting ? "space-y-0 divide-y divide-black" : "grid grid-cols-1 sm:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6"}
         `}
     >
         {Array.isArray(places) && places.length > 0
@@ -39,7 +39,7 @@ const PlaceCardList = ({
                   />
               ))
             : !isPrinting && (
-                  <div className="text-center py-10 text-gray-400 text-sm">
+                  <div className="text-center py-20 text-muted-foreground text-sm col-span-full border-2 border-dashed border-border rounded-2xl">
                       此分類尚無地點，點擊右上角新增。
                   </div>
               )}

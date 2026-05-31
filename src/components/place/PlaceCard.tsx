@@ -56,7 +56,7 @@ const PlaceCard = ({
                 ${
                     isPrinting
                         ? "flex flex-row shadow-none border-none rounded-none py-6 break-inside-avoid"
-                        : "bg-white rounded-lg overflow-hidden shadow-sm border border-gray-100 transition-all duration-500 group"
+                        : "bg-card rounded-2xl overflow-hidden shadow-sm border border-border transition-all duration-300 group hover:shadow-md flex flex-col h-full"
                 }
             `}
             onMouseEnter={() => setShowActions(true)}
@@ -66,12 +66,11 @@ const PlaceCard = ({
             {/* 圖片區域 */}
             <div
                 className={`
-                    relative overflow-hidden
-                    /* 螢幕: 滿寬，高度固定 */
+                    relative overflow-hidden shrink-0
                     ${
                         isPrinting
-                            ? "w-32 h-32 shrink-0 mr-6 rounded-sm"
-                            : "w-full h-48"
+                            ? "w-32 h-32 mr-6 rounded-sm"
+                            : "w-full h-48 sm:h-56"
                     }
                 `}
             >
@@ -92,40 +91,49 @@ const PlaceCard = ({
                         className={`w-full h-full flex items-center justify-center text-xs ${
                             isPrinting
                                 ? "bg-gray-100 text-gray-400"
-                                : "bg-gray-50 text-gray-300"
+                                : "bg-muted text-muted-foreground/50"
                         }`}
                     >
                         No Image
                     </div>
                 )}
+                
+                {/* 漸層遮罩 */}
+                {!isPrinting && (
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+                )}
+
                 {/* 類型標籤 */}
                 <div
                     className={`absolute top-0 left-0 ${
-                        !isPrinting && "top-3 left-3"
+                        !isPrinting && "top-4 left-4 z-10"
                     }`}
                 >
                     <span
                         className={`
-                            backdrop-blur-sm text-[10px] px-2 py-1 uppercase tracking-wider
+                            px-3 py-1.5 uppercase tracking-widest font-bold shadow-sm
                             ${
                                 isPrinting
-                                    ? "bg-black text-white rounded-br-sm" // 列印：高對比
-                                    : "bg-black/60 text-white" // 螢幕：半透明
+                                    ? "text-[10px] bg-black text-white rounded-br-sm"
+                                    : "text-[10px] bg-background/80 backdrop-blur-md text-foreground rounded-full"
                             }
                         `}
                     >
                         {getPlaceTypeName(place.type)}
                     </span>
                 </div>
+
                 {/* 編輯與刪除按鈕 (僅非列印模式顯示) */}
                 {!isPrinting && !isPreview && (
+                    
                     <div
-                        className={`absolute top-3 right-3 flex space-x-2 transition-opacity duration-200
+                        className={`absolute top-4 right-4 flex space-x-1 p-1 bg-black/30 backdrop-blur-md rounded-full border border-white/10 transition-all duration-300
                             ${
                                 showActions
-                                    ? "opacity-100"
-                                    : "opacity-0 group-hover:opacity-100"
+                                    ? "opacity-100 translate-y-0"
+                                    : "opacity-0 -translate-y-2 lg:group-hover:opacity-100 lg:group-hover:translate-y-0"
                             }`}
+                        onClick={(e) => e.stopPropagation()}
                     >
                         <button
                             type="button"
@@ -133,7 +141,7 @@ const PlaceCard = ({
                                 e.stopPropagation();
                                 onEdit(place);
                             }}
-                            className="p-1.5 bg-white/90 backdrop-blur rounded-full text-gray-600 hover:text-blue-600 hover:bg-white shadow-sm transition-colors"
+                            className="p-2 rounded-full text-white/80 hover:text-white hover:bg-white/20 transition-colors"
                             title="編輯"
                         >
                             <Pencil size={14} />
@@ -144,7 +152,7 @@ const PlaceCard = ({
                                 e.stopPropagation();
                                 onDelete(place);
                             }}
-                            className="p-1.5 bg-white/90 backdrop-blur rounded-full text-gray-600 hover:text-red-600 hover:bg-white shadow-sm transition-colors"
+                            className="p-2 rounded-full text-white/80 hover:text-white hover:bg-white/20 transition-colors"
                             title="刪除"
                         >
                             <Trash2 size={14} />
@@ -152,39 +160,36 @@ const PlaceCard = ({
                     </div>
                 )}
             </div>
+
             {/* --- 內容區域 --- */}
             <div
                 className={`
                     ${
                         isPrinting
-                            ? "flex-1 flex flex-col p-0" // 列印：填滿右側
-                            : "p-5" // 螢幕：一般內距
+                            ? "flex-1 flex flex-col p-0"
+                            : "p-5 sm:p-6 flex flex-col flex-1"
                     }
                 `}
             >
                 {/* 標題列 */}
                 <div
                     className={`flex justify-between items-start ${
-                        isPrinting ? "mb-1" : "mb-2"
+                        isPrinting ? "mb-1" : "mb-3"
                     }`}
                 >
                     <div className="flex flex-col justify-between items-start">
                         <h3
-                            className={`text-xl font-bold ${
-                                theme?.primary || "text-gray-800"
-                            } font-[Noto_Sans_TC] ${
-                                isPrinting ? "text-black text-lg" : ""
+                            className={`text-xl font-bold font-[Noto_Sans_TC] tracking-tight ${
+                                isPrinting ? "text-black print:text-lg" : "text-foreground"
                             }`}
                         >
                             {place.name}
                         </h3>
-                        <p
-                            className={`text-xs text-gray-400 font-medium ${
-                                isPrinting ? "text-gray-500" : ""
-                            }`}
-                        >
-                            {place.eng_name}
-                        </p>
+                        {place.eng_name && (
+                            <p className="text-xs text-muted-foreground font-medium mt-1 print:text-gray-500">
+                                {place.eng_name}
+                            </p>
+                        )}
                     </div>
                     {/* 外部連結 (列印隱藏) */}
                     {!isPrinting && !isPreview && (
@@ -192,14 +197,15 @@ const PlaceCard = ({
                             href={place.map_url || getMapUrl()}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-gray-400 hover:text-blue-500 transition-colors p-1"
+                            className="text-muted-foreground hover:text-primary transition-colors p-1"
                             title="在 Maps 中查看"
                         >
-                            <ExternalLink size={16} />
+                            <ExternalLink size={18} />
                         </a>
                     )}
                 </div>
-                {/* Tags (列印隱藏，保持版面乾淨) */}
+
+                {/* Tags */}
                 {!isPrinting && !!place.tags && (
                     <div className="flex flex-wrap gap-2 mb-4">
                         {place.tags.split(",").map((tag) => (
@@ -207,34 +213,36 @@ const PlaceCard = ({
                                 key={tag}
                                 type="button"
                                 onClick={() => onTagBtnClick(tag.trim())}
-                                className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded hover:bg-gray-200 hover:text-gray-800 transition-colors"
+                                className="text-[10px] font-medium bg-muted text-muted-foreground px-2.5 py-1 rounded-md hover:bg-primary/20 hover:text-primary transition-colors uppercase tracking-wider"
                             >
                                 #{tag.trim()}
                             </button>
                         ))}
                     </div>
                 )}
+
                 {/* 描述文字 */}
                 <p
                     className={`
                         text-sm leading-relaxed text-justify whitespace-pre-wrap
                         ${
                             isPrinting
-                                ? "text-gray-800 mb-3 flex-1" // 列印：深色字，撐開高度
-                                : "text-gray-600 mb-4"
+                                ? "text-gray-800 mb-3 flex-1"
+                                : "text-muted-foreground/90 mb-6 flex-1 line-clamp-4"
                         }
                     `}
                 >
                     {place.description}
                 </p>
+
                 {/* 資訊區塊 (Footer) */}
                 <div
                     className={`
-                        text-xs space-y-2
+                        text-xs space-y-2.5
                         ${
                             isPrinting
-                                ? "bg-transparent p-0 mt-auto space-y-1" // 列印：無背景，置底
-                                : "bg-[#F9F8F6] p-3 rounded text-gray-600" // 螢幕：有背景卡片
+                                ? "bg-transparent p-0 mt-auto space-y-1"
+                                : "mt-auto pt-4 border-t border-border/50 text-muted-foreground"
                         }
                     `}
                 >
@@ -243,43 +251,42 @@ const PlaceCard = ({
                             <Star
                                 size={14}
                                 className={`
-                                    mr-2 shrink-0
+                                    mr-2.5 shrink-0 mt-0.5
                                     ${
                                         isPrinting
-                                            ? "text-black fill-black" // 列印：實心黑星
-                                            : theme?.accentText ||
-                                              "text-gray-600"
+                                            ? "text-black fill-black"
+                                            : "text-primary fill-primary/20"
                                     }
                                 `}
                             />
                             <span
-                                className={`font-medium ${
-                                    isPrinting ? "text-black" : ""
+                                className={`font-medium leading-snug ${
+                                    isPrinting ? "text-black" : "text-foreground/80"
                                 }`}
                             >
                                 <span
-                                    className={`font-bold ${
+                                    className={`font-bold mr-1 ${
                                         isPrinting
                                             ? "text-black"
-                                            : "text-gray-800"
+                                            : "text-foreground"
                                     }`}
                                 >
                                     Tips:
-                                </span>{" "}
+                                </span>
                                 {place.tips}
                             </span>
                         </div>
                     )}
 
-                    <div className={isPrinting ? "flex gap-4 flex-wrap" : ""}>
+                    <div className={isPrinting ? "flex gap-4 flex-wrap" : "space-y-2.5"}>
                         {place?.info?.open && (
                             <div className="flex items-center">
                                 <Clock
                                     size={14}
-                                    className={`mr-2 shrink-0 ${
+                                    className={`mr-2.5 shrink-0 ${
                                         isPrinting
                                             ? "text-gray-600"
-                                            : "text-gray-400"
+                                            : "text-muted-foreground/70"
                                     }`}
                                 />
                                 <span
@@ -295,14 +302,14 @@ const PlaceCard = ({
                             <div className="flex items-center">
                                 <MapPin
                                     size={14}
-                                    className={`mr-2 shrink-0 ${
+                                    className={`mr-2.5 shrink-0 ${
                                         isPrinting
                                             ? "text-gray-600"
-                                            : "text-gray-400"
+                                            : "text-muted-foreground/70"
                                     }`}
                                 />
                                 <span
-                                    className={`break-all ${
+                                    className={`break-all line-clamp-1 ${
                                         isPrinting ? "text-gray-700" : ""
                                     }`}
                                 >

@@ -7,12 +7,14 @@ type PlaceMapControllerProps = {
     places: PlaceVM[] | null;
     defaultCenter: { lat: number; lng: number };
     defaultZoom: number;
+    isDark?: boolean;
 };
 
 const PlaceMapController = ({
     places,
     defaultCenter,
     defaultZoom,
+    isDark,
 }: PlaceMapControllerProps) => {
     const map = useMap();
 
@@ -38,7 +40,22 @@ const PlaceMapController = ({
 
     useEffect(() => {
         handleFitBounds();
-    }, [map]);
+    }, [map, places]);
+
+    useEffect(() => {
+        if (isDark !== undefined) {
+            const pane = map.getPane("tilePane");
+            if (pane) {
+                if (isDark) {
+                    pane.style.filter =
+                        "invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%)";
+                    pane.style.transition = "filter 0.3s ease";
+                } else {
+                    pane.style.filter = "none";
+                }
+            }
+        }
+    }, [map, isDark]);
 
     return (
         <div

@@ -376,8 +376,8 @@ const GuidePage = ({
                 />
             )}
             <div
-                className={`space-y-6 ${
-                    isPrinting ? "space-y-4 px-0" : "px-4 mt-6"
+                className={`flex-1 flex flex-col ${
+                    isPrinting ? "space-y-4 px-0" : "px-4 mt-6 space-y-6"
                 }`}
             >
                 {!isPrinting && (
@@ -400,7 +400,7 @@ const GuidePage = ({
                         onTagBtnClick={handleTagClick}
                     />
                 ) : (
-                    <PlaceMapView places={filteredPlaces} trip={tripData!} />
+                    <PlaceMapView places={filteredPlaces} />
                 )}
             </div>
             {isModalOpen && (

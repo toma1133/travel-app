@@ -19,20 +19,18 @@ const PlaceFilter = ({
     onFilterBtnClick,
     onRemoveTagBtnClick,
 }: PlaceFilterProps) => (
-    <div className="px-4 mb-4 space-y-3">
+    <div className="mb-4 space-y-3">
         {/* 類別過濾 */}
-        <div className="flex space-x-2 overflow-x-auto no-scrollbar">
+        <div className="flex space-x-2 overflow-x-auto no-scrollbar pb-2">
             {placeCategories.map((f) => (
                 <button
                     key={f.id}
                     type="button"
                     onClick={() => onFilterBtnClick(f.id)}
-                    className={`px-4 py-1.5 rounded-full text-xs whitespace-nowrap transition-colors ${
+                    className={`px-4 py-2 rounded-full text-[11px] font-bold tracking-widest uppercase whitespace-nowrap transition-all shadow-sm ${
                         activeFilterId === f.id
-                            ? `${
-                                  theme?.accent || "bg-blue-500"
-                              } text-white shadow-sm`
-                            : "bg-white text-gray-500 border border-gray-200 hover:border-gray-300"
+                            ? "bg-primary text-primary-foreground border-transparent shadow-md"
+                            : "bg-card text-muted-foreground border border-border hover:border-primary/50 hover:text-foreground"
                     }`}
                 >
                     {f.label}
@@ -42,48 +40,28 @@ const PlaceFilter = ({
         {/* 新增：選取的 Hashtags 顯示區域 */}
         {selectedTags.length > 0 && (
             <div className="flex flex-wrap gap-2 items-center">
-                <span className="text-[10px] text-gray-400 font-medium mr-1 uppercase tracking-wider">
+                <span className="text-[10px] text-muted-foreground font-bold mr-1 uppercase tracking-widest">
                     Tags:
                 </span>
                 {selectedTags.map((tag) => (
                     <span
                         key={tag}
-                        className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] text-white ${
-                            theme?.accent || "bg-blue-500"
-                        }`}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-medium bg-primary text-primary-foreground shadow-sm`}
                     >
+                        #{tag}
                         <button
                             type="button"
                             onClick={() => onRemoveTagBtnClick(tag)}
-                            className="hover:bg-white/20 rounded-full p-0.5 transition-colors"
+                            className="hover:bg-primary-foreground/20 rounded-full p-0.5 transition-colors ml-1"
                             title="Remove"
                         >
-                            <X size={10} strokeWidth={3} />
+                            <X size={12} strokeWidth={2.5} />
                         </button>
-                        #{tag}
                     </span>
                 ))}
             </div>
         )}
     </div>
-    // <div className="flex justify-between items-center px-4 mb-6">
-    //     <div className="flex space-x-2 overflow-x-auto no-scrollbar">
-    //         {placeCategories.map((f) => (
-    //             <button
-    //                 key={f.id}
-    //                 type="button"
-    //                 onClick={() => onFilterBtnClick(f.id)}
-    //                 className={`px-4 py-1.5 rounded-full text-xs transition-colors ${
-    //                     activeFilterId === f.id
-    //                         ? `${theme?.accent} text-white`
-    //                         : "bg-white text-gray-500 border border-gray-200"
-    //                 }`}
-    //             >
-    //                 {f.label}
-    //             </button>
-    //         ))}
-    //     </div>
-    // </div>
 );
 
 export default PlaceFilter;

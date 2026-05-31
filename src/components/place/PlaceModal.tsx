@@ -58,7 +58,7 @@ const PlaceModal = ({
             <div>
                 <label
                     htmlFor="type"
-                    className="block font-bold uppercase mb-1 flex items-center text-gray-500 text-xs"
+                    className="block font-bold uppercase mb-2 flex items-center text-muted-foreground text-xs"
                 >
                     類型 *
                 </label>
@@ -69,11 +69,11 @@ const PlaceModal = ({
                         <label
                             key={type.id}
                             className={`
-                                cursor-pointer text-center py-2 rounded-lg border text-sm transition-all
+                                cursor-pointer text-center py-2 rounded-lg border text-sm transition-all font-medium
                                 ${
                                     formData.type === type.id
-                                        ? `${theme?.accent} text-white border-transparent`
-                                        : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                                        ? `bg-primary text-primary-foreground border-transparent`
+                                        : "border-border text-muted-foreground hover:bg-muted/50"
                                 }
                             `}
                         >
@@ -91,12 +91,12 @@ const PlaceModal = ({
                 </div>
             </div>
             {/* Basic Info */}
-            <div className="grid grid-cols-1 gap-4">
+            <div className="grid grid-cols-1 gap-6">
                 {mode !== "create" && (
                     <div>
                         <label
                             htmlFor="id"
-                            className="block font-bold uppercase mb-1 flex items-center text-gray-500 text-xs"
+                            className="block font-bold uppercase mb-1 flex items-center text-muted-foreground text-xs"
                         >
                             ID
                         </label>
@@ -104,14 +104,14 @@ const PlaceModal = ({
                             <input
                                 name="id"
                                 value={formData.id}
-                                className="w-full bg-transparent border-b border-gray-300 py-2 outline-none font-[Noto_Sans_TC] text-base disabled:opacity-50"
+                                className="w-full bg-transparent border-b border-border py-2 outline-none font-[Noto_Sans_TC] text-base text-muted-foreground disabled:opacity-50"
                                 disabled
                                 placeholder="id"
                             />
                             <button
                                 type="button"
                                 onClick={handleCopy}
-                                className="p-2 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors"
+                                className="p-2 rounded-lg border border-border text-muted-foreground hover:bg-muted transition-colors"
                                 title="複製"
                             >
                                 <Copy
@@ -119,7 +119,7 @@ const PlaceModal = ({
                                     className={
                                         copiedId
                                             ? "text-green-500"
-                                            : "text-gray-500"
+                                            : "text-muted-foreground"
                                     }
                                 />
                             </button>
@@ -129,7 +129,7 @@ const PlaceModal = ({
                 <div>
                     <label
                         htmlFor="name"
-                        className="block font-bold uppercase mb-1 flex items-center text-gray-500 text-xs"
+                        className="block font-bold uppercase mb-1 flex items-center text-muted-foreground text-xs"
                     >
                         名稱 *
                     </label>
@@ -139,13 +139,13 @@ const PlaceModal = ({
                         value={formData.name}
                         onChange={onFormInputChange}
                         placeholder="例如：清水寺"
-                        className="w-full bg-transparent border-b border-gray-300 py-2 outline-none font-[Noto_Sans_TC] text-base"
+                        className="w-full bg-transparent border-b border-border py-2 outline-none font-[Noto_Sans_TC] text-base text-foreground focus:border-primary transition-colors"
                     />
                 </div>
                 <div>
                     <label
                         htmlFor="eng_name"
-                        className="block font-bold uppercase mb-1 flex items-center text-gray-500 text-xs"
+                        className="block font-bold uppercase mb-1 flex items-center text-muted-foreground text-xs"
                     >
                         英文名稱
                     </label>
@@ -154,15 +154,15 @@ const PlaceModal = ({
                         value={formData.eng_name || ""}
                         onChange={onFormInputChange}
                         placeholder="e.g. Kiyomizu-dera"
-                        className="w-full bg-transparent border-b border-gray-300 py-2 outline-none font-mono text-base"
+                        className="w-full bg-transparent border-b border-border py-2 outline-none font-mono text-base text-foreground focus:border-primary transition-colors"
                     />
                 </div>
             </div>
             {/* Image URL */}
-            <div>
+            <div className="mt-6">
                 <label
-                    htmlFor="eng_name"
-                    className="block font-bold uppercase mb-1 flex items-center text-gray-500 text-xs"
+                    htmlFor="image_url"
+                    className="block font-bold uppercase mb-1 flex items-center text-muted-foreground text-xs"
                 >
                     <ImageIcon size={12} className="mr-1" /> 圖片網址
                 </label>
@@ -171,14 +171,14 @@ const PlaceModal = ({
                     value={formData.image_url || ""}
                     onChange={onFormInputChange}
                     placeholder="https://..."
-                    className="w-full bg-transparent border-b border-gray-300 py-2 outline-none font-mono text-base"
+                    className="w-full bg-transparent border-b border-border py-2 outline-none font-mono text-base text-foreground focus:border-primary transition-colors"
                 />
             </div>
             {/* Map Url */}
-            <div>
+            <div className="mt-6">
                 <label
-                    htmlFor="eng_name"
-                    className="block font-bold uppercase mb-1 flex items-center text-gray-500 text-xs"
+                    htmlFor="map_url"
+                    className="block font-bold uppercase mb-1 flex items-center text-muted-foreground text-xs"
                 >
                     <MapIcon size={12} className="mr-1" /> 地圖網址
                 </label>
@@ -187,14 +187,14 @@ const PlaceModal = ({
                     value={formData.map_url || ""}
                     onChange={onFormInputChange}
                     placeholder="https://..."
-                    className="w-full bg-transparent border-b border-gray-300 py-2 outline-none font-mono text-base"
+                    className="w-full bg-transparent border-b border-border py-2 outline-none font-mono text-base text-foreground focus:border-primary transition-colors"
                 />
             </div>
             {/* Description */}
-            <div>
+            <div className="mt-6">
                 <label
                     htmlFor="description"
-                    className="block font-bold uppercase mb-1 flex items-center text-gray-500 text-xs"
+                    className="block font-bold uppercase mb-1 flex items-center text-muted-foreground text-xs"
                 >
                     介紹
                 </label>
@@ -204,105 +204,72 @@ const PlaceModal = ({
                     onChange={onFormInputChange}
                     rows={2}
                     placeholder="關於這個地點的簡短介紹..."
-                    className="w-full bg-transparent border-b border-gray-300 py-2 outline-none font-[Noto_Sans_TC] text-base resize-none"
+                    className="w-full bg-transparent border-b border-border py-2 outline-none font-[Noto_Sans_TC] text-base text-foreground focus:border-primary transition-colors resize-none"
                 />
             </div>
             {/* Details */}
-            <div>
-                <label
-                    htmlFor="info.open"
-                    className="block font-bold uppercase mb-1 flex items-center text-gray-500 text-xs"
-                >
-                    <Clock size={12} className="mr-1" /> 營業時間
-                </label>
-                <input
-                    name="info.open"
-                    value={formData?.info?.open || ""}
-                    onChange={onFormInputChange}
-                    placeholder="例如:09:00 - 18:00"
-                    className="w-full bg-transparent border-b border-gray-300 py-2 outline-none font-mono text-base"
-                />
+            <div className="mt-6 grid grid-cols-1 gap-6">
+                <div>
+                    <label
+                        htmlFor="info.open"
+                        className="block font-bold uppercase mb-1 flex items-center text-muted-foreground text-xs"
+                    >
+                        <Clock size={12} className="mr-1" /> 營業時間
+                    </label>
+                    <input
+                        name="info.open"
+                        value={formData?.info?.open || ""}
+                        onChange={onFormInputChange}
+                        placeholder="例如:09:00 - 18:00"
+                        className="w-full bg-transparent border-b border-border py-2 outline-none font-mono text-base text-foreground focus:border-primary transition-colors"
+                    />
+                </div>
+                <div>
+                    <label
+                        htmlFor="info.loc"
+                        className="block font-bold uppercase mb-1 flex items-center text-muted-foreground text-xs"
+                    >
+                        <MapPin size={12} className="mr-1" /> 地址 / 位置
+                    </label>
+                    <input
+                        name="info.loc"
+                        value={formData?.info?.loc || ""}
+                        onChange={onFormInputChange}
+                        placeholder="例如：京都市東山區..."
+                        className="w-full bg-transparent border-b border-border py-2 outline-none font-[Noto_Sans_TC] text-base text-foreground focus:border-primary transition-colors"
+                    />
+                </div>
+                <div>
+                    <label
+                        htmlFor="tags"
+                        className="block font-bold uppercase mb-1 flex items-center text-muted-foreground text-xs"
+                    >
+                        <Tag size={12} className="mr-1" /> 標籤 (用逗號分隔)
+                    </label>
+                    <input
+                        name="tags"
+                        value={formData.tags || ""}
+                        onChange={onFormInputChange}
+                        placeholder="例如：世界遺產, 必去, 拍照"
+                        className="w-full bg-transparent border-b border-border py-2 outline-none font-[Noto_Sans_TC] text-base text-foreground focus:border-primary transition-colors"
+                    />
+                </div>
+                <div>
+                    <label
+                        htmlFor="tips"
+                        className="block font-bold uppercase mb-1 flex items-center text-muted-foreground text-xs"
+                    >
+                        Tips / 備註
+                    </label>
+                    <input
+                        name="tips"
+                        value={formData.tips || ""}
+                        onChange={onFormInputChange}
+                        placeholder="例如：建議早上去..."
+                        className="w-full bg-transparent border-b border-border py-2 outline-none font-[Noto_Sans_TC] text-base text-foreground focus:border-primary transition-colors"
+                    />
+                </div>
             </div>
-            <div>
-                <label
-                    htmlFor="info.loc"
-                    className="block font-bold uppercase mb-1 flex items-center text-gray-500 text-xs"
-                >
-                    <MapPin size={12} className="mr-1" /> 地址 / 位置
-                </label>
-                <input
-                    name="info.loc"
-                    value={formData?.info?.loc || ""}
-                    onChange={onFormInputChange}
-                    placeholder="例如：京都市東山區..."
-                    className="w-full bg-transparent border-b border-gray-300 py-2 outline-none font-[Noto_Sans_TC] text-base"
-                />
-            </div>
-            <div>
-                <label
-                    htmlFor="tags"
-                    className="block font-bold uppercase mb-1 flex items-center text-gray-500 text-xs"
-                >
-                    <Tag size={12} className="mr-1" /> 標籤 (用逗號分隔)
-                </label>
-                <input
-                    name="tags"
-                    value={formData.tags || ""}
-                    onChange={onFormInputChange}
-                    placeholder="例如：世界遺產, 必去, 拍照"
-                    className="w-full bg-transparent border-b border-gray-300 py-2 outline-none font-[Noto_Sans_TC] text-base"
-                />
-            </div>
-            <div>
-                <label
-                    htmlFor="tips"
-                    className="block font-bold uppercase mb-1 flex items-center text-gray-500 text-xs"
-                >
-                    Tips / 備註
-                </label>
-                <input
-                    name="tips"
-                    value={formData.tips || ""}
-                    onChange={onFormInputChange}
-                    placeholder="例如：建議早上去..."
-                    className="w-full bg-transparent border-b border-gray-300 py-2 outline-none font-[Noto_Sans_TC] text-base"
-                />
-            </div>
-            {/* Lat and lng */}
-            {/* <div>
-                <label
-                    htmlFor="lat"
-                    className="block font-bold uppercase mb-1 flex items-center text-gray-500 text-xs"
-                >
-                    緯度
-                </label>
-                <input
-                    type="number"
-                    step="1"
-                    name="lat"
-                    value={formData.lat!}
-                    onChange={onFormInputChange}
-                    className="w-full bg-transparent border-b border-gray-300 py-2 outline-none font-[Noto_Sans_TC] text-base text-black"
-                    placeholder="0.0"
-                />
-            </div>
-            <div>
-                <label
-                    htmlFor="lat"
-                    className="block font-bold uppercase mb-1 flex items-center text-gray-500 text-xs"
-                >
-                    經度
-                </label>
-                <input
-                    type="number"
-                    step="1"
-                    name="lng"
-                    value={formData.lng!}
-                    onChange={onFormInputChange}
-                    className="w-full bg-transparent border-b border-gray-300 py-2 outline-none font-[Noto_Sans_TC] text-base text-black"
-                    placeholder="0.0"
-                />
-            </div> */}
         </FormModal>
     );
 };
