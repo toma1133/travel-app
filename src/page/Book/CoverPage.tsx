@@ -1,5 +1,5 @@
 import { useOutletContext, useParams } from "react-router-dom";
-import { Calendar } from "lucide-react";
+import { Compass, ArrowRight } from "lucide-react";
 import moment from "moment";
 import type BookLayoutContextType from "../../models/types/BookLayoutContextTypes";
 import type { TripVM } from "../../models/types/TripTypes";
@@ -20,8 +20,9 @@ const CoverPage = ({
     const tripId = tripIdOverride || paramsId;
     const contextData = useOutletContext<BookLayoutContextType | null>();
     const tripData = tripDataOverride || contextData?.tripData;
-    const accentColor = tripData?.theme_config?.accent || "bg-rose-600";
-    const titleColor = tripData?.theme_config?.primary || "text-gray-900";
+
+    const accentColor = tripData?.theme_config?.accent || "bg-primary";
+
     const dayCount =
         tripData?.start_date && tripData?.end_date
             ? Math.max(
@@ -37,281 +38,105 @@ const CoverPage = ({
     return (
         <div
             className={`
-                w-full bg-white overflow-hidden flex flex-col h-full 
-                ${isPrinting ? "h-[98vh] max-h-[98vh] break-inside-avoid" : ""}
+                w-full h-full bg-background overflow-hidden flex flex-col relative
+                print:h-auto print:min-h-[290mm] print:bg-white print:block print:overflow-visible
             `}
         >
-            {/* 封面圖區域 */}
-            <div
-                className={`
-                    w-full relative shrink-0
-                    flex-1 min-h-[30%] 
-                    ${isPrinting ? "h-[50%] flex-none" : ""}
-                `}
-            >
-                {/* Floating Top Nav for CoverPage */}
-                <nav className={`absolute top-0 right-0 w-full flex justify-between items-center px-4 md:px-8 py-4 z-50 pointer-events-none print:hidden ${isPrinting ? 'hidden' : ''}`}>
-                    <div className="pointer-events-auto">
-                        <button
-                            type="button"
-                            onClick={() => window.history.length > 1 ? window.history.back() : window.location.href = "/"}
-                            className="text-white/90 hover:text-white bg-black/20 backdrop-blur-md p-2 rounded-full border border-white/10 shadow-sm transition-all hover:bg-black/40"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
-                        </button>
-                    </div>
-                    <div className="pointer-events-auto">
-                        <SystemControls className="bg-black/20 text-white border-white/10" />
-                    </div>
-                </nav>
+            {/* Top Nav (Floating) */}
+            <nav className={`absolute top-0 right-0 w-full flex justify-between items-center px-6 md:px-12 py-6 z-50 pointer-events-none print:hidden ${isPrinting ? 'hidden' : ''}`}>
+                <div className="pointer-events-auto">
+                    <button
+                        type="button"
+                        onClick={() => window.history.length > 1 ? window.history.back() : window.location.href = "/"}
+                        className="text-white/90 hover:text-white bg-black/20 backdrop-blur-md p-3 rounded-full border border-white/10 shadow-sm transition-all hover:bg-black/40 hover:scale-105"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+                    </button>
+                </div>
+                <div className="pointer-events-auto">
+                    <SystemControls className="bg-black/20 text-white border-white/10" />
+                </div>
+            </nav>
 
+            {/* Background Hero Image */}
+            <div className="absolute top-0 left-0 w-full h-[55%] md:h-[60%] shrink-0 print:relative print:h-[40vh]">
                 {tripData?.cover_image ? (
                     <img
                         src={tripData.cover_image}
                         alt="Cover"
                         className="w-full h-full object-cover"
-                        style={{ opacity: 1 }}
                     />
                 ) : (
-                    <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400">
-                        No Cover Image
+                    <div className="w-full h-full bg-muted flex items-center justify-center text-muted-foreground/30">
+                        <Compass size={64} strokeWidth={1} />
                     </div>
                 )}
-
-                {/* 漸層遮罩 */}
-                {/* <div
-                    className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60"
-                    style={{
-                        // 強制在列印時顯示背景圖形 (Safari/Chrome 預設列印不印背景色)
-                        WebkitPrintColorAdjust: "exact",
-                        printColorAdjust: "exact",
-                    }}
-                ></div> */}
-                {/* <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent opacity-60"></div> */}
-                {/* <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/0 opacity-60"></div> */}
-
-                {/* [列印裝飾] 雜誌風格浮水印 */}
-                {/* {isPrinting && (
-                    <div className="absolute bottom-6 right-6 text-white opacity-80 text-right">
-                        <p className="text-xs font-bold tracking-[0.3em] uppercase mb-1">
-                            Travel Guidebook
-                        </p>
-                        <p className="text-4xl font-black tracking-tighter leading-none">
-                            VOL.01
-                        </p>
-                    </div>
-                )} */}
+                {/* Seamless Gradient Fade to Background */}
+                <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-black/20 print:hidden"></div>
             </div>
 
-            {/* 內容卡片區域 */}
-            <div
-                className={`
-                    w-full bg-white relative z-10 flex flex-col
-                    h-auto shrink-0
-                    ${
-                        !isPrinting
-                            ? "-mt-10 rounded-t-4xl shadow-[0_-10px_30px_rgba(0,0,0,0.15)]"
-                            : "mt-0 shadow-none rounded-none flex-1"
-                    }
-                `}
-            >
-                {/* 螢幕模式：Drag Handle */}
-                {!isPrinting && (
-                    <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mt-3 mb-1 shrink-0"></div>
-                )}
-
-                <div
-                    className={`flex flex-col items-start justify-start px-8 py-8 ${
-                        isPrinting ? "pt-12" : ""
-                    }`}
-                >
-                    {/* [標籤] */}
-                    <div className="flex items-center gap-3 mb-4 shrink-0">
-                        <span
-                            className={`
-                                px-3 py-1 text-[10px] font-bold tracking-[0.2em] text-white uppercase rounded-full 
-                                ${
-                                    isPrinting
-                                        ? "bg-black text-white"
-                                        : accentColor
-                                }
-                            `}
-                        >
-                            TRAVEL PLAN
+            {/* Foreground Content Container */}
+            <div className="relative z-10 flex-1 flex flex-col px-6 md:px-12 pb-6 pt-[35vh] md:pt-[40vh] print:pt-12 print:pb-32">
+                
+                {/* Title Block (Pushes up automatically via margins if needed, or stays centered) */}
+                <div className="shrink-0 mb-auto print:mb-12">
+                    <div className="flex items-center gap-4 mb-3 md:mb-5">
+                        <span className={`px-4 py-1.5 text-[10px] md:text-xs font-black tracking-[0.3em] uppercase rounded-full shadow-lg ${isPrinting ? "bg-black text-white" : "bg-primary text-primary-foreground"}`}>
+                            JOURNEY
                         </span>
                     </div>
-
-                    {/* [標題] */}
-                    <h1
-                        className={`
-                            text-3xl sm:text-4xl font-[Noto_Sans_TC] font-black leading-tight mb-2
-                            ${titleColor} 
-                            ${
-                                isPrinting
-                                    ? "text-3xl text-black mb-3 tracking-tight"
-                                    : ""
-                            }
-                        `}
-                    >
-                        {tripData?.title}
+                    <h1 className="text-4xl sm:text-6xl md:text-7xl font-[Noto_Sans_TC] font-black text-foreground drop-shadow-sm tracking-tighter leading-[1.1] max-w-5xl line-clamp-2 print:text-black print:drop-shadow-none">
+                        {tripData?.title || "Untitled Trip"}
                     </h1>
-                    <h2
-                        className={`
-                            text-sm sm:text-base text-gray-400 font-medium tracking-wide uppercase mb-8 
-                            ${
-                                isPrinting
-                                    ? "text-gray-500 text-lg mb-10 font-semibold shrink-0"
-                                    : ""
-                            }
-                        `}
-                    >
-                        {tripData?.subtitle}
-                    </h2>
+                    {tripData?.subtitle && (
+                        <h2 className="text-lg md:text-2xl font-medium text-muted-foreground max-w-3xl leading-snug mt-2 line-clamp-1 print:text-gray-600 print:mt-4">
+                            {tripData.subtitle}
+                        </h2>
+                    )}
+                </div>
 
-                    {/* ==================================================================================
-                       [核心修改] 日期區域 (Date Section) - 統一風格
-                       ================================================================================== */}
-                    <div
-                        className={`
-                        w-full py-5 mb-8
-                        /* 螢幕：細灰線 / 列印：粗黑線 */
-                        ${
-                            isPrinting
-                                ? "border-y-2 border-black"
-                                : "border-y border-gray-200"
-                        }
-                    `}
-                    >
-                        <div
-                            className={`
-                            flex justify-between gap-6
-                            ${
-                                !isPrinting
-                                    ? "flex-col sm:flex-row sm:items-center"
-                                    : "items-center flex-wrap"
-                            }
-                        `}
-                        >
-                            {/* 左側：日期區間 */}
-                            <div className="flex items-center gap-6">
-                                <div className="flex flex-col">
-                                    <span className="text-[9px] font-bold uppercase tracking-widest text-gray-400 mb-0.5">
-                                        Start
-                                    </span>
-                                    <span
-                                        className={`text-lg font-bold font-mono ${
-                                            isPrinting
-                                                ? "text-black"
-                                                : "text-gray-800"
-                                        }`}
-                                    >
-                                        {tripData?.start_date
-                                            ? moment(
-                                                  tripData.start_date
-                                              ).format("YYYY.MM.DD")
-                                            : "--"}
-                                    </span>
-                                </div>
+                {/* Info Grid & Description Block */}
+                <div className="shrink-0 mt-6 flex flex-col gap-4 md:gap-6 print:mt-auto print:mb-12">
+                    
+                    {/* Editorial Info Grid */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 py-4 md:py-8 border-y border-border print:border-black print:border-y-2">
+                        <div className="flex flex-col gap-1 md:gap-2">
+                            <span className="text-[10px] md:text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground print:text-gray-500">Departure</span>
+                            <span className="text-xl md:text-3xl font-medium font-mono text-foreground print:text-black whitespace-nowrap">
+                                {tripData?.start_date ? moment(tripData.start_date).format("MMM DD") : "--"}
+                            </span>
+                        </div>
 
-                                {/* 分隔線：螢幕模式用淺灰，列印用深灰 */}
-                                <div
-                                    className={`h-8 w-px transform rotate-12 ${
-                                        isPrinting
-                                            ? "bg-gray-400"
-                                            : "bg-gray-200"
-                                    }`}
-                                ></div>
+                        <div className="flex flex-col gap-2 hidden md:flex items-center justify-center text-muted-foreground/30">
+                            <ArrowRight size={28} strokeWidth={1} />
+                        </div>
 
-                                <div className="flex flex-col">
-                                    <span className="text-[9px] font-bold uppercase tracking-widest text-gray-400 mb-0.5">
-                                        End
-                                    </span>
-                                    <span
-                                        className={`text-lg font-bold font-mono ${
-                                            isPrinting
-                                                ? "text-black"
-                                                : "text-gray-800"
-                                        }`}
-                                    >
-                                        {tripData?.end_date
-                                            ? moment(tripData.end_date).format(
-                                                  "YYYY.MM.DD"
-                                              )
-                                            : "--"}
-                                    </span>
-                                </div>
-                            </div>
+                        <div className="flex flex-col gap-1 md:gap-2">
+                            <span className="text-[10px] md:text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground print:text-gray-500">Return</span>
+                            <span className="text-xl md:text-3xl font-medium font-mono text-foreground print:text-black whitespace-nowrap">
+                                {tripData?.end_date ? moment(tripData.end_date).format("MMM DD") : "--"}
+                            </span>
+                        </div>
 
-                            {/* 右側：天數統計 */}
-                            {/* 螢幕模式下：手機版靠左對齊，平板以上靠右對齊 */}
-                            <div
-                                className={`
-                                    flex items-center gap-3 
-                                    ${
-                                        !isPrinting
-                                            ? "sm:justify-end"
-                                            : "justify-end"
-                                    }
-                                    shrink-0
-                                `}
-                            >
-                                <div
-                                    className={`${
-                                        !isPrinting
-                                            ? "text-left sm:text-right"
-                                            : "text-left"
-                                    }`}
-                                >
-                                    <span className="text-[9px] font-bold uppercase tracking-widest text-gray-400 block mb-0.5">
-                                        Duration
-                                    </span>
-
-                                    <span
-                                        className={`
-                                            text-lg font-black whitespace-nowrap
-                                            ${
-                                                isPrinting
-                                                    ? "text-black"
-                                                    : "text-gray-900"
-                                            }
-                                        `}
-                                    >
-                                        {dayCount} DAYS
-                                    </span>
-                                </div>
-
-                                {/* Icon: 列印時純黑，螢幕時用主題色 */}
-                                <div
-                                    className={`
-                                        p-2 rounded-full text-white 
-                                        shrink-0
-                                        ${isPrinting ? "bg-black" : accentColor}
-                                    `}
-                                >
-                                    <Calendar size={16} />
-                                </div>
+                        <div className="flex flex-col gap-1 md:gap-2 md:items-end md:text-right">
+                            <span className="text-[10px] md:text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground print:text-gray-500">Duration</span>
+                            <div className="flex items-baseline gap-2">
+                                <span className="text-2xl md:text-4xl font-black text-foreground print:text-black">
+                                    {dayCount}
+                                </span>
+                                <span className="text-xs md:text-sm font-medium uppercase tracking-widest text-muted-foreground">Days</span>
                             </div>
                         </div>
                     </div>
 
-                    {/* 描述文字區 */}
-                    <div className="w-full relative">
-                        <p
-                            className={`
-                                text-sm text-gray-500 leading-relaxed font-light text-justify
-                                ${
-                                    isPrinting
-                                        ? "text-base text-gray-800 line-clamp-12"
-                                        : ""
-                                }
-                            `}
-                        >
-                            {tripData?.description}
-                        </p>
-                    </div>
-
-                    {/* 底部留白 */}
-                    {!isPrinting && <div className="h-8 shrink-0"></div>}
+                    {/* Description - Clamped to prevent scrolling */}
+                    {tripData?.description && (
+                        <div className="max-w-4xl print:max-w-none">
+                            <p className="text-sm md:text-base text-muted-foreground/90 leading-relaxed font-light text-justify line-clamp-3 md:line-clamp-4 print:text-gray-800 print:line-clamp-none">
+                                {tripData.description}
+                            </p>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
