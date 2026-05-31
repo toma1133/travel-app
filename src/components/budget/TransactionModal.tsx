@@ -49,7 +49,7 @@ const TransactionModal = ({
                     <button
                         type="button"
                         onClick={() => onDeleteBtnClick(formData)}
-                        className={`${theme?.accent} px-6 py-2 rounded-lg text-sm font-bold text-white shadow-md hover:shadow-lg transition-all transform active:scale-95 hover:bg-opacity-90`}
+                        className={`${theme?.accent} px-6 py-2 rounded-lg text-sm font-bold text-primary-foreground shadow-sm hover:shadow-lg transition-all transform active:scale-95 hover:bg-opacity-90`}
                     >
                         刪除
                     </button>
@@ -69,7 +69,7 @@ const TransactionModal = ({
             <div>
                 <label
                     htmlFor="title"
-                    className="font-bold uppercase mb-1 flex items-center text-gray-500 text-xs"
+                    className="font-bold uppercase mb-1 flex items-center text-muted-foreground text-xs"
                 >
                     標題
                 </label>
@@ -79,7 +79,7 @@ const TransactionModal = ({
                     name="title"
                     value={formData.title}
                     onChange={onFormInputChange}
-                    className="w-full bg-transparent border-b border-gray-300 py-2 outline-none font-[Noto_Sans_TC]"
+                    className="w-full bg-transparent border-b border-border py-2 outline-none font-[Noto_Sans_TC]"
                     placeholder="標題..."
                 />
             </div>
@@ -87,7 +87,7 @@ const TransactionModal = ({
             <div>
                 <label
                     htmlFor="amount"
-                    className="font-bold uppercase mb-1 flex items-center text-gray-500 text-xs"
+                    className="font-bold uppercase mb-1 flex items-center text-muted-foreground text-xs"
                 >
                     金額
                 </label>
@@ -104,10 +104,10 @@ const TransactionModal = ({
                                 e.currentTarget.select();
                             }}
                             placeholder="0"
-                            className="w-full bg-white border border-gray-300 p-3 font-mono text-2xl font-bold outline-none focus:border-black"
+                            className="w-full bg-card border border-border p-3 font-mono text-2xl font-bold outline-none focus:border-foreground"
                         />
                     </div>
-                    <div className="flex bg-white border border-gray-300 rounded overflow-hidden shrink-0">
+                    <div className="flex bg-card border border-border rounded overflow-hidden shrink-0">
                         {[setting?.localCurrency, setting?.homeCurrency].map(
                             (curr) => (
                                 <button
@@ -118,8 +118,8 @@ const TransactionModal = ({
                                     }
                                     className={`px-3 py-1 text-xs font-bold transition-colors ${
                                         formData.currency_code === curr
-                                            ? "bg-black text-white"
-                                            : "bg-white text-gray-400"
+                                            ? "bg-black text-primary-foreground"
+                                            : "bg-card text-muted-foreground"
                                     }`}
                                 >
                                     {curr}
@@ -133,7 +133,7 @@ const TransactionModal = ({
             <div>
                 <label
                     htmlFor="payment_method"
-                    className="font-bold uppercase mb-1 flex items-center text-gray-500 text-xs"
+                    className="font-bold uppercase mb-1 flex items-center text-muted-foreground text-xs"
                 >
                     支付方式
                 </label>
@@ -153,8 +153,8 @@ const TransactionModal = ({
                                         ${
                                             formData.payment_method_id ===
                                             paymentMethod.id
-                                                ? "border-black bg-white shadow-md"
-                                                : "border-gray-200 bg-gray-50 text-gray-400"
+                                                ? "border-foreground bg-card shadow-sm"
+                                                : "border-border bg-muted text-muted-foreground"
                                         }
                                     `}
                             >
@@ -174,7 +174,7 @@ const TransactionModal = ({
             <div>
                 <label
                     htmlFor="split_with"
-                    className="font-bold uppercase mb-1 flex items-center justify-between text-gray-500 text-xs"
+                    className="font-bold uppercase mb-1 flex items-center justify-between text-muted-foreground text-xs"
                 >
                     分帳夥伴
                     <span className="text-indigo-500">
@@ -206,8 +206,8 @@ const TransactionModal = ({
                                         }
                                         className={`px-4 py-2 rounded-full text-sm font-bold transition-all border border-indigo-100 ${
                                             isSelected
-                                                ? "bg-indigo-600 text-white shadow-md border-indigo-600"
-                                                : "bg-white text-indigo-400"
+                                                ? "bg-indigo-600 text-primary-foreground shadow-sm border-indigo-600"
+                                                : "bg-card text-indigo-400"
                                         }`}
                                     >
                                         {tripMember.profiles?.username}
@@ -220,7 +220,7 @@ const TransactionModal = ({
             <div>
                 <label
                     htmlFor="category"
-                    className="font-bold uppercase mb-1 flex items-center text-gray-500 text-xs"
+                    className="font-bold uppercase mb-1 flex items-center text-muted-foreground text-xs"
                 >
                     分類
                 </label>
@@ -233,8 +233,8 @@ const TransactionModal = ({
                             className={`aspect-square flex flex-col items-center justify-center rounded-full transition-all
                                         ${
                                             formData.category === cat.id
-                                                ? "bg-black text-white"
-                                                : "bg-gray-200 text-gray-400 hover:bg-gray-300"
+                                                ? "bg-black text-primary-foreground"
+                                                : "bg-muted text-muted-foreground hover:bg-muted-foreground"
                                         }
                                     `}
                             title={cat.id}
@@ -248,7 +248,7 @@ const TransactionModal = ({
             <div>
                 <label
                     htmlFor="expense_date"
-                    className="font-bold uppercase mb-1 flex items-center text-gray-500 text-xs"
+                    className="font-bold uppercase mb-1 flex items-center text-muted-foreground text-xs"
                 >
                     日期
                 </label>
@@ -258,7 +258,7 @@ const TransactionModal = ({
                     name="expense_date"
                     value={formData.expense_date!}
                     onChange={onFormInputChange}
-                    className="w-full bg-transparent border-b border-gray-300 py-2 outline-none font-[Noto_Sans_TC]"
+                    className="w-full bg-transparent border-b border-border py-2 outline-none font-[Noto_Sans_TC] dark:[color-scheme:dark]"
                     placeholder="日期"
                 />
             </div>

@@ -1,0 +1,16 @@
+export const CURRENCIES = [
+    { code: "TWD", label: "TWD$" },
+    { code: "JPY", label: "JPY¥" },
+    { code: "USD", label: "USD$" },
+    { code: "EUR", label: "EUR€" },
+    { code: "KRW", label: "KRW₩" },
+    { code: "HKD", label: "HKD$" },
+    { code: "THB", label: "THB฿" },
+    { code: "GBP", label: "GBP£" },
+    { code: "AUD", label: "AUD$" },
+    { code: "CNY", label: "CNY¥" },
+    { code: "NZD", label: "NZD$" },
+    { code: "ISK", label: "ISKkr" },
+    { code: "CHF", label: "CHFfr" },
+    { code: "SGD", label: "SGD$" },
+];

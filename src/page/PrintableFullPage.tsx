@@ -174,7 +174,7 @@ const PrintableFullPage = ({ tripData, onClose }: PrintableFullPageProps) => {
                         <div className="mb-8 border-b-4 border-black pb-4 flex justify-between items-end">
                             <div>
                                 <h1 className="text-4xl font-black text-black uppercase tracking-tighter">
-                                    Itinerary
+                                    ITINERARY
                                 </h1>
                                 <p className="text-sm text-gray-500 font-bold uppercase tracking-widest mt-1"></p>
                             </div>
@@ -193,7 +193,7 @@ const PrintableFullPage = ({ tripData, onClose }: PrintableFullPageProps) => {
                         <div className="mb-8 border-b-4 border-black pb-4 flex justify-between items-end">
                             <div>
                                 <h1 className="text-4xl font-black text-black uppercase tracking-tighter">
-                                    Tranactions
+                                    TRANSACTIONS
                                 </h1>
                                 <p className="text-sm text-gray-500 font-bold uppercase tracking-widest mt-1"></p>
                             </div>
@@ -212,7 +212,7 @@ const PrintableFullPage = ({ tripData, onClose }: PrintableFullPageProps) => {
                         <div className="mb-8 border-b-4 border-black pb-4 flex justify-between items-end">
                             <div>
                                 <h1 className="text-4xl font-black text-black uppercase tracking-tighter">
-                                    Places
+                                    PLACES
                                 </h1>
                                 <p className="text-sm text-gray-500 font-bold uppercase tracking-widest mt-1">
                                     Scene / Restaurant / Shop / Hotel
@@ -233,7 +233,7 @@ const PrintableFullPage = ({ tripData, onClose }: PrintableFullPageProps) => {
                         <div className="mb-8 border-b-4 border-black pb-4 flex justify-between items-end">
                             <div>
                                 <h1 className="text-4xl font-black text-black uppercase tracking-tighter">
-                                    Reservations
+                                    RESERVATIONS
                                 </h1>
                                 <p className="text-sm text-gray-500 font-bold uppercase tracking-widest mt-1">
                                     Flight / Hotel / Transport

@@ -44,7 +44,7 @@ const TransactionFilterModal = ({
             <div>
                 <label
                     htmlFor="category"
-                    className="font-bold uppercase mb-1 flex items-center justify-between text-gray-500 text-xs"
+                    className="font-bold uppercase mb-1 flex items-center justify-between text-muted-foreground text-xs"
                 >
                     分類
                 </label>
@@ -54,8 +54,8 @@ const TransactionFilterModal = ({
                         onClick={() => onFormDataChange("category", "all")}
                         className={`px-4 py-2 rounded-full text-sm font-bold transition-all border border-indigo-100 ${
                             formData.category === "all"
-                                ? "bg-indigo-600 text-white shadow-md border-indigo-600"
-                                : "bg-white text-indigo-400"
+                                ? "bg-indigo-600 text-primary-foreground shadow-sm border-indigo-600"
+                                : "bg-card text-indigo-400"
                         }`}
                     >
                         全部
@@ -74,8 +74,8 @@ const TransactionFilterModal = ({
                                     }
                                     className={`px-4 py-2 rounded-full text-sm font-bold transition-all border border-indigo-100 ${
                                         formData.category === category.id
-                                            ? "bg-indigo-600 text-white shadow-md border-indigo-600"
-                                            : "bg-white text-indigo-400"
+                                            ? "bg-indigo-600 text-primary-foreground shadow-sm border-indigo-600"
+                                            : "bg-card text-indigo-400"
                                     }`}
                                 >
                                     {category.name}
@@ -88,7 +88,7 @@ const TransactionFilterModal = ({
             <div>
                 <label
                     htmlFor="category"
-                    className="font-bold uppercase mb-1 flex items-center justify-between text-gray-500 text-xs"
+                    className="font-bold uppercase mb-1 flex items-center justify-between text-muted-foreground text-xs"
                 >
                     支付方式
                 </label>
@@ -100,8 +100,8 @@ const TransactionFilterModal = ({
                         }
                         className={`px-4 py-2 rounded-full text-sm font-bold transition-all border border-indigo-100 ${
                             formData.payment_method_id === "all"
-                                ? "bg-indigo-600 text-white shadow-md border-indigo-600"
-                                : "bg-white text-indigo-400"
+                                ? "bg-indigo-600 text-primary-foreground shadow-sm border-indigo-600"
+                                : "bg-card text-indigo-400"
                         }`}
                     >
                         全部
@@ -121,8 +121,8 @@ const TransactionFilterModal = ({
                                     className={`px-4 py-2 rounded-full text-sm font-bold transition-all border border-indigo-100 ${
                                         formData.payment_method_id ===
                                         paymentMethod.id
-                                            ? "bg-indigo-600 text-white shadow-md border-indigo-600"
-                                            : "bg-white text-indigo-400"
+                                            ? "bg-indigo-600 text-primary-foreground shadow-sm border-indigo-600"
+                                            : "bg-card text-indigo-400"
                                     }`}
                                 >
                                     {paymentMethod.name}

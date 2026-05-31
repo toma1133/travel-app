@@ -37,17 +37,39 @@ const BudgetLimitList = ({
         if (Array.isArray(paymentMethods))
             paymentMethods.forEach((pm) => (localUsage[pm.id] = 0));
 
-        if (Array.isArray(budgetItems))
+        if (Array.isArray(budgetItems)) {
             budgetItems.forEach((item) => {
-                if (localUsage[item.payment_method_id] !== undefined) {
-                    localUsage[item.payment_method_id] += convertToHome(
-                        item.amount,
-                        item.currency_code,
-                        setting?.homeCurrency,
-                        setting?.exchangeRate
-                    );
+                const pm = paymentMethods?.find((p) => p.id === item.payment_method_id);
+                if (pm && localUsage[item.payment_method_id] !== undefined) {
+                    const targetCurrency = pm.currency_code || setting?.homeCurrency;
+                    let amountToAdd = item.amount;
+
+                    if (item.currency_code !== targetCurrency) {
+                        if (
+                            targetCurrency === setting?.homeCurrency &&
+                            item.currency_code === setting?.localCurrency
+                        ) {
+                            amountToAdd = convertToHome(
+                                item.amount,
+                                item.currency_code,
+                                setting?.homeCurrency,
+                                setting?.exchangeRate
+                            );
+                        } else if (
+                            targetCurrency === setting?.localCurrency &&
+                            item.currency_code === setting?.homeCurrency
+                        ) {
+                            amountToAdd = setting?.exchangeRate
+                                ? Math.round(item.amount / setting.exchangeRate)
+                                : item.amount;
+                        }
+                        // If 3rd currency, we can't reliably convert without rates, so amountToAdd remains item.amount
+                    }
+
+                    localUsage[item.payment_method_id] += amountToAdd;
                 }
             });
+        }
 
         setUsage(localUsage);
     }, [budgetItems, paymentMethods]);
@@ -55,8 +77,8 @@ const BudgetLimitList = ({
     return (
         <div className={`${isPrinting ? "mb-6" : "mb-8"}`}>
             <h4
-                className={`text-xs font-bold text-gray-400 uppercase tracking-widest ${
-                    isPrinting ? "mb-2 text-black" : "mb-3"
+                className={`text-xs font-bold uppercase tracking-widest ${
+                    isPrinting ? "mb-2 text-black" : "mb-3 text-muted-foreground"
                 }`}
             >
                 支付額度狀態
@@ -72,12 +94,17 @@ const BudgetLimitList = ({
                             key={i}
                             isPrinting={isPrinting}
                             paymentMethod={paymentMethod}
-                            percent={Math.min(
-                                ((usage[paymentMethod.id] || 0) /
-                                    paymentMethod.credit_limit!) *
-                                    100,
-                                100
-                            )}
+                            percent={
+                                paymentMethod.credit_limit! > 0
+                                    ? Math.min(
+                                          ((usage[paymentMethod.id] || 0) /
+                                              paymentMethod.credit_limit!) *
+                                              100,
+                                          100
+                                      )
+                                    : 0
+                            }
+                            setting={setting}
                             theme={theme}
                             used={usage[paymentMethod.id] || 0}
                         />

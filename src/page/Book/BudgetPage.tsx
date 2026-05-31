@@ -32,7 +32,6 @@ import BudgetChart from "../../components/budget/BudgetChart";
 import BudgetLimitList from "../../components/budget/BudgetLimitList";
 import TransactionList from "../../components/budget/TransactionList";
 import TransactionModal from "../../components/budget/TransactionModal";
-import TransactionFilter from "../../components/budget/TransactionFilter";
 import SplitInfoModal from "../../components/budget/SplitInfoModal";
 import TransactionFilterModal from "../../components/budget/TransactionFilterModal";
 import type BookLayoutContextType from "../../models/types/BookLayoutContextTypes";
@@ -588,14 +587,37 @@ const BudgetPage = ({
         setDeleteKey("");
     };
 
+    const printStyle = isPrinting ? {
+        "--background": "0 0% 100%",
+        "--foreground": "0 0% 9%",
+        "--card": "0 0% 100%",
+        "--card-foreground": "0 0% 9%",
+        "--popover": "0 0% 100%",
+        "--popover-foreground": "0 0% 9%",
+        "--primary": "0 0% 9%",
+        "--primary-foreground": "0 0% 98%",
+        "--secondary": "0 0% 96.1%",
+        "--secondary-foreground": "0 0% 9%",
+        "--muted": "0 0% 96.1%",
+        "--muted-foreground": "0 0% 45.1%",
+        "--accent": "0 0% 96.1%",
+        "--accent-foreground": "0 0% 9%",
+        "--destructive": "0 84.2% 60.2%",
+        "--destructive-foreground": "0 0% 98%",
+        "--border": "0 0% 89.8%",
+        "--input": "0 0% 89.8%",
+        "--ring": "0 0% 9%",
+    } as React.CSSProperties : {};
+
     return (
         <div
-            className={`min-h-full font-[Noto_Sans_TC] text-gray-800 ${
+            style={printStyle}
+            className={`min-h-full font-[Noto_Sans_TC] text-foreground ${
                 isPrinting
-                    ? "h-auto min-h-[50vh] break-after-page overflow-visible bg-white"
+                    ? "h-auto min-h-[50vh] break-after-page overflow-visible bg-white pointer-events-none" // 列印模式：強制白底與禁用事件(無hover)
                     : `${
-                          tripData?.theme_config?.bg || "bg-gray-100"
-                      } pb-24`
+                          tripData?.theme_config?.bg || "bg-background"
+                      } pb-24 lg:pb-0 lg:h-[100dvh] lg:overflow-hidden lg:flex lg:flex-col`
             }`}
         >
             {!isPrinting && (
@@ -609,7 +631,7 @@ const BudgetPage = ({
                             <button
                                 type="button"
                                 onClick={handleSplitInfoModalOpenBtnClick}
-                                className={`flex items-center text-sm font-medium bg-emerald-50 text-emerald-600 px-3 py-1.5 rounded-lg shadow-md hover:opacity-90 transition-opacity`}
+                                className={`flex items-center text-sm font-medium bg-card text-emerald-500 border border-border/50 px-3 py-1.5 rounded-lg shadow-md hover:bg-muted/50 transition-colors`}
                                 title="結算"
                             >
                                 <Wallet size={16} />
@@ -617,7 +639,7 @@ const BudgetPage = ({
                             <button
                                 type="button"
                                 onClick={handleFilterModalOpenBtnClick}
-                                className={`flex items-center text-sm font-medium bg-white text-blue px-3 py-1.5 rounded-lg shadow-md hover:opacity-90 transition-opacity`}
+                                className={`flex items-center text-sm font-medium bg-card text-blue-500 border border-border/50 px-3 py-1.5 rounded-lg shadow-md hover:bg-muted/50 transition-colors`}
                                 title="交易過濾"
                             >
                                 <Filter size={16} />
@@ -625,7 +647,7 @@ const BudgetPage = ({
                             <button
                                 type="button"
                                 onClick={handleSettingModalOpenBtnClick}
-                                className={`flex items-center text-sm font-medium px-3 py-1.5 rounded-lg shadow-md ${tripData?.theme_config?.card} hover:opacity-90 transition-opacity`}
+                                className={`flex items-center text-sm font-medium px-3 py-1.5 rounded-lg shadow-md bg-card text-foreground border border-border/50 hover:bg-muted/50 transition-colors`}
                                 title="設定"
                             >
                                 <Settings size={16} />
@@ -642,47 +664,46 @@ const BudgetPage = ({
                     }
                 />
             )}
-            {!isPrinting && (
-                <TransactionFilter
-                    categories={budgetCategory}
-                    formData={filters}
-                    paymentMethods={paymentMethods}
-                    onFormDataChange={handleFilterChange}
-                />
-            )}
-            <div className={`${isPrinting ? "px-0" : "px-4 mt-6"}`}>
-                <BudgetChart
-                    budgetItems={filteredBudgets}
-                    isPrinting={isPrinting}
-                    setting={currentSetting}
-                    theme={currentTheme}
-                    convertToHome={convertToHome}
-                    convertToLocal={convertToLocal}
-                    getChartGradient={getChartGradient}
-                    getCategoryName={getCategoryName}
-                />
-                <BudgetLimitList
-                    budgetItems={filteredBudgets}
-                    isPrinting={isPrinting}
-                    paymentMethods={filteredPayments}
-                    setting={currentSetting}
-                    theme={currentTheme}
-                    convertToHome={convertToHome}
-                />
-                <TransactionList
-                    categories={budgetCategory}
-                    budgetItems={filteredBudgets}
-                    isPrinting={isPrinting}
-                    paymentMethods={paymentMethods}
-                    session={session}
-                    setting={currentSetting}
-                    theme={currentTheme}
-                    tripMembers={tripMembers}
-                    convertToHome={convertToHome}
-                    getCategoryIcon={getCategoryIcon}
-                    getCategoryName={getCategoryName}
-                    onEditBtnClick={handleEditBudgetBtnClick}
-                />
+            <div className={`lg:flex-1 ${isPrinting ? "px-0" : "lg:flex lg:flex-row lg:overflow-hidden px-4 mt-6"}`}>
+                {/* 左側：總覽 (圓環圖與預算列表) */}
+                <div className={`${isPrinting ? "w-full mb-8" : "lg:w-[350px] xl:w-[400px] lg:flex-shrink-0 lg:overflow-y-auto lg:custom-scrollbar lg:pr-6 lg:border-r lg:border-border lg:mr-6 mb-6 lg:mb-0"}`}>
+                    <BudgetChart
+                        budgetItems={filteredBudgets}
+                        isPrinting={isPrinting}
+                        setting={currentSetting}
+                        theme={currentTheme}
+                        convertToHome={convertToHome}
+                        convertToLocal={convertToLocal}
+                        getChartGradient={getChartGradient}
+                        getCategoryName={getCategoryName}
+                    />
+                    <BudgetLimitList
+                        budgetItems={filteredBudgets}
+                        isPrinting={isPrinting}
+                        paymentMethods={filteredPayments}
+                        setting={currentSetting}
+                        theme={currentTheme}
+                        convertToHome={convertToHome}
+                    />
+                </div>
+
+                {/* 右側：交易列表 */}
+                <div className={`${isPrinting ? "w-full" : "lg:flex-1 lg:overflow-y-auto lg:custom-scrollbar lg:min-w-0 flex flex-col pb-20 lg:pb-0"}`}>
+                    <TransactionList
+                        categories={budgetCategory}
+                        budgetItems={filteredBudgets}
+                        isPrinting={isPrinting}
+                        paymentMethods={paymentMethods}
+                        session={session}
+                        setting={currentSetting}
+                        theme={currentTheme}
+                        tripMembers={tripMembers}
+                        convertToHome={convertToHome}
+                        getCategoryIcon={getCategoryIcon}
+                        getCategoryName={getCategoryName}
+                        onEditBtnClick={handleEditBudgetBtnClick}
+                    />
+                </div>
             </div>
             {isSettingModalOpen && (
                 <SettingModal

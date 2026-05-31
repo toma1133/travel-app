@@ -86,7 +86,7 @@ const BudgetChart = ({
         <div className={`${isPrinting ? "mb-4" : "mb-8"}`}>
             {/* 1. 螢幕顯示: 深色卡片 (只在 !isPrinting 時渲染) */}
             {!isPrinting && (
-                <div className="bg-slate-900 rounded-lg p-8 text-white shadow-2xl shadow-slate-200 relative overflow-hidden">
+                <div className="bg-card border border-gray-300 dark:border-border rounded-lg p-8 text-foreground shadow-md relative overflow-hidden">
                     <div className="relative z-10 flex justify-between items-start">
                         <div>
                             <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-2">
@@ -155,17 +155,17 @@ const BudgetChart = ({
 
             {/* 2. 列印顯示: 簡潔的統計表格 (只在 isPrinting 時渲染) */}
             {isPrinting && (
-                <div className="border border-gray-300 rounded p-4">
+                <div className="border border-gray-300 rounded p-4 text-black">
                     <div className="flex justify-between items-end border-b border-gray-300 pb-2 mb-4">
                         <div>
-                            <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest">
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500">
                                 Estimated Total
                             </p>
                             <div className="flex items-baseline gap-2">
-                                <span className="text-gray-500 text-sm font-mono font-bold">
+                                <span className="text-sm font-mono font-bold text-gray-500">
                                     {setting?.homeCurrency}
                                 </span>
-                                <h2 className="text-3xl font-bold font-mono text-black">
+                                <h2 className="text-3xl font-bold font-mono">
                                     {totalSpentHome.toLocaleString()}
                                 </h2>
                             </div>
@@ -187,16 +187,16 @@ const BudgetChart = ({
                             .map(([cat, val]) => (
                                 <div
                                     key={cat}
-                                    className="flex justify-between items-center text-sm border-b border-gray-100 pb-1"
+                                    className="flex justify-between items-center text-sm border-b border-gray-200 pb-1 text-black"
                                 >
-                                    <span className="font-medium text-gray-700 truncate">
+                                    <span className="font-medium">
                                         {getCategoryName(cat)}
                                     </span>
                                     <div className="flex items-center gap-2">
-                                        <span className="text-gray-900 font-mono">
+                                        <span className="font-mono">
                                             {val.toLocaleString()}
                                         </span>
-                                        <span className="text-xs text-gray-400 w-8 text-right">
+                                        <span className="text-xs text-gray-500 w-8 text-right">
                                             {Math.round(
                                                 (val / totalSpentHome) * 100
                                             )}

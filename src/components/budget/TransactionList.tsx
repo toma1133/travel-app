@@ -57,18 +57,18 @@ const TransactionList = ({
         >
             <div className={`w-full flex justify-between items-center py-2`}>
                 <h4
-                    className={`text-xs font-bold uppercase tracking-widest text-gray-400`}
+                    className={`text-xs font-bold uppercase tracking-widest text-muted-foreground`}
                 >
                     交易紀錄
                 </h4>
                 {!isPrinting && (
-                    <span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold">
+                    <span className="text-[10px] bg-muted text-muted-foreground px-2 py-0.5 rounded-full font-bold">
                         共 {budgetItems?.length} 筆
                     </span>
                 )}
             </div>
             {isPrinting && (
-                <div className="w-full flex text-[10px] font-bold text-gray-500 uppercase tracking-wider py-1 border-b border-gray-300">
+                <div className="w-full flex text-[10px] font-bold text-muted-foreground uppercase tracking-wider py-1 border-b border-border">
                     <div className="w-12">Date</div>
                     <div className="w-16">Cat.</div>
                     <div className="flex-1">Details</div>
@@ -79,7 +79,7 @@ const TransactionList = ({
             <div
                 className={`w-full ${
                     isPrinting
-                        ? "text-xs divide-y divide-gray-300 border-b border-gray-300"
+                        ? "text-xs divide-y divide-gray-300 border-b border-border"
                         : "space-y-2"
                 }`}
             >
@@ -110,7 +110,7 @@ const TransactionList = ({
                     })}
                 {!Array.isArray(budgetItems) ||
                     (budgetItems.length === 0 && (
-                        <div className="text-center py-10 text-gray-400 text-xs">
+                        <div className="text-center py-10 text-muted-foreground text-xs">
                             尚無紀錄
                         </div>
                     ))}

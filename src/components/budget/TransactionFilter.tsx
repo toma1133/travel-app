@@ -29,20 +29,20 @@ const TransactionFilter = ({
                     formData.endDate ||
                     formData.paymentMethod !== "全部"
                         ? "bg-rose-50 border-rose-200 text-rose-600"
-                        : "bg-slate-50 border-transparent text-slate-500"
+                        : "bg-muted border-transparent text-muted-foreground"
                 }`}
             >
                 <FilterIcon size={14} />
                 進階篩選
             </button> */}
-            {/* <div className="h-4 w-px bg-slate-200 mx-1"></div>
+            {/* <div className="h-4 w-px bg-muted mx-1"></div>
             <button
                 type="button"
                 onClick={() => onFormDataChange("category", "all")}
                 className={`flex-shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
                     formData.category === "all"
-                        ? "bg-slate-900 text-white shadow-lg"
-                        : "text-slate-400 hover:bg-slate-50"
+                        ? "bg-primary text-primary-foreground shadow-lg"
+                        : "text-muted-foreground hover:bg-muted"
                 }`}
             >
                 全部
@@ -54,8 +54,8 @@ const TransactionFilter = ({
                     onClick={() => onFormDataChange("category", cat.id)}
                     className={`flex-shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
                         formData.category === cat.id
-                            ? "bg-slate-900 text-white shadow-lg"
-                            : "text-slate-400 hover:bg-slate-50"
+                            ? "bg-primary text-primary-foreground shadow-lg"
+                            : "text-muted-foreground hover:bg-muted"
                     }`}
                 >
                     {cat.name}
@@ -63,9 +63,9 @@ const TransactionFilter = ({
             ))} */}
         </div>
         // <div className="px-4 mb-4">
-        //     <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 space-y-3 mb-2 w-full">
+        //     <div className="bg-card p-4 rounded-2xl shadow-sm border border-border space-y-3 mb-2 w-full">
         //         <div className="flex justify-between items-center mb-2">
-        //             <h2 className="font-bold text-slate-800 flex items-center gap-2">
+        //             <h2 className="font-bold text-foreground flex items-center gap-2">
         //                 <Filter size={18} className="text-blue-500" /> 篩選條件
         //             </h2>
         //         </div>
@@ -76,7 +76,7 @@ const TransactionFilter = ({
         //                 onChange={(e) =>
         //                     onFormDataChange("category", e.target.value)
         //                 }
-        //                 className="p-2 bg-slate-50 rounded-lg text-sm border-none outline-none"
+        //                 className="p-2 bg-muted rounded-lg text-sm border-none outline-none"
         //                 title="Category"
         //             >
         //                 <option value="all">所有類別</option>
@@ -95,7 +95,7 @@ const TransactionFilter = ({
         //                         e.target.value
         //                     )
         //                 }
-        //                 className="p-2 bg-slate-50 rounded-lg text-sm border-none outline-none"
+        //                 className="p-2 bg-muted rounded-lg text-sm border-none outline-none"
         //                 title="Payment"
         //             >
         //                 <option value="all">所有付款方式</option>

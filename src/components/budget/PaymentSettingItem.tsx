@@ -3,6 +3,7 @@ import { ArrowUp, ArrowDown, GripVertical, Trash2 } from "lucide-react";
 import { useSortable, defaultAnimateLayoutChanges } from "@dnd-kit/sortable";
 import type { PaymentMethodRow } from "../../models/types/PaymentMethodTypes";
 import type { TripSettingConf } from "../../models/types/TripTypes";
+import { CURRENCIES } from "../../constants/Currencies";
 
 type PaymentSettingItemProps = {
     id: string;
@@ -57,7 +58,7 @@ const PaymentSettingItem = ({
             style={style}
             {...attributes}
             className={`
-                bg-white p-2 mb-1 rounded-lg border border-gray-200 shadow-md flex items-center
+                bg-card p-2 mb-1 rounded-lg border border-border shadow-sm flex items-center
                 ${
                     isDragging
                         ? "opacity-30 border-dashed border-2 border-blue-400"
@@ -67,14 +68,14 @@ const PaymentSettingItem = ({
         >
             <GripVertical
                 size={16}
-                className="text-gray-400 shrink-0 cursor-move"
+                className="text-muted-foreground shrink-0 cursor-move"
                 {...listeners}
             />
             <div className="flex flex-col space-y-2">
                 <div className="space-x-2 px-2">
                     <label
                         htmlFor="name"
-                        className="font-bold uppercase flex items-center text-gray-500 text-xs"
+                        className="font-bold uppercase flex items-center text-muted-foreground text-xs"
                     >
                         支付名稱
                     </label>
@@ -85,43 +86,62 @@ const PaymentSettingItem = ({
                         onChange={(e) =>
                             onPaymentChange(index, "name", e.target.value)
                         }
-                        className="w-full bg-transparent border-b border-gray-300 outline-none font-[Noto_Sans_TC] text-base"
+                        className="w-full bg-transparent border-b border-border outline-none font-[Noto_Sans_TC] text-base"
                         placeholder="名稱"
                     />
                 </div>
-                <div className="space-x-2 px-2">
-                    <label
-                        htmlFor="credit_limit"
-                        className="font-bold uppercase flex items-center text-gray-500 text-xs"
-                    >
-                        額度/上限 (
-                        {method.currency_code || setting?.homeCurrency || "---"}
-                        )
-                    </label>
-                    <input
-                        type="number"
-                        name="credit_limit"
-                        value={method.credit_limit || 0}
-                        onChange={(e) =>
-                            onPaymentChange(
-                                index,
-                                "credit_limit",
-                                parseInt(e.target.value) || 0
-                            )
-                        }
-                        onFocus={(e) => {
-                            e.currentTarget.select();
-                        }}
-                        className="w-full bg-transparent border-b border-gray-300 outline-none font-mono text-base"
-                        placeholder="無上限填 0"
-                    />
+                <div className="space-x-2 px-2 flex items-center">
+                    <div className="flex-1">
+                        <label
+                            htmlFor="credit_limit"
+                            className="font-bold uppercase flex items-center text-muted-foreground text-xs mb-1"
+                        >
+                            額度/上限
+                        </label>
+                        <input
+                            type="number"
+                            name="credit_limit"
+                            value={method.credit_limit || 0}
+                            onChange={(e) =>
+                                onPaymentChange(
+                                    index,
+                                    "credit_limit",
+                                    parseInt(e.target.value) || 0
+                                )
+                            }
+                            onFocus={(e) => {
+                                e.currentTarget.select();
+                            }}
+                            className="w-full bg-transparent border-b border-border outline-none font-mono text-base"
+                            placeholder="無上限填 0"
+                        />
+                    </div>
+                    <div className="w-24 shrink-0">
+                        <label
+                            htmlFor="currency_code"
+                            className="font-bold uppercase flex items-center text-muted-foreground text-xs mb-1"
+                        >
+                            幣別
+                        </label>
+                        <select
+                            name="currency_code"
+                            value={method.currency_code || setting?.homeCurrency || ""}
+                            onChange={(e) => onPaymentChange(index, "currency_code", e.target.value)}
+                            className="w-full bg-transparent border-b border-border py-1 outline-none font-mono text-xs dark:bg-card"
+                        >
+                            <option value="">預設</option>
+                            {CURRENCIES.map(c => (
+                                <option key={c.code} value={c.code}>{c.code}</option>
+                            ))}
+                        </select>
+                    </div>
                 </div>
             </div>
             <div className="flex items-center justify-between">
                 <button
                     type="button"
                     onClick={() => onPaymentMoveUp(index)}
-                    className="p-1 text-gray-400 hover:text-blue-500"
+                    className="p-1 text-muted-foreground hover:text-blue-500"
                     title="Up"
                 >
                     <ArrowUp size={14} />
@@ -129,7 +149,7 @@ const PaymentSettingItem = ({
                 <button
                     type="button"
                     onClick={() => onPaymentMoveDown(index)}
-                    className="p-1 text-gray-400 hover:text-blue-500"
+                    className="p-1 text-muted-foreground hover:text-blue-500"
                     title="down"
                 >
                     <ArrowDown size={14} />
@@ -140,7 +160,7 @@ const PaymentSettingItem = ({
                         e.stopPropagation();
                         onPaymentRemove(index);
                     }}
-                    className="text-gray-300 hover:text-red-500 p-1 rounded-full hover:bg-red-50 transition-colors shrink-0"
+                    className="text-muted-foreground/50 hover:text-red-500 p-1 rounded-full hover:bg-red-50 transition-colors shrink-0"
                     aria-label="刪除此支付方式"
                 >
                     <Trash2 size={14} />

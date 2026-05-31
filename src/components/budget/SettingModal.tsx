@@ -1,4 +1,4 @@
-import { MouseEventHandler, FormEventHandler, ChangeEventHandler } from "react";
+import { MouseEventHandler, FormEventHandler, ChangeEventHandler, useState } from "react";
 import { DragEndEvent } from "@dnd-kit/core";
 import type { PaymentMethodRow } from "../../models/types/PaymentMethodTypes";
 import type {
@@ -6,6 +6,7 @@ import type {
     TripThemeConf,
 } from "../../models/types/TripTypes";
 import PaymentSettingList from "./PaymentSettingList";
+import ExchangeRateSetting from "../common/ExchangeRateSetting";
 import FormModal from "../common/FormModal";
 
 type SettingModalProps = {
@@ -43,6 +44,7 @@ const SettingModal = ({
     onSettingChange,
     onFormSubmit,
 }: SettingModalProps) => {
+    const [activeTab, setActiveTab] = useState<"exchange" | "payment">("exchange");
     return (
         <FormModal
             formId={"setting-form"}
@@ -53,89 +55,74 @@ const SettingModal = ({
             onCloseBtnClick={onCloseBtnClick}
             onSubmit={onFormSubmit}
         >
-            {/* Currency Section */}
-            <div className="mb-8 space-y-4">
-                <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest">
+            {/* Tabs */}
+            <div className="flex border-b border-border mb-6">
+                <button
+                    type="button"
+                    onClick={() => setActiveTab("exchange")}
+                    className={`flex-1 py-2 text-sm font-bold uppercase tracking-widest transition-colors ${
+                        activeTab === "exchange"
+                            ? "border-b-2 border-primary text-foreground"
+                            : "text-muted-foreground hover:text-foreground"
+                    }`}
+                >
                     匯率設定
-                </h4>
-                <div>
-                    <label
-                        htmlFor="homeCurrency"
-                        className="font-bold uppercase mb-1 flex items-center text-gray-500 text-xs"
-                    >
-                        本國幣 (Home)
-                    </label>
-                    <input
-                        type="text"
-                        name="homeCurrency"
-                        value={setting?.homeCurrency}
-                        onChange={onSettingChange}
-                        className="w-full bg-transparent border-b border-gray-300 py-2 outline-none font-mono text-base"
-                        placeholder="TWD"
-                    />
-                </div>
-                <div>
-                    <label
-                        htmlFor="localCurrency"
-                        className="font-bold uppercase mb-1 flex items-center text-gray-500 text-xs"
-                    >
-                        當地幣 (Local)
-                    </label>
-                    <input
-                        type="text"
-                        name="localCurrency"
-                        value={setting?.localCurrency}
-                        onChange={onSettingChange}
-                        className="w-full bg-transparent border-b border-gray-300 py-2 outline-none font-mono text-base"
-                        placeholder="JPY"
-                    />
-                </div>
-                <div>
-                    <label
-                        htmlFor="exchangeRate"
-                        className="font-bold uppercase mb-1 flex items-center text-gray-500 text-xs"
-                    >
-                        匯率 (1 {setting?.localCurrency} = ?{" "}
-                        {setting?.homeCurrency})
-                    </label>
-                    <input
-                        type="number"
-                        step="1"
-                        name="exchangeRate"
-                        value={setting?.exchangeRate}
-                        onChange={onSettingChange}
-                        className="w-full bg-transparent border-b border-gray-300 py-2 outline-none font-mono text-base"
-                        placeholder="0.2"
-                    />
-                </div>
+                </button>
+                <button
+                    type="button"
+                    onClick={() => setActiveTab("payment")}
+                    className={`flex-1 py-2 text-sm font-bold uppercase tracking-widest transition-colors ${
+                        activeTab === "payment"
+                            ? "border-b-2 border-primary text-foreground"
+                            : "text-muted-foreground hover:text-foreground"
+                    }`}
+                >
+                    支付工具與額度
+                </button>
             </div>
-            {/* Payment Methods Section */}
-            <div className="mb-8 space-y-4">
-                <div className="flex justify-between items-end">
-                    <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest">
-                        支付工具與額度
-                    </h4>
-                    <button
-                        type="button"
-                        onClick={onAddPaymentMethodBtnClick}
-                        className="text-xs underline text-gray-600"
-                        title="新增"
-                    >
-                        新增
-                    </button>
-                </div>
-                <div className="max-h-50 overflow-y-auto no-scrollbar scroll-smooth">
-                    <PaymentSettingList
-                        setting={setting}
-                        onDragPaymentItem={onDragPaymentItem}
-                        paymentMethods={paymentMethods}
-                        onPaymentChange={onPaymentChange}
-                        onPaymentRemove={onPaymentRemove}
-                        onPaymentMoveUp={onPaymentMoveUp}
-                        onPaymentMoveDown={onPaymentMoveDown}
+
+            {/* Content */}
+            {activeTab === "exchange" && (
+                <div className="mb-4">
+                    <ExchangeRateSetting
+                        homeCurrency={setting?.homeCurrency}
+                        localCurrency={setting?.localCurrency}
+                        exchangeRate={setting?.exchangeRate}
+                        onSettingChange={(name, value) => {
+                            // Creating a synthetic event-like structure for the existing handler
+                            onSettingChange({
+                                target: { name, value: String(value) },
+                            } as React.ChangeEvent<HTMLInputElement>);
+                        }}
                     />
                 </div>
-            </div>
+            )}
+
+            {activeTab === "payment" && (
+                <div className="mb-4 space-y-4">
+                    <div className="flex justify-end">
+                        <button
+                            type="button"
+                            onClick={onAddPaymentMethodBtnClick}
+                            className="text-xs font-medium bg-primary/10 text-primary px-3 py-1.5 rounded-full hover:bg-primary/20 transition-colors"
+                            title="新增支付工具"
+                        >
+                            + 新增支付工具
+                        </button>
+                    </div>
+                    <div className="max-h-80 overflow-y-auto no-scrollbar scroll-smooth">
+                        <PaymentSettingList
+                            setting={setting}
+                            onDragPaymentItem={onDragPaymentItem}
+                            paymentMethods={paymentMethods}
+                            onPaymentChange={onPaymentChange}
+                            onPaymentRemove={onPaymentRemove}
+                            onPaymentMoveUp={onPaymentMoveUp}
+                            onPaymentMoveDown={onPaymentMoveDown}
+                        />
+                    </div>
+                </div>
+            )}
         </FormModal>
     );
 };

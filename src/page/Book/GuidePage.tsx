@@ -350,7 +350,7 @@ const GuidePage = ({
                                         viewMode === "list" ? "map" : "list"
                                     )
                                 }
-                                className={`flex items-center text-sm font-medium px-3 py-1.5 rounded-lg shadow-md bg-white hover:opacity-90 transition-opacity`}
+                                className={`flex items-center text-sm font-medium px-3 py-1.5 rounded-lg shadow-md bg-card text-foreground border border-border/50 hover:bg-muted/50 transition-colors`}
                                 title={viewMode === "list" ? "地圖模式" : "列表模式"}
                             >
                                 {viewMode === "list" ? (
