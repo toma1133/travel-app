@@ -129,8 +129,7 @@ const TripModal = ({
                 localCurrency={formData.settings_config?.localCurrency}
                 exchangeRate={formData.settings_config?.exchangeRate}
                 onSettingChange={(name, value) => {
-                    // map to setting_config.*
-                    onSettingChange(`setting_config.${name}`, value);
+                    onSettingChange(name, value);
                 }}
             />
         </FormModal>

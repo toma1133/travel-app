@@ -218,7 +218,7 @@ const BookshelfPage = () => {
             id: crypto.randomUUID(),
             settings_config: {
                 exchangeRate: 0.0,
-                homeCurrency: "NT$",
+                homeCurrency: "TWD",
                 localCurrency: "",
             },
             start_date: moment().format("YYYY-MM-DD"),
