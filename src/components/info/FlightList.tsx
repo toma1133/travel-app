@@ -22,14 +22,11 @@ const FlightList = ({
 }: FlightListProps) => {
     return (
         <div
-            className={`
-                break-inside-avoid-page
-                ${
-                    isPrinting
-                        ? "bg-transparent mb-8" // 列印：透明背景
-                        : "bg-white p-5 rounded-lg shadow-sm" // 螢幕：卡片
-                }
-            `}
+            className={
+                isPrinting
+                    ? "bg-transparent mb-8"
+                    : "bg-card p-5 rounded-lg shadow-sm relative group"
+            }
         >
             {/* Header */}
             <div
@@ -42,7 +39,7 @@ const FlightList = ({
                 <div className="flex items-baseline gap-3">
                     {/* 列印時的章節編號 */}
                     {isPrinting && (
-                        <span className="text-3xl font-black text-gray-200 leading-none">
+                        <span className="text-3xl font-black text-gray-400 leading-none">
                             01
                         </span>
                     )}
@@ -58,10 +55,10 @@ const FlightList = ({
                     </div>
                 </div>
                 {!isPrinting && isEditing && (
-                    <div className="flex space-x-2 bg-white pr-2 transition-opacity duration-200">
+                    <div className="flex space-x-2 bg-background/60 backdrop-blur-md p-1 rounded-full border border-border/50 transition-all duration-300 lg:opacity-0 lg:group-hover:opacity-100 z-10">
                         <button
                             onClick={onAddBtnClick}
-                            className="p-1 text-gray-400 hover:text-blue-500 transition-colors"
+                            className="p-1.5 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
                             title="新增航班"
                         >
                             <Plus size={14} />
@@ -88,7 +85,7 @@ const FlightList = ({
                         />
                     ))}
                 {(!flights || flights.length === 0) && !isPrinting && (
-                    <div className="text-center text-gray-400 text-xs py-2">
+                    <div className="text-center text-muted-foreground text-xs py-2">
                         尚無航班資訊
                     </div>
                 )}

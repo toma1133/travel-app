@@ -63,32 +63,33 @@ const AccommodationRecord = ({
     // --- 螢幕模式 (保持原樣) ---
     return (
         <div
-            className={`flex justify-between items-start pt-4 mb-4 last:mb-0 ${
-                index !== 0 ? "border-t border-gray-100" : ""
+            className={`flex justify-between items-start pt-4 mb-4 last:mb-0 relative group ${
+                index !== 0 ? "border-t border-border" : ""
             }`}
         >
-            <div className="flex-1 pr-4">
-                <div className="font-bold text-gray-800 text-sm mb-1">
+            <div className="flex-1 pr-16">
+                <div className="font-bold text-foreground text-sm mb-1">
                     {accommodation.name}
                 </div>
-                <div className="flex items-center text-xs text-gray-500">
+                <div className="flex items-center text-xs text-muted-foreground">
                     <Calendar size={12} className="mr-1.5 shrink-0" />
                     {accommodation.check_in_date}
-                    <span className="mx-1 text-gray-300">-</span>
+                    <span className="mx-1 text-muted-foreground">-</span>
                     {accommodation.check_out_date}
                 </div>
-                <div className="flex items-start text-xs text-gray-500 mt-1">
+                <div className="flex items-start text-xs text-muted-foreground mt-1">
                     <MapPin size={12} className="mr-1.5 mt-0.5 shrink-0" />
                     <span className="break-words leading-relaxed">
                         {accommodation.address}
                     </span>
                 </div>
             </div>
-            <div className="flex space-x-2 bg-white pr-2 transition-opacity duration-200">
+            <div className={`absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-1 p-1 bg-background/60 backdrop-blur-md rounded-full shadow-md border border-border/50 lg:opacity-0 lg:group-hover:opacity-100 transition-all duration-300 z-10`}>
                 {!isEditing && accommodation.link_id && (
                     <button
                         onClick={() => onViewBtnClick(accommodation.link_id!)}
-                        className="p-1 text-gray-400 hover:text-blue-500 transition-colors"
+                        className="p-1.5 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                        title="查看"
                     >
                         <BookOpen size={14} />
                     </button>
@@ -97,13 +98,15 @@ const AccommodationRecord = ({
                     <>
                         <button
                             onClick={() => onEditBtnClick(accommodation)}
-                            className="p-1 text-gray-400 hover:text-blue-500 transition-colors"
+                            className="p-1.5 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                            title="編輯"
                         >
                             <Pencil size={14} />
                         </button>
                         <button
                             onClick={() => onDeleteBtnClick(accommodation)}
-                            className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                            className="p-1.5 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                            title="刪除"
                         >
                             <Trash2 size={14} />
                         </button>

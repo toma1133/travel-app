@@ -22,14 +22,11 @@ const CarRentalList = ({
 }: CarRentalListProps) => {
     return (
         <div
-            className={`
-                break-inside-avoid-page
-                ${
-                    isPrinting
-                        ? "bg-transparent mb-8"
-                        : "bg-white p-5 rounded-lg shadow-sm"
-                }
-            `}
+            className={
+                isPrinting
+                    ? "bg-transparent mb-8"
+                    : "bg-card p-5 rounded-lg shadow-sm relative group"
+            }
         >
             <div
                 className={`flex items-center justify-between ${
@@ -40,7 +37,7 @@ const CarRentalList = ({
             >
                 <div className="flex items-baseline gap-3">
                     {isPrinting && (
-                        <span className="text-3xl font-black text-gray-200 leading-none">
+                        <span className="text-3xl font-black text-gray-400 leading-none">
                             03
                         </span>
                     )}
@@ -56,10 +53,10 @@ const CarRentalList = ({
                     </div>
                 </div>
                 {!isPrinting && isEditing && (
-                    <div className="flex space-x-2 bg-white pr-2 transition-opacity duration-200">
+                    <div className="flex space-x-2 bg-background/60 backdrop-blur-md p-1 rounded-full border border-border/50 transition-all duration-300 lg:opacity-0 lg:group-hover:opacity-100 z-10">
                         <button
                             onClick={onAddBtnClick}
-                            className="p-1 text-gray-400 hover:text-blue-500 transition-colors"
+                            className="p-1.5 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
                             title="新增租車"
                         >
                             <Plus size={14} />
@@ -88,7 +85,7 @@ const CarRentalList = ({
                         />
                     ))}
                 {(!carRentals || carRentals.length === 0) && !isPrinting && (
-                    <div className="text-center text-gray-400 text-xs py-2">
+                    <div className="text-center text-muted-foreground text-xs py-2">
                         尚無租車資訊
                     </div>
                 )}

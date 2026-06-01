@@ -440,11 +440,11 @@ const InfoPage = ({
 
     return (
         <div
-            className={`min-h-full font-[Noto_Sans_TC] text-gray-800 ${
+            className={`font-[Noto_Sans_TC] ${
                 isPrinting
-                    ? "h-auto min-h-[50vh] break-after-page overflow-visible bg-white"
-                    : `${
-                          tripData?.theme_config?.bg || "bg-gray-100"
+                    ? "h-auto min-h-[50vh] break-after-page overflow-visible bg-white text-black"
+                    : `min-h-full text-foreground ${
+                          tripData?.theme_config?.bg || "bg-background"
                       } pb-24`
             }`}
         >
@@ -461,9 +461,10 @@ const InfoPage = ({
                                 onClick={() => setIsEditing(!isEditing)}
                                 className={`flex items-center text-sm font-medium px-3 py-1.5 rounded-lg shadow-md transition-all ${
                                     isEditing
-                                        ? "bg-red-500 text-white hover:bg-red-600"
-                                        : "bg-white text-gray-600 border border-gray-300 hover:bg-gray-50"
+                                        ? "bg-destructive text-destructive-foreground hover:bg-destructive/90 border-transparent"
+                                        : "bg-card text-foreground border border-border hover:bg-card/90"
                                 }`}
+                                title={isEditing ? "退出" : "編輯"}
                             >
                                 {isEditing ? (
                                     <Lock size={16} />

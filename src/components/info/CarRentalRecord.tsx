@@ -81,43 +81,43 @@ const CarRentalRecord = ({
     // --- 螢幕模式 (保持原樣) ---
     return (
         <div
-            className={`flex justify-between items-start pt-4 mb-4 last:mb-0 ${
-                index !== 0 ? "border-t border-gray-100" : ""
+            className={`flex justify-between items-start pt-4 mb-4 last:mb-0 relative group ${
+                index !== 0 ? "border-t border-border" : ""
             }`}
         >
             <div className="w-full text-sm px-2">
                 {/* ... (螢幕模式內容保持不變) ... */}
                 <div className="grid grid-cols-3 gap-4 mb-2">
                     <div className="flex flex-col">
-                        <span className="text-gray-500 text-xs uppercase">
+                        <span className="text-muted-foreground text-xs uppercase">
                             租車公司
                         </span>
-                        <span className="font-bold text-gray-800">
+                        <span className="font-bold text-foreground">
                             {carRental.company}
                         </span>
                     </div>
                     <div className="flex flex-col">
-                        <span className="text-gray-500 text-xs uppercase">
+                        <span className="text-muted-foreground text-xs uppercase">
                             車型
                         </span>
-                        <span className="font-bold text-gray-800">
+                        <span className="font-bold text-foreground">
                             {carRental.model}
                         </span>
                     </div>
                     <div className="flex flex-col">
-                        <span className="text-gray-500 text-xs uppercase">
+                        <span className="text-muted-foreground text-xs uppercase">
                             保險
                         </span>
-                        <span className="font-bold text-gray-800">
+                        <span className="font-bold text-foreground">
                             {carRental.insurance_plan || "-"}
                         </span>
                     </div>
                 </div>
                 {/* ... */}
-                <div className="p-4 bg-gray-50 rounded text-xs space-y-2">
+                <div className="p-4 bg-muted rounded text-xs space-y-2">
                     <div className="flex justify-between items-center">
-                        <span className="text-gray-400">取車</span>
-                        <span className="text-gray-700">
+                        <span className="text-muted-foreground">取車</span>
+                        <span className="text-foreground">
                             <span className="font-bold mr-2">
                                 {carRental.pickup_loc}
                             </span>
@@ -129,8 +129,8 @@ const CarRentalRecord = ({
                         </span>
                     </div>
                     <div className="flex justify-between items-center">
-                        <span className="text-gray-400">還車</span>
-                        <span className="text-gray-700">
+                        <span className="text-muted-foreground">還車</span>
+                        <span className="text-foreground">
                             <span className="font-bold mr-2">
                                 {carRental.dropoff_loc}
                             </span>
@@ -145,16 +145,18 @@ const CarRentalRecord = ({
             </div>
 
             {isEditing && (
-                <div className="flex space-x-2 bg-white pr-2 transition-opacity duration-200">
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-1 p-1 bg-background/60 backdrop-blur-md rounded-full shadow-md border border-border/50 lg:opacity-0 lg:group-hover:opacity-100 transition-all duration-300 z-10">
                     <button
                         onClick={() => onEditBtnClick(carRental)}
-                        className="p-1 text-gray-400 hover:text-blue-500 transition-colors"
+                        className="p-1.5 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                        title="編輯"
                     >
                         <Pencil size={14} />
                     </button>
                     <button
                         onClick={() => onDeleteBtnClick(carRental)}
-                        className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                        className="p-1.5 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                        title="刪除"
                     >
                         <Trash2 size={14} />
                     </button>
