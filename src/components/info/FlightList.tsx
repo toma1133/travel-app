@@ -25,12 +25,12 @@ const FlightList = ({
             className={
                 isPrinting
                     ? "bg-transparent mb-8"
-                    : "bg-card p-5 rounded-lg shadow-sm relative group"
+                    : "bg-card p-5 rounded-lg shadow-sm relative"
             }
         >
             {/* Header */}
             <div
-                className={`flex items-center justify-between ${
+                className={`flex items-center justify-between group/header ${
                     isPrinting
                         ? "mb-6 border-b border-black pb-2"
                         : "mb-4 text-[#8E354A]"
@@ -55,7 +55,7 @@ const FlightList = ({
                     </div>
                 </div>
                 {!isPrinting && isEditing && (
-                    <div className="flex space-x-2 bg-background/60 backdrop-blur-md p-1 rounded-full border border-border/50 transition-all duration-300 lg:opacity-0 lg:group-hover:opacity-100 z-10">
+                    <div className="flex space-x-2 bg-background/60 backdrop-blur-md p-1 rounded-full border border-border/50 transition-all duration-300 lg:opacity-0 lg:group-hover/header:opacity-100 z-10">
                         <button
                             onClick={onAddBtnClick}
                             className="p-1.5 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
