@@ -212,7 +212,7 @@ const ItineraryItem = ({
             {(isExpanded || isPrinting) && (
                 <div
                     className={`relative ${
-                        isPrinting ? "pt-2 pb-2" : "pb-6 pt-2 lg:flex-1 overflow-x-hidden lg:overflow-y-auto lg:custom-scrollbar"
+                        isPrinting ? "pt-2 pb-2" : "pb-6 pt-2 lg:flex-1 overflow-x-hidden lg:overflow-y-auto no-scrollbar"
                     }`}
                 >
                     <div className="absolute top-0 bottom-6 left-0 w-14 flex justify-center pointer-events-none">

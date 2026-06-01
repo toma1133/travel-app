@@ -155,7 +155,7 @@ const SplitInfoModal = ({
                     </button>
                 </div>
                 {/* Body - Scrollable */}
-                <div className="overflow-y-auto custom-scrollbar p-6 space-y-4 flex-1">
+                <div className="overflow-y-auto no-scrollbar p-6 space-y-4 flex-1">
                     {settlements.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-12 px-4 text-center bg-muted/30 rounded-3xl border border-dashed border-border">
                             <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center mb-4">

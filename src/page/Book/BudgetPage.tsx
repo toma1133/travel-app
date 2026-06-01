@@ -666,7 +666,7 @@ const BudgetPage = ({
             )}
             <div className={`lg:flex-1 ${isPrinting ? "px-0" : "lg:flex lg:flex-row lg:overflow-hidden px-4 mt-6"}`}>
                 {/* 左側：總覽 (圓環圖與預算列表) */}
-                <div className={`${isPrinting ? "w-full mb-8" : "lg:w-[350px] xl:w-[400px] lg:flex-shrink-0 lg:overflow-y-auto lg:custom-scrollbar lg:pr-6 lg:border-r lg:border-border lg:mr-6 mb-6 lg:mb-0"}`}>
+                <div className={`${isPrinting ? "w-full mb-8" : "lg:w-[350px] xl:w-[400px] lg:flex-shrink-0 lg:overflow-y-auto no-scrollbar lg:pr-6 lg:border-r lg:border-border lg:mr-6 mb-6 lg:mb-0"}`}>
                     <BudgetChart
                         budgetItems={filteredBudgets}
                         isPrinting={isPrinting}
@@ -689,7 +689,7 @@ const BudgetPage = ({
                 </div>
 
                 {/* 右側：交易列表 */}
-                <div className={`${isPrinting ? "w-full" : "lg:flex-1 lg:overflow-y-auto lg:custom-scrollbar lg:min-w-0 flex flex-col pb-20 lg:pb-0"}`}>
+                <div className={`${isPrinting ? "w-full" : "lg:flex-1 lg:overflow-y-auto no-scrollbar lg:min-w-0 flex flex-col pb-20 lg:pb-0"}`}>
                     <TransactionList
                         categories={budgetCategory}
                         budgetItems={filteredBudgets}

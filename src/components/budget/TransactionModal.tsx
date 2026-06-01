@@ -118,7 +118,7 @@ const TransactionModal = ({
                                     }
                                     className={`px-3 py-1 text-xs font-bold transition-colors ${
                                         formData.currency_code === curr
-                                            ? "bg-black text-primary-foreground"
+                                            ? "bg-primary text-primary-foreground"
                                             : "bg-card text-muted-foreground"
                                     }`}
                                 >
@@ -137,38 +137,25 @@ const TransactionModal = ({
                 >
                     支付方式
                 </label>
-                <div className="flex gap-2 overflow-x-auto no-scrollbar scroll-smooth pb-1">
+                <select
+                    id="payment_method"
+                    name="payment_method_id"
+                    value={formData.payment_method_id || ""}
+                    onChange={(e) =>
+                        onFormDataChange("payment_method_id", e.target.value)
+                    }
+                    className="w-full bg-transparent border-b border-border py-2 outline-none font-[Noto_Sans_TC] dark:bg-card"
+                >
+                    <option value="" disabled>
+                        請選擇支付方式
+                    </option>
                     {Array.isArray(paymentMethods) &&
-                        paymentMethods.map((paymentMethod, i) => (
-                            <button
-                                key={i}
-                                type="button"
-                                onClick={() =>
-                                    onFormDataChange(
-                                        "payment_method_id",
-                                        paymentMethod.id
-                                    )
-                                }
-                                className={`flex items-center px-3 py-2 border whitespace-nowrap transition-all
-                                        ${
-                                            formData.payment_method_id ===
-                                            paymentMethod.id
-                                                ? "border-foreground bg-card shadow-sm"
-                                                : "border-border bg-muted text-muted-foreground"
-                                        }
-                                    `}
-                            >
-                                {paymentMethod.type === "credit" ? (
-                                    <CreditCard size={14} className="mr-2" />
-                                ) : (
-                                    <Banknote size={14} className="mr-2" />
-                                )}
-                                <span className="text-xs font-medium">
-                                    {paymentMethod.name}
-                                </span>
-                            </button>
+                        paymentMethods.map((paymentMethod) => (
+                            <option key={paymentMethod.id} value={paymentMethod.id}>
+                                {paymentMethod.name} ({paymentMethod.type === "credit" ? "信用卡" : "現金"})
+                            </option>
                         ))}
-                </div>
+                </select>
             </div>
             {/* Split with */}
             <div>
@@ -233,11 +220,11 @@ const TransactionModal = ({
                             className={`aspect-square flex flex-col items-center justify-center rounded-full transition-all
                                         ${
                                             formData.category === cat.id
-                                                ? "bg-black text-primary-foreground"
+                                                ? "bg-primary text-primary-foreground"
                                                 : "bg-muted text-muted-foreground hover:bg-muted-foreground"
                                         }
                                     `}
-                            title={cat.id}
+                            title={cat.name}
                         >
                             <cat.icon size={16} />
                         </button>
