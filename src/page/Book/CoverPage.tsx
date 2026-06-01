@@ -4,6 +4,7 @@ import moment from "moment";
 import type BookLayoutContextType from "../../models/types/BookLayoutContextTypes";
 import type { TripVM } from "../../models/types/TripTypes";
 import SystemControls from "../../components/common/SystemControls";
+import BackBtn from "../../components/common/BackBtn";
 
 type CoverPageProps = {
     isPrinting?: boolean;
@@ -46,13 +47,7 @@ const CoverPage = ({
             {/* Top Nav (Floating) */}
             <nav className={`absolute top-0 right-0 w-full flex justify-between items-center px-6 md:px-12 py-6 z-50 pointer-events-none print:hidden ${isPrinting ? 'hidden' : ''}`}>
                 <div className="pointer-events-auto">
-                    <button
-                        type="button"
-                        onClick={() => window.location.href = "/travel-app"}
-                        className="text-white/90 hover:text-white bg-black/20 backdrop-blur-md p-3 rounded-full border border-white/10 shadow-sm transition-all hover:bg-black/40 hover:scale-105"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
-                    </button>
+                    <BackBtn className="bg-black/20 text-white border-white/10" />
                 </div>
                 <div className="pointer-events-auto">
                     <SystemControls className="bg-black/20 text-white border-white/10" />

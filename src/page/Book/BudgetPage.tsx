@@ -272,7 +272,7 @@ const BudgetPage = ({
         () => ({
             created_at: null,
             credit_limit: 0,
-            currency_code: tripData?.settings_config?.homeCurrency || "",
+            currency_code: tripData?.settings_config?.localCurrency || "",
             id: crypto.randomUUID(),
             name: "新卡片",
             order: 0,
@@ -684,6 +684,7 @@ const BudgetPage = ({
                         setting={currentSetting}
                         theme={currentTheme}
                         convertToHome={convertToHome}
+                        convertToLocal={convertToLocal}
                     />
                 </div>
 

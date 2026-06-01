@@ -19,6 +19,12 @@ type BudgetLimitListProps = {
         homeCurrency?: string,
         exchangeRate?: number
     ) => number;
+    convertToLocal: (
+        amount: number,
+        currency: string,
+        localCurrency?: string,
+        exchangeRate?: number
+    ) => number;
 };
 
 const BudgetLimitList = ({
@@ -28,6 +34,7 @@ const BudgetLimitList = ({
     setting,
     theme,
     convertToHome,
+    convertToLocal,
 }: BudgetLimitListProps) => {
     const [usage, setUsage] = useState<{ [key: string]: number }>({});
 
@@ -42,28 +49,42 @@ const BudgetLimitList = ({
                 const pm = paymentMethods?.find((p) => p.id === item.payment_method_id);
                 if (pm && localUsage[item.payment_method_id] !== undefined) {
                     const targetCurrency = pm.currency_code || setting?.homeCurrency;
-                    let amountToAdd = item.amount;
+                    let baseAmount = item.split_with?.length! > 0 
+                        ? item.amount / (item.split_with?.length! + 1)
+                        : item.amount;
+                    let amountToAdd = baseAmount;
 
-                    if (item.currency_code !== targetCurrency) {
+                    let itemCurrency = item.currency_code;
+                    if (
+                        itemCurrency !== setting?.homeCurrency &&
+                        itemCurrency !== setting?.localCurrency
+                    ) {
+                        itemCurrency = setting?.homeCurrency;
+                    }
+
+                    if (itemCurrency !== targetCurrency) {
                         if (
                             targetCurrency === setting?.homeCurrency &&
-                            item.currency_code === setting?.localCurrency
+                            itemCurrency === setting?.localCurrency
                         ) {
                             amountToAdd = convertToHome(
-                                item.amount,
-                                item.currency_code,
+                                baseAmount,
+                                itemCurrency,
                                 setting?.homeCurrency,
                                 setting?.exchangeRate
                             );
                         } else if (
                             targetCurrency === setting?.localCurrency &&
-                            item.currency_code === setting?.homeCurrency
+                            itemCurrency === setting?.homeCurrency
                         ) {
-                            amountToAdd = setting?.exchangeRate
-                                ? Math.round(item.amount / setting.exchangeRate)
-                                : item.amount;
+                            amountToAdd = convertToLocal(
+                                baseAmount,
+                                itemCurrency,
+                                setting?.localCurrency,
+                                setting?.exchangeRate
+                            );
                         }
-                        // If 3rd currency, we can't reliably convert without rates, so amountToAdd remains item.amount
+                        // If 3rd currency, we can't reliably convert without rates, so amountToAdd remains baseAmount
                     }
 
                     localUsage[item.payment_method_id] += amountToAdd;
@@ -90,7 +111,7 @@ const BudgetLimitList = ({
             >
                 {Array.isArray(paymentMethods) &&
                     paymentMethods.map((paymentMethod, i) => (
-                        <BudgetLimitItem
+                        <BudgetLimitItem 
                             key={i}
                             isPrinting={isPrinting}
                             paymentMethod={paymentMethod}
@@ -107,6 +128,8 @@ const BudgetLimitList = ({
                             setting={setting}
                             theme={theme}
                             used={usage[paymentMethod.id] || 0}
+                            convertToHome={convertToHome}
+                            convertToLocal={convertToLocal}
                         />
                     ))}
             </div>

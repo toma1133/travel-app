@@ -187,7 +187,7 @@ const ItineraryList = ({
                     {!isPrinting && (
                         <div className="hidden lg:flex gap-6 items-start lg:flex-1 lg:min-h-0">
                             {/* Master: Sidebar */}
-                            <div className="w-1/3 xl:w-1/4 h-full overflow-y-auto pr-2 space-y-3 custom-scrollbar shrink-0">
+                            <div className="w-1/3 xl:w-1/4 h-full overflow-y-auto px-2 py-1 pr-3 space-y-3 custom-scrollbar shrink-0">
                                 {itinerarys.map((day) => (
                                     <button
                                         key={day.id}
