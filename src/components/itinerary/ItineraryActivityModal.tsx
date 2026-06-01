@@ -1,5 +1,6 @@
 import {
     ChangeEventHandler,
+    ChangeEvent,
     CSSProperties,
     FormEventHandler,
     MouseEventHandler,
@@ -10,6 +11,7 @@ import type {
     ItineraryVM,
 } from "../../models/types/ItineraryTypes";
 import type { TripThemeConf } from "../../models/types/TripTypes";
+import type { PlaceVM } from "../../models/types/PlaceTypes";
 import FormModal from "../common/FormModal";
 import PlaceLinkAutocomplete from "../common/PlaceLinkAutoComplete";
 
@@ -41,6 +43,24 @@ const ItineraryActivityModal = ({
     onFormInputChange,
     onFormSubmit,
 }: ItineraryActivityModalProps) => {
+    const handlePlaceSelect = (place: PlaceVM) => {
+        const createEvent = (name: string, value: string) =>
+            ({
+                target: { name, value },
+                currentTarget: { name, value },
+            } as unknown as ChangeEvent<HTMLInputElement>);
+
+        if (place.name) {
+            onFormInputChange(createEvent("title", place.name));
+        }
+        if (place.type) {
+            onFormInputChange(createEvent("type", place.type));
+        }
+        if (place.eng_name) {
+            onFormInputChange(createEvent("desc", place.eng_name));
+        }
+    };
+
     return (
         <FormModal
             formId={"itinerary-activity-form"}
@@ -97,47 +117,23 @@ const ItineraryActivityModal = ({
                 >
                     類型 *
                 </label>
-                <div className="grid grid-cols-5 gap-2">
+                <select
+                    required
+                    name="type"
+                    value={formData.type}
+                    onChange={onFormInputChange as any}
+                    className="w-full bg-transparent text-foreground border-b border-border py-2 outline-none font-[Noto_Sans_TC] text-base cursor-pointer"
+                >
                     {itineraryCategory.map((category) => (
-                        <label
+                        <option
                             key={category.id}
-                            className={`
-                                cursor-pointer text-center py-2 rounded-lg border text-sm transition-all
-                                ${
-                                    formData.type === category.id
-                                        ? `text-white border-transparent`
-                                        : "border-border text-muted-foreground hover:bg-muted"
-                                }
-                            `}
-                            style={
-                                {
-                                    backgroundColor:
-                                        formData.type === category.id
-                                            ? theme?.categoryColor[
-                                                  category.id
-                                              ] || theme?.accentColor
-                                            : "",
-                                    borderColor:
-                                        formData.type === category.id
-                                            ? theme?.categoryColor[
-                                                  category.id
-                                              ] || theme?.accentColor
-                                            : "",
-                                } as CSSProperties
-                            }
+                            value={category.id}
+                            className="bg-background text-foreground"
                         >
-                            <input
-                                type="radio"
-                                name="type"
-                                value={category.id}
-                                checked={formData.type === category.id}
-                                onChange={onFormInputChange}
-                                className="hidden"
-                            />
                             {category.label}
-                        </label>
+                        </option>
                     ))}
-                </div>
+                </select>
             </div>
             {/* Description */}
             <div>
@@ -153,7 +149,7 @@ const ItineraryActivityModal = ({
                     onChange={onFormInputChange}
                     rows={2}
                     placeholder="活動的細節或備註..."
-                    className="w-full bg-transparent text-foreground border-b border-border py-2 outline-none font-[Noto_Sans_TC] text-base resize-none"
+                    className="w-full bg-transparent text-foreground border-b border-border py-2 outline-none font-[Noto_Sans_TC] text-base resize-none no-scrollbar"
                 />
             </div>
             {/* Link ID */}
@@ -169,6 +165,7 @@ const ItineraryActivityModal = ({
                     name="linkId"
                     value={formData.linkId}
                     onChange={onFormInputChange}
+                    onPlaceSelect={handlePlaceSelect}
                 />
             </div>
         </FormModal>

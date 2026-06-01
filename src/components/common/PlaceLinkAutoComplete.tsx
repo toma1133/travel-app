@@ -15,6 +15,7 @@ type PlaceLinkAutocompleteProps = {
     name: string;
     value: string;
     onChange: ChangeEventHandler<HTMLInputElement>;
+    onPlaceSelect?: (place: PlaceVM) => void;
 };
 
 const PlaceLinkAutocomplete: React.FC<PlaceLinkAutocompleteProps> = ({
@@ -22,6 +23,7 @@ const PlaceLinkAutocomplete: React.FC<PlaceLinkAutocompleteProps> = ({
     name,
     value,
     onChange,
+    onPlaceSelect,
 }) => {
     const [searchTerm, setSearchTerm] = useState("");
     const [isOpen, setIsOpen] = useState(false);
@@ -111,6 +113,7 @@ const PlaceLinkAutocomplete: React.FC<PlaceLinkAutocompleteProps> = ({
         onChange(syntheticEvent);
         setSearchTerm(place.id);
         setIsOpen(false);
+        if (onPlaceSelect) onPlaceSelect(place);
     };
 
     // 清除選取 (需要偽造 Event)

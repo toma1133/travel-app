@@ -66,6 +66,10 @@ const ItineraryPage = ({
             label: "移動",
         },
         {
+            id: "hotel",
+            label: "住宿",
+        },
+        {
             id: "other",
             label: "其他",
         },

@@ -62,33 +62,23 @@ const PlaceModal = ({
                 >
                     類型 *
                 </label>
-                <div
-                    className={`grid auto-cols-[minmax(0,2fr)] grid-flow-col gap-2`}
+                <select
+                    required
+                    name="type"
+                    value={formData.type || ""}
+                    onChange={onFormInputChange as any}
+                    className="w-full bg-transparent text-foreground border-b border-border py-2 outline-none font-[Noto_Sans_TC] text-base cursor-pointer"
                 >
                     {placeCategory.map((type) => (
-                        <label
+                        <option
                             key={type.id}
-                            className={`
-                                cursor-pointer text-center py-2 rounded-lg border text-sm transition-all font-medium
-                                ${
-                                    formData.type === type.id
-                                        ? `bg-primary text-primary-foreground border-transparent`
-                                        : "border-border text-muted-foreground hover:bg-muted/50"
-                                }
-                            `}
+                            value={type.id}
+                            className="bg-background text-foreground"
                         >
-                            <input
-                                type="radio"
-                                name="type"
-                                value={type.id}
-                                checked={formData.type === type.id}
-                                onChange={onFormInputChange}
-                                className="hidden"
-                            />
                             {type.label}
-                        </label>
+                        </option>
                     ))}
-                </div>
+                </select>
             </div>
             {/* Basic Info */}
             <div className="grid grid-cols-1 gap-6">
@@ -204,7 +194,7 @@ const PlaceModal = ({
                     onChange={onFormInputChange}
                     rows={2}
                     placeholder="關於這個地點的簡短介紹..."
-                    className="w-full bg-transparent border-b border-border py-2 outline-none font-[Noto_Sans_TC] text-base text-foreground focus:border-primary transition-colors resize-none"
+                    className="w-full bg-transparent border-b border-border py-2 outline-none font-[Noto_Sans_TC] text-base text-foreground focus:border-primary transition-colors resize-none no-scrollbar"
                 />
             </div>
             {/* Details */}
