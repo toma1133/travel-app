@@ -3,8 +3,11 @@ import {
     FormEventHandler,
     MouseEventHandler,
     useState,
+    useEffect,
+    ChangeEvent,
 } from "react";
-import { Clock, Copy, ImageIcon, MapIcon, MapPin, Tag, X } from "lucide-react";
+import { Clock, Copy, ImageIcon, MapIcon, MapPin, Tag, X, Search, Loader2 } from "lucide-react";
+import { OSMService, OSMPlace, WikiData } from "../../services/api/OSMService";
 import type { PlaceCategory, PlaceVM } from "../../models/types/PlaceTypes";
 import type { TripThemeConf } from "../../models/types/TripTypes";
 import FormModal from "../common/FormModal";
@@ -31,6 +34,95 @@ const PlaceModal = ({
     onFormSubmit,
 }: PlaceModalProps) => {
     const [copiedId, setCopiedId] = useState(false);
+    
+    // Auto-fill state
+    const [searchTerm, setSearchTerm] = useState("");
+    const [isSearching, setIsSearching] = useState(false);
+    const [searchResults, setSearchResults] = useState<OSMPlace[]>([]);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const [selectedPlace, setSelectedPlace] = useState<{osm: OSMPlace, wiki: WikiData | null} | null>(null);
+    const [importFields, setImportFields] = useState({
+        eng_name: true,
+        image_url: true,
+        open: true,
+        loc: true,
+        map_url: true,
+        description: true,
+    });
+
+    useEffect(() => {
+        const timer = setTimeout(async () => {
+            if (searchTerm.trim().length > 1) {
+                setIsSearching(true);
+                const results = await OSMService.searchPlaces(searchTerm);
+                setSearchResults(results);
+                setIsSearching(false);
+                setShowSuggestions(true);
+            } else {
+                setSearchResults([]);
+                setShowSuggestions(false);
+            }
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [searchTerm]);
+
+    const handleSelectResult = async (place: OSMPlace) => {
+        setShowSuggestions(false);
+        setSearchTerm("");
+        
+        let wikiData: WikiData | null = null;
+        if (place.extratags?.wikipedia) {
+            wikiData = await OSMService.getWikiData(place.extratags.wikipedia);
+        }
+
+        // Always check "name" in case english name isn't there
+        setSelectedPlace({ osm: place, wiki: wikiData });
+    };
+
+    const handleApplyImport = () => {
+        if (!selectedPlace) return;
+        
+        const createEvent = (name: string, value: string) =>
+            ({
+                target: { name, value },
+                currentTarget: { name, value },
+            } as unknown as ChangeEvent<HTMLInputElement>);
+
+        const { osm, wiki } = selectedPlace;
+        
+        if (osm.name) {
+            onFormInputChange(createEvent("name", osm.name));
+        }
+
+        if (importFields.eng_name && wiki?.title) {
+            onFormInputChange(createEvent("eng_name", wiki.title));
+        } else if (importFields.eng_name && osm.extratags?.["name:en"]) {
+            onFormInputChange(createEvent("eng_name", osm.extratags["name:en"]));
+        }
+
+        if (importFields.image_url && wiki?.thumbnailUrl) {
+            onFormInputChange(createEvent("image_url", wiki.thumbnailUrl));
+        }
+
+        if (importFields.open && osm.extratags?.opening_hours) {
+            onFormInputChange(createEvent("info.open", osm.extratags.opening_hours));
+        }
+
+        if (importFields.loc && osm.display_name) {
+            onFormInputChange(createEvent("info.loc", osm.display_name));
+        }
+
+        if (importFields.map_url && osm.lat && osm.lon) {
+            const mapUrl = `https://maps.apple.com/?q=${encodeURIComponent(osm.name || "")}&ll=${osm.lat},${osm.lon}`;
+            onFormInputChange(createEvent("map_url", mapUrl));
+        }
+
+        if (importFields.description && wiki?.extract) {
+            onFormInputChange(createEvent("description", wiki.extract));
+        }
+
+        setSelectedPlace(null);
+    };
 
     const handleCopy = async () => {
         try {
@@ -54,6 +146,91 @@ const PlaceModal = ({
             onCloseBtnClick={onCloseBtnClick}
             onSubmit={onFormSubmit}
         >
+            {mode === "create" && (
+                <div className="mb-6 border-b border-border pb-6 relative">
+                    <label className="block font-bold uppercase mb-2 flex items-center text-muted-foreground text-xs">
+                        <Search size={12} className="mr-1" /> 快速搜尋與自動帶入 (OpenStreetMap)
+                    </label>
+                    <div className="relative">
+                        <input
+                            type="text"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            onKeyDown={(e) => { if (e.key === "Enter") e.preventDefault(); }}
+                            placeholder="輸入地點名稱搜尋..."
+                            className="w-full bg-muted/50 border border-border rounded-lg py-2 pl-3 pr-10 outline-none focus:border-primary text-sm"
+                        />
+                        <div className="absolute right-3 top-2.5 text-muted-foreground">
+                            {isSearching ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />}
+                        </div>
+                    </div>
+                    
+                    {showSuggestions && searchResults.length > 0 && (
+                        <div className="absolute z-50 left-0 right-0 mt-1 bg-card shadow-lg rounded-md border border-border max-h-60 overflow-y-auto">
+                            <ul>
+                                {searchResults.map((place) => (
+                                    <li
+                                        key={place.place_id}
+                                        onClick={() => handleSelectResult(place)}
+                                        className="px-4 py-3 hover:bg-muted cursor-pointer border-b border-border last:border-0 flex flex-col items-start transition-colors"
+                                    >
+                                        <span className="text-sm font-medium text-foreground">
+                                            {place.name || place.display_name.split(",")[0]}
+                                        </span>
+                                        <span className="text-xs text-muted-foreground mt-0.5 w-full truncate block">
+                                            {place.display_name}
+                                        </span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+
+                    {selectedPlace && (
+                        <div className="mt-4 p-4 rounded-lg border border-primary/30 bg-primary/5">
+                            <div className="flex justify-between items-center mb-3">
+                                <h4 className="font-bold text-sm text-foreground">找到資料，請勾選要帶入的欄位：</h4>
+                                <button type="button" onClick={() => setSelectedPlace(null)} className="text-muted-foreground hover:text-foreground">
+                                    <X size={16} />
+                                </button>
+                            </div>
+                            <div className="space-y-2 text-sm text-foreground">
+                                <label className="flex items-start gap-2 cursor-pointer">
+                                    <input type="checkbox" checked={importFields.eng_name} onChange={(e) => setImportFields({...importFields, eng_name: e.target.checked})} className="mt-1 flex-shrink-0" />
+                                    <span><strong>英文名稱:</strong> {selectedPlace.wiki?.title || selectedPlace.osm.extratags?.["name:en"] || "(無)"}</span>
+                                </label>
+                                <label className="flex items-start gap-2 cursor-pointer">
+                                    <input type="checkbox" checked={importFields.image_url} onChange={(e) => setImportFields({...importFields, image_url: e.target.checked})} className="mt-1 flex-shrink-0" />
+                                    <span><strong>圖片:</strong> {selectedPlace.wiki?.thumbnailUrl ? <img src={selectedPlace.wiki.thumbnailUrl} className="h-8 inline-block ml-2 rounded" alt="預覽" /> : "(無)"}</span>
+                                </label>
+                                <label className="flex items-start gap-2 cursor-pointer">
+                                    <input type="checkbox" checked={importFields.open} onChange={(e) => setImportFields({...importFields, open: e.target.checked})} className="mt-1 flex-shrink-0" />
+                                    <span><strong>營業時間:</strong> {selectedPlace.osm.extratags?.opening_hours || "(無)"}</span>
+                                </label>
+                                <label className="flex items-start gap-2 cursor-pointer">
+                                    <input type="checkbox" checked={importFields.loc} onChange={(e) => setImportFields({...importFields, loc: e.target.checked})} className="mt-1 flex-shrink-0" />
+                                    <span className="truncate flex-1 block"><strong>地址:</strong> {selectedPlace.osm.display_name}</span>
+                                </label>
+                                <label className="flex items-start gap-2 cursor-pointer">
+                                    <input type="checkbox" checked={importFields.map_url} onChange={(e) => setImportFields({...importFields, map_url: e.target.checked})} className="mt-1 flex-shrink-0" />
+                                    <span><strong>地圖網址:</strong> Apple Maps 連結</span>
+                                </label>
+                                <label className="flex items-start gap-2 cursor-pointer">
+                                    <input type="checkbox" checked={importFields.description} onChange={(e) => setImportFields({...importFields, description: e.target.checked})} className="mt-1 flex-shrink-0" />
+                                    <span className="line-clamp-2 flex-1 block"><strong>簡介:</strong> {selectedPlace.wiki?.extract || "(無)"}</span>
+                                </label>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={handleApplyImport}
+                                className="mt-4 w-full bg-primary text-primary-foreground py-2 rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
+                            >
+                                套用已勾選資料
+                            </button>
+                        </div>
+                    )}
+                </div>
+            )}
             {/* Type Selection */}
             <div>
                 <label

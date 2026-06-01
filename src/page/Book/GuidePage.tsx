@@ -224,14 +224,13 @@ const GuidePage = ({
 
         if (name.startsWith("info.")) {
             const field = name.split(".")[1];
-            const newFormPlace: PlaceVM = {
-                ...formPlace,
+            setFormPlace((prev) => ({
+                ...prev,
                 info: {
-                    ...formPlace.info,
+                    ...prev.info,
                     [field]: value,
                 },
-            };
-            setFormPlace(newFormPlace);
+            }));
         } else if (name === "map_url") {
             setFormPlace((prev) => ({ ...prev, [name]: value }));
 
