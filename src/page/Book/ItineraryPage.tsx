@@ -383,9 +383,9 @@ const ItineraryPage = ({
             className={`min-h-[100dvh] font-[Noto_Sans_TC] text-foreground flex flex-col ${
                 isPrinting
                     ? "h-auto break-after-page overflow-visible bg-white"
-                    : `${
+                    : `min-h-full ${
                           tripData?.theme_config?.bg || "bg-background"
-                      } pb-24 lg:pb-6 lg:h-[100dvh] lg:overflow-hidden`
+                      } dark:bg-background pb-24 lg:pb-6 lg:h-[100dvh] lg:overflow-hidden`
             }`}
         >
             {!isPrinting && (

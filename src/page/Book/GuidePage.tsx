@@ -328,12 +328,12 @@ const GuidePage = ({
 
     return (
         <div
-            className={`min-h-full font-[Noto_Sans_TC] text-gray-800 flex flex-col ${
+            className={`font-[Noto_Sans_TC] text-foreground flex flex-col ${
                 isPrinting
-                    ? "p-0 h-auto min-h-[50vh] break-after-page overflow-visible bg-white"
-                    : `${
-                          tripData?.theme_config?.bg || "bg-gray-100"
-                      } pb-6`
+                    ? "p-0 h-auto min-h-[50vh] break-after-page overflow-visible bg-white text-black"
+                    : `min-h-full ${
+                          tripData?.theme_config?.bg || "bg-background"
+                      } dark:bg-background pb-24`
             }`}
         >
             {!isPrinting && (

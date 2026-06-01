@@ -127,7 +127,7 @@ const TransactionListItem = ({
                     ? "py-2 border-b border-border"
                     : "group items-center p-4 border border-border hover:border-border transition-colors rounded-lg shadow-sm"
             }`}
-            title={isCreator ? "Edit" : "View"}
+            title={isCreator ? "編輯" : "檢視"}
         >
             <div className={`flex items-start`}>
                 {!isPrinting && (

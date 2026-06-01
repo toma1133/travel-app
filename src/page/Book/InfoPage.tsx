@@ -445,7 +445,7 @@ const InfoPage = ({
                     ? "h-auto min-h-[50vh] break-after-page overflow-visible bg-white text-black"
                     : `min-h-full text-foreground ${
                           tripData?.theme_config?.bg || "bg-background"
-                      } pb-24`
+                      } dark:bg-background pb-24`
             }`}
         >
             {!isPrinting && (
