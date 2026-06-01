@@ -48,7 +48,7 @@ const CoverPage = ({
                 <div className="pointer-events-auto">
                     <button
                         type="button"
-                        onClick={() => window.location.href = "/"}
+                        onClick={() => window.location.href = "/travel-app"}
                         className="text-white/90 hover:text-white bg-black/20 backdrop-blur-md p-3 rounded-full border border-white/10 shadow-sm transition-all hover:bg-black/40 hover:scale-105"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
