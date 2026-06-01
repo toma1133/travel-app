@@ -329,7 +329,7 @@ const ItineraryItem = ({
                                                     </p>
                                                 )}
                                             </div>
-                                            {!isPrinting && (
+                                            {!isPrinting && (isEditing || activity.linkId) && (
                                                 <div
                                                     className={`
                                                         flex items-center gap-1 p-0.5 bg-background/60 backdrop-blur-md rounded-full shadow-sm border border-border/50 shrink-0 ml-2 transition-all duration-300
