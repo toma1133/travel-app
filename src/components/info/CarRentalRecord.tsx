@@ -1,3 +1,4 @@
+import { useState } from "react";
 import moment from "moment";
 import { Pencil, Trash2 } from "lucide-react";
 import type { CarRentalRow } from "../../models/types/CarRentalTypes";
@@ -19,6 +20,8 @@ const CarRentalRecord = ({
     onDeleteBtnClick,
     onEditBtnClick,
 }: CarRentalRecordProps) => {
+    const [showActions, setShowActions] = useState(false);
+
     // --- 列印模式：規格表風格 ---
     if (isPrinting) {
         return (
@@ -84,6 +87,9 @@ const CarRentalRecord = ({
             className={`flex justify-between items-start pt-4 mb-4 last:mb-0 relative group ${
                 index !== 0 ? "border-t border-border" : ""
             }`}
+            onMouseEnter={() => setShowActions(true)}
+            onMouseLeave={() => setShowActions(false)}
+            onTouchStart={() => setShowActions(true)}
         >
             <div className="w-full text-sm px-2">
                 {/* ... (螢幕模式內容保持不變) ... */}
@@ -145,7 +151,7 @@ const CarRentalRecord = ({
             </div>
 
             {isEditing && (
-                <div className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-1 p-1 bg-background/60 backdrop-blur-md rounded-full shadow-md border border-border/50 lg:opacity-0 lg:group-hover:opacity-100 transition-all duration-300 z-10">
+                <div className={`absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-1 p-1 bg-background/60 backdrop-blur-md rounded-full shadow-md border border-border/50 transition-all duration-300 z-10 ${showActions ? "opacity-100" : "lg:opacity-0 lg:group-hover:opacity-100"}`}>
                     <button
                         onClick={() => onEditBtnClick(carRental)}
                         className="p-1.5 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"

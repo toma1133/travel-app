@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
     BookOpen,
     ChevronDown,
@@ -47,9 +48,11 @@ const ItineraryItem = ({
     onExpandedBtnToggle,
     onViewBtnClick,
 }: ItineraryItemProps) => {
-    // 取得主題顏色或預設值
     const accentColor = theme?.accent || "bg-rose-600";
     const primaryTextColor = theme?.primary || "text-gray-900";
+
+    const [showDayActions, setShowDayActions] = useState(false);
+    const [activeActivityIdx, setActiveActivityIdx] = useState<number | null>(null);
 
     return (
         <div
@@ -64,6 +67,9 @@ const ItineraryItem = ({
                 /* 列印: 減少底部間距 (mb-4)，避免分頁斷開 */
                 ${isPrinting ? "mb-4 break-inside-avoid" : ""}
             `}
+            onMouseEnter={() => setShowDayActions(true)}
+            onMouseLeave={() => setShowDayActions(false)}
+            onTouchStart={() => setShowDayActions(true)}
         >
             {/* --- Day Header (日期標頭) --- */}
             <div
@@ -169,7 +175,7 @@ const ItineraryItem = ({
                     </div>
                     {/* 編輯模式下的工具列 (只要 isEditing=true 就顯示，不需 Hover) */}
                     {!isPrinting && isEditing && (
-                        <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1 p-1 bg-background/60 backdrop-blur-md rounded-full shadow-md border border-border/50 lg:opacity-0 lg:group-hover:opacity-100 transition-all duration-300 z-10">
+                        <div className={`absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1 p-1 bg-background/60 backdrop-blur-md rounded-full shadow-md border border-border/50 transition-all duration-300 z-10 ${showDayActions ? "opacity-100" : "lg:opacity-0 lg:group-hover:opacity-100"}`}>
                             <button
                                 type="button"
                                 onClick={(e) => {
@@ -245,6 +251,9 @@ const ItineraryItem = ({
                                                 : "min-h-[40px]"
                                         }
                                     `}
+                                    onMouseEnter={() => setActiveActivityIdx(idx)}
+                                    onMouseLeave={() => setActiveActivityIdx(null)}
+                                    onTouchStart={() => setActiveActivityIdx(idx)}
                                 >
                                     {/* 1. 左側軌道 (Track Column) */}
                                     <div className="w-14 shrink-0 flex justify-center items-start z-10">
@@ -332,8 +341,8 @@ const ItineraryItem = ({
                                             {!isPrinting && (isEditing || activity.linkId) && (
                                                 <div
                                                     className={`
-                                                        flex items-center gap-1 p-0.5 bg-background/60 backdrop-blur-md rounded-full shadow-sm border border-border/50 shrink-0 ml-2 transition-all duration-300
-                                                        lg:opacity-0 lg:-translate-x-2 lg:group-hover/item:opacity-100 lg:group-hover/item:translate-x-0 z-10
+                                                        flex items-center gap-1 p-0.5 bg-background/60 backdrop-blur-md rounded-full shadow-sm border border-border/50 shrink-0 ml-2 transition-all duration-300 z-10
+                                                        ${activeActivityIdx === idx ? "opacity-100 translate-x-0" : "lg:opacity-0 lg:-translate-x-2 lg:group-hover/item:opacity-100 lg:group-hover/item:translate-x-0"}
                                                     `}
                                                 >
                                                     {!isEditing &&

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import moment from "moment";
 import { Clock, Pencil, Trash2, MoveRight } from "lucide-react";
 import type { FlightRow } from "../../models/types/FlightTypes";
@@ -19,6 +20,8 @@ const FlightRecord = ({
     onDeleteBtnClick,
     onEditBtnClick,
 }: FlightRecordProps) => {
+    const [showActions, setShowActions] = useState(false);
+
     const getDuration = () => {
         if (!flight.departure_time || !flight.arrival_time) return "";
         const start = moment(flight.departure_time, "HH:mm:ss");
@@ -99,6 +102,9 @@ const FlightRecord = ({
             className={`flex justify-between items-start pt-4 mb-4 last:mb-0 relative group ${
                 index !== 0 ? "border-t border-border" : ""
             }`}
+            onMouseEnter={() => setShowActions(true)}
+            onMouseLeave={() => setShowActions(false)}
+            onTouchStart={() => setShowActions(true)}
         >
             <div className="flex-1 pr-16">
                 <div className="font-bold text-foreground text-base flex items-center gap-2">
@@ -127,7 +133,7 @@ const FlightRecord = ({
             </div>
 
             {isEditing && (
-                <div className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-1 p-1 bg-background/60 backdrop-blur-md rounded-full shadow-md border border-border/50 lg:opacity-0 lg:group-hover:opacity-100 transition-all duration-300 z-10">
+                <div className={`absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-1 p-1 bg-background/60 backdrop-blur-md rounded-full shadow-md border border-border/50 transition-all duration-300 z-10 ${showActions ? "opacity-100" : "lg:opacity-0 lg:group-hover:opacity-100"}`}>
                     <button
                         onClick={() => onEditBtnClick(flight)}
                         className="p-1.5 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
