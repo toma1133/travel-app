@@ -75,6 +75,8 @@ export type Database = {
                     updated_at: string | null;
                     user_id: string;
                     split_with: string[] | null;
+                    is_payer_included: boolean | null;
+                    settled_with: string[] | null;
                 };
                 Insert: {
                     amount: number;
@@ -89,6 +91,8 @@ export type Database = {
                     updated_at?: string | null;
                     user_id: string;
                     split_with?: string[] | null;
+                    is_payer_included?: boolean | null;
+                    settled_with?: string[] | null;
                 };
                 Update: {
                     amount?: number;
@@ -103,6 +107,8 @@ export type Database = {
                     updated_at?: string | null;
                     user_id?: string;
                     split_with?: string[] | null;
+                    is_payer_included?: boolean | null;
+                    settled_with?: string[] | null;
                 };
                 Relationships: [
                     {

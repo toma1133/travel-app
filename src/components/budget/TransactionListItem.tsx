@@ -42,12 +42,18 @@ const TransactionListItem = ({
     onEditBtnClick,
 }: TransactionListItemProps) => {
     const isCreator = budgetItem.user_id === session?.user.id;
-    const members = [budgetItem.user_id, ...(budgetItem?.split_with ?? [])].map(
+    const payerName = tripMembers?.filter((tm) => tm.user_id === budgetItem.user_id)[0]?.profiles?.username ?? budgetItem.user_id;
+    let rawMembers = budgetItem.split_with ? [...budgetItem.split_with] : [];
+    if (budgetItem.is_payer_included !== false) {
+        rawMembers = [budgetItem.user_id, ...rawMembers];
+    }
+    rawMembers = Array.from(new Set(rawMembers));
+    const members = rawMembers.map(
         (userId) =>
             tripMembers?.filter((tm) => tm.user_id === userId)[0]?.profiles
                 ?.username ?? userId
     );
-    const perPerson = members
+    const perPerson = members.length > 0
         ? budgetItem.amount / members.length
         : budgetItem.amount;
 
@@ -71,8 +77,7 @@ const TransactionListItem = ({
                         <span className="font-bold text-sm truncate mr-2">
                             {budgetItem.title}
                         </span>
-                        {budgetItem.split_with &&
-                            budgetItem.split_with.length > 0 && (
+                        {(members.length > 1 || budgetItem.is_payer_included === false) && (
                                 <span className="text-[10px] truncate hidden sm:inline-block">
                                     <Users
                                         size={10}
@@ -81,7 +86,17 @@ const TransactionListItem = ({
                                     <span className="italic">
                                         {" "}
                                         {/* 修改：移除 print:italic */}
-                                        {members.join(", ")}
+                                        {rawMembers.map((uid, i) => {
+                                            const username = tripMembers?.filter((tm) => tm.user_id === uid)[0]?.profiles?.username ?? uid;
+                                            const isSettled = uid !== budgetItem.user_id && budgetItem.settled_with?.includes(uid);
+                                            return (
+                                                <span key={uid} className="inline-flex items-center">
+                                                    {username}
+                                                    {isSettled && <span className="ml-0.5 text-[8px]" title="已收回">✅</span>}
+                                                    {i < rawMembers.length - 1 && ", "}
+                                                </span>
+                                            );
+                                        })}
                                     </span>
                                 </span>
                             )}
@@ -90,7 +105,7 @@ const TransactionListItem = ({
 
                 {/* 4. 付款方式 */}
                 <div className="w-20 text-right text-[10px] font-medium truncate shrink-0">
-                    {isCreator ? paymentMethodName : `由 ${members[0]} 代付`}
+                    {isCreator ? paymentMethodName : `由 ${payerName} 代付`}
                 </div>
 
                 {/* 5. 金額 */}
@@ -187,12 +202,11 @@ const TransactionListItem = ({
                         >
                             {isCreator
                                 ? paymentMethodName
-                                : `由 ${members[0]} 代付`}
+                                : `由 ${payerName} 代付`}
                         </span>
                     </div>
                     {/* 分帳成員 (列印時可視需求決定是否顯示詳細名單，太長會佔空間) */}
-                    {budgetItem.split_with &&
-                        budgetItem.split_with.length > 0 && (
+                    {(members.length > 1 || budgetItem.is_payer_included === false) && (
                             <div className="text-[10px] text-muted-foreground flex items-center gap-1 print:text-muted-foreground print:mt-0.5">
                                 <Users className="w-3 h-3 print:hidden" />
                                 <span className="print:hidden">
@@ -200,7 +214,17 @@ const TransactionListItem = ({
                                 </span>{" "}
                                 {/* 列印時也許只顯示 (3人) 之類的簡稱 */}
                                 <span className="print:italic">
-                                    {members.join(", ")}
+                                    {rawMembers.map((uid, i) => {
+                                        const username = tripMembers?.filter((tm) => tm.user_id === uid)[0]?.profiles?.username ?? uid;
+                                        const isSettled = uid !== budgetItem.user_id && budgetItem.settled_with?.includes(uid);
+                                        return (
+                                            <span key={uid} className="inline-flex items-center">
+                                                {username}
+                                                {isSettled && <span className="ml-0.5 text-[8px]" title="已收回">✅</span>}
+                                                {i < rawMembers.length - 1 && ", "}
+                                            </span>
+                                        );
+                                    })}
                                 </span>
                             </div>
                         )}
@@ -209,7 +233,7 @@ const TransactionListItem = ({
                         <div className="text-[10px] text-muted-foreground mt-0.5 italic">
                             {isCreator
                                 ? paymentMethodName
-                                : `由 ${members[0]} 代付`}
+                                : `由 ${payerName} 代付`}
                         </div>
                     )}
                 </div>
@@ -234,7 +258,7 @@ const TransactionListItem = ({
                         ).toLocaleString()}
                     </div>
                 )}
-                {budgetItem.split_with && budgetItem.split_with.length > 0 && (
+                {(members.length > 1 || budgetItem.is_payer_included === false) && (
                     <div>
                         <div className="text-[10px] font-bold text-rose-500 mt-1">
                             每人: {budgetItem.currency_code}{" "}

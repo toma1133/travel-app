@@ -389,6 +389,8 @@ const BudgetPage = ({
             updated_at: null,
             user_id: session ? session.user.id : "",
             split_with: [],
+            is_payer_included: true,
+            settled_with: [],
         }),
         [tripId, session]
     );
@@ -432,7 +434,7 @@ const BudgetPage = ({
 
     const handleBudgetFormDataChange = (
         name: string,
-        value?: string | number
+        value?: string | number | boolean
     ) => {
         if (name == "split_with") {
             if (formBudget.split_with!.indexOf(value!.toString()) > -1) {
@@ -446,6 +448,21 @@ const BudgetPage = ({
                 setFormBudget((prev) => ({
                     ...prev,
                     split_with: [...prev.split_with!, value!.toString()],
+                }));
+            }
+        } else if (name == "settled_with") {
+            const currentSettled = formBudget.settled_with || [];
+            if (currentSettled.indexOf(value!.toString()) > -1) {
+                setFormBudget((prev) => ({
+                    ...prev,
+                    settled_with: prev.settled_with!.filter(
+                        (x) => x !== value!.toString()
+                    ),
+                }));
+            } else {
+                setFormBudget((prev) => ({
+                    ...prev,
+                    settled_with: [...currentSettled, value!.toString()],
                 }));
             }
         } else {
@@ -493,8 +510,8 @@ const BudgetPage = ({
     const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
     const initialFilterState: TransactionFilterType = useMemo(
         () => ({
-            category: "all",
-            payment_method_id: "all",
+            categories: [],
+            payment_method_ids: [],
             start_date: moment().format("YYYY-MM-DD"),
             end_date: moment().format("YYYY-MM-DD"),
         }),
@@ -505,12 +522,12 @@ const BudgetPage = ({
     const filteredBudgets = useMemo(() => {
         return budgets?.filter((ex) => {
             const matchCategory =
-                filters.category !== "all"
-                    ? ex.category === filters.category
+                filters.categories.length > 0
+                    ? filters.categories.includes(ex.category)
                     : true;
             const matchMethod =
-                filters.payment_method_id !== "all"
-                    ? ex.payment_method_id === filters.payment_method_id
+                filters.payment_method_ids.length > 0
+                    ? filters.payment_method_ids.includes(ex.payment_method_id)
                     : true;
             return matchCategory && matchMethod;
         });
@@ -518,13 +535,13 @@ const BudgetPage = ({
     const filteredPayments = useMemo(() => {
         return paymentMethods?.filter((ex) => {
             const matchMethod =
-                filters.payment_method_id !== "all"
-                    ? ex.id === filters.payment_method_id
+                filters.payment_method_ids.length > 0
+                    ? filters.payment_method_ids.includes(ex.id)
                     : true;
             return matchMethod;
         });
     }, [paymentMethods, filters]);
-    const handleFilterChange = (name: string, value?: string | number) => {
+    const handleFilterChange = (name: string, value?: string | number | string[]) => {
         setFormFilter((prev) => ({ ...prev, [name]: value }));
     };
     const handleFilterModalOpenBtnClick = () => {
@@ -636,14 +653,21 @@ const BudgetPage = ({
                             >
                                 <Wallet size={16} />
                             </button>
-                            <button
-                                type="button"
-                                onClick={handleFilterModalOpenBtnClick}
-                                className={`flex items-center text-sm font-medium bg-card text-blue-500 border border-border/50 px-3 py-1.5 rounded-lg shadow-md hover:bg-muted/50 transition-colors`}
-                                title="交易過濾"
-                            >
-                                <Filter size={16} />
-                            </button>
+                            {(() => {
+                                const hasFilters = filters.categories.length > 0 || filters.payment_method_ids.length > 0;
+                                return (
+                                    <>
+                                        <button
+                                            type="button"
+                                            onClick={handleFilterModalOpenBtnClick}
+                                            className={`flex items-center text-sm font-medium bg-card text-blue-500 border border-border/50 px-3 py-1.5 rounded-lg shadow-md hover:bg-muted/50 transition-colors ${hasFilters ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}
+                                            title="交易過濾"
+                                        >
+                                            <Filter size={16} fill={hasFilters ? "currentColor" : "none"} />
+                                        </button>
+                                    </>
+                                );
+                            })()}
                             <button
                                 type="button"
                                 onClick={handleSettingModalOpenBtnClick}
@@ -741,7 +765,7 @@ const BudgetPage = ({
             )}
             {isSplitInfoModalOpen && (
                 <SplitInfoModal
-                    budgets={budgets}
+                    budgets={filteredBudgets}
                     profiles={profiles}
                     session={session}
                     setting={currentSetting}

@@ -46,15 +46,21 @@ const BudgetChart = ({
     }>({});
 
     useEffect(() => {
+        const getAmountPortion = (item: BudgetRow) => {
+            let consumerCount = item.split_with ? item.split_with.length : 0;
+            if (item.is_payer_included !== false) {
+                consumerCount += 1;
+            }
+            return consumerCount > 0 ? item.amount / consumerCount : item.amount;
+        };
+
         setTotalSpentHome(
             Array.isArray(budgetItems)
                 ? budgetItems.reduce(
                       (sum, item) =>
                           sum +
                           convertToHome(
-                              item.split_with?.length! > 0
-                                  ? item.amount / (item.split_with?.length! + 1)
-                                  : item.amount,
+                              getAmountPortion(item),
                               item.currency_code,
                               setting?.homeCurrency,
                               setting?.exchangeRate
@@ -68,9 +74,7 @@ const BudgetChart = ({
             setCategoryStats(
                 budgetItems.reduce((acc: { [key: string]: number }, item) => {
                     const homeAmount = convertToHome(
-                        item.split_with?.length! > 0
-                            ? item.amount / (item.split_with?.length! + 1)
-                            : item.amount,
+                        getAmountPortion(item),
                         item.currency_code,
                         setting?.homeCurrency,
                         setting?.exchangeRate

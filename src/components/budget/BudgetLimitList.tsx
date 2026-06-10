@@ -49,9 +49,7 @@ const BudgetLimitList = ({
                 const pm = paymentMethods?.find((p) => p.id === item.payment_method_id);
                 if (pm && localUsage[item.payment_method_id] !== undefined) {
                     const targetCurrency = pm.currency_code || setting?.homeCurrency;
-                    let baseAmount = item.split_with?.length! > 0 
-                        ? item.amount / (item.split_with?.length! + 1)
-                        : item.amount;
+                    let baseAmount = item.amount;
                     let amountToAdd = baseAmount;
 
                     let itemCurrency = item.currency_code;

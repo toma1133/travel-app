@@ -16,7 +16,7 @@ type TransactionFilterModalProps = {
     paymentMethods?: PaymentMethodRow[];
     onCancelBtnClick: MouseEventHandler<HTMLButtonElement>;
     onCloseBtnClick: MouseEventHandler<HTMLButtonElement>;
-    onFormDataChange: (name: string, value: string | number) => void;
+    onFormDataChange: (name: string, value: string | number | string[]) => void;
     onFormSubmit: FormEventHandler<HTMLFormElement>;
 };
 
@@ -51,9 +51,9 @@ const TransactionFilterModal = ({
                 <div className="flex flex-wrap gap-2">
                     <button
                         type="button"
-                        onClick={() => onFormDataChange("category", "all")}
+                        onClick={() => onFormDataChange("categories", [])}
                         className={`px-4 py-2 rounded-full text-sm font-bold transition-all border border-indigo-100 ${
-                            formData.category === "all"
+                            formData.categories.length === 0
                                 ? "bg-indigo-600 text-primary-foreground shadow-sm border-indigo-600"
                                 : "bg-card text-indigo-400"
                         }`}
@@ -62,18 +62,19 @@ const TransactionFilterModal = ({
                     </button>
                     {Array.isArray(categories) &&
                         categories.map((category, i) => {
+                            const isSelected = formData.categories.includes(category.id);
                             return (
                                 <button
                                     key={i}
                                     type="button"
-                                    onClick={() =>
-                                        onFormDataChange(
-                                            "category",
-                                            category.id
-                                        )
-                                    }
+                                    onClick={() => {
+                                        const newCategories = isSelected
+                                            ? formData.categories.filter(id => id !== category.id)
+                                            : [...formData.categories, category.id];
+                                        onFormDataChange("categories", newCategories);
+                                    }}
                                     className={`px-4 py-2 rounded-full text-sm font-bold transition-all border border-indigo-100 ${
-                                        formData.category === category.id
+                                        isSelected
                                             ? "bg-indigo-600 text-primary-foreground shadow-sm border-indigo-600"
                                             : "bg-card text-indigo-400"
                                     }`}
@@ -96,10 +97,10 @@ const TransactionFilterModal = ({
                     <button
                         type="button"
                         onClick={() =>
-                            onFormDataChange("payment_method_id", "all")
+                            onFormDataChange("payment_method_ids", [])
                         }
                         className={`px-4 py-2 rounded-full text-sm font-bold transition-all border border-indigo-100 ${
-                            formData.payment_method_id === "all"
+                            formData.payment_method_ids.length === 0
                                 ? "bg-indigo-600 text-primary-foreground shadow-sm border-indigo-600"
                                 : "bg-card text-indigo-400"
                         }`}
@@ -108,19 +109,19 @@ const TransactionFilterModal = ({
                     </button>
                     {Array.isArray(paymentMethods) &&
                         paymentMethods.map((paymentMethod, i) => {
+                            const isSelected = formData.payment_method_ids.includes(paymentMethod.id);
                             return (
                                 <button
                                     key={i}
                                     type="button"
-                                    onClick={() =>
-                                        onFormDataChange(
-                                            "payment_method_id",
-                                            paymentMethod.id
-                                        )
-                                    }
+                                    onClick={() => {
+                                        const newIds = isSelected
+                                            ? formData.payment_method_ids.filter(id => id !== paymentMethod.id)
+                                            : [...formData.payment_method_ids, paymentMethod.id];
+                                        onFormDataChange("payment_method_ids", newIds);
+                                    }}
                                     className={`px-4 py-2 rounded-full text-sm font-bold transition-all border border-indigo-100 ${
-                                        formData.payment_method_id ===
-                                        paymentMethod.id
+                                        isSelected
                                             ? "bg-indigo-600 text-primary-foreground shadow-sm border-indigo-600"
                                             : "bg-card text-indigo-400"
                                     }`}

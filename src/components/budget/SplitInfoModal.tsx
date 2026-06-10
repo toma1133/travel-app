@@ -52,9 +52,10 @@ const SplitInfoModal = ({
                 setting?.homeCurrency,
                 setting?.exchangeRate
             );
-            const splitList = [exp.user_id].concat(
-                exp.split_with ? [...exp.split_with] : []
-            );
+            let splitList = exp.split_with ? [...exp.split_with] : [];
+            if (exp.is_payer_included !== false) {
+                splitList.push(exp.user_id);
+            }
             const perPersonAmount =
                 splitList.length > 0
                     ? amountInBase / splitList.length
@@ -67,6 +68,12 @@ const SplitInfoModal = ({
             splitList.forEach((personId) => {
                 if (balances[personId] !== undefined) {
                     balances[personId] -= perPersonAmount;
+                    
+                    // Adjust for settled users
+                    if (personId !== exp.user_id && exp.settled_with?.includes(personId)) {
+                        balances[personId] += perPersonAmount; // Cancel out their debt
+                        balances[exp.user_id] -= perPersonAmount; // Cancel out payer's receivable
+                    }
                 }
             });
         });

@@ -1,4 +1,4 @@
-import { ChangeEventHandler, FormEventHandler, MouseEventHandler } from "react";
+import { ChangeEventHandler, FormEventHandler, MouseEventHandler, useState } from "react";
 import { Banknote, CreditCard, LucideIcon } from "lucide-react";
 import FormModal from "../common/FormModal";
 import type { BudgetRow } from "../../models/types/BudgetTypes";
@@ -42,6 +42,7 @@ const TransactionModal = ({
     onFormInputChange,
     onFormSubmit,
 }: TransactionModalProps) => {
+    const [activeTab, setActiveTab] = useState<"basic" | "split">("basic");
     return (
         <FormModal
             customAction={
@@ -65,7 +66,34 @@ const TransactionModal = ({
             onCloseBtnClick={onCloseBtnClick}
             onSubmit={onFormSubmit}
         >
-            {/* Title */}
+            <div className="flex border-b border-border mb-4">
+                <button
+                    type="button"
+                    onClick={() => setActiveTab("basic")}
+                    className={`flex-1 pb-2 text-center text-sm font-bold transition-all ${
+                        activeTab === "basic"
+                            ? "border-b-2 border-primary text-primary"
+                            : "text-muted-foreground hover:text-foreground"
+                    }`}
+                >
+                    基本記帳
+                </button>
+                <button
+                    type="button"
+                    onClick={() => setActiveTab("split")}
+                    className={`flex-1 pb-2 text-center text-sm font-bold transition-all ${
+                        activeTab === "split"
+                            ? "border-b-2 border-primary text-primary"
+                            : "text-muted-foreground hover:text-foreground"
+                    }`}
+                >
+                    分帳設定
+                </button>
+            </div>
+
+            {/* Basic Tab */}
+            <div className={`flex flex-col gap-4 ${activeTab !== "basic" ? "hidden" : ""}`}>
+                {/* Title */}
             <div>
                 <label
                     htmlFor="title"
@@ -157,52 +185,7 @@ const TransactionModal = ({
                         ))}
                 </select>
             </div>
-            {/* Split with */}
-            <div>
-                <label
-                    htmlFor="split_with"
-                    className="font-bold uppercase mb-1 flex items-center justify-between text-muted-foreground text-xs"
-                >
-                    分帳夥伴
-                    <span className="text-indigo-500">
-                        {formData.split_with?.length} 人分帳
-                    </span>
-                </label>
-                <div className="flex flex-wrap gap-2">
-                    {Array.isArray(tripMembers) &&
-                        tripMembers
-                            .filter(
-                                (tripMember) =>
-                                    tripMember.user_id !== formData.user_id
-                            )
-                            .map((tripMember, i) => {
-                                const isSelected =
-                                    formData.split_with?.includes(
-                                        tripMember.user_id
-                                    );
 
-                                return (
-                                    <button
-                                        key={i}
-                                        type="button"
-                                        onClick={() =>
-                                            onFormDataChange(
-                                                "split_with",
-                                                tripMember.user_id
-                                            )
-                                        }
-                                        className={`px-4 py-2 rounded-full text-sm font-bold transition-all border border-indigo-100 ${
-                                            isSelected
-                                                ? "bg-indigo-600 text-primary-foreground shadow-sm border-indigo-600"
-                                                : "bg-card text-indigo-400"
-                                        }`}
-                                    >
-                                        {tripMember.profiles?.username}
-                                    </button>
-                                );
-                            })}
-                </div>
-            </div>
             {/* Category */}
             <div>
                 <label
@@ -221,7 +204,7 @@ const TransactionModal = ({
                                         ${
                                             formData.category === cat.id
                                                 ? "bg-primary text-primary-foreground"
-                                                : "bg-muted text-muted-foreground hover:bg-muted-foreground"
+                                                : "bg-card text-muted-foreground hover:bg-muted-foreground"
                                         }
                                     `}
                             title={cat.name}
@@ -248,6 +231,93 @@ const TransactionModal = ({
                     className="w-full bg-transparent border-b border-border py-2 outline-none font-[Noto_Sans_TC] dark:[color-scheme:dark]"
                     placeholder="日期"
                 />
+            </div>
+            </div>
+
+            {/* Split Tab */}
+            <div className={`flex flex-col gap-4 ${activeTab !== "split" ? "hidden" : ""}`}>
+                {/* Split with */}
+            <div>
+                <label
+                    htmlFor="split_with"
+                    className="font-bold uppercase mb-1 flex items-center justify-between text-muted-foreground text-xs"
+                >
+                    分帳夥伴
+                    <span className="text-indigo-500">
+                        {formData.split_with?.length} 人分帳
+                    </span>
+                </label>
+                <div className="flex flex-wrap gap-2">
+                    <button
+                        type="button"
+                        onClick={() => onFormDataChange("is_payer_included", formData.is_payer_included === false ? true : false)}
+                        className={`px-4 py-2 rounded-full text-sm font-bold transition-all border border-indigo-100 ${
+                            formData.is_payer_included !== false
+                                ? "bg-indigo-600 text-primary-foreground shadow-sm border-indigo-600"
+                                : "bg-card text-indigo-400"
+                        }`}
+                    >
+                        自己 (參與分帳)
+                    </button>
+                    {Array.isArray(tripMembers) &&
+                        tripMembers
+                            .filter(
+                                (tripMember) =>
+                                    tripMember.user_id !== formData.user_id
+                            )
+                            .map((tripMember, i) => {
+                                const isSelected = formData.split_with?.includes(tripMember.user_id) || false;
+
+                                return (
+                                    <button
+                                        key={i}
+                                        type="button"
+                                        onClick={() => onFormDataChange("split_with", tripMember.user_id)}
+                                        className={`px-4 py-2 rounded-full text-sm font-bold transition-all border border-indigo-100 ${
+                                            isSelected
+                                                ? "bg-indigo-600 text-primary-foreground shadow-sm border-indigo-600"
+                                                : "bg-card text-indigo-400"
+                                        }`}
+                                    >
+                                        {tripMember.profiles?.username}
+                                    </button>
+                                );
+                            })}
+                </div>
+
+                {mode === "edit" && formData.split_with && formData.split_with.length > 0 && (
+                    <div className="mt-4 pt-3 border-t border-border">
+                        <label className="font-bold uppercase mb-2 flex items-center justify-between text-muted-foreground text-xs">
+                            收款狀態 (代墊收回)
+                            <span className="text-emerald-500">
+                                {formData.settled_with?.length || 0} 人已付
+                            </span>
+                        </label>
+                        <div className="flex flex-col gap-2">
+                            {Array.isArray(tripMembers) &&
+                                tripMembers
+                                    .filter((tripMember) => formData.split_with?.includes(tripMember.user_id))
+                                    .map((tripMember, i) => {
+                                        const isSettled = formData.settled_with?.includes(tripMember.user_id) || false;
+                                        return (
+                                            <div key={i} className="flex items-center gap-2">
+                                                <input
+                                                    type="checkbox"
+                                                    id={`settled_${tripMember.user_id}`}
+                                                    checked={isSettled}
+                                                    onChange={() => onFormDataChange("settled_with", tripMember.user_id)}
+                                                    className="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500"
+                                                />
+                                                <label htmlFor={`settled_${tripMember.user_id}`} className="text-sm text-foreground">
+                                                    已向 <span className="font-bold">{tripMember.profiles?.username}</span> 收回
+                                                </label>
+                                            </div>
+                                        );
+                                    })}
+                        </div>
+                    </div>
+                )}
+            </div>
             </div>
         </FormModal>
     );
