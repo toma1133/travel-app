@@ -158,7 +158,7 @@ const PlaceModal = ({
                             onChange={(e) => setSearchTerm(e.target.value)}
                             onKeyDown={(e) => { if (e.key === "Enter") e.preventDefault(); }}
                             placeholder="輸入地點名稱搜尋..."
-                            className="w-full bg-muted/50 border border-border rounded-lg py-2 pl-3 pr-10 outline-none focus:border-primary text-sm"
+                            className="w-full bg-muted/50 border border-border rounded-lg py-2 pl-3 pr-10 outline-none focus:border-primary text-base"
                         />
                         <div className="absolute right-3 top-2.5 text-muted-foreground">
                             {isSearching ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />}

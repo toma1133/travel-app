@@ -1,4 +1,4 @@
-import { ChangeEventHandler, FormEventHandler, MouseEventHandler, useState } from "react";
+import { ChangeEventHandler, FormEventHandler, MouseEventHandler, useState, useEffect } from "react";
 import { Banknote, CreditCard, LucideIcon } from "lucide-react";
 import FormModal from "../common/FormModal";
 import type { BudgetRow } from "../../models/types/BudgetTypes";
@@ -43,6 +43,51 @@ const TransactionModal = ({
     onFormSubmit,
 }: TransactionModalProps) => {
     const [activeTab, setActiveTab] = useState<"basic" | "split">("basic");
+
+    const [displayAmount, setDisplayAmount] = useState<string>(
+        formData.amount ? formData.amount.toLocaleString("en-US") : ""
+    );
+
+    useEffect(() => {
+        const numDisplay = Number(displayAmount.replace(/,/g, ''));
+        if (numDisplay !== formData.amount && !isNaN(formData.amount)) {
+            setDisplayAmount(formData.amount ? formData.amount.toLocaleString("en-US") : "");
+        }
+    }, [formData.amount]);
+
+    const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        let rawValue = e.target.value.replace(/[^0-9.,]/g, '');
+        const cleanValue = rawValue.replace(/,/g, '');
+        
+        if (cleanValue === '') {
+            setDisplayAmount('');
+            onFormDataChange("amount", 0);
+            return;
+        }
+
+        const dotCount = (cleanValue.match(/\./g) || []).length;
+        if (dotCount > 1) return;
+
+        let parsedStr = cleanValue;
+        if (parsedStr.length > 1 && parsedStr.startsWith('0') && !parsedStr.startsWith('0.')) {
+            parsedStr = parsedStr.replace(/^0+/, '');
+            if (parsedStr === '') parsedStr = '0';
+        }
+        if (parsedStr.startsWith('.')) {
+            parsedStr = '0' + parsedStr;
+        }
+
+        const parts = parsedStr.split('.');
+        const integerPart = parts[0];
+        const decimalPart = parts.length > 1 ? '.' + parts[1] : '';
+
+        const formattedInteger = integerPart ? parseInt(integerPart, 10).toLocaleString("en-US") : '';
+        const finalDisplay = formattedInteger + decimalPart;
+
+        setDisplayAmount(finalDisplay);
+        onFormDataChange("amount", Number(parsedStr));
+    };
+
     return (
         <FormModal
             customAction={
@@ -122,12 +167,11 @@ const TransactionModal = ({
                 <div className="flex gap-2">
                     <div className="relative flex-1">
                         <input
-                            type="number"
+                            type="text"
                             name="amount"
                             inputMode="decimal"
-                            value={formData.amount}
-                            step="1"
-                            onChange={onFormInputChange}
+                            value={displayAmount}
+                            onChange={handleAmountChange}
                             onFocus={(e) => {
                                 e.currentTarget.select();
                             }}
