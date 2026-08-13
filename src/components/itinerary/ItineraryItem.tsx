@@ -6,12 +6,14 @@ import {
     Pencil,
     Plus,
     Trash2,
+    Hourglass,
 } from "lucide-react";
 import type {
     ItineraryActivitiy,
     ItineraryVM,
 } from "../../models/types/ItineraryTypes";
 import type { TripThemeConf } from "../../models/types/TripTypes";
+import { getCategoryIcon, getTransitIcon, DEFAULT_CATEGORY_COLORS } from "../../constants/Categories";
 
 type ItineraryItemProps = {
     itinerary: ItineraryVM;
@@ -255,26 +257,31 @@ const ItineraryItem = ({
                                     onMouseLeave={() => setActiveActivityIdx(null)}
                                     onTouchStart={() => setActiveActivityIdx(idx)}
                                 >
-                                    {/* 1. 左側軌道 (Track Column) */}
-                                    <div className="w-14 shrink-0 flex justify-center items-start z-10">
-                                        <div
-                                            className={`
-                                                rounded-full border-[3px] box-content
-                                                ${
-                                                    !isPrinting
-                                                        ? "w-3.5 h-3.5 border-white shadow-sm"
-                                                        : "w-2.5 h-2.5 border-white" // 列印時圓點稍微縮小
-                                                }
-                                            `}
-                                            style={{
-                                                backgroundColor:
-                                                    theme?.categoryColor[
-                                                        activity.type
-                                                    ] || "#CBD5E1",
-                                                printColorAdjust: "exact",
-                                                WebkitPrintColorAdjust: "exact",
-                                            }}
-                                        ></div>
+                                    {/* 1. 左側軌道 (Track Column with Lucide Font Icon) */}
+                                    <div className="w-14 shrink-0 flex justify-center items-start z-10 pt-0.5">
+                                        {(() => {
+                                            const IconComp = getCategoryIcon(activity.type);
+                                            const bgColor =
+                                                theme?.categoryColor?.[activity.type] ||
+                                                DEFAULT_CATEGORY_COLORS[activity.type] ||
+                                                "#6b7280";
+
+                                            return (
+                                                <div
+                                                    className={`
+                                                        flex items-center justify-center rounded-full shadow-md text-white shrink-0
+                                                        ${
+                                                            !isPrinting
+                                                                ? "w-7 h-7 ring-2 ring-background"
+                                                                : "w-5 h-5 bg-black text-white"
+                                                        }
+                                                    `}
+                                                    style={{ backgroundColor: bgColor }}
+                                                >
+                                                    <IconComp size={isPrinting ? 11 : 14} className="text-white drop-shadow-sm" />
+                                                </div>
+                                            );
+                                        })()}
                                     </div>
 
                                     {/* 2. 右側內容 (Content Column) */}
@@ -287,21 +294,19 @@ const ItineraryItem = ({
                                                     : ""
                                             }
                                         `}
-
                                     >
                                         <div className="flex items-start gap-3 w-full">
                                             {/* 時間 */}
-                                            <div className="flex items-center gap-1.5 shrink-0">
+                                            <div className="flex items-center shrink-0">
                                                 <span
                                                     className={`
-                                                    font-mono font-bold 
-                                                    /* 列印時時間字體縮小 */
-                                                    ${
-                                                        isPrinting
-                                                            ? "text-xs text-black"
-                                                            : "text-sm text-muted-foreground group-hover/item:text-foreground"
-                                                    }
-                                                `}
+                                                        font-mono font-bold 
+                                                        ${
+                                                            isPrinting
+                                                                ? "text-xs text-black"
+                                                                : "text-sm text-muted-foreground group-hover/item:text-foreground"
+                                                        }
+                                                    `}
                                                 >
                                                     {activity.time}
                                                 </span>
@@ -309,33 +314,71 @@ const ItineraryItem = ({
 
                                             {/* 標題與描述 */}
                                             <div className="flex-1 min-w-0">
-                                                <h4
-                                                    className={`
-                                                    font-bold leading-tight
-                                                    ${
-                                                        isPrinting
-                                                            ? "text-sm text-black"
-                                                            : "text-sm text-foreground"
-                                                    }
-                                                `}
-                                                >
-                                                    {activity.title}
-                                                </h4>
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    <h4
+                                                        className={`
+                                                            font-bold leading-tight
+                                                            ${
+                                                                isPrinting
+                                                                    ? "text-sm text-black"
+                                                                    : "text-sm text-foreground"
+                                                            }
+                                                        `}
+                                                    >
+                                                        {activity.title}
+                                                    </h4>
+                                                    {activity.duration && (
+                                                        <span
+                                                            className={`
+                                                                inline-flex items-center gap-0.5 text-[10px] font-semibold rounded-full
+                                                                ${
+                                                                    isPrinting
+                                                                        ? "text-gray-700 bg-gray-100 border border-gray-300 px-1.5 py-0"
+                                                                        : "text-primary/80 bg-primary/10 px-2 py-0.5"
+                                                                }
+                                                            `}
+                                                        >
+                                                            <Hourglass size={10} />
+                                                            {activity.duration}
+                                                        </span>
+                                                    )}
+                                                </div>
 
                                                 {activity.desc && (
                                                     <p
                                                         className={`
-                                                        leading-relaxed whitespace-pre-wrap
-                                                        /* 列印時描述縮小且行距變緊 */
-                                                        ${
-                                                            isPrinting
-                                                                ? "text-[10px] mt-0.5 text-gray-700"
-                                                                : "text-xs mt-1 text-muted-foreground"
-                                                        }
-                                                    `}
+                                                            leading-relaxed whitespace-pre-wrap
+                                                            ${
+                                                                isPrinting
+                                                                    ? "text-[10px] mt-0.5 text-gray-700"
+                                                                    : "text-xs mt-1 text-muted-foreground"
+                                                            }
+                                                        `}
                                                     >
                                                         {activity.desc}
                                                     </p>
+                                                )}
+
+                                                {/* 移動/路程時間節點 (Transit Connector Card) */}
+                                                {(activity.transitMode && activity.transitMode !== "none" || activity.transitDuration) && (
+                                                    <div
+                                                        className={`
+                                                            mt-2 inline-flex items-center gap-1.5 rounded-lg text-[11px] font-medium
+                                                            ${
+                                                                isPrinting
+                                                                    ? "px-2 py-0.5 bg-gray-100 border border-gray-300 text-black text-[9px]"
+                                                                    : "px-2.5 py-1 bg-accent/40 border border-border/50 text-muted-foreground"
+                                                            }
+                                                        `}
+                                                    >
+                                                        {(() => {
+                                                            const TransitIconComp = getTransitIcon(activity.transitMode);
+                                                            return <TransitIconComp size={isPrinting ? 11 : 13} className={`${isPrinting ? "text-black" : "text-primary"} shrink-0`} />;
+                                                        })()}
+                                                        <span>
+                                                            {activity.transitDuration ? `預估 ${activity.transitDuration}` : "前往下個景點"}
+                                                        </span>
+                                                    </div>
                                                 )}
                                             </div>
                                             {!isPrinting && (isEditing || activity.linkId) && (

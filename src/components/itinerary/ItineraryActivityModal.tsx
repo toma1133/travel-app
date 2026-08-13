@@ -1,34 +1,30 @@
 import {
     ChangeEventHandler,
     ChangeEvent,
-    CSSProperties,
     FormEventHandler,
     MouseEventHandler,
 } from "react";
-import { Clock, Tag, X } from "lucide-react";
+import { Clock, Tag, Hourglass, Navigation } from "lucide-react";
 import type {
     ItineraryActivitiy,
     ItineraryVM,
 } from "../../models/types/ItineraryTypes";
 import type { TripThemeConf } from "../../models/types/TripTypes";
 import type { PlaceVM } from "../../models/types/PlaceTypes";
+import { CATEGORY_DEFINITIONS, TRANSIT_MODES } from "../../constants/Categories";
+import { CategoryCustomSelect } from "../common/CategoryCustomSelect";
 import FormModal from "../common/FormModal";
 import PlaceLinkAutocomplete from "../common/PlaceLinkAutoComplete";
-
-type ItineraryCategory = {
-    id: string;
-    label: string;
-};
 
 type ItineraryActivityModalProps = {
     formData: ItineraryActivitiy;
     itinerary: ItineraryVM | null;
-    itineraryCategory: ItineraryCategory[];
+    itineraryCategory: any[];
     mode: string;
     theme: TripThemeConf | null;
     onCloseBtnClick: MouseEventHandler<HTMLButtonElement>;
     onFormInputChange: ChangeEventHandler<
-        HTMLInputElement | HTMLTextAreaElement
+        HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
     >;
     onFormSubmit: FormEventHandler<HTMLFormElement>;
 };
@@ -36,7 +32,6 @@ type ItineraryActivityModalProps = {
 const ItineraryActivityModal = ({
     formData,
     itinerary,
-    itineraryCategory,
     mode,
     theme,
     onCloseBtnClick,
@@ -76,23 +71,41 @@ const ItineraryActivityModal = ({
             onSubmit={onFormSubmit}
         >
             {/* Time and Title */}
-            <div>
-                <label
-                    htmlFor="time"
-                    className="block font-bold uppercase mb-1 flex items-center text-muted-foreground text-xs"
-                >
-                    <Clock size={12} className="mr-1" /> 時間 *
-                </label>
-                <input
-                    required
-                    type="time"
-                    name="time"
-                    value={formData.time}
-                    onChange={onFormInputChange}
-                    placeholder="例如: 09:30"
-                    className="w-full bg-transparent text-foreground border-b border-border py-2 outline-none font-mono text-base dark:[color-scheme:dark]"
-                />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label
+                        htmlFor="time"
+                        className="block font-bold uppercase mb-1 flex items-center text-muted-foreground text-xs"
+                    >
+                        <Clock size={12} className="mr-1" /> 時間 *
+                    </label>
+                    <input
+                        required
+                        type="time"
+                        name="time"
+                        value={formData.time}
+                        onChange={onFormInputChange}
+                        placeholder="例如: 09:30"
+                        className="w-full bg-transparent text-foreground border-b border-border py-2 outline-none font-mono text-base dark:[color-scheme:dark]"
+                    />
+                </div>
+                <div>
+                    <label
+                        htmlFor="duration"
+                        className="block font-bold uppercase mb-1 flex items-center text-muted-foreground text-xs"
+                    >
+                        <Hourglass size={12} className="mr-1" /> 停留時間 (選填)
+                    </label>
+                    <input
+                        name="duration"
+                        value={formData.duration || ""}
+                        onChange={onFormInputChange}
+                        placeholder="例如：1.5小時, 45分鐘"
+                        className="w-full bg-transparent text-foreground border-b border-border py-2 outline-none font-[Noto_Sans_TC] text-base"
+                    />
+                </div>
             </div>
+
             <div>
                 <label
                     htmlFor="title"
@@ -105,36 +118,62 @@ const ItineraryActivityModal = ({
                     name="title"
                     value={formData.title}
                     onChange={onFormInputChange}
-                    placeholder="例如：從飯店出發"
+                    placeholder="例如：清水寺"
                     className="w-full bg-transparent text-foreground border-b border-border py-2 outline-none font-[Noto_Sans_TC] text-base"
                 />
             </div>
-            {/* Type Selection */}
-            <div>
-                <label
-                    htmlFor="type"
-                    className="block font-bold uppercase mb-1 flex items-center text-muted-foreground text-xs"
-                >
-                    類型 *
+
+            {/* Category Type Selection with Custom Icons */}
+            <CategoryCustomSelect
+                label="活動類型 *"
+                value={formData.type || "sight"}
+                onChange={(newTypeId) => {
+                    const event = {
+                        target: { name: "type", value: newTypeId },
+                        currentTarget: { name: "type", value: newTypeId },
+                    } as unknown as ChangeEvent<HTMLInputElement>;
+                    onFormInputChange(event);
+                }}
+            />
+
+            {/* Transit Section (路程與交通) */}
+            <div className="p-3 rounded-xl bg-accent/30 border border-border/50 space-y-3">
+                <label className="block font-bold uppercase flex items-center text-muted-foreground text-xs">
+                    <Navigation size={12} className="mr-1 text-primary" /> 前往下一站的交通與車程 (選填)
                 </label>
-                <select
-                    required
-                    name="type"
-                    value={formData.type}
-                    onChange={onFormInputChange as any}
-                    className="w-full bg-transparent text-foreground border-b border-border py-2 outline-none font-[Noto_Sans_TC] text-base cursor-pointer"
-                >
-                    {itineraryCategory.map((category) => (
-                        <option
-                            key={category.id}
-                            value={category.id}
-                            className="bg-background text-foreground"
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <span className="block text-[10px] font-semibold text-muted-foreground mb-1">
+                            交通工具
+                        </span>
+                        <select
+                            name="transitMode"
+                            value={formData.transitMode || "none"}
+                            onChange={onFormInputChange as any}
+                            className="w-full bg-background border border-input rounded-lg py-1.5 px-2 text-xs text-foreground outline-none cursor-pointer"
                         >
-                            {category.label}
-                        </option>
-                    ))}
-                </select>
+                            {TRANSIT_MODES.map((mode) => (
+                                <option key={mode.id} value={mode.id}>
+                                    {mode.label}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                    <div>
+                        <span className="block text-[10px] font-semibold text-muted-foreground mb-1">
+                            預估路程時間
+                        </span>
+                        <input
+                            name="transitDuration"
+                            value={formData.transitDuration || ""}
+                            onChange={onFormInputChange}
+                            placeholder="例如：30分鐘"
+                            className="w-full bg-background border border-input rounded-lg py-1.5 px-2 text-xs text-foreground outline-none"
+                        />
+                    </div>
+                </div>
             </div>
+
             {/* Description */}
             <div>
                 <label
@@ -152,6 +191,7 @@ const ItineraryActivityModal = ({
                     className="w-full bg-transparent text-foreground border-b border-border py-2 outline-none font-[Noto_Sans_TC] text-base resize-none no-scrollbar"
                 />
             </div>
+
             {/* Link ID */}
             <div>
                 <label

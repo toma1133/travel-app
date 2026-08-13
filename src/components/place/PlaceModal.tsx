@@ -6,11 +6,22 @@ import {
     useEffect,
     ChangeEvent,
 } from "react";
-import { Clock, Copy, ImageIcon, MapIcon, MapPin, Tag, X, Search, Loader2 } from "lucide-react";
+import {
+    Clock,
+    Copy,
+    ImageIcon,
+    MapIcon,
+    MapPin,
+    Tag,
+    X,
+    Search,
+    Loader2,
+} from "lucide-react";
 import { OSMService, OSMPlace, WikiData } from "../../services/api/OSMService";
 import type { PlaceCategory, PlaceVM } from "../../models/types/PlaceTypes";
-import type { TripThemeConf } from "../../models/types/TripTypes";
+import { CategoryCustomSelect } from "../common/CategoryCustomSelect";
 import FormModal from "../common/FormModal";
+import { TripThemeConf } from "../../models/types/TripTypes";
 
 type PlaceModalProps = {
     formData: PlaceVM;
@@ -34,13 +45,16 @@ const PlaceModal = ({
     onFormSubmit,
 }: PlaceModalProps) => {
     const [copiedId, setCopiedId] = useState(false);
-    
+
     // Auto-fill state
     const [searchTerm, setSearchTerm] = useState("");
     const [isSearching, setIsSearching] = useState(false);
     const [searchResults, setSearchResults] = useState<OSMPlace[]>([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
-    const [selectedPlace, setSelectedPlace] = useState<{osm: OSMPlace, wiki: WikiData | null} | null>(null);
+    const [selectedPlace, setSelectedPlace] = useState<{
+        osm: OSMPlace;
+        wiki: WikiData | null;
+    } | null>(null);
     const [importFields, setImportFields] = useState({
         eng_name: true,
         image_url: true,
@@ -69,7 +83,7 @@ const PlaceModal = ({
     const handleSelectResult = async (place: OSMPlace) => {
         setShowSuggestions(false);
         setSearchTerm("");
-        
+
         let wikiData: WikiData | null = null;
         if (place.extratags?.wikipedia) {
             wikiData = await OSMService.getWikiData(place.extratags.wikipedia);
@@ -81,15 +95,15 @@ const PlaceModal = ({
 
     const handleApplyImport = () => {
         if (!selectedPlace) return;
-        
+
         const createEvent = (name: string, value: string) =>
             ({
                 target: { name, value },
                 currentTarget: { name, value },
-            } as unknown as ChangeEvent<HTMLInputElement>);
+            }) as unknown as ChangeEvent<HTMLInputElement>;
 
         const { osm, wiki } = selectedPlace;
-        
+
         if (osm.name) {
             onFormInputChange(createEvent("name", osm.name));
         }
@@ -97,7 +111,9 @@ const PlaceModal = ({
         if (importFields.eng_name && wiki?.title) {
             onFormInputChange(createEvent("eng_name", wiki.title));
         } else if (importFields.eng_name && osm.extratags?.["name:en"]) {
-            onFormInputChange(createEvent("eng_name", osm.extratags["name:en"]));
+            onFormInputChange(
+                createEvent("eng_name", osm.extratags["name:en"]),
+            );
         }
 
         if (importFields.image_url && wiki?.thumbnailUrl) {
@@ -105,7 +121,9 @@ const PlaceModal = ({
         }
 
         if (importFields.open && osm.extratags?.opening_hours) {
-            onFormInputChange(createEvent("info.open", osm.extratags.opening_hours));
+            onFormInputChange(
+                createEvent("info.open", osm.extratags.opening_hours),
+            );
         }
 
         if (importFields.loc && osm.display_name) {
@@ -149,33 +167,45 @@ const PlaceModal = ({
             {mode === "create" && (
                 <div className="mb-6 border-b border-border pb-6 relative">
                     <label className="block font-bold uppercase mb-2 flex items-center text-muted-foreground text-xs">
-                        <Search size={12} className="mr-1" /> 快速搜尋與自動帶入 (OpenStreetMap)
+                        <Search size={12} className="mr-1" /> 快速搜尋與自動帶入
+                        (OpenStreetMap)
                     </label>
                     <div className="relative">
                         <input
                             type="text"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            onKeyDown={(e) => { if (e.key === "Enter") e.preventDefault(); }}
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter") e.preventDefault();
+                            }}
                             placeholder="輸入地點名稱搜尋..."
                             className="w-full bg-muted/50 border border-border rounded-lg py-2 pl-3 pr-10 outline-none focus:border-primary text-base"
                         />
                         <div className="absolute right-3 top-2.5 text-muted-foreground">
-                            {isSearching ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />}
+                            {isSearching ? (
+                                <Loader2 size={16} className="animate-spin" />
+                            ) : (
+                                <Search size={16} />
+                            )}
                         </div>
                     </div>
-                    
+
                     {showSuggestions && searchResults.length > 0 && (
                         <div className="absolute z-50 left-0 right-0 mt-1 bg-card shadow-lg rounded-md border border-border max-h-60 overflow-y-auto">
                             <ul>
                                 {searchResults.map((place) => (
                                     <li
                                         key={place.place_id}
-                                        onClick={() => handleSelectResult(place)}
+                                        onClick={() =>
+                                            handleSelectResult(place)
+                                        }
                                         className="px-4 py-3 hover:bg-muted cursor-pointer border-b border-border last:border-0 flex flex-col items-start transition-colors"
                                     >
                                         <span className="text-sm font-medium text-foreground">
-                                            {place.name || place.display_name.split(",")[0]}
+                                            {place.name ||
+                                                place.display_name.split(
+                                                    ",",
+                                                )[0]}
                                         </span>
                                         <span className="text-xs text-muted-foreground mt-0.5 w-full truncate block">
                                             {place.display_name}
@@ -189,35 +219,135 @@ const PlaceModal = ({
                     {selectedPlace && (
                         <div className="mt-4 p-4 rounded-lg border border-primary/30 bg-primary/5">
                             <div className="flex justify-between items-center mb-3">
-                                <h4 className="font-bold text-sm text-foreground">找到資料，請勾選要帶入的欄位：</h4>
-                                <button type="button" onClick={() => setSelectedPlace(null)} className="text-muted-foreground hover:text-foreground">
+                                <h4 className="font-bold text-sm text-foreground">
+                                    找到資料，請勾選要帶入的欄位：
+                                </h4>
+                                <button
+                                    type="button"
+                                    onClick={() => setSelectedPlace(null)}
+                                    className="text-muted-foreground hover:text-foreground"
+                                >
                                     <X size={16} />
                                 </button>
                             </div>
                             <div className="space-y-2 text-sm text-foreground">
                                 <label className="flex items-start gap-2 cursor-pointer">
-                                    <input type="checkbox" checked={importFields.eng_name} onChange={(e) => setImportFields({...importFields, eng_name: e.target.checked})} className="mt-1 flex-shrink-0" />
-                                    <span><strong>英文名稱:</strong> {selectedPlace.wiki?.title || selectedPlace.osm.extratags?.["name:en"] || "(無)"}</span>
+                                    <input
+                                        type="checkbox"
+                                        checked={importFields.eng_name}
+                                        onChange={(e) =>
+                                            setImportFields({
+                                                ...importFields,
+                                                eng_name: e.target.checked,
+                                            })
+                                        }
+                                        className="mt-1 flex-shrink-0"
+                                    />
+                                    <span>
+                                        <strong>英文名稱:</strong>{" "}
+                                        {selectedPlace.wiki?.title ||
+                                            selectedPlace.osm.extratags?.[
+                                                "name:en"
+                                            ] ||
+                                            "(無)"}
+                                    </span>
                                 </label>
                                 <label className="flex items-start gap-2 cursor-pointer">
-                                    <input type="checkbox" checked={importFields.image_url} onChange={(e) => setImportFields({...importFields, image_url: e.target.checked})} className="mt-1 flex-shrink-0" />
-                                    <span><strong>圖片:</strong> {selectedPlace.wiki?.thumbnailUrl ? <img src={selectedPlace.wiki.thumbnailUrl} className="h-8 inline-block ml-2 rounded" alt="預覽" /> : "(無)"}</span>
+                                    <input
+                                        type="checkbox"
+                                        checked={importFields.image_url}
+                                        onChange={(e) =>
+                                            setImportFields({
+                                                ...importFields,
+                                                image_url: e.target.checked,
+                                            })
+                                        }
+                                        className="mt-1 flex-shrink-0"
+                                    />
+                                    <span>
+                                        <strong>圖片:</strong>{" "}
+                                        {selectedPlace.wiki?.thumbnailUrl ? (
+                                            <img
+                                                src={
+                                                    selectedPlace.wiki
+                                                        .thumbnailUrl
+                                                }
+                                                className="h-8 inline-block ml-2 rounded"
+                                                alt="預覽"
+                                            />
+                                        ) : (
+                                            "(無)"
+                                        )}
+                                    </span>
                                 </label>
                                 <label className="flex items-start gap-2 cursor-pointer">
-                                    <input type="checkbox" checked={importFields.open} onChange={(e) => setImportFields({...importFields, open: e.target.checked})} className="mt-1 flex-shrink-0" />
-                                    <span><strong>營業時間:</strong> {selectedPlace.osm.extratags?.opening_hours || "(無)"}</span>
+                                    <input
+                                        type="checkbox"
+                                        checked={importFields.open}
+                                        onChange={(e) =>
+                                            setImportFields({
+                                                ...importFields,
+                                                open: e.target.checked,
+                                            })
+                                        }
+                                        className="mt-1 flex-shrink-0"
+                                    />
+                                    <span>
+                                        <strong>營業時間:</strong>{" "}
+                                        {selectedPlace.osm.extratags
+                                            ?.opening_hours || "(無)"}
+                                    </span>
                                 </label>
                                 <label className="flex items-start gap-2 cursor-pointer">
-                                    <input type="checkbox" checked={importFields.loc} onChange={(e) => setImportFields({...importFields, loc: e.target.checked})} className="mt-1 flex-shrink-0" />
-                                    <span className="truncate flex-1 block"><strong>地址:</strong> {selectedPlace.osm.display_name}</span>
+                                    <input
+                                        type="checkbox"
+                                        checked={importFields.loc}
+                                        onChange={(e) =>
+                                            setImportFields({
+                                                ...importFields,
+                                                loc: e.target.checked,
+                                            })
+                                        }
+                                        className="mt-1 flex-shrink-0"
+                                    />
+                                    <span className="truncate flex-1 block">
+                                        <strong>地址:</strong>{" "}
+                                        {selectedPlace.osm.display_name}
+                                    </span>
                                 </label>
                                 <label className="flex items-start gap-2 cursor-pointer">
-                                    <input type="checkbox" checked={importFields.map_url} onChange={(e) => setImportFields({...importFields, map_url: e.target.checked})} className="mt-1 flex-shrink-0" />
-                                    <span><strong>地圖網址:</strong> Apple Maps 連結</span>
+                                    <input
+                                        type="checkbox"
+                                        checked={importFields.map_url}
+                                        onChange={(e) =>
+                                            setImportFields({
+                                                ...importFields,
+                                                map_url: e.target.checked,
+                                            })
+                                        }
+                                        className="mt-1 flex-shrink-0"
+                                    />
+                                    <span>
+                                        <strong>地圖網址:</strong> Apple Maps
+                                        連結
+                                    </span>
                                 </label>
                                 <label className="flex items-start gap-2 cursor-pointer">
-                                    <input type="checkbox" checked={importFields.description} onChange={(e) => setImportFields({...importFields, description: e.target.checked})} className="mt-1 flex-shrink-0" />
-                                    <span className="line-clamp-2 flex-1 block"><strong>簡介:</strong> {selectedPlace.wiki?.extract || "(無)"}</span>
+                                    <input
+                                        type="checkbox"
+                                        checked={importFields.description}
+                                        onChange={(e) =>
+                                            setImportFields({
+                                                ...importFields,
+                                                description: e.target.checked,
+                                            })
+                                        }
+                                        className="mt-1 flex-shrink-0"
+                                    />
+                                    <span className="line-clamp-2 flex-1 block">
+                                        <strong>簡介:</strong>{" "}
+                                        {selectedPlace.wiki?.extract || "(無)"}
+                                    </span>
                                 </label>
                             </div>
                             <button
@@ -232,31 +362,16 @@ const PlaceModal = ({
                 </div>
             )}
             {/* Type Selection */}
-            <div>
-                <label
-                    htmlFor="type"
-                    className="block font-bold uppercase mb-2 flex items-center text-muted-foreground text-xs"
-                >
-                    類型 *
-                </label>
-                <select
-                    required
-                    name="type"
-                    value={formData.type || ""}
-                    onChange={onFormInputChange as any}
-                    className="w-full bg-transparent text-foreground border-b border-border py-2 outline-none font-[Noto_Sans_TC] text-base cursor-pointer"
-                >
-                    {placeCategory.map((type) => (
-                        <option
-                            key={type.id}
-                            value={type.id}
-                            className="bg-background text-foreground"
-                        >
-                            {type.label}
-                        </option>
-                    ))}
-                </select>
-            </div>
+            <CategoryCustomSelect
+                value={formData.type || "sight"}
+                onChange={(newTypeId) => {
+                    const event = {
+                        target: { name: "type", value: newTypeId },
+                        currentTarget: { name: "type", value: newTypeId },
+                    } as unknown as ChangeEvent<HTMLInputElement>;
+                    onFormInputChange(event);
+                }}
+            />
             {/* Basic Info */}
             <div className="grid grid-cols-1 gap-6">
                 {mode !== "create" && (
@@ -409,17 +524,132 @@ const PlaceModal = ({
                 <div>
                     <label
                         htmlFor="tags"
-                        className="block font-bold uppercase mb-1 flex items-center text-muted-foreground text-xs"
+                        className="block font-bold uppercase mb-1.5 flex items-center text-muted-foreground text-xs"
                     >
-                        <Tag size={12} className="mr-1" /> 標籤 (用逗號分隔)
+                        <Tag size={12} className="mr-1" /> 標籤 (按 Enter 新增)
                     </label>
-                    <input
-                        name="tags"
-                        value={formData.tags || ""}
-                        onChange={onFormInputChange}
-                        placeholder="例如：世界遺產, 必去, 拍照"
-                        className="w-full bg-transparent border-b border-border py-2 outline-none font-[Noto_Sans_TC] text-base text-foreground focus:border-primary transition-colors"
-                    />
+                    <div className="flex flex-wrap items-center gap-1.5 p-2 bg-transparent border-b border-border focus-within:border-primary transition-colors">
+                        {(formData.tags
+                            ? formData.tags
+                                  .split(",")
+                                  .filter((t) => t.trim() !== "")
+                            : []
+                        ).map((tag, index) => (
+                            <span
+                                key={index}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20 animate-in fade-in zoom-in-95"
+                            >
+                                #{tag.trim()}
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        const currentTags = formData.tags
+                                            ? formData.tags
+                                                  .split(",")
+                                                  .map((t) => t.trim())
+                                                  .filter((t) => t !== "")
+                                            : [];
+                                        const newTags = currentTags
+                                            .filter((_, i) => i !== index)
+                                            .join(",");
+                                        const event = {
+                                            target: {
+                                                name: "tags",
+                                                value: newTags,
+                                            },
+                                            currentTarget: {
+                                                name: "tags",
+                                                value: newTags,
+                                            },
+                                        } as unknown as ChangeEvent<HTMLInputElement>;
+                                        onFormInputChange(event);
+                                    }}
+                                    className="hover:bg-primary/20 rounded-full p-0.5 transition-colors"
+                                    title="移除標籤"
+                                >
+                                    <X size={12} />
+                                </button>
+                            </span>
+                        ))}
+                        <input
+                            type="text"
+                            placeholder={
+                                (formData.tags
+                                    ? formData.tags
+                                          .split(",")
+                                          .filter((t) => t.trim() !== "").length
+                                    : 0) === 0
+                                    ? "例如：世界遺產, 必去 (按 Enter 新增)"
+                                    : "新增標籤..."
+                            }
+                            className="flex-1 min-w-[120px] bg-transparent text-sm text-foreground outline-none py-1"
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter" || e.key === ",") {
+                                    e.preventDefault();
+                                    const val = e.currentTarget.value
+                                        .trim()
+                                        .replace(/^#/, "");
+                                    if (val) {
+                                        const currentTags = formData.tags
+                                            ? formData.tags
+                                                  .split(",")
+                                                  .map((t) => t.trim())
+                                                  .filter((t) => t !== "")
+                                            : [];
+                                        if (!currentTags.includes(val)) {
+                                            const newTags = [
+                                                ...currentTags,
+                                                val,
+                                            ].join(",");
+                                            const event = {
+                                                target: {
+                                                    name: "tags",
+                                                    value: newTags,
+                                                },
+                                                currentTarget: {
+                                                    name: "tags",
+                                                    value: newTags,
+                                                },
+                                            } as unknown as ChangeEvent<HTMLInputElement>;
+                                            onFormInputChange(event);
+                                        }
+                                        e.currentTarget.value = "";
+                                    }
+                                }
+                            }}
+                            onBlur={(e) => {
+                                const val = e.currentTarget.value
+                                    .trim()
+                                    .replace(/^#/, "");
+                                if (val) {
+                                    const currentTags = formData.tags
+                                        ? formData.tags
+                                              .split(",")
+                                              .map((t) => t.trim())
+                                              .filter((t) => t !== "")
+                                        : [];
+                                    if (!currentTags.includes(val)) {
+                                        const newTags = [
+                                            ...currentTags,
+                                            val,
+                                        ].join(",");
+                                        const event = {
+                                            target: {
+                                                name: "tags",
+                                                value: newTags,
+                                            },
+                                            currentTarget: {
+                                                name: "tags",
+                                                value: newTags,
+                                            },
+                                        } as unknown as ChangeEvent<HTMLInputElement>;
+                                        onFormInputChange(event);
+                                    }
+                                    e.currentTarget.value = "";
+                                }
+                            }}
+                        />
+                    </div>
                 </div>
                 <div>
                     <label

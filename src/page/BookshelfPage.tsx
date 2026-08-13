@@ -163,13 +163,18 @@ const BookshelfPage = () => {
                 secondary: "text-[#4B5563]",
                 accentText: "text-[#9F1239]",
                 categoryColor: {
-                    food: "#ebceb1",
-                    stay: "#d0755c",
-                    other: "#798187",
-                    sight: "#576169",
-                    ticket: "#929489",
-                    shopping: "#eee9de",
-                    transport: "#88352b",
+                    food: "#d97706",      // 濃郁琥珀橘 (Amber/Orange) - 高對比清晰
+                    stay: "#2563eb",      // 皇家藍 (Royal Blue) - 住宿專用對比色
+                    hotel: "#2563eb",     // 皇家藍 (Hotel)
+                    other: "#6b7280",     // 質感灰 (Slate Gray)
+                    sight: "#059669",     // 翡翠綠 (Emerald Green)
+                    ticket: "#7c3aed",    // 紫羅蘭 (Violet)
+                    shopping: "#db2777",  // 亮桃粉 (Rose/Pink) - 解決原本淺淡色系問題
+                    transport: "#dc2626", // 經典紅 (Red)
+                    cafe: "#b45309",      // 暖咖啡 (Warm Coffee)
+                    activity: "#7c3aed",  // 紫羅蘭 (Activity)
+                    nature: "#16a34a",    // 森林綠 (Forest Green)
+                    culture: "#4f46e5",   // 靛藍 (Indigo)
                 },
                 navTextActive: "text-white",
                 navTextInactive: "text-[#6B7280]",
