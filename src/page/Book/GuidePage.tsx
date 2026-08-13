@@ -16,6 +16,8 @@ import LayoutContextType from "../../models/types/LayoutContextTypes";
 import type { PlaceCategory, PlaceVM } from "../../models/types/PlaceTypes";
 import type { TripVM } from "../../models/types/TripTypes";
 
+import { PLACE_CATEGORIES } from "../../constants/Categories";
+
 type CoverPageProps = {
     isPrinting?: boolean;
     tripDataOverride?: TripVM;
@@ -38,13 +40,7 @@ const GuidePage = ({
     const { setIsPageLoading } = useOutletContext<LayoutContextType>();
 
     const [viewMode, setViewMode] = useState<"list" | "map">("list");
-    const [placeCategories] = useState<PlaceCategory[]>([
-        { id: "all", label: "全部" },
-        { id: "sight", label: "觀光" },
-        { id: "food", label: "美食" },
-        { id: "shopping", label: "購物" },
-        { id: "hotel", label: "住宿" },
-    ]);
+    const [placeCategories] = useState<PlaceCategory[]>(PLACE_CATEGORIES);
     const [filter, setFilter] = useState("all");
     const [filteredPlaces, setFilteredPlaces] = useState<PlaceVM[] | null>(
         null
@@ -325,6 +321,11 @@ const GuidePage = ({
         setSelectedTags(selectedTags.filter((t) => t !== tag));
     };
 
+    const handleClearAllFilters = () => {
+        setFilter("all");
+        setSelectedTags([]);
+    };
+
     return (
         <div
             className={`font-[Noto_Sans_TC] text-foreground flex flex-col ${
@@ -387,6 +388,7 @@ const GuidePage = ({
                         theme={tripData?.theme_config!}
                         onFilterBtnClick={handleFilterBtnClick}
                         onRemoveTagBtnClick={handleRemoveTag}
+                        onClearAllFilters={handleClearAllFilters}
                     />
                 )}
                 {viewMode === "list" || isPrinting ? (

@@ -7,6 +7,7 @@ import {
     Trash2,
     ExternalLink,
 } from "lucide-react";
+import { getCategoryTypeName } from "../../constants/Categories";
 import type { PlaceVM } from "../../models/types/PlaceTypes";
 import type { TripThemeConf } from "../../models/types/TripTypes";
 
@@ -30,20 +31,6 @@ const PlaceCard = ({
     onTagBtnClick,
 }: PlaceCardProps) => {
     const [showActions, setShowActions] = useState(false);
-    const getPlaceTypeName = (param: string | null) => {
-        switch (param) {
-            case "sight":
-                return "Sightseeing";
-            case "food":
-                return "Gourmet";
-            case "shopping":
-                return "Shop";
-            case "hotel":
-                return "Hotel";
-            default:
-                return "Other";
-        }
-    };
     const getMapUrl = () =>
         `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
             place.info?.loc || place.name
@@ -119,7 +106,7 @@ const PlaceCard = ({
                             }
                         `}
                     >
-                        {getPlaceTypeName(place.type)}
+                        {getCategoryTypeName(place.type)}
                     </span>
                 </div>
 

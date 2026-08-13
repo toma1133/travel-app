@@ -487,6 +487,51 @@ export type Database = {
                 };
                 Relationships: [];
             };
+            trip_invitations: {
+                Row: {
+                    created_at: string | null;
+                    id: string;
+                    invitee_email: string;
+                    inviter_id: string;
+                    status: string;
+                    trip_id: string;
+                    trip_title: string | null;
+                };
+                Insert: {
+                    created_at?: string | null;
+                    id?: string;
+                    invitee_email: string;
+                    inviter_id: string;
+                    status?: string;
+                    trip_id: string;
+                    trip_title?: string | null;
+                };
+                Update: {
+                    created_at?: string | null;
+                    id?: string;
+                    invitee_email?: string;
+                    inviter_id?: string;
+                    status?: string;
+                    trip_id?: string;
+                    trip_title?: string | null;
+                };
+                Relationships: [
+                    {
+                        foreignKeyName: "trip_invitations_inviter_id_fkey";
+                        columns: ["inviter_id"];
+                        isOneToOne: false;
+                        referencedRelation: "profiles";
+                        referencedColumns: ["id"];
+                    },
+                    {
+                        foreignKeyName: "trip_invitations_trip_id_fkey";
+                        columns: ["trip_id"];
+                        isOneToOne: false;
+                        referencedRelation: "trips";
+                        referencedColumns: ["id"];
+                    }
+                ];
+            };
         };
         Views: {
             [_ in never]: never;

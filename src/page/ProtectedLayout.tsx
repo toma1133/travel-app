@@ -11,6 +11,7 @@ import useAuth from "../hooks/UseAuth";
 import LayoutContextType from "../models/types/LayoutContextTypes";
 import LoadingMask from "../components/common/LoadingMask";
 import { useTheme } from "../contexts/ThemeContext";
+import NotificationBell from "../components/common/NotificationBell";
 
 type ProtectedLayoutProps = {
     isOffline: boolean;

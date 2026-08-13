@@ -24,6 +24,8 @@ import type {
 import type { PlaceVM } from "../../models/types/PlaceTypes";
 import type { TripVM } from "../../models/types/TripTypes";
 
+import { ITINERARY_CATEGORIES } from "../../constants/Categories";
+
 type ItineraryPageProps = {
     isPrinting?: boolean;
     tripDataOverride?: TripVM;
@@ -54,26 +56,7 @@ const ItineraryPage = ({
     const { setIsPageLoading } = useOutletContext<LayoutContextType>();
 
     const [isEditing, setIsEditing] = useState(false);
-    const [itineraryCategory] = useState([
-        { id: "sight", label: "觀光" },
-        { id: "food", label: "美食" },
-        {
-            id: "shopping",
-            label: "購物",
-        },
-        {
-            id: "transport",
-            label: "移動",
-        },
-        {
-            id: "hotel",
-            label: "住宿",
-        },
-        {
-            id: "other",
-            label: "其他",
-        },
-    ]);
+    const [itineraryCategory] = useState(ITINERARY_CATEGORIES);
 
     // --- Preview Modal Handlers ---
     const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);

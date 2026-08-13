@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Moon, Sun } from "lucide-react";
 import useAuth from "../../hooks/UseAuth";
 import { useTheme } from "../../contexts/ThemeContext";
+import NotificationBell from "./NotificationBell";
 
 type SystemControlsProps = {
     className?: string;
@@ -29,6 +30,7 @@ const SystemControls = ({ className = "" }: SystemControlsProps) => {
 
     return (
         <div className={`flex items-center gap-3 bg-background/50 backdrop-blur-md px-3 py-1.5 rounded-full border border-border/50 shadow-sm ${className}`}>
+            <NotificationBell />
             <button
                 type="button"
                 onClick={toggleTheme}
