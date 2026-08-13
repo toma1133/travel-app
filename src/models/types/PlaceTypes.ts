@@ -13,6 +13,9 @@ export type PlaceInfo = {
     open?: string | null;
     price?: string | null;
     loc?: string | null;
+    rating?: number | string | null;
+    rating_count?: number | string | null;
+    rating_source?: string | null;
 };
 
 export type PlaceVM = Omit<PlaceRow, "type" | "tags" | "info"> & {

@@ -1,19 +1,8 @@
 import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import { useOutletContext, useParams } from "react-router-dom";
 import { useIsMutating } from "@tanstack/react-query";
-import {
-    Bed,
-    Coffee,
-    CreditCard,
-    Filter,
-    LucideIcon,
-    Plane,
-    Plus,
-    Settings,
-    ShoppingBag,
-    Ticket,
-    Wallet,
-} from "lucide-react";
+import { LucideIcon, Wallet, Filter, Settings, Plus } from "lucide-react";
+import { CATEGORY_DEFINITIONS } from "../../constants/Categories";
 import moment from "moment";
 import { DragEndEvent } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
@@ -182,32 +171,14 @@ const BudgetPage = ({
     };
 
     const getCategoryName = (cat: string) => {
-        const map: { [key: string]: string } = {
-            transport: "交通",
-            stay: "住宿",
-            food: "餐飲",
-            shopping: "購物",
-            ticket: "門票/活動",
-            other: "其他",
-        };
-        return map[cat] || "其他";
+        const item = CATEGORY_DEFINITIONS.find((c) => c.id === cat);
+        return item ? item.label : "其他";
     };
 
     const getCategoryIcon = (cat: string) => {
-        switch (cat) {
-            case "transport":
-                return <Plane size={14} />;
-            case "stay":
-                return <Bed size={14} />;
-            case "food":
-                return <Coffee size={14} />;
-            case "shopping":
-                return <ShoppingBag size={14} />;
-            case "ticket":
-                return <Ticket size={14} />;
-            default:
-                return <CreditCard size={14} />;
-        }
+        const item = CATEGORY_DEFINITIONS.find((c) => c.id === cat);
+        const IconComponent = item ? item.icon : CATEGORY_DEFINITIONS[CATEGORY_DEFINITIONS.length - 1].icon;
+        return <IconComponent size={14} />;
     };
 
     // Setting Modal
@@ -402,14 +373,13 @@ const BudgetPage = ({
             name: string;
             icon: LucideIcon;
         }[]
-    >([
-        { id: "food", name: "餐飲", icon: Coffee },
-        { id: "transport", name: "交通", icon: Plane },
-        { id: "stay", name: "住宿", icon: Bed },
-        { id: "shopping", name: "購物", icon: ShoppingBag },
-        { id: "ticket", name: "門票", icon: Ticket },
-        { id: "other", name: "其他", icon: CreditCard },
-    ]);
+    >(
+        CATEGORY_DEFINITIONS.map((cat) => ({
+            id: cat.id,
+            name: cat.label,
+            icon: cat.icon,
+        }))
+    );
     const [budgetToDelete, setBudgetToDelete] = useState<BudgetRow | null>(
         null
     );

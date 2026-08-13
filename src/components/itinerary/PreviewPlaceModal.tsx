@@ -13,7 +13,7 @@ const PreviewPlaceModal = ({
     return (
         <div className="fixed inset-0 z-100 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
             <div
-                className="w-full max-w-xs bg-white rounded-2xl shadow-2xl relative animate-in zoom-in-95 slide-in-from-bottom-2 duration-300"
+                className="w-full max-w-xs sm:max-w-md bg-white rounded-2xl shadow-2xl relative animate-in zoom-in-95 slide-in-from-bottom-2 duration-300"
                 onClick={(e) => e.stopPropagation()}
             >
                 <button

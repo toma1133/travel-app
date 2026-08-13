@@ -12,6 +12,7 @@ import {
     ImageIcon,
     MapIcon,
     MapPin,
+    Star,
     Tag,
     X,
     Search,
@@ -373,9 +374,9 @@ const PlaceModal = ({
                 }}
             />
             {/* Basic Info */}
-            <div className="grid grid-cols-1 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 {mode !== "create" && (
-                    <div>
+                    <div className="sm:col-span-2">
                         <label
                             htmlFor="id"
                             className="block font-bold uppercase mb-1 flex items-center text-muted-foreground text-xs"
@@ -439,58 +440,52 @@ const PlaceModal = ({
                         className="w-full bg-transparent border-b border-border py-2 outline-none font-mono text-base text-foreground focus:border-primary transition-colors"
                     />
                 </div>
-            </div>
-            {/* Image URL */}
-            <div className="mt-6">
-                <label
-                    htmlFor="image_url"
-                    className="block font-bold uppercase mb-1 flex items-center text-muted-foreground text-xs"
-                >
-                    <ImageIcon size={12} className="mr-1" /> 圖片網址
-                </label>
-                <input
-                    name="image_url"
-                    value={formData.image_url || ""}
-                    onChange={onFormInputChange}
-                    placeholder="https://..."
-                    className="w-full bg-transparent border-b border-border py-2 outline-none font-mono text-base text-foreground focus:border-primary transition-colors"
-                />
-            </div>
-            {/* Map Url */}
-            <div className="mt-6">
-                <label
-                    htmlFor="map_url"
-                    className="block font-bold uppercase mb-1 flex items-center text-muted-foreground text-xs"
-                >
-                    <MapIcon size={12} className="mr-1" /> 地圖網址
-                </label>
-                <input
-                    name="map_url"
-                    value={formData.map_url || ""}
-                    onChange={onFormInputChange}
-                    placeholder="https://..."
-                    className="w-full bg-transparent border-b border-border py-2 outline-none font-mono text-base text-foreground focus:border-primary transition-colors"
-                />
-            </div>
-            {/* Description */}
-            <div className="mt-6">
-                <label
-                    htmlFor="description"
-                    className="block font-bold uppercase mb-1 flex items-center text-muted-foreground text-xs"
-                >
-                    介紹
-                </label>
-                <textarea
-                    name="description"
-                    value={formData.description || ""}
-                    onChange={onFormInputChange}
-                    rows={2}
-                    placeholder="關於這個地點的簡短介紹..."
-                    className="w-full bg-transparent border-b border-border py-2 outline-none font-[Noto_Sans_TC] text-base text-foreground focus:border-primary transition-colors resize-none no-scrollbar"
-                />
-            </div>
-            {/* Details */}
-            <div className="mt-6 grid grid-cols-1 gap-6">
+                <div>
+                    <label
+                        htmlFor="image_url"
+                        className="block font-bold uppercase mb-1 flex items-center text-muted-foreground text-xs"
+                    >
+                        <ImageIcon size={12} className="mr-1" /> 圖片網址
+                    </label>
+                    <input
+                        name="image_url"
+                        value={formData.image_url || ""}
+                        onChange={onFormInputChange}
+                        placeholder="https://..."
+                        className="w-full bg-transparent border-b border-border py-2 outline-none font-mono text-base text-foreground focus:border-primary transition-colors"
+                    />
+                </div>
+                <div>
+                    <label
+                        htmlFor="map_url"
+                        className="block font-bold uppercase mb-1 flex items-center text-muted-foreground text-xs"
+                    >
+                        <MapIcon size={12} className="mr-1" /> 地圖網址
+                    </label>
+                    <input
+                        name="map_url"
+                        value={formData.map_url || ""}
+                        onChange={onFormInputChange}
+                        placeholder="https://..."
+                        className="w-full bg-transparent border-b border-border py-2 outline-none font-mono text-base text-foreground focus:border-primary transition-colors"
+                    />
+                </div>
+                <div className="sm:col-span-2">
+                    <label
+                        htmlFor="description"
+                        className="block font-bold uppercase mb-1 flex items-center text-muted-foreground text-xs"
+                    >
+                        介紹
+                    </label>
+                    <textarea
+                        name="description"
+                        value={formData.description || ""}
+                        onChange={onFormInputChange}
+                        rows={2}
+                        placeholder="關於這個地點的簡短介紹..."
+                        className="w-full bg-transparent border-b border-border py-2 outline-none font-[Noto_Sans_TC] text-base text-foreground focus:border-primary transition-colors resize-none no-scrollbar"
+                    />
+                </div>
                 <div>
                     <label
                         htmlFor="info.open"
@@ -521,7 +516,55 @@ const PlaceModal = ({
                         className="w-full bg-transparent border-b border-border py-2 outline-none font-[Noto_Sans_TC] text-base text-foreground focus:border-primary transition-colors"
                     />
                 </div>
-                <div>
+                {/* 評價分數與評論數量 */}
+                <div className="sm:col-span-2 grid grid-cols-3 gap-4">
+                    <div>
+                        <label
+                            htmlFor="info.rating"
+                            className="block font-bold uppercase mb-1 flex items-center text-muted-foreground text-xs"
+                        >
+                            <Star size={12} className="mr-1 text-amber-500" /> 評價分數
+                        </label>
+                        <input
+                            name="info.rating"
+                            value={formData?.info?.rating || ""}
+                            onChange={onFormInputChange}
+                            placeholder="如: 4.5 或 3.58"
+                            className="w-full bg-transparent border-b border-border py-2 outline-none font-mono text-base text-foreground focus:border-primary transition-colors"
+                        />
+                    </div>
+                    <div>
+                        <label
+                            htmlFor="info.rating_count"
+                            className="block font-bold uppercase mb-1 flex items-center text-muted-foreground text-xs"
+                        >
+                            評價人數
+                        </label>
+                        <input
+                            name="info.rating_count"
+                            value={formData?.info?.rating_count || ""}
+                            onChange={onFormInputChange}
+                            placeholder="如: 1200"
+                            className="w-full bg-transparent border-b border-border py-2 outline-none font-mono text-base text-foreground focus:border-primary transition-colors"
+                        />
+                    </div>
+                    <div>
+                        <label
+                            htmlFor="info.rating_source"
+                            className="block font-bold uppercase mb-1 flex items-center text-muted-foreground text-xs"
+                        >
+                            評分來源
+                        </label>
+                        <input
+                            name="info.rating_source"
+                            value={formData?.info?.rating_source || ""}
+                            onChange={onFormInputChange}
+                            placeholder="如: Google / Tabelog / TripAdvisor"
+                            className="w-full bg-transparent border-b border-border py-2 outline-none font-[Noto_Sans_TC] text-base text-foreground focus:border-primary transition-colors"
+                        />
+                    </div>
+                </div>
+                <div className="sm:col-span-2">
                     <label
                         htmlFor="tags"
                         className="block font-bold uppercase mb-1.5 flex items-center text-muted-foreground text-xs"
@@ -651,7 +694,7 @@ const PlaceModal = ({
                         />
                     </div>
                 </div>
-                <div>
+                <div className="sm:col-span-2">
                     <label
                         htmlFor="tips"
                         className="block font-bold uppercase mb-1 flex items-center text-muted-foreground text-xs"

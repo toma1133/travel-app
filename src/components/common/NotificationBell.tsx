@@ -70,14 +70,14 @@ const NotificationBell = () => {
             </button>
 
             {isOpen && (
-                <div className="absolute right-0 mt-2 w-80 sm:w-96 rounded-2xl bg-card border border-border shadow-2xl z-[120] overflow-hidden animate-in fade-in slide-in-from-top-2">
+                <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 rounded-2xl bg-card border border-border shadow-2xl z-[120] overflow-hidden animate-in fade-in slide-in-from-top-2">
                     <div className="p-4 border-b border-border/50 flex items-center justify-between bg-muted/30">
                         <div className="flex items-center gap-2">
-                            <Bell size={16} className="text-primary" />
-                            <h4 className="font-bold text-sm text-foreground">旅程邀請通知</h4>
+                            <Bell size={16} className="text-primary shrink-0" />
+                            <h4 className="font-bold text-sm text-foreground whitespace-nowrap">旅程邀請通知</h4>
                         </div>
                         {unreadCount > 0 && (
-                            <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-semibold">
+                            <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-semibold whitespace-nowrap">
                                 {unreadCount} 則未處理
                             </span>
                         )}
@@ -95,19 +95,17 @@ const NotificationBell = () => {
                                     key={inv.id}
                                     className="p-4 hover:bg-accent/30 transition-colors flex flex-col gap-2.5"
                                 >
-                                    <div className="flex items-start justify-between gap-2">
-                                        <div className="flex items-center gap-2 min-w-0">
-                                            <div className="p-2 rounded-lg bg-primary/10 text-primary shrink-0">
-                                                <MapPin size={18} />
-                                            </div>
-                                            <div className="min-w-0">
-                                                <h5 className="font-bold text-sm text-foreground truncate">
-                                                    {inv.trip_title || inv.trips?.title || "未命名旅程"}
-                                                </h5>
-                                                <p className="text-xs text-muted-foreground truncate">
-                                                    邀請人：{inv.inviter?.username || inv.inviter?.email || "旅行夥伴"}
-                                                </p>
-                                            </div>
+                                    <div className="flex items-center gap-2.5 min-w-0">
+                                        <div className="p-2 rounded-lg bg-primary/10 text-primary shrink-0">
+                                            <MapPin size={18} />
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <h5 className="font-bold text-sm text-foreground truncate leading-tight">
+                                                {inv.trip_title || inv.trips?.title || "未命名旅程"}
+                                            </h5>
+                                            <p className="text-xs text-muted-foreground truncate mt-0.5">
+                                                邀請人：{inv.inviter?.username || inv.inviter?.email || "旅行夥伴"}
+                                            </p>
                                         </div>
                                     </div>
 
@@ -116,7 +114,7 @@ const NotificationBell = () => {
                                             type="button"
                                             onClick={() => handleDecline(inv.id)}
                                             disabled={anyPending}
-                                            className="px-3 py-1.5 rounded-lg border border-input text-xs font-semibold text-muted-foreground hover:bg-accent hover:text-foreground transition-colors flex items-center gap-1 disabled:opacity-50"
+                                            className="px-3 py-1.5 rounded-lg border border-input text-xs font-semibold text-muted-foreground hover:bg-accent hover:text-foreground transition-colors flex items-center gap-1 disabled:opacity-50 whitespace-nowrap"
                                         >
                                             <X size={14} />
                                             拒絕
@@ -125,7 +123,7 @@ const NotificationBell = () => {
                                             type="button"
                                             onClick={() => handleAccept(inv.id, inv.trip_id)}
                                             disabled={anyPending}
-                                            className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 shadow-sm transition-colors flex items-center gap-1 disabled:opacity-50"
+                                            className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 shadow-sm transition-colors flex items-center gap-1 disabled:opacity-50 whitespace-nowrap"
                                         >
                                             <Check size={14} />
                                             接受邀請

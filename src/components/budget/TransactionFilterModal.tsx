@@ -44,7 +44,7 @@ const TransactionFilterModal = ({
             <div>
                 <label
                     htmlFor="category"
-                    className="font-bold uppercase mb-1 flex items-center justify-between text-muted-foreground text-xs"
+                    className="font-bold uppercase mb-2 flex items-center justify-between text-muted-foreground text-xs"
                 >
                     分類
                 </label>
@@ -52,20 +52,21 @@ const TransactionFilterModal = ({
                     <button
                         type="button"
                         onClick={() => onFormDataChange("categories", [])}
-                        className={`px-4 py-2 rounded-full text-sm font-bold transition-all border border-indigo-100 ${
+                        className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all border ${
                             formData.categories.length === 0
-                                ? "bg-indigo-600 text-primary-foreground shadow-sm border-indigo-600"
-                                : "bg-card text-indigo-400"
+                                ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                                : "bg-card text-muted-foreground border-border hover:bg-muted"
                         }`}
                     >
                         全部
                     </button>
                     {Array.isArray(categories) &&
-                        categories.map((category, i) => {
+                        categories.map((category) => {
                             const isSelected = formData.categories.includes(category.id);
+                            const IconComponent = category.icon;
                             return (
                                 <button
-                                    key={i}
+                                    key={category.id}
                                     type="button"
                                     onClick={() => {
                                         const newCategories = isSelected
@@ -73,13 +74,14 @@ const TransactionFilterModal = ({
                                             : [...formData.categories, category.id];
                                         onFormDataChange("categories", newCategories);
                                     }}
-                                    className={`px-4 py-2 rounded-full text-sm font-bold transition-all border border-indigo-100 ${
+                                    className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border flex items-center gap-1.5 ${
                                         isSelected
-                                            ? "bg-indigo-600 text-primary-foreground shadow-sm border-indigo-600"
-                                            : "bg-card text-indigo-400"
+                                            ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                                            : "bg-card text-muted-foreground border-border hover:bg-muted"
                                     }`}
                                 >
-                                    {category.name}
+                                    <IconComponent size={14} />
+                                    <span>{category.name}</span>
                                 </button>
                             );
                         })}
@@ -88,8 +90,8 @@ const TransactionFilterModal = ({
             {/* 支付方式 */}
             <div>
                 <label
-                    htmlFor="category"
-                    className="font-bold uppercase mb-1 flex items-center justify-between text-muted-foreground text-xs"
+                    htmlFor="payment_method"
+                    className="font-bold uppercase mb-2 flex items-center justify-between text-muted-foreground text-xs"
                 >
                     支付方式
                 </label>
@@ -99,20 +101,20 @@ const TransactionFilterModal = ({
                         onClick={() =>
                             onFormDataChange("payment_method_ids", [])
                         }
-                        className={`px-4 py-2 rounded-full text-sm font-bold transition-all border border-indigo-100 ${
+                        className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all border ${
                             formData.payment_method_ids.length === 0
-                                ? "bg-indigo-600 text-primary-foreground shadow-sm border-indigo-600"
-                                : "bg-card text-indigo-400"
+                                ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                                : "bg-card text-muted-foreground border-border hover:bg-muted"
                         }`}
                     >
                         全部
                     </button>
                     {Array.isArray(paymentMethods) &&
-                        paymentMethods.map((paymentMethod, i) => {
+                        paymentMethods.map((paymentMethod) => {
                             const isSelected = formData.payment_method_ids.includes(paymentMethod.id);
                             return (
                                 <button
-                                    key={i}
+                                    key={paymentMethod.id}
                                     type="button"
                                     onClick={() => {
                                         const newIds = isSelected
@@ -120,10 +122,10 @@ const TransactionFilterModal = ({
                                             : [...formData.payment_method_ids, paymentMethod.id];
                                         onFormDataChange("payment_method_ids", newIds);
                                     }}
-                                    className={`px-4 py-2 rounded-full text-sm font-bold transition-all border border-indigo-100 ${
+                                    className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all border ${
                                         isSelected
-                                            ? "bg-indigo-600 text-primary-foreground shadow-sm border-indigo-600"
-                                            : "bg-card text-indigo-400"
+                                            ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                                            : "bg-card text-muted-foreground border-border hover:bg-muted"
                                     }`}
                                 >
                                     {paymentMethod.name}

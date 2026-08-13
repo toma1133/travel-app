@@ -1,6 +1,7 @@
 import { ChangeEventHandler, FormEventHandler, MouseEventHandler, useState, useEffect } from "react";
 import { Banknote, CreditCard, LucideIcon } from "lucide-react";
 import FormModal from "../common/FormModal";
+import { CategoryCustomSelect } from "../common/CategoryCustomSelect";
 import type { BudgetRow } from "../../models/types/BudgetTypes";
 import type { PaymentMethodRow } from "../../models/types/PaymentMethodTypes";
 import type {
@@ -23,7 +24,7 @@ type TransactionModalProps = {
     tripMembers?: TripMemberVM[];
     onCloseBtnClick: MouseEventHandler<HTMLButtonElement>;
     onDeleteBtnClick: (budgetItem: BudgetRow) => void;
-    onFormDataChange: (name: string, value?: string | number) => void;
+    onFormDataChange: (name: string, value?: string | number | boolean) => void;
     onFormInputChange: ChangeEventHandler<HTMLInputElement>;
     onFormSubmit: FormEventHandler<HTMLFormElement>;
 };
@@ -231,33 +232,11 @@ const TransactionModal = ({
             </div>
 
             {/* Category */}
-            <div>
-                <label
-                    htmlFor="category"
-                    className="font-bold uppercase mb-1 flex items-center text-muted-foreground text-xs"
-                >
-                    分類
-                </label>
-                <div className="grid grid-cols-6 gap-2">
-                    {categories.map((cat) => (
-                        <button
-                            type="button"
-                            key={cat.id}
-                            onClick={() => onFormDataChange("category", cat.id)}
-                            className={`aspect-square flex flex-col items-center justify-center rounded-full transition-all
-                                        ${
-                                            formData.category === cat.id
-                                                ? "bg-primary text-primary-foreground"
-                                                : "bg-card text-muted-foreground hover:bg-muted-foreground"
-                                        }
-                                    `}
-                            title={cat.name}
-                        >
-                            <cat.icon size={16} />
-                        </button>
-                    ))}
-                </div>
-            </div>
+            <CategoryCustomSelect
+                label="分類 *"
+                value={formData.category || "sight"}
+                onChange={(newCatId) => onFormDataChange("category", newCatId)}
+            />
             {/* Date */}
             <div>
                 <label

@@ -14,7 +14,7 @@ const DeleteModal = ({
 }: DeleteModalProps) => {
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in">
-            <div className="bg-card rounded-2xl shadow-xl border border-border w-full max-w-sm p-6 animate-in zoom-in-95 duration-200">
+            <div className="bg-card rounded-2xl shadow-xl border border-border w-full max-w-sm sm:max-w-md p-6 animate-in zoom-in-95 duration-200">
                 <div className="flex items-center space-x-3 mb-4">
                     <div className="p-2 bg-destructive/10 rounded-full text-destructive">
                         <AlertTriangle size={24} />

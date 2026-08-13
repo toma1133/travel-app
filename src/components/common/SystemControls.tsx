@@ -29,12 +29,14 @@ const SystemControls = ({ className = "" }: SystemControlsProps) => {
     }, []);
 
     return (
-        <div className={`flex items-center gap-3 bg-background/50 backdrop-blur-md px-3 py-1.5 rounded-full border border-border/50 shadow-sm ${className}`}>
+        <div
+            className={`flex items-center gap-3 bg-card/85 dark:bg-card/75 backdrop-blur-md px-3 py-1.5 rounded-full border border-border/80 shadow-md text-foreground transition-all ${className}`}
+        >
             <NotificationBell />
             <button
                 type="button"
                 onClick={toggleTheme}
-                className="text-muted-foreground hover:text-foreground transition-colors"
+                className="text-foreground/80 hover:text-foreground transition-colors p-0.5 rounded-full hover:bg-muted/50"
                 title="Toggle theme"
             >
                 {theme === "light" ? <Moon size={16} /> : <Sun size={16} />}
@@ -43,7 +45,7 @@ const SystemControls = ({ className = "" }: SystemControlsProps) => {
                 className={`text-[10px] font-bold px-2 py-0.5 rounded-full hidden md:inline-block ${
                     isOffline
                         ? "bg-muted text-muted-foreground"
-                        : "bg-green-500/20 text-green-500"
+                        : "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
                 }`}
             >
                 {isOffline ? "OFFLINE" : "ONLINE"}
@@ -51,7 +53,7 @@ const SystemControls = ({ className = "" }: SystemControlsProps) => {
             <button
                 type="button"
                 onClick={signOut}
-                className="text-[12px] font-medium text-muted-foreground hover:text-foreground transition-colors"
+                className="text-[12px] font-bold text-foreground/80 hover:text-foreground transition-colors"
             >
                 登出
             </button>

@@ -266,6 +266,31 @@ const PlaceCard = ({
                     )}
 
                     <div className={isPrinting ? "flex gap-4 flex-wrap" : "space-y-2.5"}>
+                        {place?.info?.rating && (
+                            <div className="flex items-center">
+                                <Star
+                                    size={14}
+                                    className={`mr-2.5 shrink-0 ${
+                                        isPrinting
+                                            ? "text-amber-600 fill-amber-600"
+                                            : "text-amber-500 fill-amber-500"
+                                    }`}
+                                />
+                                <span className="font-semibold text-foreground mr-1">
+                                    {place.info.rating}
+                                </span>
+                                {place.info.rating_count && (
+                                    <span className="text-muted-foreground mr-1.5">
+                                        ({place.info.rating_count}則評價)
+                                    </span>
+                                )}
+                                {place.info.rating_source && (
+                                    <span className="text-[10px] font-medium bg-muted px-1.5 py-0.5 rounded text-muted-foreground uppercase">
+                                        {place.info.rating_source}
+                                    </span>
+                                )}
+                            </div>
+                        )}
                         {place?.info?.open && (
                             <div className="flex items-center">
                                 <Clock

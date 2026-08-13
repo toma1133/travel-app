@@ -140,9 +140,9 @@ const SplitInfoModal = ({
     }, [budgets]);
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in">
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in p-0 sm:p-4">
             <div
-                className={`bg-card w-full max-w-sm rounded-t-3xl sm:rounded-3xl shadow-2xl animate-in slide-in-from-bottom border border-border flex flex-col max-h-[85vh]`}
+                className={`bg-card w-full max-w-sm sm:max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl animate-in slide-in-from-bottom border border-border flex flex-col max-h-[85vh]`}
             >
                 {/* Header */}
                 <div className="flex justify-between items-center border-b border-border/50 p-6">

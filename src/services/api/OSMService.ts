@@ -9,6 +9,8 @@ export type OSMPlace = {
         website?: string;
         wikipedia?: string;
         wikidata?: string;
+        "name:en"?: string;
+        [key: string]: string | undefined;
     };
     address?: {
         road?: string;

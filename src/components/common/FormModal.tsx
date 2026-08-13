@@ -12,6 +12,7 @@ type FormModalProps = {
     onCancelBtnClick: MouseEventHandler<HTMLButtonElement>;
     onCloseBtnClick: MouseEventHandler<HTMLButtonElement>;
     onSubmit?: FormEventHandler<HTMLFormElement>;
+    maxWidthClass?: string;
 };
 
 const FormModal = ({
@@ -24,12 +25,13 @@ const FormModal = ({
     onCancelBtnClick,
     onCloseBtnClick,
     onSubmit,
+    maxWidthClass = "sm:max-w-2xl",
 }: FormModalProps) => {
     return (
         <form id={formId} onSubmit={onSubmit}>
-            <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-background/80 backdrop-blur-sm animate-in fade-in">
+            <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-background/80 backdrop-blur-sm animate-in fade-in p-0 sm:p-4">
                 <div
-                    className={`bg-card w-full max-w-sm rounded-t-3xl sm:rounded-2xl shadow-2xl animate-in slide-in-from-bottom border border-border`}
+                    className={`bg-card w-full ${maxWidthClass} rounded-t-3xl sm:rounded-2xl shadow-2xl animate-in slide-in-from-bottom border border-border flex flex-col max-h-[90vh]`}
                 >
                     {/* Header */}
                     <div className="flex justify-between items-center border-b border-border/50 p-6">
