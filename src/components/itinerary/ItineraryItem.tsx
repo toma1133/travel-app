@@ -359,25 +359,94 @@ const ItineraryItem = ({
                                                     </p>
                                                 )}
 
-                                                {/* 移動/路程時間節點 (Transit Connector Card) */}
-                                                {(activity.transitMode && activity.transitMode !== "none" || activity.transitDuration) && (
+                                                {/* 移動/路程時間與交通備註節點 (Transit Connector Card) */}
+                                                {(activity.transitMode && activity.transitMode !== "none" || activity.transitDuration || activity.transitDetails) && (
                                                     <div
                                                         className={`
-                                                            mt-2 inline-flex items-center gap-1.5 rounded-lg text-[11px] font-medium
+                                                            mt-2.5 rounded-xl text-[11px] font-medium transition-all inline-block max-w-full
                                                             ${
                                                                 isPrinting
-                                                                    ? "px-2 py-0.5 bg-gray-100 border border-gray-300 text-black text-[9px]"
-                                                                    : "px-2.5 py-1 bg-accent/40 border border-border/50 text-muted-foreground"
+                                                                    ? "p-2 bg-gray-50 border border-gray-300 text-black text-[9px]"
+                                                                    : "p-2.5 bg-slate-50 dark:bg-zinc-800/90 border border-slate-200/80 dark:border-zinc-700/80 text-slate-800 dark:text-zinc-100 shadow-sm"
                                                             }
                                                         `}
                                                     >
-                                                        {(() => {
-                                                            const TransitIconComp = getTransitIcon(activity.transitMode);
-                                                            return <TransitIconComp size={isPrinting ? 11 : 13} className={`${isPrinting ? "text-black" : "text-primary"} shrink-0`} />;
-                                                        })()}
-                                                        <span>
-                                                            {activity.transitDuration ? `預估 ${activity.transitDuration}` : "前往下個景點"}
-                                                        </span>
+                                                        {/* 標頭：圖示 + 模式 + 預估時間 */}
+                                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                                            {(() => {
+                                                                const TransitIconComp = getTransitIcon(activity.transitMode);
+                                                                return <TransitIconComp size={isPrinting ? 11 : 13} className={`${isPrinting ? "text-black" : "text-sky-600 dark:text-sky-400"} shrink-0`} />;
+                                                            })()}
+                                                            <span className="font-bold text-slate-900 dark:text-zinc-100">
+                                                                {activity.transitDuration ? `預估 ${activity.transitDuration}` : "前往下一站"}
+                                                            </span>
+
+                                                            {/* 標籤/費用/周遊券簡章 */}
+                                                            {activity.transitDetails?.passName && (
+                                                                <span className="px-1.5 py-0.5 rounded bg-sky-100/80 text-sky-800 border border-sky-200/60 dark:bg-sky-950/80 dark:text-sky-300 dark:border-sky-800/60 text-[10px] font-semibold">
+                                                                    [{activity.transitDetails.passName}]
+                                                                </span>
+                                                            )}
+                                                            {activity.transitDetails?.fare && (
+                                                                <span className="px-1.5 py-0.5 rounded bg-amber-100/80 text-amber-800 border border-amber-200/60 dark:bg-amber-950/70 dark:text-amber-300 dark:border-amber-700/60 text-[10px] font-semibold">
+                                                                    {activity.transitDetails.fare}
+                                                                </span>
+                                                            )}
+                                                            {activity.transitDetails?.isReservationRequired && (
+                                                                <span className="px-1.5 py-0.5 rounded bg-emerald-100/80 text-emerald-800 border border-emerald-200/60 dark:bg-emerald-950/70 dark:text-emerald-300 dark:border-emerald-700/60 text-[10px] font-semibold">
+                                                                    ✓ 機場接送/已預約
+                                                                </span>
+                                                            )}
+                                                        </div>
+
+                                                        {/* 詳細交通欄位內容 (有填寫具體資訊才顯示分隔線與詳細區塊) */}
+                                                        {activity.transitDetails && (
+                                                            activity.transitDetails.startLocation ||
+                                                            activity.transitDetails.companyAndLine ||
+                                                            activity.transitDetails.destination ||
+                                                            activity.transitDetails.platform ||
+                                                            activity.transitDetails.flightNumber ||
+                                                            activity.transitDetails.gate ||
+                                                            activity.transitDetails.schedules
+                                                        ) && (
+                                                            <div className="mt-2 pt-2 border-t border-slate-200/80 dark:border-zinc-700/70 space-y-1 text-xs text-slate-600 dark:text-zinc-300">
+                                                                {/* 計程車/自駕出發點 */}
+                                                                {activity.transitDetails.startLocation && (
+                                                                    <div>
+                                                                        <span className="font-semibold text-slate-800 dark:text-zinc-200">出發備註：</span>
+                                                                        {activity.transitDetails.startLocation}
+                                                                    </div>
+                                                                )}
+
+                                                                {/* 電車/公車 路線與月台與方向 */}
+                                                                {(activity.transitDetails.companyAndLine || activity.transitDetails.destination || activity.transitDetails.platform) && (
+                                                                    <div className="flex items-center gap-2 flex-wrap text-slate-800 dark:text-zinc-200 font-medium">
+                                                                        {activity.transitDetails.companyAndLine && <span>{activity.transitDetails.companyAndLine}</span>}
+                                                                        {activity.transitDetails.destination && <span className="text-slate-500 dark:text-zinc-400">到 {activity.transitDetails.destination}</span>}
+                                                                        {activity.transitDetails.platform && (
+                                                                            <span className="px-1.5 py-0.2 rounded bg-slate-200/70 text-slate-700 dark:bg-zinc-700 dark:text-zinc-200 text-[10px]">
+                                                                                月台: {activity.transitDetails.platform}
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                )}
+
+                                                                {/* 飛機資訊 */}
+                                                                {(activity.transitDetails.flightNumber || activity.transitDetails.gate) && (
+                                                                    <div className="flex items-center gap-2 flex-wrap text-slate-800 dark:text-zinc-200">
+                                                                        {activity.transitDetails.flightNumber && <span className="font-bold text-sky-600 dark:text-sky-400">航班 {activity.transitDetails.flightNumber}</span>}
+                                                                        {activity.transitDetails.gate && <span>{activity.transitDetails.gate}</span>}
+                                                                    </div>
+                                                                )}
+
+                                                                {/* 班次多行列表 (例如: Haruka16 10:44 -> 11:31) */}
+                                                                {activity.transitDetails.schedules && (
+                                                                    <div className="mt-1.5 font-mono text-[11px] whitespace-pre-wrap bg-white/90 dark:bg-zinc-900/90 p-2 rounded-lg border border-slate-200 dark:border-zinc-700/80 text-slate-800 dark:text-zinc-200 leading-relaxed shadow-sm">
+                                                                        {activity.transitDetails.schedules}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 )}
                                             </div>

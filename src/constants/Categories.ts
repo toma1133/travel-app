@@ -43,7 +43,8 @@ export const TRANSIT_MODES: { id: string; label: string; icon: LucideIcon }[] = 
     { id: "flight", label: "搭乘飛機", icon: Plane },
     { id: "train", label: "電車/新幹線/火車", icon: Train },
     { id: "bus", label: "公車/巴士", icon: Bus },
-    { id: "car", label: "自駕/計程車", icon: Car },
+    { id: "taxi", label: "計程車/包車/接送", icon: Car },
+    { id: "car", label: "自駕/租車", icon: Car },
     { id: "walk", label: "步行", icon: Footprints },
 ];
 

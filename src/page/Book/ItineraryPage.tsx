@@ -253,10 +253,23 @@ const ItineraryPage = ({
     };
 
     const handleActivityFormInputChange = async (
-        e: ChangeEvent<HTMLInputElement>
+        e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
     ) => {
-        const { name, value } = e.target;
-        setFormActivity((prev) => ({ ...prev, [name]: value }));
+        const { name, value, type } = e.target;
+        const checked = (e.target as HTMLInputElement).checked;
+
+        if (name.startsWith("transitDetails.")) {
+            const field = name.replace("transitDetails.", "");
+            setFormActivity((prev) => ({
+                ...prev,
+                transitDetails: {
+                    ...(prev.transitDetails || {}),
+                    [field]: type === "checkbox" ? checked : value,
+                },
+            }));
+        } else {
+            setFormActivity((prev) => ({ ...prev, [name]: value }));
+        }
     };
 
     const handleActivitySubmit = async (e: FormEvent) => {
