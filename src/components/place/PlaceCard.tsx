@@ -6,6 +6,9 @@ import {
     Pencil,
     Trash2,
     ExternalLink,
+    CalendarX,
+    Phone,
+    DollarSign,
 } from "lucide-react";
 import { getCategoryTypeName } from "../../constants/Categories";
 import type { PlaceVM } from "../../models/types/PlaceTypes";
@@ -173,8 +176,13 @@ const PlaceCard = ({
                             {place.name}
                         </h3>
                         {place.eng_name && (
-                            <p className="text-xs text-muted-foreground font-medium mt-1 print:text-gray-500">
+                            <p className="text-xs text-muted-foreground font-medium mt-1 print:text-gray-500 font-mono">
                                 {place.eng_name}
+                            </p>
+                        )}
+                        {place.info?.native_name && (
+                            <p className="text-xs text-muted-foreground/80 font-normal mt-0.5">
+                                {place.info.native_name}
                             </p>
                         )}
                     </div>
@@ -291,7 +299,23 @@ const PlaceCard = ({
                                 )}
                             </div>
                         )}
-                        {place?.info?.open && (
+                        {place?.info?.check_in && (
+                            <div className="flex items-center">
+                                <Clock
+                                    size={14}
+                                    className={`mr-2.5 shrink-0 ${
+                                        isPrinting
+                                            ? "text-gray-600"
+                                            : "text-primary"
+                                    }`}
+                                />
+                                <span className={isPrinting ? "text-gray-700" : ""}>
+                                    Check-in: {place.info.check_in}
+                                    {place.info.check_out && ` / Check-out: ${place.info.check_out}`}
+                                </span>
+                            </div>
+                        )}
+                        {place?.info?.open && !place?.info?.check_in && (
                             <div className="flex items-center">
                                 <Clock
                                     size={14}
@@ -308,6 +332,47 @@ const PlaceCard = ({
                                 >
                                     {place.info.open}
                                 </span>
+                            </div>
+                        )}
+                        {place?.info?.closed_days && (
+                            <div className="flex items-center">
+                                <CalendarX
+                                    size={14}
+                                    className={`mr-2.5 shrink-0 ${
+                                        isPrinting
+                                            ? "text-gray-600"
+                                            : "text-rose-500"
+                                    }`}
+                                />
+                                <span className="text-rose-600 dark:text-rose-400 font-medium">
+                                    {place.info.closed_days}
+                                </span>
+                            </div>
+                        )}
+                        {place?.info?.phone && (
+                            <div className="flex items-center">
+                                <Phone
+                                    size={14}
+                                    className={`mr-2.5 shrink-0 ${
+                                        isPrinting
+                                            ? "text-gray-600"
+                                            : "text-muted-foreground/70"
+                                    }`}
+                                />
+                                <span className="font-mono">{place.info.phone}</span>
+                            </div>
+                        )}
+                        {place?.info?.price && (
+                            <div className="flex items-center">
+                                <DollarSign
+                                    size={14}
+                                    className={`mr-2.5 shrink-0 ${
+                                        isPrinting
+                                            ? "text-gray-600"
+                                            : "text-emerald-500"
+                                    }`}
+                                />
+                                <span>{place.info.price}</span>
                             </div>
                         )}
                         {place?.info?.loc && (

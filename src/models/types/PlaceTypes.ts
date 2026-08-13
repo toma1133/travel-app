@@ -11,8 +11,13 @@ export type PlaceCategory = {
 
 export type PlaceInfo = {
     open?: string | null;
+    closed_days?: string | null;
+    check_in?: string | null;
+    check_out?: string | null;
+    native_name?: string | null;
     price?: string | null;
     loc?: string | null;
+    phone?: string | null;
     rating?: number | string | null;
     rating_count?: number | string | null;
     rating_source?: string | null;
