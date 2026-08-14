@@ -1,4 +1,4 @@
-export type RouteMode = "driving" | "walking" | "cycling";
+export type RouteMode = "driving" | "walking" | "cycling" | "motorcycle" | "direct";
 
 export type RouteResult = {
     distanceMeters: number;
@@ -8,6 +8,7 @@ export type RouteResult = {
     durationMinutes: number;
     durationFormatted: string;
     coordinates: [number, number][]; // [lat, lng] array formatted for Leaflet
+    isEstimated?: boolean;
 };
 
 export type MultiStopRouteResult = {
@@ -22,11 +23,66 @@ export type MultiStopRouteResult = {
         distanceFormatted: string;
     }[];
     coordinates: [number, number][]; // [lat, lng] array formatted for Leaflet
+    isEstimated?: boolean;
+    mode: RouteMode;
 };
 
 // In-memory cache for route requests to prevent redundant API calls
 const routeCache = new Map<string, RouteResult>();
 const multiStopCache = new Map<string, MultiStopRouteResult>();
+
+/**
+ * Calculate Great-Circle distance between two coordinates in meters (Haversine formula)
+ */
+export function calculateHaversineDistance(
+    lat1: number,
+    lon1: number,
+    lat2: number,
+    lon2: number
+): number {
+    const R = 6371e3; // Earth radius in meters
+    const phi1 = (lat1 * Math.PI) / 180;
+    const phi2 = (lat2 * Math.PI) / 180;
+    const deltaPhi = ((lat2 - lat1) * Math.PI) / 180;
+    const deltaLambda = ((lon2 - lon1) * Math.PI) / 180;
+
+    const a =
+        Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2) +
+        Math.cos(phi1) *
+            Math.cos(phi2) *
+            Math.sin(deltaLambda / 2) *
+            Math.sin(deltaLambda / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return R * c; // in meters
+}
+
+/**
+ * Calculate fallback travel duration in minutes based on distance and mode
+ */
+export function estimateDurationMinutes(meters: number, mode: RouteMode): number {
+    // Average realistic speeds (km/h)
+    let speedKmH = 40;
+    switch (mode) {
+        case "walking":
+            speedKmH = 4.5;
+            break;
+        case "cycling":
+            speedKmH = 15;
+            break;
+        case "motorcycle":
+            speedKmH = 35;
+            break;
+        case "driving":
+            speedKmH = 40;
+            break;
+        case "direct":
+            speedKmH = 500;
+            break;
+    }
+    const hours = (meters / 1000) / speedKmH;
+    return Math.max(1, Math.round(hours * 60));
+}
 
 /**
  * Format duration in minutes into friendly localized text
@@ -64,6 +120,12 @@ export class RoutingService {
             case "bike":
             case "cycling":
                 return "cycling";
+            case "motorcycle":
+            case "scooter":
+                return "motorcycle";
+            case "direct":
+            case "flight":
+                return "direct";
             case "car":
             case "taxi":
             case "bus":
@@ -73,78 +135,54 @@ export class RoutingService {
     }
 
     /**
-     * Query OSRM routing API between two coordinates
-     * @param origin { lat, lng }
-     * @param destination { lat, lng }
-     * @param mode 'driving' | 'walking' | 'cycling'
+     * Fallback multi-stop generator using straight-line geodesic distances
      */
-    static async getRoute(
-        origin: { lat: number; lng: number },
-        destination: { lat: number; lng: number },
-        mode: RouteMode = "driving"
-    ): Promise<RouteResult | null> {
-        if (
-            typeof origin?.lat !== "number" ||
-            typeof origin?.lng !== "number" ||
-            typeof destination?.lat !== "number" ||
-            typeof destination?.lng !== "number"
-        ) {
-            return null;
+    static generateFallbackMultiStop(
+        stops: { lat: number; lng: number }[],
+        mode: RouteMode
+    ): MultiStopRouteResult {
+        let totalDistanceMeters = 0;
+        const straightCoords: [number, number][] = stops.map((s) => [s.lat, s.lng]);
+        const legs = [];
+
+        for (let i = 0; i < stops.length - 1; i++) {
+            const dist = calculateHaversineDistance(
+                stops[i].lat,
+                stops[i].lng,
+                stops[i + 1].lat,
+                stops[i + 1].lng
+            );
+            // Add ~20% routing detour factor for road modes compared to straight line
+            const adjustedDist = mode === "direct" ? dist : dist * 1.25;
+            totalDistanceMeters += adjustedDist;
+
+            const legMins = estimateDurationMinutes(adjustedDist, mode);
+            legs.push({
+                distanceKm: parseFloat((adjustedDist / 1000).toFixed(2)),
+                durationMinutes: legMins,
+                durationFormatted: formatDuration(legMins),
+                distanceFormatted: formatDistance(adjustedDist),
+            });
         }
 
-        const cacheKey = `${origin.lat.toFixed(5)},${origin.lng.toFixed(5)}-${destination.lat.toFixed(5)},${destination.lng.toFixed(5)}-${mode}`;
-        if (routeCache.has(cacheKey)) {
-            return routeCache.get(cacheKey)!;
-        }
+        const totalMins = estimateDurationMinutes(totalDistanceMeters, mode);
 
-        try {
-            // OSRM expects coordinates in lng,lat order: {lng1},{lat1};{lng2},{lat2}
-            const coords = `${origin.lng},${origin.lat};${destination.lng},${destination.lat}`;
-            const url = `https://router.project-osrm.org/route/v1/${mode}/${coords}?overview=full&geometries=geojson`;
-
-            const response = await fetch(url);
-            if (!response.ok) {
-                console.warn("OSRM Routing API returned status:", response.status);
-                return null;
-            }
-
-            const data = await response.json();
-            if (data.code !== "Ok" || !data.routes || data.routes.length === 0) {
-                return null;
-            }
-
-            const route = data.routes[0];
-            const distanceMeters = route.distance || 0;
-            const durationSeconds = route.duration || 0;
-            const distanceKm = parseFloat((distanceMeters / 1000).toFixed(2));
-            const durationMinutes = Math.max(1, Math.round(durationSeconds / 60));
-
-            // GeoJSON coordinates are [lng, lat], convert to Leaflet's [lat, lng]
-            const rawCoords: [number, number][] = route.geometry?.coordinates || [];
-            const leafletCoords: [number, number][] = rawCoords.map(([lng, lat]) => [lat, lng]);
-
-            const result: RouteResult = {
-                distanceMeters,
-                distanceKm,
-                distanceFormatted: formatDistance(distanceMeters),
-                durationSeconds,
-                durationMinutes,
-                durationFormatted: formatDuration(durationMinutes),
-                coordinates: leafletCoords,
-            };
-
-            routeCache.set(cacheKey, result);
-            return result;
-        } catch (error) {
-            console.error("Failed to fetch route from OSRM:", error);
-            return null;
-        }
+        return {
+            totalDistanceKm: parseFloat((totalDistanceMeters / 1000).toFixed(2)),
+            totalDistanceFormatted: formatDistance(totalDistanceMeters),
+            totalDurationMinutes: totalMins,
+            totalDurationFormatted: formatDuration(totalMins),
+            legs,
+            coordinates: straightCoords,
+            isEstimated: true,
+            mode,
+        };
     }
 
     /**
      * Query OSRM routing API for a multi-stop itinerary route
      * @param stops Array of coordinates [{ lat, lng }]
-     * @param mode 'driving' | 'walking' | 'cycling'
+     * @param mode 'driving' | 'walking' | 'cycling' | 'motorcycle' | 'direct'
      */
     static async getMultiStopRoute(
         stops: { lat: number; lng: number }[],
@@ -157,30 +195,57 @@ export class RoutingService {
             return multiStopCache.get(cacheKey)!;
         }
 
-        try {
-            // OSRM format: lng1,lat1;lng2,lat2;lng3,lat3
-            const coords = stops.map((s) => `${s.lng},${s.lat}`).join(";");
-            const url = `https://router.project-osrm.org/route/v1/${mode}/${coords}?overview=full&geometries=geojson&steps=false`;
+        // Direct mode uses geodesic straight lines immediately
+        if (mode === "direct") {
+            const directResult = this.generateFallbackMultiStop(stops, "direct");
+            multiStopCache.set(cacheKey, directResult);
+            return directResult;
+        }
 
-            const response = await fetch(url);
-            if (!response.ok) return null;
+        try {
+            // OSRM profiles: driving, walking (or foot), cycling (or bike)
+            // motorcycle maps to driving with speed adjustment if needed
+            const osrmProfile = mode === "motorcycle" ? "driving" : mode;
+            const coords = stops.map((s) => `${s.lng},${s.lat}`).join(";");
+            const url = `https://router.project-osrm.org/route/v1/${osrmProfile}/${coords}?overview=full&geometries=geojson&steps=false`;
+
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 6000); // 6s timeout
+
+            const response = await fetch(url, { signal: controller.signal });
+            clearTimeout(timeoutId);
+
+            if (!response.ok) {
+                const fallback = this.generateFallbackMultiStop(stops, mode);
+                multiStopCache.set(cacheKey, fallback);
+                return fallback;
+            }
 
             const data = await response.json();
             if (data.code !== "Ok" || !data.routes || data.routes.length === 0) {
-                return null;
+                const fallback = this.generateFallbackMultiStop(stops, mode);
+                multiStopCache.set(cacheKey, fallback);
+                return fallback;
             }
 
             const route = data.routes[0];
             const totalDistanceMeters = route.distance || 0;
-            const totalDistanceKm = parseFloat((totalDistanceMeters / 1000).toFixed(2));
-            const totalDurationMinutes = Math.max(1, Math.round((route.duration || 0) / 60));
+            let totalDurationMinutes = Math.max(1, Math.round((route.duration || 0) / 60));
+
+            // Adjust duration for motorcycle (slightly faster in urban traffic than car)
+            if (mode === "motorcycle") {
+                totalDurationMinutes = Math.max(1, Math.round(totalDurationMinutes * 0.85));
+            }
 
             const rawCoords: [number, number][] = route.geometry?.coordinates || [];
             const leafletCoords: [number, number][] = rawCoords.map(([lng, lat]) => [lat, lng]);
 
             const legs = (route.legs || []).map((leg: any) => {
                 const legMeters = leg.distance || 0;
-                const legMinutes = Math.max(1, Math.round((leg.duration || 0) / 60));
+                let legMinutes = Math.max(1, Math.round((leg.duration || 0) / 60));
+                if (mode === "motorcycle") {
+                    legMinutes = Math.max(1, Math.round(legMinutes * 0.85));
+                }
                 return {
                     distanceKm: parseFloat((legMeters / 1000).toFixed(2)),
                     durationMinutes: legMinutes,
@@ -190,19 +255,24 @@ export class RoutingService {
             });
 
             const result: MultiStopRouteResult = {
-                totalDistanceKm,
+                totalDistanceKm: parseFloat((totalDistanceMeters / 1000).toFixed(2)),
                 totalDistanceFormatted: formatDistance(totalDistanceMeters),
                 totalDurationMinutes,
                 totalDurationFormatted: formatDuration(totalDurationMinutes),
                 legs,
                 coordinates: leafletCoords,
+                isEstimated: false,
+                mode,
             };
 
             multiStopCache.set(cacheKey, result);
             return result;
         } catch (error) {
-            console.error("Failed to fetch multi-stop route from OSRM:", error);
-            return null;
+            console.warn("OSRM routing failed or timed out, using fallback calculation:", error);
+            const fallback = this.generateFallbackMultiStop(stops, mode);
+            multiStopCache.set(cacheKey, fallback);
+            return fallback;
         }
     }
 }
+

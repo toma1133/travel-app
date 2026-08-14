@@ -47,6 +47,7 @@ const ItineraryList = ({
     const [expandedDayNum, setExpandedDayNum] = useState<number | null>(null);
     const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
     const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
+    const prevPcSelectedDayIdRef = useRef<string | undefined>(pcSelectedDayId);
     
     useEffect(() => {
         const handleResize = () => setIsDesktop(window.innerWidth >= 1024);
@@ -57,12 +58,15 @@ const ItineraryList = ({
     // 同步外部的選擇狀態與內部的展開狀態
     useEffect(() => {
         if (!Array.isArray(itinerarys)) return;
+        const dayChanged = prevPcSelectedDayIdRef.current !== pcSelectedDayId;
+        prevPcSelectedDayIdRef.current = pcSelectedDayId;
+
         if (pcSelectedDayId && pcSelectedDayId !== "all") {
             const day = itinerarys.find(d => d.id === pcSelectedDayId);
             if (day) setExpandedDayNum(day.day_number);
             
-            // 在 PC 端點擊天數切換時，滾動到最上方
-            if (isDesktop && scrollContainerRef?.current) {
+            // 僅在 PC 端切換天數時，滾動到最上方
+            if (isDesktop && dayChanged && scrollContainerRef?.current) {
                 scrollContainerRef.current.scrollTo({ top: 0, behavior: "smooth" });
             }
         } else if (itinerarys.length === 1) {
@@ -73,7 +77,7 @@ const ItineraryList = ({
                 const todayDay = itinerarys.find(d => d.date === todayStr);
                 setExpandedDayNum(todayDay ? todayDay.day_number : itinerarys[0].day_number);
             }
-            if (isDesktop && pcSelectedDayId === "all" && scrollContainerRef?.current) {
+            if (isDesktop && dayChanged && pcSelectedDayId === "all" && scrollContainerRef?.current) {
                 scrollContainerRef.current.scrollTo({ top: 0, behavior: "smooth" });
             }
         }

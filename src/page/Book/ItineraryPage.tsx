@@ -61,6 +61,32 @@ const ItineraryPage = ({
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const [selectedDayFilter, setSelectedDayFilter] = useState<string>("all"); // 'all' | day.id
     const [itineraryPlacesMap, setItineraryPlacesMap] = useState<Record<string, PlaceVM[]>>({}); // dayId -> PlaceVM[]
+    const hasInitializedDayFilterRef = useRef(false);
+
+    // 維護 selectedDayFilter 狀態：初始載入時預設當天或第一天，之後儲存/更新時保持當前選取的日程
+    useEffect(() => {
+        if (!Array.isArray(itinerarys) || itinerarys.length === 0) return;
+
+        setSelectedDayFilter((prev) => {
+            if (!hasInitializedDayFilterRef.current) {
+                hasInitializedDayFilterRef.current = true;
+                const todayStr = moment().format("YYYY-MM-DD");
+                const todayDay = itinerarys.find((d) => d.date === todayStr);
+                return todayDay ? todayDay.id : itinerarys[0].id;
+            }
+
+            if (prev === "all") return "all";
+
+            // 若目前選取的日程仍然存在，保持原日程
+            const dayStillExists = itinerarys.some((d) => d.id === prev);
+            if (dayStillExists) return prev;
+
+            // 原日程已不存在（如被刪除），則回退到當天或第一天
+            const todayStr = moment().format("YYYY-MM-DD");
+            const todayDay = itinerarys.find((d) => d.date === todayStr);
+            return todayDay ? todayDay.id : itinerarys[0].id;
+        });
+    }, [itinerarys]);
 
     // 當行程變更時，批次抓取該行程所有活動有關聯的 Place 地標 (善用 快取 與 單次批次查詢 避免額外 API 消耗)
     useEffect(() => {
@@ -94,36 +120,26 @@ const ItineraryPage = ({
                     if (r) placeMapById.set(r.id, toPlaceVM(r));
                 });
 
-            // 3. 組合每日的 Place 陣列與全部天數陣列
-            const dayMap: Record<string, PlaceVM[]> = {};
-            const allVMs: PlaceVM[] = [];
+                // 3. 組合每日的 Place 陣列與全部天數陣列
+                const dayMap: Record<string, PlaceVM[]> = {};
+                const allVMs: PlaceVM[] = [];
 
-            itinerarys.forEach((day) => {
-                const dayVMs: PlaceVM[] = [];
-                day.activities?.forEach((act) => {
-                    if (act.linkId && placeMapById.has(act.linkId)) {
-                        dayVMs.push(placeMapById.get(act.linkId)!);
-                    }
+                itinerarys.forEach((day) => {
+                    const dayVMs: PlaceVM[] = [];
+                    day.activities?.forEach((act) => {
+                        if (act.linkId && placeMapById.has(act.linkId)) {
+                            dayVMs.push(placeMapById.get(act.linkId)!);
+                        }
+                    });
+                    dayMap[day.id] = dayVMs;
                 });
-                dayMap[day.id] = dayVMs;
-            });
 
-            placeMapById.forEach((vm) => allVMs.push(vm));
-            dayMap["all"] = allVMs;
+                placeMapById.forEach((vm) => allVMs.push(vm));
+                dayMap["all"] = allVMs;
 
-            if (isMounted) {
-                setItineraryPlacesMap(dayMap);
-                // 預設選取邏輯：若剛好是行程當天 (Today) 則自動選取該天，否則預設選取 DAY 1
-                if (itinerarys.length > 0) {
-                    const todayStr = moment().format("YYYY-MM-DD");
-                    const todayDay = itinerarys.find((d) => d.date === todayStr);
-                    if (todayDay) {
-                        setSelectedDayFilter(todayDay.id);
-                    } else {
-                        setSelectedDayFilter(itinerarys[0].id);
-                    }
+                if (isMounted) {
+                    setItineraryPlacesMap(dayMap);
                 }
-            }
             } finally {
                 if (isMounted) {
                     setIsPageLoading(false);
@@ -264,11 +280,14 @@ const ItineraryPage = ({
 
         try {
             if (dayModalMode === "create") {
+                const newDayId = crypto.randomUUID();
+                setSelectedDayFilter(newDayId);
                 await insertItinerary.mutateAsync({
                     ...dayData,
-                    id: crypto.randomUUID(),
+                    id: newDayId,
                 });
             } else {
+                setSelectedDayFilter(dayData.id);
                 await updateItinerary.mutateAsync(dayData);
             }
             setFormDay(initialDayState);
@@ -394,6 +413,10 @@ const ItineraryPage = ({
                     }));
             }
 
+            if (dayItemForActivity) {
+                setSelectedDayFilter(dayItemForActivity.id);
+            }
+
             await updateItinerary.mutateAsync({
                 ...dayItemForActivity!,
                 activities: targetActivities,
@@ -435,6 +458,10 @@ const ItineraryPage = ({
                                 activityIndex: index,
                             })
                         );
+                    }
+
+                    if (dayItemForActivity) {
+                        setSelectedDayFilter(dayItemForActivity.id);
                     }
 
                     await updateItinerary.mutateAsync({

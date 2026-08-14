@@ -42,21 +42,6 @@ const PlaceMapController = ({
         handleFitBounds();
     }, [map, places]);
 
-    useEffect(() => {
-        if (isDark !== undefined) {
-            const pane = map.getPane("tilePane");
-            if (pane) {
-                if (isDark) {
-                    pane.style.filter =
-                        "invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%)";
-                    pane.style.transition = "filter 0.3s ease";
-                } else {
-                    pane.style.filter = "none";
-                }
-            }
-        }
-    }, [map, isDark]);
-
     return (
         <div
             className="leaflet-bottom leaflet-left"

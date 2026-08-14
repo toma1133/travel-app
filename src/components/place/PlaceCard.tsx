@@ -13,6 +13,10 @@ import {
 import { getCategoryTypeName } from "../../constants/Categories";
 import type { PlaceVM } from "../../models/types/PlaceTypes";
 import type { TripThemeConf } from "../../models/types/TripTypes";
+import {
+    getSmartNavigationUrl,
+    getSmartNavigationLabel,
+} from "../../utils/MapNavigationUtil";
 
 type PlaceCardProps = {
     theme: TripThemeConf | null;
@@ -34,10 +38,15 @@ const PlaceCard = ({
     onTagBtnClick,
 }: PlaceCardProps) => {
     const [showActions, setShowActions] = useState(false);
-    const getMapUrl = () =>
-        `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-            place.info?.loc || place.name
-        )}`;
+    const smartNav = getSmartNavigationLabel();
+    const mapUrl =
+        place.map_url ||
+        getSmartNavigationUrl({
+            name: place.name,
+            loc: place.info?.loc,
+            lat: place.lat,
+            lng: place.lng,
+        });
 
     return (
         <div
@@ -189,11 +198,11 @@ const PlaceCard = ({
                     {/* 外部連結 (列印隱藏) */}
                     {!isPrinting && !isPreview && (
                         <a
-                            href={place.map_url || getMapUrl()}
+                            href={mapUrl}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-muted-foreground hover:text-primary transition-colors p-1"
-                            title="在 Maps 中查看"
+                            title={`在 ${smartNav.appName} 中開啟`}
                         >
                             <ExternalLink size={18} />
                         </a>
