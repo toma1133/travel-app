@@ -1,4 +1,4 @@
-import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useOutletContext, useParams } from "react-router-dom";
 import { useIsMutating } from "@tanstack/react-query";
 import moment from "moment";
@@ -58,6 +58,7 @@ const ItineraryPage = ({
 
     const [isEditing, setIsEditing] = useState(false);
     const [itineraryCategory] = useState(ITINERARY_CATEGORIES);
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
     const [selectedDayFilter, setSelectedDayFilter] = useState<string>("all"); // 'all' | day.id
     const [itineraryPlacesMap, setItineraryPlacesMap] = useState<Record<string, PlaceVM[]>>({}); // dayId -> PlaceVM[]
 
@@ -464,13 +465,13 @@ const ItineraryPage = ({
 
     return (
         <div
-            className={`min-h-[100dvh] font-[Noto_Sans_TC] text-foreground flex flex-col ${
+            className={
                 isPrinting
-                    ? "h-auto break-after-page overflow-visible bg-white"
-                    : `min-h-full ${
+                    ? "font-[Noto_Sans_TC] text-foreground block h-auto min-h-0 overflow-visible bg-white"
+                    : `min-h-[100dvh] font-[Noto_Sans_TC] text-foreground flex flex-col ${
                           tripData?.theme_config?.bg || "bg-background"
                       } dark:bg-background pb-24 lg:pb-6 lg:h-[100dvh] lg:overflow-hidden`
-            }`}
+            }
         >
             {!isPrinting && (
                 <SectionHeader
@@ -509,15 +510,23 @@ const ItineraryPage = ({
                 />
             )}
             <div
-                className={`flex-1 flex flex-col min-h-0 overflow-hidden ${
-                    isPrinting ? "space-y-6 px-0 overflow-visible h-auto block" : "px-3 sm:px-6 pt-3 pb-20 lg:pb-6"
-                }`}
+                className={
+                    isPrinting
+                        ? "space-y-6 px-0 overflow-visible h-auto block"
+                        : "flex-1 flex flex-col min-h-0 overflow-hidden px-3 sm:px-6 pt-3 pb-20 lg:pb-6"
+                }
             >
                 {/* 主佈局：螢幕版雙欄 (左行程右地圖)，列印版單欄攤平 */}
-                <div className={`flex flex-col lg:flex-row gap-4 sm:gap-5 lg:items-start ${isPrinting ? "block space-y-6 overflow-visible" : "px-3 sm:px-6 pt-3 lg:px-0 lg:pt-0 lg:flex-1 lg:min-h-0"}`}>
+                <div
+                    className={
+                        isPrinting
+                            ? "block space-y-6 overflow-visible"
+                            : "flex flex-col lg:flex-row gap-4 sm:gap-5 lg:items-start px-3 sm:px-6 pt-3 lg:px-0 lg:pt-0 lg:flex-1 lg:min-h-0"
+                    }
+                >
                     
                     {/* 左欄：Tabs + 清單 */}
-                    <div className={`w-full lg:max-w-[58%] flex flex-col lg:flex-row gap-4 lg:gap-6 ${isPrinting ? "" : "lg:flex-1 lg:h-full lg:overflow-y-auto no-scrollbar lg:pr-2 lg:pb-12"}`}>
+                    <div ref={scrollContainerRef} className={isPrinting ? "w-full block overflow-visible" : "w-full lg:max-w-[58%] flex flex-col lg:flex-row gap-4 lg:gap-6 lg:flex-1 lg:h-full lg:overflow-y-auto no-scrollbar lg:pr-2 lg:pb-12"}>
                         
                         {/* 電腦版垂直 Day Selector (側邊欄) */}
                         {!isPrinting && (
@@ -562,6 +571,7 @@ const ItineraryPage = ({
                             isEditing={isEditing}
                             isPrinting={isPrinting}
                             theme={tripData?.theme_config!}
+                            scrollContainerRef={scrollContainerRef}
                             onAddActivityBtnClick={handleOpenCreateActivityModal}
                             onDeleteActivityBtnClick={handleOpenDeleteActivityModal}
                             onDeleteDayBtnClick={handleOpenDeleteDayModal}

@@ -12,6 +12,7 @@ type ItineraryListProps = {
     isPrinting?: boolean;
     itinerarys?: ItineraryVM[];
     pcSelectedDayId?: string;
+    scrollContainerRef?: React.RefObject<HTMLDivElement | null>;
     theme: TripThemeConf | null;
     onAddActivityBtnClick: (itineraryDay: ItineraryVM) => void;
     onDeleteActivityBtnClick: (
@@ -33,6 +34,7 @@ const ItineraryList = ({
     isPrinting = false,
     itinerarys,
     pcSelectedDayId,
+    scrollContainerRef,
     theme,
     onAddActivityBtnClick,
     onDeleteActivityBtnClick,
@@ -65,6 +67,11 @@ const ItineraryList = ({
         if (pcSelectedDayId && pcSelectedDayId !== "all") {
             const day = itinerarys.find(d => d.id === pcSelectedDayId);
             if (day) setExpandedDayNum(day.day_number);
+            
+            // 在 PC 端點擊天數切換時，滾動到最上方
+            if (isDesktop && scrollContainerRef?.current) {
+                scrollContainerRef.current.scrollTo({ top: 0, behavior: "smooth" });
+            }
         } else if (itinerarys.length === 1) {
             setExpandedDayNum(itinerarys[0].day_number);
         } else if (pcSelectedDayId === "all" || !pcSelectedDayId) {
@@ -72,6 +79,9 @@ const ItineraryList = ({
                 const todayStr = moment().format("YYYY-MM-DD");
                 const todayDay = itinerarys.find(d => d.date === todayStr);
                 setExpandedDayNum(todayDay ? todayDay.day_number : itinerarys[0].day_number);
+            }
+            if (isDesktop && pcSelectedDayId === "all" && scrollContainerRef?.current) {
+                scrollContainerRef.current.scrollTo({ top: 0, behavior: "smooth" });
             }
         }
     }, [itinerarys, pcSelectedDayId]);
@@ -136,7 +146,7 @@ const ItineraryList = ({
                                 itemRefs.current[i] = el;
                             }}
                             className={`scroll-mt-[60px] lg:scroll-mt-0 ${
-                                pcSelectedDayId && pcSelectedDayId !== "all" && pcSelectedDayId !== itinerary.id 
+                                !isPrinting && pcSelectedDayId && pcSelectedDayId !== "all" && pcSelectedDayId !== itinerary.id 
                                     ? "block lg:hidden" 
                                     : "block"
                             }`}

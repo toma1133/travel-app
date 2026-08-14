@@ -487,14 +487,14 @@ const ItineraryItem = ({
                                                             mt-2.5 rounded-xl text-[11px] font-medium transition-all block w-full max-w-xl
                                                             ${
                                                                 isPrinting
-                                                                    ? "p-2 bg-gray-50 border border-gray-300 text-black text-[9px]"
-                                                                    : "p-3 bg-slate-50/90 dark:bg-zinc-800/95 border border-slate-200/90 dark:border-zinc-700/90 text-slate-800 dark:text-zinc-100 shadow-sm"
+                                                                    ? "p-2 bg-white border border-gray-400 text-black text-[9px]"
+                                                                    : "p-3 bg-white dark:bg-zinc-800/95 border border-gray-300 dark:border-zinc-700/90 text-gray-900 dark:text-zinc-100 shadow-sm"
                                                             }
                                                         `}
                                                     >
                                                         {/* 標頭：圖示 + 模式 + 預估時間 + 標籤膠囊 */}
                                                         <div className="flex items-center gap-2 flex-wrap">
-                                                            <div className="flex items-center gap-1.5 font-bold text-slate-900 dark:text-zinc-100">
+                                                            <div className={`flex items-center gap-1.5 font-bold ${isPrinting ? "text-black" : "text-gray-900 dark:text-zinc-100"}`}>
                                                                 {(() => {
                                                                     const TransitIconComp =
                                                                         getTransitIcon(
@@ -507,7 +507,7 @@ const ItineraryItem = ({
                                                                                     ? 11
                                                                                     : 14
                                                                             }
-                                                                            className={`${isPrinting ? "text-black" : "text-sky-600 dark:text-sky-400"} shrink-0`}
+                                                                            className={`${isPrinting ? "text-black" : "text-gray-700 dark:text-sky-400"} shrink-0`}
                                                                         />
                                                                     );
                                                                 })()}
@@ -606,7 +606,7 @@ const ItineraryItem = ({
                                                                 activity
                                                                     .transitDetails
                                                                     .schedules) && (
-                                                                <div className="mt-2.5 pt-2 border-t border-slate-200/80 dark:border-zinc-700/70 space-y-2 text-xs">
+                                                                <div className={`mt-2.5 pt-2 space-y-2 text-xs ${isPrinting ? "border-t border-gray-400" : "border-t border-gray-200 dark:border-zinc-700/70"}`}>
                                                                     {/* 電車/公車/渡輪 路線、目的地、月台碼頭 */}
                                                                     {(activity
                                                                         .transitDetails
@@ -617,7 +617,7 @@ const ItineraryItem = ({
                                                                         activity
                                                                             .transitDetails
                                                                             .platform) && (
-                                                                        <div className="flex items-center gap-2 flex-wrap text-slate-700 dark:text-zinc-200 font-medium">
+                                                                        <div className={`flex items-center gap-2 flex-wrap font-medium ${isPrinting ? "text-black" : "text-gray-800 dark:text-zinc-200"}`}>
                                                                             {activity
                                                                                 .transitDetails
                                                                                 .companyAndLine && (
@@ -632,7 +632,7 @@ const ItineraryItem = ({
                                                                             {activity
                                                                                 .transitDetails
                                                                                 .destination && (
-                                                                                <span className="text-slate-500 dark:text-zinc-400">
+                                                                                <span className={isPrinting ? "text-gray-600" : "text-gray-500 dark:text-zinc-400"}>
                                                                                     往{" "}
                                                                                     {
                                                                                         activity
@@ -644,7 +644,7 @@ const ItineraryItem = ({
                                                                             {activity
                                                                                 .transitDetails
                                                                                 .platform && (
-                                                                                <span className="px-1.5 py-0.5 rounded bg-slate-200/80 text-slate-700 dark:bg-zinc-700 dark:text-zinc-200 text-[10px]">
+                                                                                <span className={`px-1.5 py-0.5 rounded text-[10px] ${isPrinting ? "bg-gray-200 text-black" : "bg-gray-100 text-gray-700 dark:bg-zinc-700 dark:text-zinc-200"}`}>
                                                                                     {activity.transitMode ===
                                                                                     "ferry"
                                                                                         ? "碼頭"
@@ -668,11 +668,11 @@ const ItineraryItem = ({
                                                                         activity
                                                                             .transitDetails
                                                                             .gate) && (
-                                                                        <div className="flex items-center gap-2 flex-wrap text-slate-800 dark:text-zinc-200">
+                                                                        <div className={`flex items-center gap-2 flex-wrap ${isPrinting ? "text-black" : "text-gray-800 dark:text-zinc-200"}`}>
                                                                             {activity
                                                                                 .transitDetails
                                                                                 .flightNumber && (
-                                                                                <span className="font-bold text-sky-600 dark:text-sky-400">
+                                                                                <span className="font-bold text-gray-800 dark:text-sky-400">
                                                                                     航班{" "}
                                                                                     {
                                                                                         activity
@@ -707,7 +707,7 @@ const ItineraryItem = ({
                                                                             .length >
                                                                             0 && (
                                                                             <div className="space-y-1 mt-2">
-                                                                                <span className="block text-[10px] font-bold uppercase text-slate-500 dark:text-zinc-400 tracking-wider">
+                                                                                <span className="block text-[10px] font-bold uppercase text-gray-500 dark:text-zinc-400 tracking-wider">
                                                                                     備選/預選班次列表
                                                                                 </span>
                                                                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
@@ -720,13 +720,13 @@ const ItineraryItem = ({
                                                                                                 key={
                                                                                                     sIdx
                                                                                                 }
-                                                                                                className="flex items-center justify-between p-1.5 rounded-md bg-white/90 dark:bg-zinc-900/90 border border-slate-200/90 dark:border-zinc-700/80 font-mono text-[11px] text-slate-800 dark:text-zinc-200 shadow-2xs"
+                                                                                                className="flex items-center justify-between p-1.5 rounded-md bg-white dark:bg-zinc-900/90 border border-gray-200 dark:border-zinc-700/80 font-mono text-[11px] text-gray-800 dark:text-zinc-200 shadow-2xs"
                                                                                             >
-                                                                                                <span className="font-bold text-sky-700 dark:text-sky-300 truncate max-w-[120px]">
+                                                                                                <span className="font-bold text-gray-800 dark:text-sky-300 truncate max-w-[120px]">
                                                                                                     {sch.name ||
                                                                                                         `班次 ${sIdx + 1}`}
                                                                                                 </span>
-                                                                                                <div className="flex items-center gap-1.5 text-[10px] text-slate-600 dark:text-zinc-300 shrink-0">
+                                                                                                <div className="flex items-center gap-1.5 text-[10px] text-gray-600 dark:text-zinc-300 shrink-0">
                                                                                                     {(sch.departureTime ||
                                                                                                         sch.arrivalTime) && (
                                                                                                         <span>
@@ -738,7 +738,7 @@ const ItineraryItem = ({
                                                                                                         </span>
                                                                                                     )}
                                                                                                     {sch.platform && (
-                                                                                                        <span className="px-1 bg-slate-100 dark:bg-zinc-800 rounded text-slate-500 dark:text-zinc-400">
+                                                                                                        <span className="px-1 bg-gray-100 dark:bg-zinc-800 rounded text-gray-500 dark:text-zinc-400">
                                                                                                             {
                                                                                                                 sch.platform
                                                                                                             }
@@ -764,7 +764,7 @@ const ItineraryItem = ({
                                                                                 .scheduleList
                                                                                 .length ===
                                                                                 0) && (
-                                                                            <div className="mt-1.5 font-mono text-[11px] whitespace-pre-wrap bg-white/90 dark:bg-zinc-900/90 p-2 rounded-lg border border-slate-200 dark:border-zinc-700/80 text-slate-800 dark:text-zinc-200 leading-relaxed shadow-sm">
+                                                                            <div className="mt-1.5 font-mono text-[11px] whitespace-pre-wrap bg-white dark:bg-zinc-900/90 p-2 rounded-lg border border-gray-200 dark:border-zinc-700/80 text-gray-800 dark:text-zinc-200 leading-relaxed shadow-sm">
                                                                                 {
                                                                                     activity
                                                                                         .transitDetails

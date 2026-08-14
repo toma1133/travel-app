@@ -16,7 +16,6 @@ type PrintableFullPageProps = {
 
 const PageBreak = () => (
     <div
-        className="hidden block"
         style={{
             pageBreakBefore: "always",
             breakBefore: "page",
@@ -89,16 +88,29 @@ const PrintableFullPage = ({ tripData, onClose }: PrintableFullPageProps) => {
                         
                     html, body {
                         width: 100%;
-                        height: 100%;
+                        height: auto !important;
                         overflow: visible !important;
                         margin: 0 !important;
                         padding: 0 !important;
-                        display: block !important; /* 關鍵：防止 Flex 干擾 */
+                        display: block !important;
                     }
 
                     * {
                         -webkit-print-color-adjust: exact !important;
                         print-color-adjust: exact !important;
+                    }
+
+                    /* 關鍵：列印時強制佈局容器的 overflow 為 visible，
+                       並清除固定高度，防止內容被裁切或重疊。
+                       排除 img 和有明確尺寸的圖片容器。 */
+                    .page-content-wrapper {
+                        overflow: visible !important;
+                        max-height: none !important;
+                    }
+                    .page-content-wrapper > div,
+                    .page-content-wrapper > div > div {
+                        overflow: visible !important;
+                        max-height: none !important;
                     }
 
                     h3 {
@@ -112,11 +124,10 @@ const PrintableFullPage = ({ tripData, onClose }: PrintableFullPageProps) => {
                 }
             `}</style>
 
-            {/* 外層容器 */}
             <div
                 className={`
                     fixed inset-0 z-9999 bg-gray-100 overflow-y-auto 
-                    static inset-auto h-auto overflow-visible block bg-white w-full
+                    print:static print:inset-auto print:h-auto print:overflow-visible print:block print:bg-white print:w-full
                 `}
             >
                 {/* Loading 遮罩 */}
@@ -150,18 +161,18 @@ const PrintableFullPage = ({ tripData, onClose }: PrintableFullPageProps) => {
                     className={`
                             bg-white text-black min-h-screen w-full mx-auto 
                             max-w-[210mm] shadow-2xl
-                            shadow-none m-0 p-0 max-w-none w-full
+                            print:shadow-none print:m-0 print:p-0 print:max-w-none print:w-full
                         `}
                 >
                     <div
                         className={`
                                 w-full block relative mb-0
-                                aspect-210/297 overflow-hidden
-                                aspect-auto 
-                                h-[297mm] 
-                                overflow-visible
+                                aspect-[210/297] overflow-hidden
+                                print:aspect-auto 
+                                print:h-[297mm] 
+                                print:overflow-visible
                                 break-after-page 
-                                m-0
+                                print:m-0
                             `}
                     >
                         <CoverPage
@@ -229,7 +240,7 @@ const PrintableFullPage = ({ tripData, onClose }: PrintableFullPageProps) => {
 
                     <PageBreak />
 
-                    <div className="pt-4 block page-content-wrapper px-8">
+                    <div className="pt-4 block page-content-wrapper px-8 pb-16">
                         <div className="mb-8 border-b-4 border-black pb-4 flex justify-between items-end">
                             <div>
                                 <h1 className="text-4xl font-black text-black uppercase tracking-tighter">

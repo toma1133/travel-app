@@ -43,22 +43,22 @@
     body {
         background: white;
     }
-    .print\\:hidden {
+    .print\:hidden {
         display: none !important;
     }
-    .print\\:block {
+    .print\:block {
         display: block !important;
     }
-    .print\\:h-auto {
+    .print\:h-auto {
         height: auto !important;
     }
-    .print\\:overflow-visible {
+    .print\:overflow-visible {
         overflow: visible !important;
     }
-    .print\\:shadow-none {
+    .print\:shadow-none {
         box-shadow: none !important;
     }
-    .print\\:border-gray-300 {
+    .print\:border-gray-300 {
         border-color: #d1d5db !important;
     }
     .break-before-page {
