@@ -40,8 +40,8 @@ const CoverPage = ({
         <div
             className={`
                 w-full h-full bg-background overflow-hidden flex flex-col relative
-                print:h-auto print:min-h-[290mm] print:bg-white print:block print:overflow-visible
-                ${isPrinting ? "h-auto min-h-[290mm] bg-white block overflow-visible" : ""}
+                print:h-full print:max-h-[297mm] print:min-h-0 print:bg-white print:flex print:flex-col print:overflow-hidden
+                ${isPrinting ? "h-full max-h-[297mm] min-h-0 bg-white flex flex-col overflow-hidden" : ""}
             `}
         >
             {/* Top Nav (Floating) */}
@@ -55,7 +55,7 @@ const CoverPage = ({
             </nav>
 
             {/* Background Hero Image */}
-            <div className={`shrink-0 print:relative print:h-[40vh] ${isPrinting ? "relative h-[40vh]" : "absolute top-0 left-0 w-full h-[55%] md:h-[60%]"}`}>
+            <div className={`shrink-0 print:relative print:h-[35vh] print:max-h-[85mm] ${isPrinting ? "relative h-[35vh] max-h-[85mm]" : "absolute top-0 left-0 w-full h-[55%] md:h-[60%]"}`}>
                 {tripData?.cover_image ? (
                     <img
                         src={tripData.cover_image}
@@ -72,7 +72,7 @@ const CoverPage = ({
             </div>
 
             {/* Foreground Content Container */}
-            <div className={`relative z-10 flex-1 flex flex-col px-6 md:px-12 pb-6 print:pt-12 print:pb-32 ${isPrinting ? "pt-12 pb-32" : "pt-[35vh] md:pt-[40vh]"}`}>
+            <div className={`relative z-10 flex-1 flex flex-col px-6 md:px-12 pb-6 print:pt-6 print:pb-12 ${isPrinting ? "pt-6 pb-12" : "pt-[35vh] md:pt-[40vh]"}`}>
                 
                 {/* Title Block (Pushes up automatically via margins if needed, or stays centered) */}
                 <div className={`shrink-0 mb-auto print:mb-12 ${isPrinting ? "mb-12" : ""}`}>

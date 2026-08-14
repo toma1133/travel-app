@@ -119,7 +119,7 @@ const PrintableFullPage = ({ tripData, onClose }: PrintableFullPageProps) => {
                     }
 
                     .page-content-wrapper {
-                        padding-top: 20px;
+                        padding-top: 8px !important;
                     }
                 }
             `}</style>
@@ -169,8 +169,9 @@ const PrintableFullPage = ({ tripData, onClose }: PrintableFullPageProps) => {
                                 w-full block relative mb-0
                                 aspect-[210/297] overflow-hidden
                                 print:aspect-auto 
-                                print:h-[297mm] 
-                                print:overflow-visible
+                                print:h-auto
+                                print:max-h-[285mm]
+                                print:overflow-hidden
                                 break-after-page 
                                 print:m-0
                             `}
@@ -181,15 +182,15 @@ const PrintableFullPage = ({ tripData, onClose }: PrintableFullPageProps) => {
                             tripIdOverride={tripId}
                         />
                     </div>
-                    <div className="pt-4 block page-content-wrapper px-8">
-                        <div className="mb-8 border-b-4 border-black pb-4 flex justify-between items-end">
+                    <div className="pt-4 print:pt-1 block page-content-wrapper px-8 print:px-6">
+                        <div className="mb-6 print:mb-3 border-b-4 print:border-b-2 border-black pb-3 print:pb-1.5 flex justify-between items-end">
                             <div>
-                                <h1 className="text-4xl font-black text-black uppercase tracking-tighter">
+                                <h1 className="text-3xl print:text-2xl font-black text-black uppercase tracking-tighter">
                                     ITINERARY
                                 </h1>
-                                <p className="text-sm text-gray-500 font-bold uppercase tracking-widest mt-1"></p>
+                                <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mt-0.5"></p>
                             </div>
-                            <Map size={32} className="text-gray-300 mb-1" />
+                            <Map size={24} className="text-gray-300 mb-0.5" />
                         </div>
                         <ItineraryPage
                             isPrinting={true}
@@ -200,15 +201,15 @@ const PrintableFullPage = ({ tripData, onClose }: PrintableFullPageProps) => {
 
                     <PageBreak />
 
-                    <div className="pt-4 block page-content-wrapper px-8">
-                        <div className="mb-8 border-b-4 border-black pb-4 flex justify-between items-end">
+                    <div className="pt-4 print:pt-1 block page-content-wrapper px-8 print:px-6">
+                        <div className="mb-6 print:mb-3 border-b-4 print:border-b-2 border-black pb-3 print:pb-1.5 flex justify-between items-end">
                             <div>
-                                <h1 className="text-4xl font-black text-black uppercase tracking-tighter">
+                                <h1 className="text-3xl print:text-2xl font-black text-black uppercase tracking-tighter">
                                     TRANSACTIONS
                                 </h1>
-                                <p className="text-sm text-gray-500 font-bold uppercase tracking-widest mt-1"></p>
+                                <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mt-0.5"></p>
                             </div>
-                            <Wallet size={32} className="text-gray-300 mb-1" />
+                            <Wallet size={24} className="text-gray-300 mb-0.5" />
                         </div>
                         <BudgetPage
                             isPrinting={true}
@@ -219,17 +220,17 @@ const PrintableFullPage = ({ tripData, onClose }: PrintableFullPageProps) => {
 
                     <PageBreak />
 
-                    <div className="pt-4 block page-content-wrapper px-8">
-                        <div className="mb-8 border-b-4 border-black pb-4 flex justify-between items-end">
+                    <div className="pt-4 print:pt-1 block page-content-wrapper px-8 print:px-6">
+                        <div className="mb-6 print:mb-3 border-b-4 print:border-b-2 border-black pb-3 print:pb-1.5 flex justify-between items-end">
                             <div>
-                                <h1 className="text-4xl font-black text-black uppercase tracking-tighter">
+                                <h1 className="text-3xl print:text-2xl font-black text-black uppercase tracking-tighter">
                                     PLACES
                                 </h1>
-                                <p className="text-sm text-gray-500 font-bold uppercase tracking-widest mt-1">
+                                <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mt-0.5">
                                     Scene / Restaurant / Shop / Hotel
                                 </p>
                             </div>
-                            <Pin size={32} className="text-gray-300 mb-1" />
+                            <Pin size={24} className="text-gray-300 mb-0.5" />
                         </div>
                         <GuidePage
                             isPrinting={true}
@@ -240,17 +241,17 @@ const PrintableFullPage = ({ tripData, onClose }: PrintableFullPageProps) => {
 
                     <PageBreak />
 
-                    <div className="pt-4 block page-content-wrapper px-8 pb-16">
-                        <div className="mb-8 border-b-4 border-black pb-4 flex justify-between items-end">
+                    <div className="pt-4 print:pt-1 block page-content-wrapper px-8 print:px-6 pb-0">
+                        <div className="mb-6 print:mb-3 border-b-4 print:border-b-2 border-black pb-3 print:pb-1.5 flex justify-between items-end">
                             <div>
-                                <h1 className="text-4xl font-black text-black uppercase tracking-tighter">
+                                <h1 className="text-3xl print:text-2xl font-black text-black uppercase tracking-tighter">
                                     RESERVATIONS
                                 </h1>
-                                <p className="text-sm text-gray-500 font-bold uppercase tracking-widest mt-1">
+                                <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mt-0.5">
                                     Flight / Hotel / Transport
                                 </p>
                             </div>
-                            <Info size={32} className="text-gray-300 mb-1" />
+                            <Info size={24} className="text-gray-300 mb-0.5" />
                         </div>
                         <InfoPage
                             isPrinting={true}

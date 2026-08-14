@@ -443,7 +443,7 @@ const InfoPage = ({
         <div
             className={`font-[Noto_Sans_TC] ${
                 isPrinting
-                    ? "h-auto min-h-[50vh] break-after-page overflow-visible bg-white text-black"
+                    ? "h-auto min-h-0 overflow-visible bg-white text-black"
                     : `min-h-full text-foreground ${
                           tripData?.theme_config?.bg || "bg-background"
                       } dark:bg-background pb-24`

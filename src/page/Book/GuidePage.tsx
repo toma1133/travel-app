@@ -329,7 +329,7 @@ const GuidePage = ({
         <div
             className={`font-[Noto_Sans_TC] text-foreground flex flex-col ${
                 isPrinting
-                    ? "p-0 h-auto min-h-[50vh] break-after-page overflow-visible bg-white text-black"
+                    ? "p-0 h-auto min-h-0 overflow-visible bg-white text-black"
                     : `min-h-full ${
                           tripData?.theme_config?.bg || "bg-background"
                       } dark:bg-background pb-24`

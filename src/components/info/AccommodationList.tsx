@@ -28,7 +28,7 @@ const AccommodationList = ({
         <div
             className={
                 isPrinting
-                    ? "bg-transparent mb-8"
+                    ? "bg-transparent mb-8 break-inside-avoid overflow-visible block"
                     : "bg-card p-5 rounded-xl shadow-sm relative transition-all"
             }
         >

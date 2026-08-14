@@ -513,7 +513,7 @@ const ItineraryPage = ({
                 className={
                     isPrinting
                         ? "space-y-6 px-0 overflow-visible h-auto block"
-                        : "flex-1 flex flex-col min-h-0 overflow-hidden px-3 sm:px-6 pt-3 pb-20 lg:pb-6"
+                        : "flex-1 flex flex-col min-h-0 px-3 sm:px-6 pt-3 pb-20 lg:pb-6 lg:overflow-hidden"
                 }
             >
                 {/* 主佈局：螢幕版雙欄 (左行程右地圖)，列印版單欄攤平 */}
@@ -521,7 +521,7 @@ const ItineraryPage = ({
                     className={
                         isPrinting
                             ? "block space-y-6 overflow-visible"
-                            : "flex flex-col lg:flex-row gap-4 sm:gap-5 lg:items-start px-3 sm:px-6 pt-3 lg:px-0 lg:pt-0 lg:flex-1 lg:min-h-0"
+                            : "flex flex-col lg:flex-row gap-4 sm:gap-5 lg:items-start lg:px-0 lg:pt-0 lg:flex-1 lg:min-h-0"
                     }
                 >
                     

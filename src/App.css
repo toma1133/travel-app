@@ -62,12 +62,25 @@
         border-color: #d1d5db !important;
     }
     .break-before-page {
-        break-before: page;
+        break-before: page !important;
+        page-break-before: always !important;
     }
     .break-after-page {
-        break-after: page;
+        break-after: page !important;
+        page-break-after: always !important;
     }
     .break-inside-avoid {
-        break-inside: avoid;
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+        -webkit-column-break-inside: avoid !important;
+    }
+    .break-inside-auto {
+        break-inside: auto !important;
+        page-break-inside: auto !important;
+        -webkit-column-break-inside: auto !important;
+    }
+    .break-after-avoid {
+        break-after: avoid !important;
+        page-break-after: avoid !important;
     }
 }

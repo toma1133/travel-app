@@ -126,11 +126,11 @@ const ItineraryItem = ({
                 /* 螢幕: 卡片懸浮感、圓角 */
                 ${
                     !isPrinting
-                        ? "bg-card rounded-2xl shadow-sm border border-border mb-4 transition-all duration-300 hover:shadow-md lg:mb-0"
-                        : ""
+                        ? "overflow-hidden bg-card rounded-2xl shadow-sm border border-border mb-4 transition-all duration-300 hover:shadow-md lg:mb-0"
+                        : "overflow-visible block"
                 }
-                /* 列印: 減少底部間距 (mb-4)，避免分頁斷開 */
-                ${isPrinting ? "mb-4 break-inside-avoid" : ""}
+                /* 列印: 每個日程作為完整單元，避免中間換頁 (break-inside-avoid) */
+                ${isPrinting ? "mb-6 break-inside-avoid" : ""}
             `}
             onMouseEnter={() => setShowDayActions(true)}
             onMouseLeave={() => setShowDayActions(false)}
@@ -146,10 +146,10 @@ const ItineraryItem = ({
                 className={`
                     w-full flex items-stretch rounded-t-2xl
                     ${!isPrinting && !isEditing ? "cursor-pointer hover:bg-muted/10" : ""}
-                    ${!isPrinting ? "sticky top-[60px] lg:top-0 z-20 bg-card/95 backdrop-blur-sm shadow-sm border-b border-border/50" : ""}
+                    ${!isPrinting ? "bg-card z-20 shadow-sm border-b border-border/50" : ""}
                     ${
                         isPrinting
-                            ? "cursor-default border-b border-black pb-1 rounded-none overflow-hidden"
+                            ? "cursor-default border-b border-black pb-1 rounded-none overflow-visible break-inside-avoid break-after-avoid"
                             : "p-0"
                     }
                 `}
@@ -336,7 +336,7 @@ const ItineraryItem = ({
                                         flex group/item items-start
                                         ${
                                             isPrinting
-                                                ? "min-h-0"
+                                                ? "min-h-0 break-inside-avoid"
                                                 : "min-h-[40px]"
                                         }
                                     `}

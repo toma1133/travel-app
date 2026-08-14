@@ -601,7 +601,7 @@ const BudgetPage = ({
             style={printStyle}
             className={`min-h-full font-[Noto_Sans_TC] text-foreground ${
                 isPrinting
-                    ? "h-auto min-h-[50vh] break-after-page overflow-visible bg-white pointer-events-none" // 列印模式：強制白底與禁用事件(無hover)
+                    ? "h-auto min-h-0 overflow-visible bg-white pointer-events-none" // 列印模式：強制白底與禁用事件(無hover)
                     : `${
                           tripData?.theme_config?.bg || "bg-background"
                       } dark:bg-background pb-24 lg:pb-0 lg:h-[100dvh] lg:overflow-hidden lg:flex lg:flex-col`
