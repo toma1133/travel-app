@@ -9,6 +9,15 @@ export type PlaceCategory = {
     label: string;
 }
 
+export type RecommendedItem = {
+    name: string;
+    native_name?: string | null;
+    romaji?: string | null;
+    price?: string | null;
+    category?: string | null;
+    note?: string | null;
+};
+
 export type PlaceInfo = {
     open?: string | null;
     closed_days?: string | null;
@@ -21,6 +30,14 @@ export type PlaceInfo = {
     rating?: number | string | null;
     rating_count?: number | string | null;
     rating_source?: string | null;
+    stay_duration?: string | null;
+    booking_url?: string | null;
+    booking_status?: "required" | "recommended" | "none" | "walk_in" | string | null;
+    transit_access?: string | null;
+    payment_methods?: string[] | string | null;
+    amenities?: string[] | string | null;
+    website_url?: string | null;
+    recommended_items?: RecommendedItem[] | null;
 };
 
 export type PlaceVM = Omit<PlaceRow, "type" | "tags" | "info"> & {
@@ -28,3 +45,4 @@ export type PlaceVM = Omit<PlaceRow, "type" | "tags" | "info"> & {
     type: string | null;
     tags: string | null;
 };
+

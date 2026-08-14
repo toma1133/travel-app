@@ -14,6 +14,7 @@ import ItineraryPage from "./page/Book/ItineraryPage";
 import InfoPage from "./page/Book/InfoPage";
 import "./App.css";
 import BudgetPage from "./page/Book/BudgetPage";
+import RouteErrorBoundary from "./components/common/RouteErrorBoundary";
 
 const qc = new QueryClient();
 
@@ -24,21 +25,26 @@ const AppContent = ({ isOffline }: { isOffline: boolean }) => {
         [
             {
                 path: "/",
+                errorElement: <RouteErrorBoundary />,
                 Component: () => <Navigate to="/trip" replace />,
             },
             {
                 path: "/login",
+                errorElement: <RouteErrorBoundary />,
                 Component: () => <LoginPage />,
             },
             {
+                errorElement: <RouteErrorBoundary />,
                 Component: () => <ProtectedLayout isOffline={isOffline} />,
                 children: [
                     {
                         path: "/trip",
+                        errorElement: <RouteErrorBoundary />,
                         Component: () => <BookshelfPage />,
                     },
                     {
                         path: "/trip/:id",
+                        errorElement: <RouteErrorBoundary />,
                         Component: () => <BookPage />,
                         children: [
                             {
@@ -79,6 +85,7 @@ const AppContent = ({ isOffline }: { isOffline: boolean }) => {
             },
             {
                 path: "*",
+                errorElement: <RouteErrorBoundary />,
                 Component: () => <div>頁面不存在</div>,
             },
         ],

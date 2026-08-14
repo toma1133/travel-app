@@ -22,7 +22,7 @@ const PlaceCardList = ({
     <div
         className={`
             w-full 
-            ${isPrinting ? "space-y-0 divide-y divide-black" : "grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"}
+            ${isPrinting ? "space-y-0 divide-y divide-black" : "space-y-6 w-full"}
         `}
     >
         {Array.isArray(places) && places.length > 0

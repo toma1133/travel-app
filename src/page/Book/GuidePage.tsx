@@ -388,6 +388,7 @@ const GuidePage = ({
                         (pc) => pc.id !== "all"
                     )}
                     theme={tripData?.theme_config!}
+                    localCurrency={tripData?.settings_config?.localCurrency}
                     onCloseBtnClick={handleCloseEditModal}
                     onFormInputChange={handleInputChange}
                     onFormSubmit={handleSubmit}

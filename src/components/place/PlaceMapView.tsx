@@ -20,6 +20,9 @@ import {
     Bed,
     Plane,
     Layers,
+    Train,
+    Ticket,
+    Utensils,
 } from "lucide-react";
 import type { PlaceVM } from "../../models/types/PlaceTypes";
 import PlaceMapController from "./PlaceMapController";
@@ -322,6 +325,91 @@ const PlaceMarkerPopupContent = ({
                                     <Copy size={12} />
                                 )}
                             </button>
+                        </div>
+                    )}
+
+                    {/* Stay Duration */}
+                    {place.info?.stay_duration && (
+                        <div className="flex items-center gap-1.5">
+                            <Clock size={13} className="text-primary mt-0.5 shrink-0" />
+                            <span className="text-foreground/90 leading-tight">
+                                <span className="font-medium text-muted-foreground">建議停留：</span>
+                                <strong className="font-semibold text-foreground">{place.info.stay_duration}</strong>
+                            </span>
+                        </div>
+                    )}
+
+                    {/* Transit Access */}
+                    {place.info?.transit_access && (
+                        <div className="flex items-start gap-1.5">
+                            <Train size={13} className="text-indigo-500 mt-0.5 shrink-0" />
+                            <span className="text-foreground/90 leading-tight">
+                                {place.info.transit_access}
+                            </span>
+                        </div>
+                    )}
+
+                    {/* Booking Status & Link */}
+                    {(place.info?.booking_status || place.info?.booking_url) && (
+                        <div className="flex items-center justify-between gap-1 pt-1 border-t border-border/40 text-[11px]">
+                            <div className="flex items-center gap-1">
+                                <Ticket size={12} className="text-emerald-500 shrink-0" />
+                                <span>
+                                    {place.info?.booking_status === "required" && (
+                                        <span className="text-rose-600 dark:text-rose-400 font-semibold">需提前預約</span>
+                                    )}
+                                    {place.info?.booking_status === "recommended" && (
+                                        <span className="text-amber-600 dark:text-amber-400 font-semibold">建議預約</span>
+                                    )}
+                                    {place.info?.booking_status === "walk_in" && (
+                                        <span className="text-blue-600 dark:text-blue-400 font-semibold">現場排隊</span>
+                                    )}
+                                    {place.info?.booking_status === "none" && (
+                                        <span className="text-emerald-600 dark:text-emerald-400 font-semibold">免預約</span>
+                                    )}
+                                    {!["required", "recommended", "walk_in", "none"].includes(place.info?.booking_status || "") && place.info?.booking_status}
+                                </span>
+                            </div>
+                            {place.info?.booking_url && (
+                                <a
+                                    href={place.info.booking_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold hover:underline"
+                                >
+                                    <span>預約購票</span>
+                                    <ExternalLink size={9} />
+                                </a>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Recommended Items Preview */}
+                    {place.info?.recommended_items && place.info.recommended_items.length > 0 && (
+                        <div className="bg-muted/30 p-2 rounded-lg border border-border/50 space-y-1">
+                            <div className="flex items-center gap-1 text-[11px] font-bold text-foreground">
+                                <Utensils size={11} className="text-amber-500" />
+                                <span>{place.type === "shopping" ? "🛍️ 推薦商品" : "🍽️ 必點推薦"}</span>
+                            </div>
+                            <div className="space-y-1">
+                                {place.info.recommended_items.slice(0, 3).map((item, i) => (
+                                    <div key={i} className="flex items-center justify-between text-[11px] gap-1">
+                                        <div className="truncate min-w-0">
+                                            <span className="text-foreground/90 font-medium">{item.name}</span>
+                                            {item.native_name && (
+                                                <span className="text-[10px] text-muted-foreground ml-1 font-mono">
+                                                    ({item.native_name})
+                                                </span>
+                                            )}
+                                        </div>
+                                        {item.price && (
+                                            <span className="font-mono text-[10px] font-bold text-emerald-600 dark:text-emerald-400 shrink-0 ml-1">
+                                                {item.price}
+                                            </span>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     )}
 
