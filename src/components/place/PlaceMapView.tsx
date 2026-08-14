@@ -8,9 +8,14 @@ import { useTheme } from "../../contexts/ThemeContext";
 type PlaceMapViewProps = {
     places: PlaceVM[] | null;
     showRouteLine?: boolean;
+    highlightedPlaceId?: string | null;
 };
 
-const PlaceMapView = ({ places, showRouteLine = true }: PlaceMapViewProps) => {
+const PlaceMapView = ({
+    places,
+    showRouteLine = true,
+    highlightedPlaceId,
+}: PlaceMapViewProps) => {
     const { theme } = useTheme();
     const isDark = theme === "dark";
 
@@ -62,11 +67,15 @@ const PlaceMapView = ({ places, showRouteLine = true }: PlaceMapViewProps) => {
         }
     };
 
-    const createNumberedIcon = (type: string | null, index: number) => {
-        const color = getPlaceColor(type);
+    const createNumberedIcon = (type: string | null, index: number, isHighlighted: boolean) => {
+        const color = isHighlighted ? "#f43f5e" : getPlaceColor(type);
+        const scale = isHighlighted ? "transform: scale(1.35); z-index: 99;" : "";
+        const pulseRing = isHighlighted ? `<div style="position: absolute; inset: -6px; border-radius: 50%; background: rgba(244,63,94,0.35); animation: ping 1.2s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>` : "";
+
         const svgTemplate = `
-            <div style="position: relative; width: 38px; height: 38px;">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="${color}" width="38" height="38" style="filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.3));">
+            <div style="position: relative; width: 38px; height: 38px; transition: transform 0.2s ease; ${scale}">
+                ${pulseRing}
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="${color}" width="38" height="38" style="filter: drop-shadow(0px 2px 6px rgba(0,0,0,0.4));">
                     <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
                 </svg>
                 <div style="
@@ -126,9 +135,9 @@ const PlaceMapView = ({ places, showRouteLine = true }: PlaceMapViewProps) => {
 
             {validPlaces.map((place, idx) => (
                 <Marker
-                    key={place.id || idx}
+                    key={`${place.id || "place"}-${idx}`}
                     position={{ lat: place.lat, lng: place.lng }}
-                    icon={createNumberedIcon(place.type, idx)}
+                    icon={createNumberedIcon(place.type, idx, !!highlightedPlaceId && place.id === highlightedPlaceId)}
                 >
                     <Popup>
                         <div className="p-1 min-w-[150px]">

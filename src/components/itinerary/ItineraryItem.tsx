@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
 import {
     BookOpen,
-    ChevronDown,
-    ChevronUp,
     Pencil,
     Plus,
     Trash2,
@@ -44,6 +42,7 @@ type ItineraryItemProps = {
     onEditDayBtnClick: (itinerary: ItineraryVM) => void;
     onExpandedBtnToggle: (itinerary: ItineraryVM) => void;
     onViewBtnClick: (linkId: string) => void;
+    onPlaceHover?: (linkId: string | null) => void;
 };
 
 const ItineraryItem = ({
@@ -59,6 +58,7 @@ const ItineraryItem = ({
     onEditDayBtnClick,
     onExpandedBtnToggle,
     onViewBtnClick,
+    onPlaceHover,
 }: ItineraryItemProps) => {
     const accentColor = theme?.accent || "bg-rose-600";
     const primaryTextColor = theme?.primary || "text-gray-900";
@@ -126,7 +126,7 @@ const ItineraryItem = ({
                 /* 螢幕: 卡片懸浮感、圓角 */
                 ${
                     !isPrinting
-                        ? "bg-card rounded-2xl shadow-sm border border-border mb-6 transition-all duration-300 hover:shadow-md lg:flex lg:flex-col lg:h-full lg:mb-0 lg:overflow-hidden"
+                        ? "bg-card rounded-2xl shadow-sm border border-border mb-4 transition-all duration-300 hover:shadow-md lg:mb-0"
                         : ""
                 }
                 /* 列印: 減少底部間距 (mb-4)，避免分頁斷開 */
@@ -144,12 +144,12 @@ const ItineraryItem = ({
                         : () => onExpandedBtnToggle(itinerary)
                 }
                 className={`
-                    w-full flex items-stretch overflow-hidden rounded-t-2xl
+                    w-full flex items-stretch rounded-t-2xl
                     ${!isPrinting && !isEditing ? "cursor-pointer hover:bg-muted/10" : ""}
-                    ${!isPrinting ? "lg:shrink-0 bg-card z-20 shadow-sm border-b border-border/50" : ""}
+                    ${!isPrinting ? "sticky top-[60px] lg:top-0 z-20 bg-card/95 backdrop-blur-sm shadow-sm border-b border-border/50" : ""}
                     ${
                         isPrinting
-                            ? "cursor-default border-b border-black pb-1 rounded-none"
+                            ? "cursor-default border-b border-black pb-1 rounded-none overflow-hidden"
                             : "p-0"
                     }
                 `}
@@ -203,8 +203,8 @@ const ItineraryItem = ({
                         min-w-0
                     `}
                 >
-                    <div className="flex justify-between items-center w-full min-w-0">
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3 min-w-0 flex-1 mr-4">
+                    <div className="flex justify-between items-center w-full min-w-0 gap-2">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3 min-w-0 flex-1">
                             <div className="flex items-center gap-2 min-w-0">
                                 {/* Day Badge */}
                                 <span
@@ -256,57 +256,48 @@ const ItineraryItem = ({
                                 </span>
                             )}
                         </div>
-                        {/* 螢幕模式：展開/收合箭頭 (桌面版常駐展開，故隱藏箭頭) */}
-                        {!isPrinting && !isEditing && (
-                            <div className="text-muted-foreground transition-transform duration-300 hover:text-foreground shrink-0 lg:hidden">
-                                {isExpanded ? (
-                                    <ChevronUp size={20} />
-                                ) : (
-                                    <ChevronDown size={20} />
-                                )}
+
+                        {/* 編輯模式下的工具列 (作為靜態 Flex 元素，手機/電腦不壓迫左側) */}
+                        {!isPrinting && isEditing && (
+                            <div
+                                className={`flex items-center gap-1 p-0.5 bg-card/90 backdrop-blur-md rounded-full shadow-sm border border-border/80 shrink-0 transition-all duration-200 z-10 ${showDayActions ? "opacity-100 scale-100" : "lg:opacity-0 lg:scale-95 lg:group-hover:opacity-100 lg:group-hover:scale-100"}`}
+                            >
+                                <button
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onAddActivityBtnClick(itinerary);
+                                    }}
+                                    className="p-1.5 sm:p-2 rounded-full text-muted-foreground hover:text-primary-foreground hover:bg-primary transition-all"
+                                    title="新增活動"
+                                >
+                                    <Plus size={15} />
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onEditDayBtnClick(itinerary);
+                                    }}
+                                    className="p-1.5 sm:p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
+                                    title="編輯日程"
+                                >
+                                    <Pencil size={15} />
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onDeleteDayBtnClick(itinerary);
+                                    }}
+                                    className="p-1.5 sm:p-2 rounded-full text-muted-foreground hover:text-destructive-foreground hover:bg-destructive transition-all"
+                                    title="刪除日程"
+                                >
+                                    <Trash2 size={15} />
+                                </button>
                             </div>
                         )}
                     </div>
-                    {/* 編輯模式下的工具列 (只要 isEditing=true 就顯示，不需 Hover) */}
-                    {!isPrinting && isEditing && (
-                        <div
-                            className={`absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1 p-1 bg-background/60 backdrop-blur-md rounded-full shadow-md border border-border/50 transition-all duration-300 z-10 ${showDayActions ? "opacity-100" : "lg:opacity-0 lg:group-hover:opacity-100"}`}
-                        >
-                            <button
-                                type="button"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    onAddActivityBtnClick(itinerary);
-                                }}
-                                className="p-2 rounded-full text-muted-foreground hover:text-primary-foreground hover:bg-primary transition-all"
-                                title="新增活動"
-                            >
-                                <Plus size={16} />
-                            </button>
-                            <button
-                                type="button"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    onEditDayBtnClick(itinerary);
-                                }}
-                                className="p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
-                                title="編輯日程"
-                            >
-                                <Pencil size={16} />
-                            </button>
-                            <button
-                                type="button"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    onDeleteDayBtnClick(itinerary);
-                                }}
-                                className="p-2 rounded-full text-muted-foreground hover:text-destructive-foreground hover:bg-destructive transition-all"
-                                title="刪除日程"
-                            >
-                                <Trash2 size={16} />
-                            </button>
-                        </div>
-                    )}
                 </div>
             </div>
 
@@ -349,15 +340,24 @@ const ItineraryItem = ({
                                                 : "min-h-[40px]"
                                         }
                                     `}
-                                    onMouseEnter={() =>
-                                        setActiveActivityIdx(idx)
-                                    }
-                                    onMouseLeave={() =>
-                                        setActiveActivityIdx(null)
-                                    }
-                                    onTouchStart={() =>
-                                        setActiveActivityIdx(idx)
-                                    }
+                                    onMouseEnter={() => {
+                                        setActiveActivityIdx(idx);
+                                        if (activity.linkId && onPlaceHover) {
+                                            onPlaceHover(activity.linkId);
+                                        }
+                                    }}
+                                    onMouseLeave={() => {
+                                        setActiveActivityIdx(null);
+                                        if (onPlaceHover) {
+                                            onPlaceHover(null);
+                                        }
+                                    }}
+                                    onTouchStart={() => {
+                                        setActiveActivityIdx(idx);
+                                        if (activity.linkId && onPlaceHover) {
+                                            onPlaceHover(activity.linkId);
+                                        }
+                                    }}
                                 >
                                     {/* 1. 左側軌道 (Track Column with Lucide Font Icon) */}
                                     <div className="w-14 shrink-0 flex justify-center items-start z-10 pt-0.5">
@@ -403,10 +403,10 @@ const ItineraryItem = ({
                                     {/* 2. 右側內容 (Content Column) */}
                                     <div
                                         className={`
-                                            flex-1 flex flex-col items-start pr-6
+                                            flex-1 min-w-0 flex flex-col items-start pr-1
                                             ${
                                                 !isPrinting
-                                                    ? "transition-transform duration-200 group-hover/item:translate-x-1"
+                                                    ? "transition-transform duration-200 group-hover/item:translate-x-0.5"
                                                     : ""
                                             }
                                         `}
@@ -782,8 +782,8 @@ const ItineraryItem = ({
                                                     activity.linkId) && (
                                                     <div
                                                         className={`
-                                                        flex items-center gap-1 p-0.5 bg-background/60 backdrop-blur-md rounded-full shadow-sm border border-border/50 shrink-0 ml-2 transition-all duration-300 z-10
-                                                        ${activeActivityIdx === idx ? "opacity-100 translate-x-0" : "lg:opacity-0 lg:-translate-x-2 lg:group-hover/item:opacity-100 lg:group-hover/item:translate-x-0"}
+                                                        flex items-center gap-1 p-0.5 bg-card/90 backdrop-blur-md rounded-full shadow-sm border border-border/80 shrink-0 ml-1.5 transition-all duration-200 z-10 self-start mt-0.5
+                                                        ${activeActivityIdx === idx ? "opacity-100 scale-100" : "lg:opacity-0 lg:scale-95 lg:group-hover/item:opacity-100 lg:group-hover/item:scale-100"}
                                                     `}
                                                     >
                                                         {!isEditing &&

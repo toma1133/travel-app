@@ -22,6 +22,22 @@ export const placeRepo: IRepo<PlaceRow, PlaceVM, PlaceVM, string> = {
         }
         return data ?? null;
     },
+    async getByIds(ids: string[]): Promise<PlaceRow[]> {
+        if (!ids || ids.length === 0) return [];
+        const missingIds = ids.filter(id => !placeCache.has(id));
+        if (missingIds.length > 0) {
+            // Split into chunks if too many, but Supabase handles reasonably sized arrays well.
+            const { data, error } = await supabaseClient
+                .from("places")
+                .select("*")
+                .in("id", missingIds);
+            if (error) throw error;
+            if (data) {
+                data.forEach(p => placeCache.set(p.id, p));
+            }
+        }
+        return ids.map(id => placeCache.get(id)).filter(Boolean) as PlaceRow[];
+    },
     async list(parentId: string | undefined): Promise<PlaceRow[]> {
         if (parentId === undefined) return [];
         const { data, error } = await supabaseClient

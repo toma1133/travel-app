@@ -11,6 +11,7 @@ type ItineraryListProps = {
     isEditing: boolean;
     isPrinting?: boolean;
     itinerarys?: ItineraryVM[];
+    pcSelectedDayId?: string;
     theme: TripThemeConf | null;
     onAddActivityBtnClick: (itineraryDay: ItineraryVM) => void;
     onDeleteActivityBtnClick: (
@@ -24,12 +25,14 @@ type ItineraryListProps = {
     ) => void;
     onEditDayBtnClick: (itinerary: ItineraryVM) => void;
     onViewBtnClick: (linkId: string) => void;
+    onPlaceHover?: (linkId: string | null) => void;
 };
 
 const ItineraryList = ({
     isEditing,
-    isPrinting,
+    isPrinting = false,
     itinerarys,
+    pcSelectedDayId,
     theme,
     onAddActivityBtnClick,
     onDeleteActivityBtnClick,
@@ -37,9 +40,18 @@ const ItineraryList = ({
     onEditActivityBtnClick,
     onEditDayBtnClick,
     onViewBtnClick,
+    onPlaceHover,
 }: ItineraryListProps) => {
     const [expandedDayNum, setExpandedDayNum] = useState<number | null>(null);
     const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
+    const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
+    
+    useEffect(() => {
+        const handleResize = () => setIsDesktop(window.innerWidth >= 1024);
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+    }, []);
+
     // 用來標記是否為「使用者手動點擊」觸發的展開
     // 避免與初始載入的自動捲動邏輯衝突
     const isUserInteractionRef = useRef(false);
@@ -47,72 +59,41 @@ const ItineraryList = ({
     // 用來標記初始載入是否完成
     const hasInitialScrolledRef = useRef(false);
     
-    // 1. 處理初始載入 (自動捲動到今天)
+    // 同步外部的選擇狀態與內部的展開狀態
     useEffect(() => {
-        if (isPrinting || !Array.isArray(itinerarys) || itinerarys.length === 0)
-            return;
-
-        if (hasInitialScrolledRef.current) return;
-
-        const today = moment().format("YYYY-MM-DD");
-        const todayItineraryIndex = itinerarys.findIndex(
-            (day) => day.date === today
-        );
-
-        let targetDayNum = 1;
-        let scrollIndex = 0;
-
-        if (todayItineraryIndex !== -1) {
-            targetDayNum = itinerarys[todayItineraryIndex].day_number;
-            scrollIndex = todayItineraryIndex;
-        } else {
-            targetDayNum = itinerarys[0].day_number;
-            scrollIndex = 0;
-        }
-
-        setExpandedDayNum(targetDayNum);
-
-        // 稍微延遲確保 DOM 渲染完畢
-        setTimeout(() => {
-            if (itemRefs.current[scrollIndex]) {
-                itemRefs.current[scrollIndex]?.scrollIntoView({
-                    behavior: "smooth",
-                    block: "start",
-                });
-                hasInitialScrolledRef.current = true;
+        if (!Array.isArray(itinerarys)) return;
+        if (pcSelectedDayId && pcSelectedDayId !== "all") {
+            const day = itinerarys.find(d => d.id === pcSelectedDayId);
+            if (day) setExpandedDayNum(day.day_number);
+        } else if (itinerarys.length === 1) {
+            setExpandedDayNum(itinerarys[0].day_number);
+        } else if (pcSelectedDayId === "all" || !pcSelectedDayId) {
+            if (expandedDayNum === null && itinerarys.length > 0) {
+                const todayStr = moment().format("YYYY-MM-DD");
+                const todayDay = itinerarys.find(d => d.date === todayStr);
+                setExpandedDayNum(todayDay ? todayDay.day_number : itinerarys[0].day_number);
             }
-        }, 300);
-    }, [itinerarys, isPrinting]);
+        }
+    }, [itinerarys, pcSelectedDayId]);
 
-    // 2. [修正重點] 監聽 expandedDayNum 變化來處理使用者點擊後的捲動
+    // 初始載入時，自動捲動到展開的日期
     useEffect(() => {
-        // 如果不是使用者點擊 (例如初始載入)，則不執行這裡的捲動，避免衝突
-        if (!isUserInteractionRef.current || expandedDayNum === null || !itinerarys) return;
-
-        const index = itinerarys.findIndex(it => it.day_number === expandedDayNum);
-        
-        // 桌面版不進行頁面捲動，避免 Master-Detail 佈局跳動
-        if (window.innerWidth >= 1024) {
-            isUserInteractionRef.current = false;
-            return;
+        if (!hasInitialScrolledRef.current && expandedDayNum !== null && !isDesktop && Array.isArray(itinerarys)) {
+            const index = itinerarys.findIndex(d => d.day_number === expandedDayNum);
+            if (index >= 0) {
+                const element = itemRefs.current[index];
+                if (element) {
+                    hasInitialScrolledRef.current = true;
+                    setTimeout(() => {
+                        element.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }, 300);
+                }
+            }
         }
-
-        if (index !== -1 && itemRefs.current[index]) {
-            // 在這裡執行捲動，確保 DOM 已經重新渲染(展開/收合)完畢
-            // 使用 setTimeout 0 讓它排在 Event Loop 最後，確保畫面高度已更新
-            setTimeout(() => {
-                itemRefs.current[index]?.scrollIntoView({
-                    behavior: "smooth",
-                    block: "start",
-                });
-                // 重置標記
-                isUserInteractionRef.current = false; 
-            }, 50); // 給一點點緩衝時間讓 CSS transition (如果有) 開始
-        }
-    }, [expandedDayNum, itinerarys]);
+    }, [expandedDayNum, itinerarys, isDesktop]);
 
     const handleExpandedBtnClick = (itinerary: ItineraryVM, index: number) => {
-        if (isPrinting) return;
+        if (isPrinting || isDesktop) return;
 
         // 標記這是使用者觸發的行為
         isUserInteractionRef.current = true;
@@ -124,6 +105,16 @@ const ItineraryList = ({
         
         // 只更新 State，捲動邏輯交給 useEffect
         setExpandedDayNum(newDayNum);
+
+        // 手機版點擊展開後自動滾動到該項目頂部
+        if (newDayNum !== null) {
+            setTimeout(() => {
+                const element = itemRefs.current[index];
+                if (element) {
+                    element.scrollIntoView({ behavior: "smooth", block: "start" });
+                }
+            }, 150);
+        }
     };
 
     const activeItinerary = useMemo(() => {
@@ -135,133 +126,39 @@ const ItineraryList = ({
     }, [itinerarys, expandedDayNum]);
 
     return (
-        <div className={`space-y-4 ${isPrinting ? "space-y-6" : ""} lg:h-full lg:flex lg:flex-col lg:min-h-0 lg:space-y-0`}>
+        <div className={`space-y-4 ${isPrinting ? "space-y-6" : ""}`}>
             {Array.isArray(itinerarys) && itinerarys.length > 0 ? (
-                <>
-                    {/* --- Mobile & Print View (Stacked) --- */}
-                    <div
-                        className={`${
-                            !isPrinting ? "lg:hidden" : ""
-                        } space-y-4 ${isPrinting ? "space-y-6" : ""}`}
-                    >
-                        {itinerarys.map((itinerary, i) => (
-                            <div
-                                key={i}
-                                ref={(el: HTMLDivElement | null) => {
-                                    itemRefs.current[i] = el;
-                                }}
-                                className="scroll-mt-20"
-                            >
-                                <ItineraryItem
-                                    itinerary={itinerary}
-                                    theme={theme}
-                                    isEditing={isEditing}
-                                    isExpanded={
-                                        isPrinting
-                                            ? true
-                                            : expandedDayNum ===
-                                              itinerary.day_number
-                                    }
-                                    isPrinting={isPrinting}
-                                    onExpandedBtnToggle={() =>
-                                        handleExpandedBtnClick(itinerary, i)
-                                    }
-                                    onAddActivityBtnClick={
-                                        onAddActivityBtnClick
-                                    }
-                                    onDeleteActivityBtnClick={
-                                        onDeleteActivityBtnClick
-                                    }
-                                    onDeleteDayBtnClick={onDeleteDayBtnClick}
-                                    onEditActivityBtnClick={
-                                        onEditActivityBtnClick
-                                    }
-                                    onEditDayBtnClick={onEditDayBtnClick}
-                                    onViewBtnClick={onViewBtnClick}
-                                />
-                            </div>
-                        ))}
-                    </div>
-
-                    {/* --- Desktop View (Master-Detail) --- */}
-                    {!isPrinting && (
-                        <div className="hidden lg:flex gap-6 items-start lg:flex-1 lg:min-h-0">
-                            {/* Master: Sidebar */}
-                            <div className="w-1/3 xl:w-1/4 h-full overflow-y-auto px-2 py-1 pr-3 space-y-3 no-scrollbar shrink-0">
-                                {itinerarys.map((day) => (
-                                    <button
-                                        key={day.id}
-                                        type="button"
-                                        onClick={() =>
-                                            setExpandedDayNum(day.day_number)
-                                        }
-                                        className={`w-full text-left p-4 rounded-2xl border transition-all duration-300 shadow-sm ${
-                                            expandedDayNum === day.day_number
-                                                ? "bg-primary text-primary-foreground border-transparent shadow-md scale-[1.02]"
-                                                : "bg-card text-muted-foreground border-border hover:border-primary/50 hover:bg-muted/30"
-                                        }`}
-                                    >
-                                        <div className="flex justify-between items-center">
-                                            <div>
-                                                <div className="text-[10px] font-bold opacity-70 mb-1 tracking-widest uppercase">
-                                                    {
-                                                        day.date.split("-")[1]
-                                                    }/
-                                                    {
-                                                        day.date.split("-")[2]
-                                                    }{" "}
-                                                    ({day.weekday})
-                                                </div>
-                                                <div
-                                                    className={`text-lg font-black leading-tight ${
-                                                        expandedDayNum ===
-                                                        day.day_number
-                                                            ? "text-primary-foreground"
-                                                            : "text-foreground"
-                                                    }`}
-                                                >
-                                                    DAY {day.day_number}
-                                                </div>
-                                                <div className="text-sm truncate mt-1 opacity-90 font-medium">
-                                                    {day.title ||
-                                                        "未命名行程"}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </button>
-                                ))}
-                            </div>
-
-                            {/* Detail: Expanded Card */}
-                            <div className="flex-1 min-w-0 h-full">
-                                {activeItinerary && (
-                                    <ItineraryItem
-                                        itinerary={activeItinerary}
-                                        theme={theme}
-                                        isEditing={isEditing}
-                                        isExpanded={true}
-                                        isPrinting={false}
-                                        onExpandedBtnToggle={() => {}}
-                                        onAddActivityBtnClick={
-                                            onAddActivityBtnClick
-                                        }
-                                        onDeleteActivityBtnClick={
-                                            onDeleteActivityBtnClick
-                                        }
-                                        onDeleteDayBtnClick={
-                                            onDeleteDayBtnClick
-                                        }
-                                        onEditActivityBtnClick={
-                                            onEditActivityBtnClick
-                                        }
-                                        onEditDayBtnClick={onEditDayBtnClick}
-                                        onViewBtnClick={onViewBtnClick}
-                                    />
-                                )}
-                            </div>
+                <div className="space-y-4">
+                    {itinerarys.map((itinerary, i) => (
+                        <div
+                            key={itinerary.id || i}
+                            ref={(el: HTMLDivElement | null) => {
+                                itemRefs.current[i] = el;
+                            }}
+                            className={`scroll-mt-[60px] lg:scroll-mt-0 ${
+                                pcSelectedDayId && pcSelectedDayId !== "all" && pcSelectedDayId !== itinerary.id 
+                                    ? "block lg:hidden" 
+                                    : "block"
+                            }`}
+                        >
+                            <ItineraryItem
+                                itinerary={itinerary}
+                                theme={theme}
+                                isEditing={isEditing}
+                                isExpanded={isDesktop || expandedDayNum === itinerary.day_number || isPrinting}
+                                isPrinting={isPrinting}
+                                onExpandedBtnToggle={() => handleExpandedBtnClick(itinerary, i)}
+                                onAddActivityBtnClick={onAddActivityBtnClick}
+                                onDeleteActivityBtnClick={onDeleteActivityBtnClick}
+                                onDeleteDayBtnClick={onDeleteDayBtnClick}
+                                onEditActivityBtnClick={onEditActivityBtnClick}
+                                onEditDayBtnClick={onEditDayBtnClick}
+                                onViewBtnClick={onViewBtnClick}
+                                onPlaceHover={onPlaceHover}
+                            />
                         </div>
-                    )}
-                </>
+                    ))}
+                </div>
             ) : (
                 !isPrinting && (
                     <div className="text-center py-10 bg-card rounded-xl border border-dashed border-border/50 shadow-sm">

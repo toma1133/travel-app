@@ -2,7 +2,7 @@ import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import { useOutletContext, useParams } from "react-router-dom";
 import { useIsMutating } from "@tanstack/react-query";
 import moment from "moment";
-import { ListIcon, Lock, MapIcon, Plus, Settings } from "lucide-react";
+import { Lock, MapIcon, Plus, Settings } from "lucide-react";
 import useAuth from "../../hooks/UseAuth";
 import useItinerarys from "../../hooks/itinerary/UseItinerarys";
 import useItineraryMutations from "../../hooks/itinerary/UseItineraryMutations";
@@ -58,7 +58,6 @@ const ItineraryPage = ({
 
     const [isEditing, setIsEditing] = useState(false);
     const [itineraryCategory] = useState(ITINERARY_CATEGORIES);
-    const [viewMode, setViewMode] = useState<"list" | "map">("list");
     const [selectedDayFilter, setSelectedDayFilter] = useState<string>("all"); // 'all' | day.id
     const [itineraryPlacesMap, setItineraryPlacesMap] = useState<Record<string, PlaceVM[]>>({}); // dayId -> PlaceVM[]
 
@@ -83,13 +82,16 @@ const ItineraryPage = ({
             }
 
             // 2. 一次性批次向 repo 請求（經由記憶體快取或單次併發）
-            const placeIdList = Array.from(allPlaceIds);
-            const rows = await Promise.all(placeIdList.map((id) => placeRepo.getById(id)));
-            
-            const placeMapById = new Map<string, PlaceVM>();
-            rows.forEach((r) => {
-                if (r) placeMapById.set(r.id, toPlaceVM(r));
-            });
+            setIsPageLoading(true);
+            try {
+                const placeIdList = Array.from(allPlaceIds);
+                // @ts-ignore - getByIds added to PlaceRepo
+                const rows = await placeRepo.getByIds(placeIdList);
+                
+                const placeMapById = new Map<string, PlaceVM>();
+                rows.forEach((r: any) => {
+                    if (r) placeMapById.set(r.id, toPlaceVM(r));
+                });
 
             // 3. 組合每日的 Place 陣列與全部天數陣列
             const dayMap: Record<string, PlaceVM[]> = {};
@@ -110,6 +112,21 @@ const ItineraryPage = ({
 
             if (isMounted) {
                 setItineraryPlacesMap(dayMap);
+                // 預設選取邏輯：若剛好是行程當天 (Today) 則自動選取該天，否則預設選取 DAY 1
+                if (itinerarys.length > 0) {
+                    const todayStr = moment().format("YYYY-MM-DD");
+                    const todayDay = itinerarys.find((d) => d.date === todayStr);
+                    if (todayDay) {
+                        setSelectedDayFilter(todayDay.id);
+                    } else {
+                        setSelectedDayFilter(itinerarys[0].id);
+                    }
+                }
+            }
+            } finally {
+                if (isMounted) {
+                    setIsPageLoading(false);
+                }
             }
         };
 
@@ -118,6 +135,8 @@ const ItineraryPage = ({
             isMounted = false;
         };
     }, [itinerarys]);
+
+    const [hoveredPlaceId, setHoveredPlaceId] = useState<string | null>(null);
 
     const activeMapPlaces = useMemo(() => {
         return itineraryPlacesMap[selectedDayFilter] || [];
@@ -460,36 +479,7 @@ const ItineraryPage = ({
                     theme={tripData?.theme_config!}
                     hasBackBtn={true}
                     rightAction={
-                        <div className="flex justify-center items-center gap-1.5 sm:gap-3">
-                            {/* 切換 清單 / 地圖 檢視模式 (手機縮小圖示) */}
-                            <div className="flex items-center bg-card border border-border rounded-lg p-0.5 shadow-sm">
-                                <button
-                                    type="button"
-                                    onClick={() => setViewMode("list")}
-                                    className={`flex items-center gap-1 text-xs font-semibold px-2 py-1 sm:px-2.5 rounded-md transition-all ${
-                                        viewMode === "list"
-                                            ? "bg-primary text-primary-foreground shadow-2xs"
-                                            : "text-muted-foreground hover:text-foreground"
-                                    }`}
-                                    title="清單模式"
-                                >
-                                    <ListIcon size={14} />
-                                    <span className="hidden sm:inline">清單</span>
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setViewMode("map")}
-                                    className={`flex items-center gap-1 text-xs font-semibold px-2 py-1 sm:px-2.5 rounded-md transition-all ${
-                                        viewMode === "map"
-                                            ? "bg-primary text-primary-foreground shadow-2xs"
-                                            : "text-muted-foreground hover:text-foreground"
-                                    }`}
-                                    title="地圖模式"
-                                >
-                                    <MapIcon size={14} />
-                                    <span className="hidden sm:inline">地圖</span>
-                                </button>
-                            </div>
+                        <div className="flex justify-center items-center gap-2 sm:gap-3">
                             <button
                                 type="button"
                                 onClick={() => setIsEditing(!isEditing)}
@@ -519,64 +509,90 @@ const ItineraryPage = ({
                 />
             )}
             <div
-                className={`lg:flex-1 lg:flex lg:flex-col lg:overflow-hidden ${
-                    isPrinting ? "space-y-4 px-0" : "px-4 mt-6"
+                className={`flex-1 flex flex-col min-h-0 overflow-hidden ${
+                    isPrinting ? "space-y-6 px-0 overflow-visible h-auto block" : "px-3 sm:px-6 pt-3 pb-20 lg:pb-6"
                 }`}
             >
-                {viewMode === "list" ? (
-                    <ItineraryList
-                        itinerarys={itinerarys}
-                        isEditing={isEditing}
-                        isPrinting={isPrinting}
-                        theme={tripData?.theme_config!}
-                        onAddActivityBtnClick={handleOpenCreateActivityModal}
-                        onDeleteActivityBtnClick={handleOpenDeleteActivityModal}
-                        onDeleteDayBtnClick={handleOpenDeleteDayModal}
-                        onEditActivityBtnClick={handleOpenEditActivityModal}
-                        onEditDayBtnClick={handleOpenEditDayModal}
-                        onViewBtnClick={handleOpenPreviewModal}
-                    />
-                ) : (
-                    <div className="flex flex-col h-[70vh] lg:h-full gap-3">
-                        {/* Day Filter Pills */}
-                        {Array.isArray(itinerarys) && itinerarys.length > 0 && (
-                            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar shrink-0">
+                {/* 主佈局：螢幕版雙欄 (左行程右地圖)，列印版單欄攤平 */}
+                <div className={`flex flex-col lg:flex-row gap-4 sm:gap-5 lg:items-start ${isPrinting ? "block space-y-6 overflow-visible" : "px-3 sm:px-6 pt-3 lg:px-0 lg:pt-0 lg:flex-1 lg:min-h-0"}`}>
+                    
+                    {/* 左欄：Tabs + 清單 */}
+                    <div className={`w-full lg:max-w-[58%] flex flex-col lg:flex-row gap-4 lg:gap-6 ${isPrinting ? "" : "lg:flex-1 lg:h-full lg:overflow-y-auto no-scrollbar lg:pr-2 lg:pb-12"}`}>
+                        
+                        {/* 電腦版垂直 Day Selector (側邊欄) */}
+                        {!isPrinting && (
+                            <div className="hidden lg:flex flex-col gap-2 shrink-0 w-[120px] sticky top-0 pt-1 max-h-[calc(100vh-120px)] overflow-y-auto no-scrollbar pb-10">
                                 <button
                                     type="button"
                                     onClick={() => setSelectedDayFilter("all")}
-                                    className={`px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
+                                    className={`px-4 py-3 rounded-2xl text-sm font-bold text-left transition-all ${
                                         selectedDayFilter === "all"
-                                            ? "bg-primary text-primary-foreground shadow-xs"
-                                            : "bg-card border border-border text-muted-foreground hover:text-foreground"
+                                            ? "bg-primary text-primary-foreground shadow-sm"
+                                            : "bg-card border border-border text-muted-foreground hover:text-foreground hover:border-primary/50"
                                     }`}
                                 >
                                     全部天數
                                 </button>
-                                {itinerarys.map((day) => {
-                                    return (
+                                {Array.isArray(itinerarys) &&
+                                    itinerarys.map((day) => (
                                         <button
                                             key={day.id}
                                             type="button"
                                             onClick={() => setSelectedDayFilter(day.id)}
-                                            className={`px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1 ${
+                                            className={`px-4 py-3 rounded-2xl text-left transition-all flex flex-col gap-0.5 ${
                                                 selectedDayFilter === day.id
-                                                    ? "bg-primary text-primary-foreground shadow-xs"
-                                                    : "bg-card border border-border text-muted-foreground hover:text-foreground"
+                                                    ? "bg-primary text-primary-foreground shadow-sm"
+                                                    : "bg-card border border-border text-muted-foreground hover:text-foreground hover:border-primary/50"
                                             }`}
                                         >
-                                            <span>DAY {day.day_number}</span>
-                                            {day.title && <span className="opacity-80 max-w-[100px] truncate">({day.title})</span>}
+                                            <span className="text-sm font-bold">DAY {day.day_number}</span>
+                                            <span className="text-[11px] opacity-75 font-mono">
+                                                {day.date.split("-")[1]}/{day.date.split("-")[2]}
+                                            </span>
                                         </button>
-                                    );
-                                })}
+                                    ))}
                             </div>
                         )}
 
-                        <div className="flex-1 w-full rounded-2xl overflow-hidden shadow-md relative min-h-[300px]">
-                            <PlaceMapView places={activeMapPlaces} showRouteLine={true} />
-                        </div>
+                        {/* 行程時間軸清單 */}
+                        <div className={`flex-1 w-full min-w-0 ${isPrinting ? "overflow-visible" : "pb-4"}`}>
+                        <ItineraryList
+                            itinerarys={itinerarys}
+                            pcSelectedDayId={selectedDayFilter}
+                            isEditing={isEditing}
+                            isPrinting={isPrinting}
+                            theme={tripData?.theme_config!}
+                            onAddActivityBtnClick={handleOpenCreateActivityModal}
+                            onDeleteActivityBtnClick={handleOpenDeleteActivityModal}
+                            onDeleteDayBtnClick={handleOpenDeleteDayModal}
+                            onEditActivityBtnClick={handleOpenEditActivityModal}
+                            onEditDayBtnClick={handleOpenEditDayModal}
+                            onViewBtnClick={handleOpenPreviewModal}
+                            onPlaceHover={setHoveredPlaceId}
+                        />
                     </div>
-                )}
+                    </div>
+
+                    {/* 右欄：電腦版常駐大地圖 */}
+                    {!isPrinting && (
+                        <div className="hidden lg:flex flex-1 flex-col h-full rounded-3xl overflow-hidden shadow-lg border border-border/80 min-h-[450px]">
+                            <div className="px-4 py-3 bg-muted/30 border-b border-border/50 flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <MapIcon size={16} className="text-primary shrink-0" />
+                                    <span className="text-xs font-bold text-foreground">
+                                        地圖與動態路線
+                                    </span>
+                                </div>
+                                <span className="text-[11px] text-muted-foreground font-mono bg-accent/50 px-2 py-0.5 rounded-full">
+                                    {activeMapPlaces.length} 個地標
+                                </span>
+                            </div>
+                            <div className="flex-1 w-full relative">
+                                <PlaceMapView places={activeMapPlaces} showRouteLine={true} highlightedPlaceId={hoveredPlaceId} />
+                            </div>
+                        </div>
+                    )}
+                </div>
             </div>
             {isDayModalOpen && (
                 <ItineraryDayModal
