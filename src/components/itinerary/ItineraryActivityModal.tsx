@@ -3,8 +3,9 @@ import {
     ChangeEvent,
     FormEventHandler,
     MouseEventHandler,
+    useState,
 } from "react";
-import { Clock, Tag, Hourglass, Navigation } from "lucide-react";
+import { Clock, Tag, Hourglass, Navigation, Sparkles, Loader2, CheckCircle2, AlertCircle, Info } from "lucide-react";
 import type {
     ItineraryActivitiy,
     ItineraryVM,
@@ -18,6 +19,8 @@ import {
 import { CategoryCustomSelect } from "../common/CategoryCustomSelect";
 import FormModal from "../common/FormModal";
 import PlaceLinkAutocomplete from "../common/PlaceLinkAutoComplete";
+import { placeRepo } from "../../services/repositories/PlaceRepo";
+import { RoutingService } from "../../services/api/RoutingService";
 
 type ItineraryActivityModalProps = {
     formData: ItineraryActivitiy;
@@ -41,6 +44,12 @@ const ItineraryActivityModal = ({
     onFormInputChange,
     onFormSubmit,
 }: ItineraryActivityModalProps) => {
+    const [isCalculatingRoute, setIsCalculatingRoute] = useState(false);
+    const [routingMessage, setRoutingMessage] = useState<{
+        type: "success" | "error" | "info";
+        text: string;
+    } | null>(null);
+
     const handlePlaceSelect = (place: PlaceVM) => {
         const createEvent = (name: string, value: string) =>
             ({
@@ -56,6 +65,134 @@ const ItineraryActivityModal = ({
         }
         if (place.eng_name) {
             onFormInputChange(createEvent("desc", place.eng_name));
+        }
+    };
+
+    const handleAutoCalculateRoute = async () => {
+        setRoutingMessage(null);
+        if (!itinerary) return;
+
+        // 1. Determine origin place
+        if (!formData.linkId) {
+            setRoutingMessage({
+                type: "info",
+                text: "請先在最下方的「連結地點 ID」中選擇地點，才能取得出發經緯度！",
+            });
+            return;
+        }
+
+        setIsCalculatingRoute(true);
+
+        try {
+            const originPlace = await placeRepo.getById(formData.linkId);
+            if (
+                !originPlace ||
+                typeof originPlace.lat !== "number" ||
+                typeof originPlace.lng !== "number"
+            ) {
+                setRoutingMessage({
+                    type: "error",
+                    text: "出發地點尚未包含經緯度座標，請確認地標設定。",
+                });
+                setIsCalculatingRoute(false);
+                return;
+            }
+
+            // 2. Determine destination place (next activity in the same day)
+            const activities = (itinerary.activities || [])
+                .slice()
+                .sort((a, b) => a.time.localeCompare(b.time));
+
+            const currentIndex = activities.findIndex(
+                (a) =>
+                    (formData.activityIndex !== undefined &&
+                        a.activityIndex === formData.activityIndex) ||
+                    (a.title === formData.title && a.time === formData.time) ||
+                    (a.linkId === formData.linkId)
+            );
+
+            let nextActivity: ItineraryActivitiy | null = null;
+            if (currentIndex >= 0 && currentIndex < activities.length - 1) {
+                nextActivity = activities[currentIndex + 1];
+            } else if (activities.length > 0) {
+                // If not found or this is newly created, find first activity after its time with linkId
+                nextActivity =
+                    activities.find((a) => a.time > formData.time && a.linkId) || null;
+            }
+
+            if (!nextActivity || !nextActivity.linkId) {
+                setRoutingMessage({
+                    type: "info",
+                    text: `已確認出發點「${originPlace.name}」，但此日程後續尚未安排其他已連結地點的活動。`,
+                });
+                setIsCalculatingRoute(false);
+                return;
+            }
+
+            const destPlace = await placeRepo.getById(nextActivity.linkId);
+            if (
+                !destPlace ||
+                typeof destPlace.lat !== "number" ||
+                typeof destPlace.lng !== "number"
+            ) {
+                setRoutingMessage({
+                    type: "error",
+                    text: `下一站「${nextActivity.title}」未包含經緯度座標！`,
+                });
+                setIsCalculatingRoute(false);
+                return;
+            }
+
+            // 3. Request route
+            const profile = RoutingService.mapTransitModeToProfile(formData.transitMode);
+            const routeResult = await RoutingService.getRoute(
+                { lat: originPlace.lat, lng: originPlace.lng },
+                { lat: destPlace.lat, lng: destPlace.lng },
+                profile
+            );
+
+            if (routeResult) {
+                // Update duration
+                const durationEvent = {
+                    target: {
+                        name: "transitDuration",
+                        value: `${routeResult.durationFormatted} (${routeResult.distanceFormatted})`,
+                    },
+                    currentTarget: {
+                        name: "transitDuration",
+                        value: `${routeResult.durationFormatted} (${routeResult.distanceFormatted})`,
+                    },
+                } as unknown as ChangeEvent<HTMLInputElement>;
+                onFormInputChange(durationEvent);
+
+                // Auto-set transit mode if not selected
+                if (!formData.transitMode || formData.transitMode === "none") {
+                    const suggestedMode = routeResult.distanceKm <= 1.5 ? "walk" : "car";
+                    const modeEvent = {
+                        target: { name: "transitMode", value: suggestedMode },
+                        currentTarget: { name: "transitMode", value: suggestedMode },
+                    } as unknown as ChangeEvent<HTMLInputElement>;
+                    onFormInputChange(modeEvent);
+                }
+
+                setRoutingMessage({
+                    type: "success",
+                    text: `已成功取得「${originPlace.name}」➔「${destPlace.name}」路程：約 ${routeResult.durationFormatted}（${routeResult.distanceFormatted}）`,
+                });
+            } else {
+                setRoutingMessage({
+                    type: "error",
+                    text: "OSM 路線規劃服務暫時無法計算兩點路徑。",
+                });
+            }
+        } catch (err) {
+            console.error("Failed to auto calculate route:", err);
+            setRoutingMessage({
+                type: "error",
+                text: "計算過程發生問題，請稍候重試。",
+            });
+        } finally {
+            setIsCalculatingRoute(false);
         }
     };
 
@@ -141,10 +278,56 @@ const ItineraryActivityModal = ({
 
             {/* Transit Section (路程與交通) */}
             <div className="p-3.5 rounded-xl bg-accent/30 border border-border/50 space-y-3">
-                <label className="block font-bold uppercase flex items-center text-muted-foreground text-xs">
-                    <Navigation size={12} className="mr-1 text-primary" />{" "}
-                    前往下一站的交通與車程 (選填)
-                </label>
+                <div className="flex items-center justify-between">
+                    <label className="font-bold uppercase flex items-center text-muted-foreground text-xs">
+                        <Navigation size={12} className="mr-1 text-primary" />{" "}
+                        前往下一站的交通與車程 (選填)
+                    </label>
+
+                    {/* Auto-calculate button with OSM */}
+                    <button
+                        type="button"
+                        onClick={handleAutoCalculateRoute}
+                        disabled={isCalculatingRoute}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-all border border-primary/20 cursor-pointer disabled:opacity-50"
+                        title="透過 OpenStreetMap 自動計算至下一站的距離與行車/步行時間"
+                    >
+                        {isCalculatingRoute ? (
+                            <>
+                                <Loader2 size={11} className="animate-spin" />
+                                <span>計算中...</span>
+                            </>
+                        ) : (
+                            <>
+                                <Sparkles size={11} />
+                                <span>⚡ 自動透過地圖估算</span>
+                            </>
+                        )}
+                    </button>
+                </div>
+
+                {/* Routing status message feedback */}
+                {routingMessage && (
+                    <div
+                        className={`p-2 rounded-lg text-xs flex items-start gap-1.5 animate-fadeIn ${
+                            routingMessage.type === "success"
+                                ? "bg-emerald-50 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
+                                : routingMessage.type === "error"
+                                ? "bg-destructive/10 text-destructive border border-destructive/20"
+                                : "bg-sky-50 text-sky-800 dark:bg-sky-950/60 dark:text-sky-300 border border-sky-200 dark:border-sky-800"
+                        }`}
+                    >
+                        {routingMessage.type === "success" ? (
+                            <CheckCircle2 size={13} className="shrink-0 mt-0.5" />
+                        ) : routingMessage.type === "error" ? (
+                            <AlertCircle size={13} className="shrink-0 mt-0.5" />
+                        ) : (
+                            <Info size={13} className="shrink-0 mt-0.5" />
+                        )}
+                        <span className="leading-tight">{routingMessage.text}</span>
+                    </div>
+                )}
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                         <span className="block text-[10px] font-semibold text-muted-foreground mb-1">
