@@ -1,7 +1,7 @@
 import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import { useOutletContext, useParams } from "react-router-dom";
 import { useIsMutating } from "@tanstack/react-query";
-import { ListIcon, MapIcon, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import useAuth from "../../hooks/UseAuth";
 import usePlaces from "../../hooks/place/UsePlaces";
 import usePlaceMutations from "../../hooks/place/UsePlaceMutations";
@@ -10,7 +10,6 @@ import DeleteModal from "../../components/common/DeleteModal";
 import PlaceModal from "../../components/place/PlaceModal";
 import PlaceFilter from "../../components/place/PlaceFilter";
 import PlaceCardList from "../../components/place/PlaceCardList";
-import PlaceMapView from "../../components/place/PlaceMapView";
 import BookLayoutContextType from "../../models/types/BookLayoutContextTypes";
 import LayoutContextType from "../../models/types/LayoutContextTypes";
 import type { PlaceCategory, PlaceVM } from "../../models/types/PlaceTypes";
@@ -345,25 +344,6 @@ const GuidePage = ({
                     rightAction={
                         <div className="flex justify-center items-center gap-4">
                             <button
-                                onClick={() =>
-                                    setViewMode(
-                                        viewMode === "list" ? "map" : "list"
-                                    )
-                                }
-                                className={`flex items-center text-sm font-medium px-3 py-1.5 rounded-lg shadow-md bg-card text-foreground border border-border/50 hover:bg-muted/50 transition-colors`}
-                                title={viewMode === "list" ? "地圖模式" : "列表模式"}
-                            >
-                                {viewMode === "list" ? (
-                                    <>
-                                        <MapIcon size={16} />
-                                    </>
-                                ) : (
-                                    <>
-                                        <ListIcon size={16} />
-                                    </>
-                                )}
-                            </button>
-                            <button
                                 type="button"
                                 onClick={handleOpenCreateModal}
                                 className={`flex items-center text-sm font-medium text-white px-3 py-1.5 rounded-lg shadow-md ${tripData?.theme_config?.accent} hover:opacity-90 transition-opacity`}
@@ -391,18 +371,14 @@ const GuidePage = ({
                         onClearAllFilters={handleClearAllFilters}
                     />
                 )}
-                {viewMode === "list" || isPrinting ? (
-                    <PlaceCardList
-                        isPrinting={isPrinting}
-                        places={filteredPlaces}
-                        theme={tripData?.theme_config!}
-                        onDeleteBtnClick={handleOpenDeleteModal}
-                        onEditBtnClick={handleOpenEditModal}
-                        onTagBtnClick={handleTagClick}
-                    />
-                ) : (
-                    <PlaceMapView places={filteredPlaces} />
-                )}
+                <PlaceCardList
+                    isPrinting={isPrinting}
+                    places={filteredPlaces}
+                    theme={tripData?.theme_config!}
+                    onDeleteBtnClick={handleOpenDeleteModal}
+                    onEditBtnClick={handleOpenEditModal}
+                    onTagBtnClick={handleTagClick}
+                />
             </div>
             {isModalOpen && (
                 <PlaceModal

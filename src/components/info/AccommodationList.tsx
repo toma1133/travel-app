@@ -1,5 +1,5 @@
-import { MouseEventHandler } from "react";
-import { Bed, Plus } from "lucide-react";
+import { MouseEventHandler, useState } from "react";
+import { Bed, ChevronDown, ChevronUp, Plus } from "lucide-react";
 import type { AccommodationRow } from "../../models/types/AccommodationTypes";
 import AccommodationRecord from "./AccommodationRecord";
 
@@ -22,20 +22,23 @@ const AccommodationList = ({
     onEditBtnClick,
     onViewBtnClick,
 }: AccommodationListProps) => {
+    const [isOpen, setIsOpen] = useState(true);
+
     return (
         <div
             className={
                 isPrinting
                     ? "bg-transparent mb-8"
-                    : "bg-card p-5 rounded-lg shadow-sm relative"
+                    : "bg-card p-5 rounded-xl shadow-sm relative transition-all"
             }
         >
             <div
-                className={`flex items-center justify-between group/header ${
+                className={`flex items-center justify-between select-none ${
                     isPrinting
                         ? "mb-6 border-b border-black pb-2"
-                        : "mb-4 text-[#8E354A]"
+                        : `${isOpen ? "mb-4" : "mb-0"} text-[#8E354A] cursor-pointer`
                 }`}
+                onClick={() => !isPrinting && setIsOpen(!isOpen)}
             >
                 <div className="flex items-baseline gap-3">
                     {isPrinting && (
@@ -54,44 +57,56 @@ const AccommodationList = ({
                         </h3>
                     </div>
                 </div>
-                {!isPrinting && isEditing && (
-                    <div className="flex space-x-2 bg-background/60 backdrop-blur-md p-1 rounded-full border border-border/50 transition-all duration-300 lg:opacity-0 lg:group-hover/header:opacity-100 z-10">
-                        <button
-                            onClick={onAddBtnClick}
-                            className="p-1.5 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
-                            title="新增住宿"
-                        >
-                            <Plus size={14} />
-                        </button>
-                    </div>
-                )}
-            </div>
 
-            <div
-                className={`space-y-0 ${
-                    isPrinting ? "grid grid-cols-1 gap-4" : ""
-                }`}
-            >
-                {Array.isArray(accommodations) &&
-                    accommodations.map((accommodation, i) => (
-                        <AccommodationRecord
-                            key={i}
-                            accommodation={accommodation}
-                            index={i}
-                            isEditing={isEditing}
-                            isPrinting={isPrinting}
-                            onDeleteBtnClick={onDeleteBtnClick}
-                            onEditBtnClick={onEditBtnClick}
-                            onViewBtnClick={onViewBtnClick}
-                        />
-                    ))}
-                {(!accommodations || accommodations.length === 0) &&
-                    !isPrinting && (
-                        <div className="text-center text-muted-foreground text-xs py-2">
-                            尚無住宿資訊
+                <div className="flex items-center gap-2">
+                    {!isPrinting && isEditing && (
+                        <div 
+                            className="flex space-x-2 bg-background/60 backdrop-blur-md p-1 rounded-full border border-border/50 transition-all duration-300 z-10"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <button
+                                onClick={onAddBtnClick}
+                                className="p-1.5 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                                title="新增住宿"
+                            >
+                                <Plus size={14} />
+                            </button>
                         </div>
                     )}
+                    {!isPrinting && (
+                        <button
+                            type="button"
+                            className="text-muted-foreground hover:text-foreground p-1 transition-transform duration-200"
+                        >
+                            {isOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                        </button>
+                    )}
+                </div>
             </div>
+
+            {/* Collapsible Content */}
+            {(isOpen || isPrinting) && (
+                <div className="space-y-4">
+                    {Array.isArray(accommodations) && accommodations.length > 0 ? (
+                        accommodations.map((acc, i) => (
+                            <AccommodationRecord
+                                key={acc.id ?? i}
+                                accommodation={acc}
+                                index={i}
+                                isEditing={isEditing}
+                                isPrinting={isPrinting}
+                                onDeleteBtnClick={() => onDeleteBtnClick(acc)}
+                                onEditBtnClick={() => onEditBtnClick(acc)}
+                                onViewBtnClick={onViewBtnClick}
+                            />
+                        ))
+                    ) : (
+                        <p className="text-xs text-muted-foreground italic py-2">
+                            尚無住宿記錄
+                        </p>
+                    )}
+                </div>
+            )}
         </div>
     );
 };

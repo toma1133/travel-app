@@ -3,15 +3,23 @@ import { toPlaceInsert, toPlaceUpdate } from "../mappers/PlaceMapper";
 import type { PlaceRow, PlaceVM } from "../../models/types/PlaceTypes";
 import IRepo from "./IRepo";
 
+const placeCache = new Map<string, PlaceRow>();
+
 export const placeRepo: IRepo<PlaceRow, PlaceVM, PlaceVM, string> = {
     async getById(id: string | undefined): Promise<PlaceRow | null> {
         if (id === undefined || id === null) return null;
+        if (placeCache.has(id)) {
+            return placeCache.get(id)!;
+        }
         const { data, error } = await supabaseClient
             .from("places")
             .select("*")
             .eq("id", id)
             .single();
         if (error) throw error;
+        if (data) {
+            placeCache.set(id, data);
+        }
         return data ?? null;
     },
     async list(parentId: string | undefined): Promise<PlaceRow[]> {
@@ -23,6 +31,9 @@ export const placeRepo: IRepo<PlaceRow, PlaceVM, PlaceVM, string> = {
             .order("type", { ascending: true, })
             .order("id", { ascending: true, });
         if (error) throw error;
+        if (data) {
+            data.forEach((p) => placeCache.set(p.id, p));
+        }
         return data ?? [];
     },
     async insert(payload: PlaceVM): Promise<PlaceRow | null> {
@@ -33,6 +44,7 @@ export const placeRepo: IRepo<PlaceRow, PlaceVM, PlaceVM, string> = {
             .select("*")
             .single();
         if (error) throw error;
+        if (data) placeCache.set(data.id, data);
         return data!;
     },
     async update(patch: Partial<PlaceVM>): Promise<PlaceRow | null> {
@@ -45,6 +57,7 @@ export const placeRepo: IRepo<PlaceRow, PlaceVM, PlaceVM, string> = {
             .select("*")
             .single();
         if (error) throw error;
+        if (data) placeCache.set(data.id, data);
         return data;
     },
     async upsert(payload: PlaceVM): Promise<PlaceRow | null> {
@@ -55,6 +68,7 @@ export const placeRepo: IRepo<PlaceRow, PlaceVM, PlaceVM, string> = {
             .select("*")
             .single();
         if (error) throw error;
+        if (data) placeCache.set(data.id, data);
         return data!;
     },
     async delete(id: string): Promise<void> {
@@ -63,5 +77,6 @@ export const placeRepo: IRepo<PlaceRow, PlaceVM, PlaceVM, string> = {
             .delete()
             .eq("id", id);
         if (error) throw error;
+        placeCache.delete(id);
     },
 };

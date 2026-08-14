@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
     BookOpen,
     ChevronDown,
@@ -18,6 +18,12 @@ import {
     getTransitIcon,
     DEFAULT_CATEGORY_COLORS,
 } from "../../constants/Categories";
+import {
+    fetchDailyWeather,
+    getWeatherInfoByCode,
+    WeatherForecastData,
+} from "../../services/WeatherService";
+import { placeRepo } from "../../services/repositories/PlaceRepo";
 
 type ItineraryItemProps = {
     itinerary: ItineraryVM;
@@ -61,6 +67,57 @@ const ItineraryItem = ({
     const [activeActivityIdx, setActiveActivityIdx] = useState<number | null>(
         null,
     );
+    const [weatherData, setWeatherData] = useState<WeatherForecastData | null>(null);
+    const [isWeatherLoading, setIsWeatherLoading] = useState(false);
+
+    useEffect(() => {
+        if (isPrinting || !itinerary.date) {
+            setWeatherData(null);
+            setIsWeatherLoading(false);
+            return;
+        }
+
+        let isMounted = true;
+        // 每次日期變更時，立即重置天氣狀態並開啟 Loading 轉圈
+        setWeatherData(null);
+        setIsWeatherLoading(true);
+        
+        let targetLat = 25.033;
+        let targetLng = 121.565;
+
+        const resolveLocationAndFetch = async () => {
+            if (Array.isArray(itinerary.activities)) {
+                for (const act of itinerary.activities) {
+                    if (act.linkId) {
+                        try {
+                            const pRow = await placeRepo.getById(act.linkId);
+                            if (pRow && typeof pRow.lat === "number" && typeof pRow.lng === "number") {
+                                targetLat = pRow.lat;
+                                targetLng = pRow.lng;
+                                break;
+                            }
+                        } catch (e) {
+                            // Ignore error
+                        }
+                    }
+                }
+            }
+
+            if (isMounted) {
+                const res = await fetchDailyWeather(targetLat, targetLng, itinerary.date);
+                if (isMounted) {
+                    setWeatherData(res); // 若無資料會被歸零重置 (null)
+                    setIsWeatherLoading(false);
+                }
+            }
+        };
+
+        resolveLocationAndFetch();
+
+        return () => {
+            isMounted = false;
+        };
+    }, [itinerary.date, itinerary.activities, isPrinting]);
 
     return (
         <div
@@ -147,32 +204,57 @@ const ItineraryItem = ({
                     `}
                 >
                     <div className="flex justify-between items-center w-full min-w-0">
-                        <div className="flex items-center gap-3 min-w-0 flex-1 mr-4">
-                            {/* Day Badge */}
-                            <span
-                                className={`
-                                    rounded-full font-bold text-white tracking-wide shadow-sm shrink-0 whitespace-nowrap
-                                    ${
-                                        !isPrinting
-                                            ? `px-2.5 py-0.5 text-[10px] ${accentColor}`
-                                            : "px-2 py-0 text-[9px] bg-black text-white border border-black"
-                                    }
-                                `}
-                            >
-                                DAY {itinerary.day_number}
-                            </span>
-                            <h3
-                                className={`
-                                    font-bold 
-                                    ${
-                                        isPrinting
-                                            ? "text-base text-black whitespace-normal"
-                                            : "text-md truncate text-foreground"
-                                    }
-                                `}
-                            >
-                                {itinerary.title || "未命名行程"}
-                            </h3>
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3 min-w-0 flex-1 mr-4">
+                            <div className="flex items-center gap-2 min-w-0">
+                                {/* Day Badge */}
+                                <span
+                                    className={`
+                                        rounded-full font-bold text-white tracking-wide shadow-sm shrink-0 whitespace-nowrap
+                                        ${
+                                            !isPrinting
+                                                ? `px-2.5 py-0.5 text-[10px] ${accentColor}`
+                                                : "px-2 py-0 text-[9px] bg-black text-white border border-black"
+                                        }
+                                    `}
+                                >
+                                    DAY {itinerary.day_number}
+                                </span>
+                                <h3
+                                    className={`
+                                        font-bold 
+                                        ${
+                                            isPrinting
+                                                ? "text-base text-black whitespace-normal"
+                                                : "text-md truncate text-foreground"
+                                        }
+                                    `}
+                                >
+                                    {itinerary.title || "未命名行程"}
+                                </h3>
+                            </div>
+
+                            {/* 天氣預報資訊膠囊 (Weather Forecast Badge - 支援手機/電腦響應式) */}
+                            {!isPrinting && isWeatherLoading && (
+                                 <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-accent/40 border border-border/40 text-[11px] sm:text-xs font-mono text-muted-foreground shrink-0 animate-pulse w-fit">
+                                     <span className="w-2.5 h-2.5 rounded-full border-2 border-primary/40 border-t-primary animate-spin" />
+                                     <span>查詢天氣...</span>
+                                 </span>
+                            )}
+
+                            {!isPrinting && !isWeatherLoading && weatherData && (
+                                <span 
+                                    className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-accent/60 border border-border/60 text-[11px] sm:text-xs font-mono font-medium text-foreground shrink-0 shadow-2xs w-fit"
+                                    title={`降雨機率: ${weatherData.precipitationProbabilityMax ?? 0}%`}
+                                >
+                                    <span>{getWeatherInfoByCode(weatherData.weatherCode).icon}</span>
+                                    <span>{weatherData.temperatureMin}° ~ {weatherData.temperatureMax}°C</span>
+                                    {typeof weatherData.precipitationProbabilityMax === "number" && weatherData.precipitationProbabilityMax > 20 && (
+                                        <span className="text-[10px] text-blue-600 dark:text-blue-400 font-sans font-bold">
+                                            💧{weatherData.precipitationProbabilityMax}%
+                                        </span>
+                                    )}
+                                </span>
+                            )}
                         </div>
                         {/* 螢幕模式：展開/收合箭頭 (桌面版常駐展開，故隱藏箭頭) */}
                         {!isPrinting && !isEditing && (

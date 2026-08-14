@@ -2,13 +2,19 @@ import { MouseEventHandler } from "react";
 import { AlertTriangle } from "lucide-react";
 
 type DeleteModalProps = {
-    deleteKey: string | undefined;
+    deleteKey?: string;
+    title?: string;
+    description?: string;
+    confirmText?: string;
     onCloseClick: MouseEventHandler<HTMLButtonElement>;
     onConfirmClick: MouseEventHandler<HTMLButtonElement>;
 };
 
 const DeleteModal = ({
     deleteKey,
+    title = "確定要刪除？",
+    description,
+    confirmText = "確認刪除",
     onCloseClick,
     onConfirmClick,
 }: DeleteModalProps) => {
@@ -20,13 +26,19 @@ const DeleteModal = ({
                         <AlertTriangle size={24} />
                     </div>
                     <h3 className="text-lg font-bold text-foreground tracking-tight">
-                        確定要刪除？
+                        {title}
                     </h3>
                 </div>
                 <p className="text-sm text-muted-foreground mb-6">
-                    您即將刪除{" "}
-                    <span className="font-bold text-foreground">{deleteKey}</span>
-                    。此動作無法復原。
+                    {description ? (
+                        description
+                    ) : (
+                        <>
+                            您即將刪除{" "}
+                            <span className="font-bold text-foreground">{deleteKey}</span>
+                            。此動作無法復原。
+                        </>
+                    )}
                 </p>
                 <div className="flex justify-end space-x-3">
                     <button
@@ -40,7 +52,7 @@ const DeleteModal = ({
                         onClick={onConfirmClick}
                         className="px-4 py-2 text-sm font-bold text-destructive-foreground bg-destructive hover:bg-destructive/90 rounded-lg shadow-sm transition-colors"
                     >
-                        確認刪除
+                        {confirmText}
                     </button>
                 </div>
             </div>

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
     Outlet,
     useLocation,
@@ -10,6 +10,7 @@ import useTrip from "../hooks/trip/UseTrip";
 import LayoutContextType from "../models/types/LayoutContextTypes";
 import TabButton from "../components/common/TabButton";
 import BackToTopButton from "../components/common/BackToTopBtn";
+import ChecklistModal from "../components/common/ChecklistModal";
 
 const BookPage = () => {
     const { id: tripId } = useParams<{ id: string }>();
@@ -17,6 +18,8 @@ const BookPage = () => {
     const { setIsPageLoading } = useOutletContext<LayoutContextType>();
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const location = useLocation();
+
+    const [isChecklistOpen, setIsChecklistOpen] = useState(false);
 
     useEffect(() => {
         setIsPageLoading(isLoading);
@@ -83,6 +86,7 @@ const BookPage = () => {
                         ref={scrollContainerRef}
                     >
                         <Outlet context={{ tripData, setIsPageLoading }} />
+
                         <BackToTopButton
                             showAt={200}
                             size={24}

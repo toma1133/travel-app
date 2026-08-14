@@ -2,7 +2,7 @@ import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import { useOutletContext, useParams } from "react-router-dom";
 import { useIsMutating } from "@tanstack/react-query";
 import moment from "moment";
-import { Lock, Plus, Settings } from "lucide-react";
+import { ListIcon, Lock, MapIcon, Plus, Settings } from "lucide-react";
 import useAuth from "../../hooks/UseAuth";
 import useItinerarys from "../../hooks/itinerary/UseItinerarys";
 import useItineraryMutations from "../../hooks/itinerary/UseItineraryMutations";
@@ -15,6 +15,7 @@ import ItineraryDayModal from "../../components/itinerary/ItineraryDayModal";
 import ItineraryActivityModal from "../../components/itinerary/ItineraryActivityModal";
 import PreviewPlaceModal from "../../components/itinerary/PreviewPlaceModal";
 import PlaceCard from "../../components/place/PlaceCard";
+import PlaceMapView from "../../components/place/PlaceMapView";
 import type BookLayoutContextType from "../../models/types/BookLayoutContextTypes";
 import type LayoutContextType from "../../models/types/LayoutContextTypes";
 import type {
@@ -57,6 +58,70 @@ const ItineraryPage = ({
 
     const [isEditing, setIsEditing] = useState(false);
     const [itineraryCategory] = useState(ITINERARY_CATEGORIES);
+    const [viewMode, setViewMode] = useState<"list" | "map">("list");
+    const [selectedDayFilter, setSelectedDayFilter] = useState<string>("all"); // 'all' | day.id
+    const [itineraryPlacesMap, setItineraryPlacesMap] = useState<Record<string, PlaceVM[]>>({}); // dayId -> PlaceVM[]
+
+    // 當行程變更時，批次抓取該行程所有活動有關聯的 Place 地標 (善用 快取 與 單次批次查詢 避免額外 API 消耗)
+    useEffect(() => {
+        if (!Array.isArray(itinerarys)) return;
+        let isMounted = true;
+
+        const fetchLinkedPlacesByDay = async () => {
+            const allPlaceIds = new Set<string>();
+
+            // 1. 收集行程中所有有連結的 Place ID
+            itinerarys.forEach((day) => {
+                day.activities?.forEach((act) => {
+                    if (act.linkId) allPlaceIds.add(act.linkId);
+                });
+            });
+
+            if (allPlaceIds.size === 0) {
+                if (isMounted) setItineraryPlacesMap({ all: [] });
+                return;
+            }
+
+            // 2. 一次性批次向 repo 請求（經由記憶體快取或單次併發）
+            const placeIdList = Array.from(allPlaceIds);
+            const rows = await Promise.all(placeIdList.map((id) => placeRepo.getById(id)));
+            
+            const placeMapById = new Map<string, PlaceVM>();
+            rows.forEach((r) => {
+                if (r) placeMapById.set(r.id, toPlaceVM(r));
+            });
+
+            // 3. 組合每日的 Place 陣列與全部天數陣列
+            const dayMap: Record<string, PlaceVM[]> = {};
+            const allVMs: PlaceVM[] = [];
+
+            itinerarys.forEach((day) => {
+                const dayVMs: PlaceVM[] = [];
+                day.activities?.forEach((act) => {
+                    if (act.linkId && placeMapById.has(act.linkId)) {
+                        dayVMs.push(placeMapById.get(act.linkId)!);
+                    }
+                });
+                dayMap[day.id] = dayVMs;
+            });
+
+            placeMapById.forEach((vm) => allVMs.push(vm));
+            dayMap["all"] = allVMs;
+
+            if (isMounted) {
+                setItineraryPlacesMap(dayMap);
+            }
+        };
+
+        fetchLinkedPlacesByDay();
+        return () => {
+            isMounted = false;
+        };
+    }, [itinerarys]);
+
+    const activeMapPlaces = useMemo(() => {
+        return itineraryPlacesMap[selectedDayFilter] || [];
+    }, [itineraryPlacesMap, selectedDayFilter]);
 
     // --- Preview Modal Handlers ---
     const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
@@ -395,11 +460,40 @@ const ItineraryPage = ({
                     theme={tripData?.theme_config!}
                     hasBackBtn={true}
                     rightAction={
-                        <div className="flex justify-center items-center gap-4">
+                        <div className="flex justify-center items-center gap-1.5 sm:gap-3">
+                            {/* 切換 清單 / 地圖 檢視模式 (手機縮小圖示) */}
+                            <div className="flex items-center bg-card border border-border rounded-lg p-0.5 shadow-sm">
+                                <button
+                                    type="button"
+                                    onClick={() => setViewMode("list")}
+                                    className={`flex items-center gap-1 text-xs font-semibold px-2 py-1 sm:px-2.5 rounded-md transition-all ${
+                                        viewMode === "list"
+                                            ? "bg-primary text-primary-foreground shadow-2xs"
+                                            : "text-muted-foreground hover:text-foreground"
+                                    }`}
+                                    title="清單模式"
+                                >
+                                    <ListIcon size={14} />
+                                    <span className="hidden sm:inline">清單</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setViewMode("map")}
+                                    className={`flex items-center gap-1 text-xs font-semibold px-2 py-1 sm:px-2.5 rounded-md transition-all ${
+                                        viewMode === "map"
+                                            ? "bg-primary text-primary-foreground shadow-2xs"
+                                            : "text-muted-foreground hover:text-foreground"
+                                    }`}
+                                    title="地圖模式"
+                                >
+                                    <MapIcon size={14} />
+                                    <span className="hidden sm:inline">地圖</span>
+                                </button>
+                            </div>
                             <button
                                 type="button"
                                 onClick={() => setIsEditing(!isEditing)}
-                                className={`flex items-center text-sm font-medium px-3 py-1.5 rounded-lg shadow-md transition-all ${
+                                className={`flex items-center text-xs sm:text-sm font-medium px-2 py-1.5 sm:px-3 rounded-lg shadow-md transition-all ${
                                     isEditing
                                         ? "bg-destructive text-destructive-foreground hover:bg-destructive/90 border-transparent"
                                         : "bg-card text-foreground border border-border hover:bg-card/90"
@@ -407,18 +501,18 @@ const ItineraryPage = ({
                                 title={isEditing ? "退出" : "編輯"}
                             >
                                 {isEditing ? (
-                                    <Lock size={16} />
+                                    <Lock size={15} />
                                 ) : (
-                                    <Settings size={16} />
+                                    <Settings size={15} />
                                 )}
                             </button>
                             <button
                                 type="button"
                                 onClick={handleOpenCreateDayModal}
-                                className={`flex items-center text-sm font-medium text-white px-3 py-1.5 rounded-lg shadow-md ${tripData?.theme_config?.accent} hover:opacity-90 transition-opacity`}
+                                className={`flex items-center text-xs sm:text-sm font-medium text-white px-2 py-1.5 sm:px-3 rounded-lg shadow-md ${tripData?.theme_config?.accent} hover:opacity-90 transition-opacity`}
                                 title="新增"
                             >
-                                <Plus size={16} />
+                                <Plus size={15} />
                             </button>
                         </div>
                     }
@@ -429,18 +523,60 @@ const ItineraryPage = ({
                     isPrinting ? "space-y-4 px-0" : "px-4 mt-6"
                 }`}
             >
-                <ItineraryList
-                    itinerarys={itinerarys}
-                    isEditing={isEditing}
-                    isPrinting={isPrinting}
-                    theme={tripData?.theme_config!}
-                    onAddActivityBtnClick={handleOpenCreateActivityModal}
-                    onDeleteActivityBtnClick={handleOpenDeleteActivityModal}
-                    onDeleteDayBtnClick={handleOpenDeleteDayModal}
-                    onEditActivityBtnClick={handleOpenEditActivityModal}
-                    onEditDayBtnClick={handleOpenEditDayModal}
-                    onViewBtnClick={handleOpenPreviewModal}
-                />
+                {viewMode === "list" ? (
+                    <ItineraryList
+                        itinerarys={itinerarys}
+                        isEditing={isEditing}
+                        isPrinting={isPrinting}
+                        theme={tripData?.theme_config!}
+                        onAddActivityBtnClick={handleOpenCreateActivityModal}
+                        onDeleteActivityBtnClick={handleOpenDeleteActivityModal}
+                        onDeleteDayBtnClick={handleOpenDeleteDayModal}
+                        onEditActivityBtnClick={handleOpenEditActivityModal}
+                        onEditDayBtnClick={handleOpenEditDayModal}
+                        onViewBtnClick={handleOpenPreviewModal}
+                    />
+                ) : (
+                    <div className="flex flex-col h-[70vh] lg:h-full gap-3">
+                        {/* Day Filter Pills */}
+                        {Array.isArray(itinerarys) && itinerarys.length > 0 && (
+                            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar shrink-0">
+                                <button
+                                    type="button"
+                                    onClick={() => setSelectedDayFilter("all")}
+                                    className={`px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
+                                        selectedDayFilter === "all"
+                                            ? "bg-primary text-primary-foreground shadow-xs"
+                                            : "bg-card border border-border text-muted-foreground hover:text-foreground"
+                                    }`}
+                                >
+                                    全部天數
+                                </button>
+                                {itinerarys.map((day) => {
+                                    return (
+                                        <button
+                                            key={day.id}
+                                            type="button"
+                                            onClick={() => setSelectedDayFilter(day.id)}
+                                            className={`px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1 ${
+                                                selectedDayFilter === day.id
+                                                    ? "bg-primary text-primary-foreground shadow-xs"
+                                                    : "bg-card border border-border text-muted-foreground hover:text-foreground"
+                                            }`}
+                                        >
+                                            <span>DAY {day.day_number}</span>
+                                            {day.title && <span className="opacity-80 max-w-[100px] truncate">({day.title})</span>}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        )}
+
+                        <div className="flex-1 w-full rounded-2xl overflow-hidden shadow-md relative min-h-[300px]">
+                            <PlaceMapView places={activeMapPlaces} showRouteLine={true} />
+                        </div>
+                    </div>
+                )}
             </div>
             {isDayModalOpen && (
                 <ItineraryDayModal

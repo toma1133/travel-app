@@ -18,6 +18,7 @@ import AccommodationList from "../../components/info/AccommodationList";
 import AccommodationModal from "../../components/info/AccommodationModal";
 import CarRentalList from "../../components/info/CarRentalList";
 import CarRentalModal from "../../components/info/CarRentalModal";
+import ChecklistSection from "../../components/info/ChecklistSection";
 import PreviewPlaceModal from "../../components/itinerary/PreviewPlaceModal";
 import PlaceCard from "../../components/place/PlaceCard";
 import { placeRepo } from "../../services/repositories/PlaceRepo";
@@ -506,6 +507,9 @@ const InfoPage = ({
                     onDeleteBtnClick={handleOpenDeleteCarRentalModal}
                     onEditBtnClick={handleOpenEditCarRentalModal}
                 />
+                {!isPrinting && (
+                    <ChecklistSection tripId={tripId || "default"} isEditing={isEditing} />
+                )}
             </div>
             {isFlightModalOpen && (
                 <FlightModal
