@@ -28,6 +28,7 @@ import {
 import { OSMService, OSMPlace, WikiData } from "../../services/api/OSMService";
 import type { PlaceCategory, PlaceVM } from "../../models/types/PlaceTypes";
 import { CategoryCustomSelect } from "../common/CategoryCustomSelect";
+import { CURRENCIES } from "../../constants/Currencies";
 import FormModal from "../common/FormModal";
 import { TripThemeConf } from "../../models/types/TripTypes";
 
@@ -38,9 +39,335 @@ type PlaceModalProps = {
     theme: TripThemeConf | null;
     onCloseBtnClick: MouseEventHandler<HTMLButtonElement>;
     onFormInputChange: ChangeEventHandler<
-        HTMLInputElement | HTMLTextAreaElement
+        HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
     >;
     onFormSubmit: FormEventHandler<HTMLFormElement>;
+};
+
+const TimeSelect = ({
+    value,
+    onChange,
+    name,
+}: {
+    value: string;
+    onChange: (e: any) => void;
+    name: string;
+}) => {
+    const [hh, mm] = (value || "").split(":");
+    const handleHH = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        onChange({
+            target: { name, value: `${e.target.value}:${mm || "00"}` },
+        });
+    };
+    const handleMM = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        onChange({
+            target: { name, value: `${hh || "00"}:${e.target.value}` },
+        });
+    };
+    return (
+        <div className="flex items-center gap-1.5">
+            <select
+                className="bg-background border border-border rounded-lg px-2 py-1.5 text-sm outline-none focus:border-primary cursor-pointer font-mono"
+                value={hh || "00"}
+                onChange={handleHH}
+            >
+                {Array.from({ length: 24 }).map((_, i) => {
+                    const val = i.toString().padStart(2, "0");
+                    return (
+                        <option key={val} value={val}>
+                            {val}
+                        </option>
+                    );
+                })}
+            </select>
+            <span className="font-bold text-muted-foreground">:</span>
+            <select
+                className="bg-background border border-border rounded-lg px-2 py-1.5 text-sm outline-none focus:border-primary cursor-pointer font-mono"
+                value={mm || "00"}
+                onChange={handleMM}
+            >
+                {[
+                    "00",
+                    "05",
+                    "10",
+                    "15",
+                    "20",
+                    "25",
+                    "30",
+                    "35",
+                    "40",
+                    "45",
+                    "50",
+                    "55",
+                ].map((m) => (
+                    <option key={m} value={m}>
+                        {m}
+                    </option>
+                ))}
+            </select>
+        </div>
+    );
+};
+
+const CheckInOutField = ({ label, name, value, onChange }: { label: string, name: string, value: string, onChange: (e: any) => void }) => {
+    const is24h = value === "24小時";
+    const isRange = !is24h && value.includes("-");
+    const type = is24h ? "24h" : isRange ? "range" : "specific";
+    const [start, end] = isRange ? value.split(/\s*-\s*/) : [is24h ? "15:00" : (value || "15:00"), ""];
+
+    return (
+        <div>
+            <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-semibold text-foreground/80">
+                    {label}
+                </label>
+                <select
+                    className="bg-transparent text-[11px] text-primary font-bold outline-none cursor-pointer"
+                    value={type}
+                    onChange={(e) => {
+                        const t = e.target.value;
+                        if (t === "24h") onChange({ target: { name, value: "24小時" } });
+                        else if (t === "range") onChange({ target: { name, value: `${start || "15:00"} - 20:00` } });
+                        else onChange({ target: { name, value: start || "15:00" } });
+                    }}
+                >
+                    <option value="specific" className="bg-background text-foreground">特定時間</option>
+                    <option value="range" className="bg-background text-foreground">時間範圍</option>
+                    <option value="24h" className="bg-background text-foreground">24小時開放</option>
+                </select>
+            </div>
+            {type === "24h" ? (
+                <div className="py-2.5 px-3 bg-card border border-border rounded-lg text-sm text-center font-bold text-muted-foreground">
+                    全天 24 小時開放
+                </div>
+            ) : type === "range" ? (
+                <div className="flex items-center gap-1.5">
+                    <TimeSelect
+                        name={`${name}_start`}
+                        value={start || "15:00"}
+                        onChange={(e) => onChange({ target: { name, value: `${e.target.value} - ${end || "20:00"}` } })}
+                    />
+                    <span className="text-muted-foreground text-xs font-bold">至</span>
+                    <TimeSelect
+                        name={`${name}_end`}
+                        value={end || "20:00"}
+                        onChange={(e) => onChange({ target: { name, value: `${start || "15:00"} - ${e.target.value}` } })}
+                    />
+                </div>
+            ) : (
+                <TimeSelect
+                    name={name}
+                    value={start || "15:00"}
+                    onChange={(e) => onChange({ target: { name, value: e.target.value } })}
+                />
+            )}
+        </div>
+    );
+};
+
+const BusinessHoursField = ({ formData, onFormInputChange }: { formData: PlaceVM, onFormInputChange: (e: any) => void }) => {
+    const rawOpen = formData?.info?.open || "";
+    
+    // Determine mode
+    let mode: "uniform" | "per_day" | "custom" = "uniform";
+    let perDaySchedule: Record<number, string[]> = {};
+    if (rawOpen.startsWith("{") && rawOpen.includes('"type":"per_day"')) {
+        try {
+            const parsed = JSON.parse(rawOpen);
+            if (parsed.type === "per_day") {
+                mode = "per_day";
+                perDaySchedule = parsed.schedule || {};
+            }
+        } catch (e) { }
+    } else if (rawOpen && !rawOpen.startsWith("{") && !/^[\d:\s,\-]*$/.test(rawOpen)) {
+        mode = "custom";
+    }
+
+    [1,2,3,4,5,6,7].forEach(d => {
+        if (!perDaySchedule[d]) perDaySchedule[d] = [];
+    });
+
+    const setMode = (newMode: "uniform" | "per_day" | "custom") => {
+        if (newMode === "uniform") {
+            onFormInputChange({ target: { name: "info.open", value: "09:00 - 17:00" } });
+        } else if (newMode === "per_day") {
+            const initJSON = JSON.stringify({
+                type: "per_day",
+                schedule: { 1: ["09:00 - 17:00"], 2: ["09:00 - 17:00"], 3: ["09:00 - 17:00"], 4: ["09:00 - 17:00"], 5: ["09:00 - 17:00"], 6: ["09:00 - 17:00"], 7: ["09:00 - 17:00"] }
+            });
+            onFormInputChange({ target: { name: "info.open", value: initJSON } });
+        } else {
+            onFormInputChange({ target: { name: "info.open", value: "在此輸入詳細營業時間..." } });
+        }
+    };
+
+    const uniformPeriods = (mode === "uniform" ? rawOpen : "09:00 - 17:00").split(",").map(p => p.trim()).filter(p => p !== "");
+    if (uniformPeriods.length === 0) uniformPeriods.push("09:00 - 17:00");
+
+    return (
+        <div className="space-y-3">
+            <div className="flex items-center justify-between mb-1.5">
+                <label className="text-xs font-bold text-muted-foreground uppercase flex items-center">
+                    <Clock size={13} className="mr-1.5 text-primary" /> 營業時間
+                </label>
+                <select
+                    className="bg-transparent text-xs text-primary font-bold outline-none cursor-pointer"
+                    value={mode}
+                    onChange={(e) => setMode(e.target.value as any)}
+                >
+                    <option value="uniform" className="bg-background text-foreground">統一時間</option>
+                    <option value="per_day" className="bg-background text-foreground">依星期設定</option>
+                    <option value="custom" className="bg-background text-foreground">自訂文字</option>
+                </select>
+            </div>
+            
+            {mode === "custom" ? (
+                <textarea
+                    name="info.open"
+                    value={rawOpen}
+                    onChange={onFormInputChange}
+                    className="w-full bg-background border border-border rounded-xl p-3 outline-none text-sm focus:border-primary min-h-[100px] resize-y"
+                    placeholder="例如：每月第二個星期二公休..."
+                />
+            ) : mode === "per_day" ? (
+                <div className="flex flex-col gap-3">
+                    {[1, 2, 3, 4, 5, 6, 7].map((dayNum) => {
+                        const dayNames = ["週一", "週二", "週三", "週四", "週五", "週六", "週日"];
+                        const dayName = dayNames[dayNum - 1];
+                        const periods = perDaySchedule[dayNum] || [];
+                        const isClosed = periods.length === 0;
+
+                        return (
+                            <div key={dayNum} className="flex flex-col sm:flex-row sm:items-start gap-2 border-b border-border/40 pb-3 last:border-0 last:pb-0">
+                                <div className="flex items-center gap-2 w-20 shrink-0 sm:pt-1.5">
+                                    <span className="text-sm font-bold text-foreground/80">{dayName}</span>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const newSchedule = { ...perDaySchedule };
+                                            newSchedule[dayNum] = isClosed ? ["09:00 - 17:00"] : [];
+                                            onFormInputChange({ target: { name: "info.open", value: JSON.stringify({ type: "per_day", schedule: newSchedule }) } });
+                                        }}
+                                        className={`px-1.5 py-0.5 rounded text-[10px] font-bold border transition-colors ${isClosed ? "bg-rose-500/10 text-rose-500 border-rose-500/20" : "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"}`}
+                                    >
+                                        {isClosed ? "公休" : "營業"}
+                                    </button>
+                                </div>
+                                <div className="flex flex-col gap-1.5 flex-1">
+                                    {!isClosed && periods.map((period, idx) => {
+                                        const [start, end] = period.split(" - ");
+                                        return (
+                                            <div key={idx} className="flex items-center gap-1.5">
+                                                <TimeSelect
+                                                    name=""
+                                                    value={start || "09:00"}
+                                                    onChange={(e) => {
+                                                        const newSchedule = { ...perDaySchedule };
+                                                        newSchedule[dayNum][idx] = `${e.target.value} - ${end || "17:00"}`;
+                                                        onFormInputChange({ target: { name: "info.open", value: JSON.stringify({ type: "per_day", schedule: newSchedule }) } });
+                                                    }}
+                                                />
+                                                <span className="text-muted-foreground text-xs font-bold">至</span>
+                                                <TimeSelect
+                                                    name=""
+                                                    value={end || "17:00"}
+                                                    onChange={(e) => {
+                                                        const newSchedule = { ...perDaySchedule };
+                                                        newSchedule[dayNum][idx] = `${start || "09:00"} - ${e.target.value}`;
+                                                        onFormInputChange({ target: { name: "info.open", value: JSON.stringify({ type: "per_day", schedule: newSchedule }) } });
+                                                    }}
+                                                />
+                                                {periods.length > 1 && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            const newSchedule = { ...perDaySchedule };
+                                                            newSchedule[dayNum] = periods.filter((_, i) => i !== idx);
+                                                            onFormInputChange({ target: { name: "info.open", value: JSON.stringify({ type: "per_day", schedule: newSchedule }) } });
+                                                        }}
+                                                        className="p-1 text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors ml-1"
+                                                    >
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                    {!isClosed && periods.length < 3 && (
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const newSchedule = { ...perDaySchedule };
+                                                newSchedule[dayNum] = [...periods, "17:00 - 21:00"];
+                                                onFormInputChange({ target: { name: "info.open", value: JSON.stringify({ type: "per_day", schedule: newSchedule }) } });
+                                            }}
+                                            className="flex items-center gap-1 text-[11px] text-primary hover:text-primary/80 font-bold w-fit mt-0.5"
+                                        >
+                                            <Plus size={11} /> 新增時段
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            ) : (
+                <div className="flex flex-col gap-2.5">
+                    {uniformPeriods.map((period, index) => {
+                        const [start, end] = period.split(" - ");
+                        return (
+                            <div key={index} className="flex items-center gap-2">
+                                <TimeSelect
+                                    name={`open_start_${index}`}
+                                    value={start || "09:00"}
+                                    onChange={(e) => {
+                                        const newPeriods = [...uniformPeriods];
+                                        newPeriods[index] = `${e.target.value} - ${end || "17:00"}`;
+                                        onFormInputChange({ target: { name: "info.open", value: newPeriods.join(", ") } });
+                                    }}
+                                />
+                                <span className="font-bold text-muted-foreground">至</span>
+                                <TimeSelect
+                                    name={`open_end_${index}`}
+                                    value={end || "17:00"}
+                                    onChange={(e) => {
+                                        const newPeriods = [...uniformPeriods];
+                                        newPeriods[index] = `${start || "09:00"} - ${e.target.value}`;
+                                        onFormInputChange({ target: { name: "info.open", value: newPeriods.join(", ") } });
+                                    }}
+                                />
+                                {uniformPeriods.length > 1 && (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const newPeriods = uniformPeriods.filter((_, i) => i !== index);
+                                            onFormInputChange({ target: { name: "info.open", value: newPeriods.join(", ") } });
+                                        }}
+                                        className="p-1.5 text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors ml-1"
+                                        title="移除時段"
+                                    >
+                                        <Trash2 size={16} />
+                                    </button>
+                                )}
+                            </div>
+                        );
+                    })}
+                    {uniformPeriods.length < 5 && (
+                        <button
+                            type="button"
+                            onClick={() => {
+                                const newPeriods = [...uniformPeriods, "17:00 - 21:00"];
+                                onFormInputChange({ target: { name: "info.open", value: newPeriods.join(", ") } });
+                            }}
+                            className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors w-fit font-bold mt-1"
+                        >
+                            <Plus size={14} /> 新增時段
+                        </button>
+                    )}
+                </div>
+            )}
+        </div>
+    );
 };
 
 const PlaceModal = ({
@@ -523,249 +850,117 @@ const PlaceModal = ({
                             </span>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-xs font-semibold mb-1 text-foreground/80">
-                                    入住時間 (Check-in)
-                                </label>
-                                <input
-                                    name="info.check_in"
-                                    value={formData?.info?.check_in || ""}
-                                    onChange={onFormInputChange}
-                                    placeholder="如: 15:00 - 20:00"
-                                    className="w-full bg-background border border-border rounded-lg px-3 py-1.5 outline-none font-mono text-sm focus:border-primary transition-colors"
-                                />
-                                <div className="flex flex-wrap gap-1.5 mt-2">
-                                    {[
-                                        "15:00 起",
-                                        "15:00 - 20:00",
-                                        "24 小時",
-                                    ].map((preset) => (
-                                        <button
-                                            key={preset}
-                                            type="button"
-                                            onClick={() => {
-                                                const event = {
-                                                    target: {
-                                                        name: "info.check_in",
-                                                        value: preset,
-                                                    },
-                                                } as React.ChangeEvent<HTMLInputElement>;
-                                                onFormInputChange(event);
-                                            }}
-                                            className="px-2 py-0.5 rounded text-[11px] font-mono bg-card border border-border hover:border-primary text-muted-foreground hover:text-foreground transition-all"
-                                        >
-                                            {preset}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                            <div>
-                                <label className="block text-xs font-semibold mb-1 text-foreground/80">
-                                    退房時間 (Check-out)
-                                </label>
-                                <input
-                                    name="info.check_out"
-                                    value={formData?.info?.check_out || ""}
-                                    onChange={onFormInputChange}
-                                    placeholder="如: 11:00 前"
-                                    className="w-full bg-background border border-border rounded-lg px-3 py-1.5 outline-none font-mono text-sm focus:border-primary transition-colors"
-                                />
-                                <div className="flex flex-wrap gap-1.5 mt-2">
-                                    {["10:00 前", "11:00 前", "24 小時"].map(
-                                        (preset) => (
-                                            <button
-                                                key={preset}
-                                                type="button"
-                                                onClick={() => {
-                                                    const event = {
-                                                        target: {
-                                                            name: "info.check_out",
-                                                            value: preset,
-                                                        },
-                                                    } as React.ChangeEvent<HTMLInputElement>;
-                                                    onFormInputChange(event);
-                                                }}
-                                                className="px-2 py-0.5 rounded text-[11px] font-mono bg-card border border-border hover:border-primary text-muted-foreground hover:text-foreground transition-all"
-                                            >
-                                                {preset}
-                                            </button>
-                                        ),
-                                    )}
-                                </div>
-                            </div>
+                            <CheckInOutField
+                                label="入住時間 (Check-in)"
+                                name="info.check_in"
+                                value={formData?.info?.check_in || "15:00"}
+                                onChange={onFormInputChange}
+                            />
+                            <CheckInOutField
+                                label="退房時間 (Check-out)"
+                                name="info.check_out"
+                                value={formData?.info?.check_out || "11:00"}
+                                onChange={onFormInputChange}
+                            />
                         </div>
                     </div>
                 ) : (
                     <div className="sm:col-span-2 space-y-4 bg-muted/20 p-3.5 rounded-xl border border-border/60">
                         {/* 營業時間快捷模板 & 多段輸入 */}
-                        <div>
-                            <div className="flex items-center justify-between mb-1.5">
-                                <label className="text-xs font-bold text-muted-foreground uppercase flex items-center">
-                                    <Clock
-                                        size={13}
-                                        className="mr-1.5 text-primary"
-                                    />{" "}
-                                    營業時間
-                                </label>
-                                <div className="flex gap-1">
-                                    {[
-                                        {
-                                            label: "全天 (24H)",
-                                            value: "00:00 - 24:00",
-                                        },
-                                        {
-                                            label: "日間 (09-17)",
-                                            value: "09:00 - 17:00",
-                                        },
-                                        {
-                                            label: "雙時段 (午/晚)",
-                                            value: "11:30 - 14:00, 17:30 - 21:00",
-                                        },
-                                    ].map((tpl) => (
-                                        <button
-                                            key={tpl.label}
-                                            type="button"
-                                            onClick={() => {
-                                                const event = {
-                                                    target: {
-                                                        name: "info.open",
-                                                        value: tpl.value,
-                                                    },
-                                                } as React.ChangeEvent<HTMLInputElement>;
-                                                onFormInputChange(event);
-                                            }}
-                                            className="px-2 py-0.5 rounded text-[11px] bg-card border border-border hover:border-primary text-muted-foreground hover:text-foreground transition-all"
-                                        >
-                                            {tpl.label}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                            <input
-                                name="info.open"
-                                value={formData?.info?.open || ""}
-                                onChange={onFormInputChange}
-                                placeholder="例如: 11:30 - 14:00, 17:30 - 21:00"
-                                className="w-full bg-background border border-border rounded-lg px-3 py-1.5 outline-none font-mono text-sm focus:border-primary transition-colors"
-                            />
-                        </div>
+                        <BusinessHoursField formData={formData} onFormInputChange={onFormInputChange} />
 
                         {/* 公休時間點選膠囊 (Weekday Pills) */}
-                        <div>
-                            <div className="flex items-center justify-between mb-1.5">
-                                <label className="text-xs font-bold text-muted-foreground uppercase flex items-center">
-                                    <CalendarX
-                                        size={13}
-                                        className="mr-1.5 text-rose-500"
-                                    />{" "}
-                                    公休時間點選
-                                </label>
-                                <div className="flex gap-1.5">
-                                    <button
-                                        type="button"
-                                        onClick={() => {
+                        {!(formData?.info?.open || "").includes('"type":"per_day"') && (
+                            <div>
+                                <div className="flex items-center justify-between mb-1.5">
+                                    <label className="text-xs font-bold text-muted-foreground uppercase flex items-center">
+                                        <CalendarX
+                                            size={13}
+                                            className="mr-1.5 text-rose-500"
+                                        />{" "}
+                                        公休時間點選
+                                    </label>
+                                </div>
+
+                                {/* 星期膠囊按鈕 (Mon - Sun) */}
+                                <div className="flex items-center gap-1.5 flex-wrap mb-2">
+                                    {[
+                                        { day: "一", val: "週一" },
+                                        { day: "二", val: "週二" },
+                                        { day: "三", val: "週三" },
+                                        { day: "四", val: "週四" },
+                                        { day: "五", val: "週五" },
+                                        { day: "六", val: "週六" },
+                                        { day: "日", val: "週日" },
+                                    ].map((item) => {
+                                        const currentClosed =
+                                            formData?.info?.closed_days || "";
+                                        const isSelected = currentClosed.includes(
+                                            item.val,
+                                        );
+
+                                        const toggleDay = () => {
+                                            let updated = "";
+                                            const daysList = [
+                                                "週一",
+                                                "週二",
+                                                "週三",
+                                                "週四",
+                                                "週五",
+                                                "週六",
+                                                "週日",
+                                            ];
+                                            let activeDays = daysList.filter((d) =>
+                                                currentClosed.includes(d),
+                                            );
+
+                                            if (isSelected) {
+                                                activeDays = activeDays.filter(
+                                                    (d) => d !== item.val,
+                                                );
+                                            } else {
+                                                activeDays.push(item.val);
+                                                activeDays.sort(
+                                                    (a, b) =>
+                                                        daysList.indexOf(a) -
+                                                        daysList.indexOf(b),
+                                                );
+                                            }
+
+                                            if (activeDays.length === 0) {
+                                                updated = "";
+                                            } else {
+                                                updated = `${activeDays.join(", ")} 公休`;
+                                            }
+
                                             const event = {
                                                 target: {
                                                     name: "info.closed_days",
-                                                    value: "",
+                                                    value: updated,
                                                 },
                                             } as React.ChangeEvent<HTMLInputElement>;
                                             onFormInputChange(event);
-                                        }}
-                                        className="text-[11px] text-muted-foreground hover:text-primary underline"
-                                    >
-                                        無公休 (清除)
-                                    </button>
+                                        };
+
+                                        return (
+                                            <button
+                                                key={item.val}
+                                                type="button"
+                                                onClick={toggleDay}
+                                                className={`w-7 h-7 rounded-full text-xs font-bold transition-all border ${
+                                                    isSelected
+                                                        ? "bg-rose-500 text-white border-rose-500 shadow-sm"
+                                                        : "bg-card text-muted-foreground border-border hover:border-rose-300"
+                                                }`}
+                                                title={`切換${item.val}公休`}
+                                            >
+                                                {item.day}
+                                            </button>
+                                        );
+                                    })}
                                 </div>
                             </div>
-
-                            {/* 星期膠囊按鈕 (Mon - Sun) */}
-                            <div className="flex items-center gap-1.5 flex-wrap mb-2">
-                                {[
-                                    { day: "一", val: "週一" },
-                                    { day: "二", val: "週二" },
-                                    { day: "三", val: "週三" },
-                                    { day: "四", val: "週四" },
-                                    { day: "五", val: "週五" },
-                                    { day: "六", val: "週六" },
-                                    { day: "日", val: "週日" },
-                                ].map((item) => {
-                                    const currentClosed =
-                                        formData?.info?.closed_days || "";
-                                    const isSelected = currentClosed.includes(
-                                        item.val,
-                                    );
-
-                                    const toggleDay = () => {
-                                        let updated = "";
-                                        const daysList = [
-                                            "週一",
-                                            "週二",
-                                            "週三",
-                                            "週四",
-                                            "週五",
-                                            "週六",
-                                            "週日",
-                                        ];
-                                        let activeDays = daysList.filter((d) =>
-                                            currentClosed.includes(d),
-                                        );
-
-                                        if (isSelected) {
-                                            activeDays = activeDays.filter(
-                                                (d) => d !== item.val,
-                                            );
-                                        } else {
-                                            activeDays.push(item.val);
-                                            activeDays.sort(
-                                                (a, b) =>
-                                                    daysList.indexOf(a) -
-                                                    daysList.indexOf(b),
-                                            );
-                                        }
-
-                                        if (activeDays.length === 0) {
-                                            updated = "";
-                                        } else {
-                                            updated = `${activeDays.join(", ")} 公休`;
-                                        }
-
-                                        const event = {
-                                            target: {
-                                                name: "info.closed_days",
-                                                value: updated,
-                                            },
-                                        } as React.ChangeEvent<HTMLInputElement>;
-                                        onFormInputChange(event);
-                                    };
-
-                                    return (
-                                        <button
-                                            key={item.val}
-                                            type="button"
-                                            onClick={toggleDay}
-                                            className={`w-7 h-7 rounded-full text-xs font-bold transition-all border ${
-                                                isSelected
-                                                    ? "bg-rose-500 text-white border-rose-500 shadow-sm"
-                                                    : "bg-card text-muted-foreground border-border hover:border-rose-300"
-                                            }`}
-                                            title={`切換${item.val}公休`}
-                                        >
-                                            {item.day}
-                                        </button>
-                                    );
-                                })}
-                            </div>
-
-                            {/* 精確公休文字輸入 */}
-                            <input
-                                name="info.closed_days"
-                                value={formData?.info?.closed_days || ""}
-                                onChange={onFormInputChange}
-                                placeholder="例如: 週一公休 / 每月第一個週二"
-                                className="w-full bg-background border border-border rounded-lg px-3 py-1.5 outline-none font-[Noto_Sans_TC] text-sm text-foreground focus:border-primary transition-colors"
-                            />
-                        </div>
+                        )}
                     </div>
                 )}
 
@@ -808,13 +1003,50 @@ const PlaceModal = ({
                         <DollarSign size={12} className="mr-1" /> 人均預算 /
                         消費價位
                     </label>
-                    <input
-                        name="info.price"
-                        value={formData?.info?.price || ""}
-                        onChange={onFormInputChange}
-                        placeholder="例如: ¥2,000 - ¥3,000 / 人"
-                        className="w-full bg-transparent border-b border-border py-2 outline-none font-[Noto_Sans_TC] text-base text-foreground focus:border-primary transition-colors"
-                    />
+                    <div className="flex items-center gap-2 border-b border-border focus-within:border-primary transition-colors">
+                        {(() => {
+                            const knownCurrencies = CURRENCIES.map(c => c.code);
+                            const parts = (formData?.info?.price || "").match(/^([A-Z]{3})?\s*(.*)$/);
+                            let currency = "JPY"; // 預設
+                            let amount = formData?.info?.price || "";
+                            
+                            if (parts && parts[1] && knownCurrencies.includes(parts[1])) {
+                                currency = parts[1];
+                                amount = parts[2];
+                            }
+                            
+                            // 清除舊有的符號
+                            amount = amount.replace(/^[¥$€₩NT£฿krfr]+\s*/i, "").trim();
+                            
+                            return (
+                                <>
+                                    <select
+                                        className="bg-transparent dark:bg-background text-muted-foreground outline-none font-mono py-2 cursor-pointer"
+                                        value={currency}
+                                        onChange={(e) => {
+                                            const newCurr = e.target.value;
+                                            const event = { target: { name: "info.price", value: `${newCurr} ${amount}` } } as any;
+                                            onFormInputChange(event);
+                                        }}
+                                    >
+                                        {CURRENCIES.map(c => <option key={c.code} value={c.code} className="bg-background text-foreground">{c.code}</option>)}
+                                    </select>
+                                    <input
+                                        name="info.price"
+                                        value={amount}
+                                        onChange={(e) => {
+                                            const raw = e.target.value.replace(/,/g, "");
+                                            const formatted = raw.replace(/\d+/g, (match) => parseInt(match, 10).toLocaleString('en-US'));
+                                            const event = { target: { name: "info.price", value: `${currency} ${formatted}` } } as any;
+                                            onFormInputChange(event);
+                                        }}
+                                        placeholder="例如: 2,000 - 3,000 / 人"
+                                        className="flex-1 bg-transparent py-2 outline-none font-[Noto_Sans_TC] text-base text-foreground min-w-0"
+                                    />
+                                </>
+                            );
+                        })()}
+                    </div>
                 </div>
 
                 {/* 評價分數與評論數量 */}
@@ -844,9 +1076,14 @@ const PlaceModal = ({
                         </label>
                         <input
                             name="info.rating_count"
-                            value={formData?.info?.rating_count || ""}
-                            onChange={onFormInputChange}
-                            placeholder="如: 1200"
+                            value={((formData?.info?.rating_count || "").toString()).replace(/\d+/g, (match) => parseInt(match, 10).toLocaleString('en-US'))}
+                            onChange={(e) => {
+                                const raw = e.target.value.replace(/,/g, "");
+                                const formatted = raw.replace(/\d+/g, (match) => parseInt(match, 10).toLocaleString('en-US'));
+                                const event = { target: { name: "info.rating_count", value: formatted } } as any;
+                                onFormInputChange(event);
+                            }}
+                            placeholder="如: 1,200"
                             className="w-full bg-transparent border-b border-border py-2 outline-none font-mono text-base text-foreground focus:border-primary transition-colors"
                         />
                     </div>
@@ -857,13 +1094,22 @@ const PlaceModal = ({
                         >
                             評分來源
                         </label>
-                        <input
+                        <select
                             name="info.rating_source"
                             value={formData?.info?.rating_source || ""}
                             onChange={onFormInputChange}
-                            placeholder="如: Google / Tabelog / TripAdvisor"
-                            className="w-full bg-transparent border-b border-border py-2 outline-none font-[Noto_Sans_TC] text-base text-foreground focus:border-primary transition-colors"
-                        />
+                            className="w-full bg-transparent dark:bg-background border-b border-border py-2 outline-none font-[Noto_Sans_TC] text-base text-foreground focus:border-primary transition-colors cursor-pointer"
+                        >
+                            <option value="" className="bg-background text-foreground">請選擇</option>
+                            {(formData.type === "hotel" || formData.type === "stay"
+                                ? ["Google", "Agoda", "Booking.com", "TripAdvisor", "Expedia", "Hotels.com", "Airbnb"]
+                                : formData.type === "food" || formData.type === "restaurant" || formData.type === "cafe"
+                                ? ["Google", "Tabelog", "TripAdvisor", "Yelp", "米其林指南"]
+                                : ["Google", "TripAdvisor", "Yelp"]
+                            ).map((preset) => (
+                                <option key={preset} value={preset} className="bg-background text-foreground">{preset}</option>
+                            ))}
+                        </select>
                     </div>
                 </div>
                 <div className="sm:col-span-2">
