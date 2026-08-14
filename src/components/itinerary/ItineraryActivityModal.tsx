@@ -11,7 +11,10 @@ import type {
 } from "../../models/types/ItineraryTypes";
 import type { TripThemeConf } from "../../models/types/TripTypes";
 import type { PlaceVM } from "../../models/types/PlaceTypes";
-import { CATEGORY_DEFINITIONS, TRANSIT_MODES } from "../../constants/Categories";
+import {
+    CATEGORY_DEFINITIONS,
+    TRANSIT_MODES,
+} from "../../constants/Categories";
 import { CategoryCustomSelect } from "../common/CategoryCustomSelect";
 import FormModal from "../common/FormModal";
 import PlaceLinkAutocomplete from "../common/PlaceLinkAutoComplete";
@@ -43,7 +46,7 @@ const ItineraryActivityModal = ({
             ({
                 target: { name, value },
                 currentTarget: { name, value },
-            } as unknown as ChangeEvent<HTMLInputElement>);
+            }) as unknown as ChangeEvent<HTMLInputElement>;
 
         if (place.name) {
             onFormInputChange(createEvent("title", place.name));
@@ -139,7 +142,8 @@ const ItineraryActivityModal = ({
             {/* Transit Section (路程與交通) */}
             <div className="p-3.5 rounded-xl bg-accent/30 border border-border/50 space-y-3">
                 <label className="block font-bold uppercase flex items-center text-muted-foreground text-xs">
-                    <Navigation size={12} className="mr-1 text-primary" /> 前往下一站的交通與備註 (選填)
+                    <Navigation size={12} className="mr-1 text-primary" />{" "}
+                    前往下一站的交通與車程 (選填)
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
@@ -176,15 +180,58 @@ const ItineraryActivityModal = ({
                 {/* 動態交通詳細備註 (Transit Details) */}
                 {formData.transitMode && formData.transitMode !== "none" && (
                     <div className="pt-2 border-t border-border/40 space-y-2.5">
-                        {/* 1. 計程車 / 包車 / 自駕 */}
-                        {(formData.transitMode === "taxi" || formData.transitMode === "car") && (
+                        {/* 1. 自駕 / 租車 */}
+                        {formData.transitMode === "car" && (
                             <div className="space-y-2 text-xs">
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                     <div>
-                                        <span className="block text-[10px] text-muted-foreground mb-0.5">預估車資 (選填)</span>
+                                        <span className="block text-[10px] text-muted-foreground mb-0.5">
+                                            租車公司 (選填)
+                                        </span>
+                                        <input
+                                            name="transitDetails.carRentalCompany"
+                                            value={
+                                                formData.transitDetails
+                                                    ?.carRentalCompany || ""
+                                            }
+                                            onChange={onFormInputChange}
+                                            placeholder="例如：Toyota Rent a Car / Times"
+                                            className="w-full bg-background border border-input rounded py-1 px-2 text-xs"
+                                        />
+                                    </div>
+                                    <div>
+                                        <span className="block text-[10px] text-muted-foreground mb-0.5">
+                                            取車/取件分店 (選填)
+                                        </span>
+                                        <input
+                                            name="transitDetails.carRentalBranch"
+                                            value={
+                                                formData.transitDetails
+                                                    ?.carRentalBranch || ""
+                                            }
+                                            onChange={onFormInputChange}
+                                            placeholder="例如：那霸機場店 / 札幌站前店"
+                                            className="w-full bg-background border border-input rounded py-1 px-2 text-xs"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* 2. 計程車 / 包車 / 接送 */}
+                        {formData.transitMode === "taxi" && (
+                            <div className="space-y-2 text-xs">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                    <div>
+                                        <span className="block text-[10px] text-muted-foreground mb-0.5">
+                                            預估車資 (選填)
+                                        </span>
                                         <input
                                             name="transitDetails.fare"
-                                            value={formData.transitDetails?.fare || ""}
+                                            value={
+                                                formData.transitDetails?.fare ||
+                                                ""
+                                            }
                                             onChange={onFormInputChange}
                                             placeholder="例如：NT$ 1,200 或 JPY 3,000"
                                             className="w-full bg-background border border-input rounded py-1 px-2 text-xs"
@@ -195,123 +242,466 @@ const ItineraryActivityModal = ({
                                             <input
                                                 type="checkbox"
                                                 name="transitDetails.isReservationRequired"
-                                                checked={formData.transitDetails?.isReservationRequired || false}
+                                                checked={
+                                                    formData.transitDetails
+                                                        ?.isReservationRequired ||
+                                                    false
+                                                }
                                                 onChange={(e) => {
                                                     const event = {
                                                         target: {
                                                             name: "transitDetails.isReservationRequired",
-                                                            value: e.target.checked,
+                                                            value: e.target
+                                                                .checked,
                                                             type: "checkbox",
-                                                            checked: e.target.checked,
+                                                            checked:
+                                                                e.target
+                                                                    .checked,
                                                         },
                                                         currentTarget: {
                                                             name: "transitDetails.isReservationRequired",
-                                                            value: e.target.checked,
+                                                            value: e.target
+                                                                .checked,
                                                         },
                                                     } as unknown as ChangeEvent<HTMLInputElement>;
                                                     onFormInputChange(event);
                                                 }}
                                                 className="rounded border-input text-primary focus:ring-primary h-3.5 w-3.5"
                                             />
-                                            <span>預約機場接送 / 需事先叫車</span>
+                                            <span>
+                                                預約機場接送 / 需事先叫車
+                                            </span>
                                         </label>
                                     </div>
                                 </div>
                             </div>
                         )}
 
-                        {/* 2. 電車 / 新幹線 / 公車 */}
-                        {(formData.transitMode === "train" || formData.transitMode === "bus") && (
-                            <div className="space-y-2 text-xs">
+                        {/* 3. 電車 / 新幹線 / 公車 / 渡輪 */}
+                        {(formData.transitMode === "train" ||
+                            formData.transitMode === "bus" ||
+                            formData.transitMode === "ferry") && (
+                            <div className="space-y-2.5 text-xs">
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                     <div>
-                                        <span className="block text-[10px] text-muted-foreground mb-0.5">票券 / Pass 種類</span>
+                                        <span className="block text-[10px] text-muted-foreground mb-0.5">
+                                            票券 / Pass 種類
+                                        </span>
                                         <input
                                             name="transitDetails.passName"
-                                            value={formData.transitDetails?.passName || ""}
+                                            value={
+                                                formData.transitDetails
+                                                    ?.passName || ""
+                                            }
                                             onChange={onFormInputChange}
-                                            placeholder="例如：關西廣域周遊券 5 Days / 單程票"
+                                            placeholder="例如：關西廣域周遊券 5 Days / 船票"
                                             className="w-full bg-background border border-input rounded py-1 px-2 text-xs"
                                         />
                                     </div>
                                     <div>
-                                        <span className="block text-[10px] text-muted-foreground mb-0.5">票價 / 車資</span>
+                                        <span className="block text-[10px] text-muted-foreground mb-0.5">
+                                            票價 / 車資
+                                        </span>
                                         <input
                                             name="transitDetails.fare"
-                                            value={formData.transitDetails?.fare || ""}
+                                            value={
+                                                formData.transitDetails?.fare ||
+                                                ""
+                                            }
                                             onChange={onFormInputChange}
                                             placeholder="例如：JPY 420 或 JPY 1,800"
                                             className="w-full bg-background border border-input rounded py-1 px-2 text-xs"
                                         />
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                                    <div className="sm:col-span-2">
-                                        <span className="block text-[10px] text-muted-foreground mb-0.5">鐵路公司與路線 / 車次</span>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                    <div>
+                                        <span className="block text-[10px] text-muted-foreground mb-0.5">
+                                            {formData.transitMode === "ferry"
+                                                ? "船公司與航線名稱"
+                                                : "鐵路/公車公司與路線"}
+                                        </span>
                                         <input
                                             name="transitDetails.companyAndLine"
-                                            value={formData.transitDetails?.companyAndLine || ""}
+                                            value={
+                                                formData.transitDetails
+                                                    ?.companyAndLine || ""
+                                            }
                                             onChange={onFormInputChange}
-                                            placeholder="例如：JR神戶京都琵琶湖線新快速1号"
+                                            placeholder={
+                                                formData.transitMode === "ferry"
+                                                    ? "例如：南海渡輪 德島航線"
+                                                    : "例如：JR神戶京都琵琶湖線"
+                                            }
                                             className="w-full bg-background border border-input rounded py-1 px-2 text-xs"
                                         />
                                     </div>
                                     <div>
-                                        <span className="block text-[10px] text-muted-foreground mb-0.5">月台資訊</span>
+                                        <span className="block text-[10px] text-muted-foreground mb-0.5">
+                                            {formData.transitMode === "ferry"
+                                                ? "碼頭/棧橋"
+                                                : "月台資訊"}
+                                        </span>
                                         <input
                                             name="transitDetails.platform"
-                                            value={formData.transitDetails?.platform || ""}
+                                            value={
+                                                formData.transitDetails
+                                                    ?.platform || ""
+                                            }
                                             onChange={onFormInputChange}
-                                            placeholder="例如：5番ホーム / 4番月台"
+                                            placeholder={
+                                                formData.transitMode === "ferry"
+                                                    ? "例如：1號碼頭"
+                                                    : "例如：5番ホーム / 4番月台"
+                                            }
                                             className="w-full bg-background border border-input rounded py-1 px-2 text-xs"
                                         />
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                     <div>
-                                        <span className="block text-[10px] text-muted-foreground mb-0.5">開往方向</span>
+                                        <span className="block text-[10px] text-muted-foreground mb-0.5">
+                                            開往方向 / 目的地
+                                        </span>
                                         <input
                                             name="transitDetails.destination"
-                                            value={formData.transitDetails?.destination || ""}
+                                            value={
+                                                formData.transitDetails
+                                                    ?.destination || ""
+                                            }
                                             onChange={onFormInputChange}
-                                            placeholder="例如：姬路 / 京都"
+                                            placeholder="例如：姬路 / 小豆島土庄港"
                                             className="w-full bg-background border border-input rounded py-1 px-2 text-xs"
                                         />
                                     </div>
                                 </div>
-                                <div>
-                                    <span className="block text-[10px] text-muted-foreground mb-0.5">選搭班次列表 / 備註資訊</span>
-                                    <textarea
-                                        name="transitDetails.schedules"
-                                        value={formData.transitDetails?.schedules || ""}
-                                        onChange={onFormInputChange}
-                                        rows={3}
-                                        placeholder={`例如：\nHaruka16 10:44 → 11:31 4番月台\nHaruka18 11:14 → 12:01 4番月台\nHaruka20 11:44 → 12:31 4番月台`}
-                                        className="w-full bg-background border border-input rounded py-1 px-2 text-xs resize-none"
-                                    />
+
+                                {/* 動態班次清單編輯器 (Schedule List Editor) */}
+                                <div className="pt-2 border-t border-border/30">
+                                    <div className="flex justify-between items-center mb-1.5">
+                                        <span className="block text-[11px] font-bold text-foreground">
+                                            選搭班次列表 (
+                                            {formData.transitDetails
+                                                ?.scheduleList?.length || 0}
+                                            )
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const currentList =
+                                                    formData.transitDetails
+                                                        ?.scheduleList || [];
+                                                const newList = [
+                                                    ...currentList,
+                                                    {
+                                                        name: "",
+                                                        departureTime: "",
+                                                        arrivalTime: "",
+                                                        platform: "",
+                                                    },
+                                                ];
+                                                const event = {
+                                                    target: {
+                                                        name: "transitDetails.scheduleList",
+                                                        value: newList,
+                                                    },
+                                                    currentTarget: {
+                                                        name: "transitDetails.scheduleList",
+                                                        value: newList,
+                                                    },
+                                                } as unknown as ChangeEvent<HTMLInputElement>;
+                                                onFormInputChange(event);
+                                            }}
+                                            className="px-2 py-0.5 text-[10px] font-semibold bg-primary/10 text-primary hover:bg-primary/20 rounded transition-colors"
+                                        >
+                                            + 新增班次
+                                        </button>
+                                    </div>
+
+                                    {/* 班次列表 */}
+                                    {Array.isArray(
+                                        formData.transitDetails?.scheduleList,
+                                    ) &&
+                                    formData.transitDetails.scheduleList
+                                        .length > 0 ? (
+                                        <div className="space-y-2">
+                                            {formData.transitDetails.scheduleList.map(
+                                                (item, idx) => (
+                                                    <div
+                                                        key={idx}
+                                                        className="p-2 rounded-lg bg-background border border-border/60 space-y-1.5 relative group"
+                                                    >
+                                                        <div className="grid grid-cols-12 gap-1.5 items-center">
+                                                            <div className="col-span-4">
+                                                                <input
+                                                                    placeholder="車次/班名 (如: Haruka 16号)"
+                                                                    value={
+                                                                        item.name
+                                                                    }
+                                                                    onChange={(
+                                                                        e,
+                                                                    ) => {
+                                                                        const newList =
+                                                                            [
+                                                                                ...(formData
+                                                                                    .transitDetails
+                                                                                    ?.scheduleList ||
+                                                                                    []),
+                                                                            ];
+                                                                        newList[
+                                                                            idx
+                                                                        ] = {
+                                                                            ...newList[
+                                                                                idx
+                                                                            ],
+                                                                            name: e
+                                                                                .target
+                                                                                .value,
+                                                                        };
+                                                                        const event =
+                                                                            {
+                                                                                target: {
+                                                                                    name: "transitDetails.scheduleList",
+                                                                                    value: newList,
+                                                                                },
+                                                                                currentTarget:
+                                                                                    {
+                                                                                        name: "transitDetails.scheduleList",
+                                                                                        value: newList,
+                                                                                    },
+                                                                            } as unknown as ChangeEvent<HTMLInputElement>;
+                                                                        onFormInputChange(
+                                                                            event,
+                                                                        );
+                                                                    }}
+                                                                    className="w-full bg-transparent border border-input rounded py-1 px-1.5 text-[11px]"
+                                                                />
+                                                            </div>
+                                                            <div className="col-span-3">
+                                                                <input
+                                                                    type="time"
+                                                                    placeholder="發車"
+                                                                    value={
+                                                                        item.departureTime ||
+                                                                        ""
+                                                                    }
+                                                                    onChange={(
+                                                                        e,
+                                                                    ) => {
+                                                                        const newList =
+                                                                            [
+                                                                                ...(formData
+                                                                                    .transitDetails
+                                                                                    ?.scheduleList ||
+                                                                                    []),
+                                                                            ];
+                                                                        newList[
+                                                                            idx
+                                                                        ] = {
+                                                                            ...newList[
+                                                                                idx
+                                                                            ],
+                                                                            departureTime:
+                                                                                e
+                                                                                    .target
+                                                                                    .value,
+                                                                        };
+                                                                        const event =
+                                                                            {
+                                                                                target: {
+                                                                                    name: "transitDetails.scheduleList",
+                                                                                    value: newList,
+                                                                                },
+                                                                                currentTarget:
+                                                                                    {
+                                                                                        name: "transitDetails.scheduleList",
+                                                                                        value: newList,
+                                                                                    },
+                                                                            } as unknown as ChangeEvent<HTMLInputElement>;
+                                                                        onFormInputChange(
+                                                                            event,
+                                                                        );
+                                                                    }}
+                                                                    className="w-full bg-transparent border border-input rounded py-1 px-1 text-[11px] font-mono"
+                                                                />
+                                                            </div>
+                                                            <div className="col-span-3">
+                                                                <input
+                                                                    type="time"
+                                                                    placeholder="到達"
+                                                                    value={
+                                                                        item.arrivalTime ||
+                                                                        ""
+                                                                    }
+                                                                    onChange={(
+                                                                        e,
+                                                                    ) => {
+                                                                        const newList =
+                                                                            [
+                                                                                ...(formData
+                                                                                    .transitDetails
+                                                                                    ?.scheduleList ||
+                                                                                    []),
+                                                                            ];
+                                                                        newList[
+                                                                            idx
+                                                                        ] = {
+                                                                            ...newList[
+                                                                                idx
+                                                                            ],
+                                                                            arrivalTime:
+                                                                                e
+                                                                                    .target
+                                                                                    .value,
+                                                                        };
+                                                                        const event =
+                                                                            {
+                                                                                target: {
+                                                                                    name: "transitDetails.scheduleList",
+                                                                                    value: newList,
+                                                                                },
+                                                                                currentTarget:
+                                                                                    {
+                                                                                        name: "transitDetails.scheduleList",
+                                                                                        value: newList,
+                                                                                    },
+                                                                            } as unknown as ChangeEvent<HTMLInputElement>;
+                                                                        onFormInputChange(
+                                                                            event,
+                                                                        );
+                                                                    }}
+                                                                    className="w-full bg-transparent border border-input rounded py-1 px-1 text-[11px] font-mono"
+                                                                />
+                                                            </div>
+                                                            <div className="col-span-2 flex items-center gap-1">
+                                                                <input
+                                                                    placeholder="月台"
+                                                                    value={
+                                                                        item.platform ||
+                                                                        ""
+                                                                    }
+                                                                    onChange={(
+                                                                        e,
+                                                                    ) => {
+                                                                        const newList =
+                                                                            [
+                                                                                ...(formData
+                                                                                    .transitDetails
+                                                                                    ?.scheduleList ||
+                                                                                    []),
+                                                                            ];
+                                                                        newList[
+                                                                            idx
+                                                                        ] = {
+                                                                            ...newList[
+                                                                                idx
+                                                                            ],
+                                                                            platform:
+                                                                                e
+                                                                                    .target
+                                                                                    .value,
+                                                                        };
+                                                                        const event =
+                                                                            {
+                                                                                target: {
+                                                                                    name: "transitDetails.scheduleList",
+                                                                                    value: newList,
+                                                                                },
+                                                                                currentTarget:
+                                                                                    {
+                                                                                        name: "transitDetails.scheduleList",
+                                                                                        value: newList,
+                                                                                    },
+                                                                            } as unknown as ChangeEvent<HTMLInputElement>;
+                                                                        onFormInputChange(
+                                                                            event,
+                                                                        );
+                                                                    }}
+                                                                    className="w-full bg-transparent border border-input rounded py-1 px-1 text-[11px]"
+                                                                />
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        const newList =
+                                                                            (
+                                                                                formData
+                                                                                    .transitDetails
+                                                                                    ?.scheduleList ||
+                                                                                []
+                                                                            ).filter(
+                                                                                (
+                                                                                    _,
+                                                                                    i,
+                                                                                ) =>
+                                                                                    i !==
+                                                                                    idx,
+                                                                            );
+                                                                        const event =
+                                                                            {
+                                                                                target: {
+                                                                                    name: "transitDetails.scheduleList",
+                                                                                    value: newList,
+                                                                                },
+                                                                                currentTarget:
+                                                                                    {
+                                                                                        name: "transitDetails.scheduleList",
+                                                                                        value: newList,
+                                                                                    },
+                                                                            } as unknown as ChangeEvent<HTMLInputElement>;
+                                                                        onFormInputChange(
+                                                                            event,
+                                                                        );
+                                                                    }}
+                                                                    className="text-destructive hover:bg-destructive/10 p-1 rounded transition-colors shrink-0"
+                                                                    title="刪除班次"
+                                                                >
+                                                                    ✕
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ),
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <p className="text-[10px] text-muted-foreground italic">
+                                            尚未加入預選班次，點擊「+
+                                            新增班次」建立動態時刻清單
+                                        </p>
+                                    )}
                                 </div>
                             </div>
                         )}
 
-                        {/* 3. 飛機 */}
+                        {/* 4. 飛機 */}
                         {formData.transitMode === "flight" && (
                             <div className="space-y-2 text-xs">
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                     <div>
-                                        <span className="block text-[10px] text-muted-foreground mb-0.5">航班號碼</span>
+                                        <span className="block text-[10px] text-muted-foreground mb-0.5">
+                                            航班號碼
+                                        </span>
                                         <input
                                             name="transitDetails.flightNumber"
-                                            value={formData.transitDetails?.flightNumber || ""}
+                                            value={
+                                                formData.transitDetails
+                                                    ?.flightNumber || ""
+                                            }
                                             onChange={onFormInputChange}
                                             placeholder="例如：JX820 / CI156"
                                             className="w-full bg-background border border-input rounded py-1 px-2 text-xs"
                                         />
                                     </div>
                                     <div>
-                                        <span className="block text-[10px] text-muted-foreground mb-0.5">航廈 / 登機門</span>
+                                        <span className="block text-[10px] text-muted-foreground mb-0.5">
+                                            航廈 / 登機門
+                                        </span>
                                         <input
                                             name="transitDetails.gate"
-                                            value={formData.transitDetails?.gate || ""}
+                                            value={
+                                                formData.transitDetails?.gate ||
+                                                ""
+                                            }
                                             onChange={onFormInputChange}
                                             placeholder="例如：T1 B5登機門"
                                             className="w-full bg-background border border-input rounded py-1 px-2 text-xs"
@@ -319,10 +709,14 @@ const ItineraryActivityModal = ({
                                     </div>
                                 </div>
                                 <div>
-                                    <span className="block text-[10px] text-muted-foreground mb-0.5">機票/費用/行李等備註</span>
+                                    <span className="block text-[10px] text-muted-foreground mb-0.5">
+                                        機票/費用/行李等備註
+                                    </span>
                                     <input
                                         name="transitDetails.fare"
-                                        value={formData.transitDetails?.fare || ""}
+                                        value={
+                                            formData.transitDetails?.fare || ""
+                                        }
                                         onChange={onFormInputChange}
                                         placeholder="例如：含20kg託運行李, 請提早2.5小時報到"
                                         className="w-full bg-background border border-input rounded py-1 px-2 text-xs"

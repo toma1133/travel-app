@@ -13,7 +13,11 @@ import type {
     ItineraryVM,
 } from "../../models/types/ItineraryTypes";
 import type { TripThemeConf } from "../../models/types/TripTypes";
-import { getCategoryIcon, getTransitIcon, DEFAULT_CATEGORY_COLORS } from "../../constants/Categories";
+import {
+    getCategoryIcon,
+    getTransitIcon,
+    DEFAULT_CATEGORY_COLORS,
+} from "../../constants/Categories";
 
 type ItineraryItemProps = {
     itinerary: ItineraryVM;
@@ -24,12 +28,12 @@ type ItineraryItemProps = {
     onAddActivityBtnClick: (itineraryDay: ItineraryVM) => void;
     onDeleteActivityBtnClick: (
         itineraryDay: ItineraryVM,
-        activity: ItineraryActivitiy
+        activity: ItineraryActivitiy,
     ) => void;
     onDeleteDayBtnClick: (itinerary: ItineraryVM) => void;
     onEditActivityBtnClick: (
         itineraryDay: ItineraryVM,
-        activity: ItineraryActivitiy
+        activity: ItineraryActivitiy,
     ) => void;
     onEditDayBtnClick: (itinerary: ItineraryVM) => void;
     onExpandedBtnToggle: (itinerary: ItineraryVM) => void;
@@ -54,7 +58,9 @@ const ItineraryItem = ({
     const primaryTextColor = theme?.primary || "text-gray-900";
 
     const [showDayActions, setShowDayActions] = useState(false);
-    const [activeActivityIdx, setActiveActivityIdx] = useState<number | null>(null);
+    const [activeActivityIdx, setActiveActivityIdx] = useState<number | null>(
+        null,
+    );
 
     return (
         <div
@@ -105,14 +111,18 @@ const ItineraryItem = ({
                 >
                     <span
                         className={`font-black uppercase tracking-widest ${
-                            isPrinting ? "text-[8px] text-black" : "text-[10px] text-muted-foreground"
+                            isPrinting
+                                ? "text-[8px] text-black"
+                                : "text-[10px] text-muted-foreground"
                         }`}
                     >
                         {itinerary.weekday}
                     </span>
                     <span
                         className={`font-[Noto_Sans_TC] font-black leading-none mt-1 ${
-                            isPrinting ? "text-xl text-black" : "text-3xl text-foreground"
+                            isPrinting
+                                ? "text-xl text-black"
+                                : "text-3xl text-foreground"
                         }`}
                     >
                         {itinerary.date.split("-")[2]}
@@ -177,7 +187,9 @@ const ItineraryItem = ({
                     </div>
                     {/* 編輯模式下的工具列 (只要 isEditing=true 就顯示，不需 Hover) */}
                     {!isPrinting && isEditing && (
-                        <div className={`absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1 p-1 bg-background/60 backdrop-blur-md rounded-full shadow-md border border-border/50 transition-all duration-300 z-10 ${showDayActions ? "opacity-100" : "lg:opacity-0 lg:group-hover:opacity-100"}`}>
+                        <div
+                            className={`absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1 p-1 bg-background/60 backdrop-blur-md rounded-full shadow-md border border-border/50 transition-all duration-300 z-10 ${showDayActions ? "opacity-100" : "lg:opacity-0 lg:group-hover:opacity-100"}`}
+                        >
                             <button
                                 type="button"
                                 onClick={(e) => {
@@ -220,7 +232,9 @@ const ItineraryItem = ({
             {(isExpanded || isPrinting) && (
                 <div
                     className={`relative ${
-                        isPrinting ? "pt-2 pb-2" : "pb-6 pt-2 lg:flex-1 overflow-x-hidden lg:overflow-y-auto no-scrollbar"
+                        isPrinting
+                            ? "pt-2 pb-2"
+                            : "pb-6 pt-2 lg:flex-1 overflow-x-hidden lg:overflow-y-auto no-scrollbar"
                     }`}
                 >
                     <div className="absolute top-0 bottom-6 left-0 w-14 flex justify-center pointer-events-none">
@@ -253,17 +267,29 @@ const ItineraryItem = ({
                                                 : "min-h-[40px]"
                                         }
                                     `}
-                                    onMouseEnter={() => setActiveActivityIdx(idx)}
-                                    onMouseLeave={() => setActiveActivityIdx(null)}
-                                    onTouchStart={() => setActiveActivityIdx(idx)}
+                                    onMouseEnter={() =>
+                                        setActiveActivityIdx(idx)
+                                    }
+                                    onMouseLeave={() =>
+                                        setActiveActivityIdx(null)
+                                    }
+                                    onTouchStart={() =>
+                                        setActiveActivityIdx(idx)
+                                    }
                                 >
                                     {/* 1. 左側軌道 (Track Column with Lucide Font Icon) */}
                                     <div className="w-14 shrink-0 flex justify-center items-start z-10 pt-0.5">
                                         {(() => {
-                                            const IconComp = getCategoryIcon(activity.type);
+                                            const IconComp = getCategoryIcon(
+                                                activity.type,
+                                            );
                                             const bgColor =
-                                                theme?.categoryColor?.[activity.type] ||
-                                                DEFAULT_CATEGORY_COLORS[activity.type] ||
+                                                theme?.categoryColor?.[
+                                                    activity.type
+                                                ] ||
+                                                DEFAULT_CATEGORY_COLORS[
+                                                    activity.type
+                                                ] ||
                                                 "#6b7280";
 
                                             return (
@@ -276,9 +302,17 @@ const ItineraryItem = ({
                                                                 : "w-5 h-5 bg-black text-white"
                                                         }
                                                     `}
-                                                    style={{ backgroundColor: bgColor }}
+                                                    style={{
+                                                        backgroundColor:
+                                                            bgColor,
+                                                    }}
                                                 >
-                                                    <IconComp size={isPrinting ? 11 : 14} className="text-white drop-shadow-sm" />
+                                                    <IconComp
+                                                        size={
+                                                            isPrinting ? 11 : 14
+                                                        }
+                                                        className="text-white drop-shadow-sm"
+                                                    />
                                                 </div>
                                             );
                                         })()}
@@ -338,7 +372,9 @@ const ItineraryItem = ({
                                                                 }
                                                             `}
                                                         >
-                                                            <Hourglass size={10} />
+                                                            <Hourglass
+                                                                size={10}
+                                                            />
                                                             {activity.duration}
                                                         </span>
                                                     )}
@@ -359,157 +395,374 @@ const ItineraryItem = ({
                                                     </p>
                                                 )}
 
-                                                {/* 移動/路程時間與交通備註節點 (Transit Connector Card) */}
-                                                {(activity.transitMode && activity.transitMode !== "none" || activity.transitDuration || activity.transitDetails) && (
+                                                {/* 移動/路程時間節點 (Transit Connector Card) */}
+                                                {((activity.transitMode &&
+                                                    activity.transitMode !==
+                                                        "none") ||
+                                                    activity.transitDuration) && (
                                                     <div
                                                         className={`
-                                                            mt-2.5 rounded-xl text-[11px] font-medium transition-all inline-block max-w-full
+                                                            mt-2.5 rounded-xl text-[11px] font-medium transition-all block w-full max-w-xl
                                                             ${
                                                                 isPrinting
                                                                     ? "p-2 bg-gray-50 border border-gray-300 text-black text-[9px]"
-                                                                    : "p-2.5 bg-slate-50 dark:bg-zinc-800/90 border border-slate-200/80 dark:border-zinc-700/80 text-slate-800 dark:text-zinc-100 shadow-sm"
+                                                                    : "p-3 bg-slate-50/90 dark:bg-zinc-800/95 border border-slate-200/90 dark:border-zinc-700/90 text-slate-800 dark:text-zinc-100 shadow-sm"
                                                             }
                                                         `}
                                                     >
-                                                        {/* 標頭：圖示 + 模式 + 預估時間 */}
-                                                        <div className="flex items-center gap-1.5 flex-wrap">
-                                                            {(() => {
-                                                                const TransitIconComp = getTransitIcon(activity.transitMode);
-                                                                return <TransitIconComp size={isPrinting ? 11 : 13} className={`${isPrinting ? "text-black" : "text-sky-600 dark:text-sky-400"} shrink-0`} />;
-                                                            })()}
-                                                            <span className="font-bold text-slate-900 dark:text-zinc-100">
-                                                                {activity.transitDuration ? `預估 ${activity.transitDuration}` : "前往下一站"}
-                                                            </span>
+                                                        {/* 標頭：圖示 + 模式 + 預估時間 + 標籤膠囊 */}
+                                                        <div className="flex items-center gap-2 flex-wrap">
+                                                            <div className="flex items-center gap-1.5 font-bold text-slate-900 dark:text-zinc-100">
+                                                                {(() => {
+                                                                    const TransitIconComp =
+                                                                        getTransitIcon(
+                                                                            activity.transitMode,
+                                                                        );
+                                                                    return (
+                                                                        <TransitIconComp
+                                                                            size={
+                                                                                isPrinting
+                                                                                    ? 11
+                                                                                    : 14
+                                                                            }
+                                                                            className={`${isPrinting ? "text-black" : "text-sky-600 dark:text-sky-400"} shrink-0`}
+                                                                        />
+                                                                    );
+                                                                })()}
+                                                                <span>
+                                                                    {activity.transitDuration
+                                                                        ? `預估 ${activity.transitDuration}`
+                                                                        : "前往下一站"}
+                                                                </span>
+                                                            </div>
 
-                                                            {/* 標籤/費用/周遊券簡章 */}
-                                                            {activity.transitDetails?.passName && (
-                                                                <span className="px-1.5 py-0.5 rounded bg-sky-100/80 text-sky-800 border border-sky-200/60 dark:bg-sky-950/80 dark:text-sky-300 dark:border-sky-800/60 text-[10px] font-semibold">
-                                                                    [{activity.transitDetails.passName}]
+                                                            {/* 租車公司膠囊標籤 */}
+                                                            {(activity
+                                                                .transitDetails
+                                                                ?.carRentalCompany ||
+                                                                activity
+                                                                    .transitDetails
+                                                                    ?.carRentalBranch) && (
+                                                                <span className="px-2 py-0.5 rounded-md bg-indigo-100/90 text-indigo-800 border border-indigo-200/70 dark:bg-indigo-950/80 dark:text-indigo-300 dark:border-indigo-800/60 text-[10px] font-semibold flex items-center gap-1">
+                                                                    🚗{" "}
+                                                                    {
+                                                                        activity
+                                                                            .transitDetails
+                                                                            .carRentalCompany
+                                                                    }{" "}
+                                                                    {activity
+                                                                        .transitDetails
+                                                                        .carRentalBranch &&
+                                                                        `(${activity.transitDetails.carRentalBranch})`}
                                                                 </span>
                                                             )}
-                                                            {activity.transitDetails?.fare && (
-                                                                <span className="px-1.5 py-0.5 rounded bg-amber-100/80 text-amber-800 border border-amber-200/60 dark:bg-amber-950/70 dark:text-amber-300 dark:border-amber-700/60 text-[10px] font-semibold">
-                                                                    {activity.transitDetails.fare}
+
+                                                            {/* Pass 周遊券膠囊 */}
+                                                            {activity
+                                                                .transitDetails
+                                                                ?.passName && (
+                                                                <span className="px-2 py-0.5 rounded-md bg-sky-100/90 text-sky-800 border border-sky-200/70 dark:bg-sky-950/80 dark:text-sky-300 dark:border-sky-800/60 text-[10px] font-semibold">
+                                                                    🎫{" "}
+                                                                    {
+                                                                        activity
+                                                                            .transitDetails
+                                                                            .passName
+                                                                    }
                                                                 </span>
                                                             )}
-                                                            {activity.transitDetails?.isReservationRequired && (
-                                                                <span className="px-1.5 py-0.5 rounded bg-emerald-100/80 text-emerald-800 border border-emerald-200/60 dark:bg-emerald-950/70 dark:text-emerald-300 dark:border-emerald-700/60 text-[10px] font-semibold">
-                                                                    ✓ 機場接送/已預約
+
+                                                            {/* 車資膠囊 */}
+                                                            {activity
+                                                                .transitDetails
+                                                                ?.fare && (
+                                                                <span className="px-2 py-0.5 rounded-md bg-amber-100/90 text-amber-800 border border-amber-200/70 dark:bg-amber-950/80 dark:text-amber-300 dark:border-amber-700/60 text-[10px] font-semibold">
+                                                                    💰{" "}
+                                                                    {
+                                                                        activity
+                                                                            .transitDetails
+                                                                            .fare
+                                                                    }
+                                                                </span>
+                                                            )}
+
+                                                            {/* 叫車/接送標籤 */}
+                                                            {activity
+                                                                .transitDetails
+                                                                ?.isReservationRequired && (
+                                                                <span className="px-2 py-0.5 rounded-md bg-emerald-100/90 text-emerald-800 border border-emerald-200/70 dark:bg-emerald-950/80 dark:text-emerald-300 dark:border-emerald-700/60 text-[10px] font-semibold">
+                                                                    ✓
+                                                                    已預約機場接送
                                                                 </span>
                                                             )}
                                                         </div>
 
-                                                        {/* 詳細交通欄位內容 (有填寫具體資訊才顯示分隔線與詳細區塊) */}
-                                                        {activity.transitDetails && (
-                                                            activity.transitDetails.startLocation ||
-                                                            activity.transitDetails.companyAndLine ||
-                                                            activity.transitDetails.destination ||
-                                                            activity.transitDetails.platform ||
-                                                            activity.transitDetails.flightNumber ||
-                                                            activity.transitDetails.gate ||
-                                                            activity.transitDetails.schedules
-                                                        ) && (
-                                                            <div className="mt-2 pt-2 border-t border-slate-200/80 dark:border-zinc-700/70 space-y-1 text-xs text-slate-600 dark:text-zinc-300">
-                                                                {/* 計程車/自駕出發點 */}
-                                                                {activity.transitDetails.startLocation && (
-                                                                    <div>
-                                                                        <span className="font-semibold text-slate-800 dark:text-zinc-200">出發備註：</span>
-                                                                        {activity.transitDetails.startLocation}
-                                                                    </div>
-                                                                )}
+                                                        {/* 詳細交通欄位內容 */}
+                                                        {activity.transitDetails &&
+                                                            (activity
+                                                                .transitDetails
+                                                                .companyAndLine ||
+                                                                activity
+                                                                    .transitDetails
+                                                                    .destination ||
+                                                                activity
+                                                                    .transitDetails
+                                                                    .platform ||
+                                                                activity
+                                                                    .transitDetails
+                                                                    .flightNumber ||
+                                                                activity
+                                                                    .transitDetails
+                                                                    .gate ||
+                                                                (activity
+                                                                    .transitDetails
+                                                                    .scheduleList &&
+                                                                    activity
+                                                                        .transitDetails
+                                                                        .scheduleList
+                                                                        .length >
+                                                                        0) ||
+                                                                activity
+                                                                    .transitDetails
+                                                                    .schedules) && (
+                                                                <div className="mt-2.5 pt-2 border-t border-slate-200/80 dark:border-zinc-700/70 space-y-2 text-xs">
+                                                                    {/* 電車/公車/渡輪 路線、目的地、月台碼頭 */}
+                                                                    {(activity
+                                                                        .transitDetails
+                                                                        .companyAndLine ||
+                                                                        activity
+                                                                            .transitDetails
+                                                                            .destination ||
+                                                                        activity
+                                                                            .transitDetails
+                                                                            .platform) && (
+                                                                        <div className="flex items-center gap-2 flex-wrap text-slate-700 dark:text-zinc-200 font-medium">
+                                                                            {activity
+                                                                                .transitDetails
+                                                                                .companyAndLine && (
+                                                                                <span className="font-semibold">
+                                                                                    {
+                                                                                        activity
+                                                                                            .transitDetails
+                                                                                            .companyAndLine
+                                                                                    }
+                                                                                </span>
+                                                                            )}
+                                                                            {activity
+                                                                                .transitDetails
+                                                                                .destination && (
+                                                                                <span className="text-slate-500 dark:text-zinc-400">
+                                                                                    往{" "}
+                                                                                    {
+                                                                                        activity
+                                                                                            .transitDetails
+                                                                                            .destination
+                                                                                    }
+                                                                                </span>
+                                                                            )}
+                                                                            {activity
+                                                                                .transitDetails
+                                                                                .platform && (
+                                                                                <span className="px-1.5 py-0.5 rounded bg-slate-200/80 text-slate-700 dark:bg-zinc-700 dark:text-zinc-200 text-[10px]">
+                                                                                    {activity.transitMode ===
+                                                                                    "ferry"
+                                                                                        ? "碼頭"
+                                                                                        : "月台"}
 
-                                                                {/* 電車/公車 路線與月台與方向 */}
-                                                                {(activity.transitDetails.companyAndLine || activity.transitDetails.destination || activity.transitDetails.platform) && (
-                                                                    <div className="flex items-center gap-2 flex-wrap text-slate-800 dark:text-zinc-200 font-medium">
-                                                                        {activity.transitDetails.companyAndLine && <span>{activity.transitDetails.companyAndLine}</span>}
-                                                                        {activity.transitDetails.destination && <span className="text-slate-500 dark:text-zinc-400">到 {activity.transitDetails.destination}</span>}
-                                                                        {activity.transitDetails.platform && (
-                                                                            <span className="px-1.5 py-0.2 rounded bg-slate-200/70 text-slate-700 dark:bg-zinc-700 dark:text-zinc-200 text-[10px]">
-                                                                                月台: {activity.transitDetails.platform}
-                                                                            </span>
+                                                                                    :{" "}
+                                                                                    {
+                                                                                        activity
+                                                                                            .transitDetails
+                                                                                            .platform
+                                                                                    }
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                    )}
+
+                                                                    {/* 飛機資訊 */}
+                                                                    {(activity
+                                                                        .transitDetails
+                                                                        .flightNumber ||
+                                                                        activity
+                                                                            .transitDetails
+                                                                            .gate) && (
+                                                                        <div className="flex items-center gap-2 flex-wrap text-slate-800 dark:text-zinc-200">
+                                                                            {activity
+                                                                                .transitDetails
+                                                                                .flightNumber && (
+                                                                                <span className="font-bold text-sky-600 dark:text-sky-400">
+                                                                                    航班{" "}
+                                                                                    {
+                                                                                        activity
+                                                                                            .transitDetails
+                                                                                            .flightNumber
+                                                                                    }
+                                                                                </span>
+                                                                            )}
+                                                                            {activity
+                                                                                .transitDetails
+                                                                                .gate && (
+                                                                                <span>
+                                                                                    {
+                                                                                        activity
+                                                                                            .transitDetails
+                                                                                            .gate
+                                                                                    }
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                    )}
+
+                                                                    {/* 🆕 動態結構化選搭班次表格 (Structured Schedule Table) */}
+                                                                    {Array.isArray(
+                                                                        activity
+                                                                            .transitDetails
+                                                                            .scheduleList,
+                                                                    ) &&
+                                                                        activity
+                                                                            .transitDetails
+                                                                            .scheduleList
+                                                                            .length >
+                                                                            0 && (
+                                                                            <div className="space-y-1 mt-2">
+                                                                                <span className="block text-[10px] font-bold uppercase text-slate-500 dark:text-zinc-400 tracking-wider">
+                                                                                    備選/預選班次列表
+                                                                                </span>
+                                                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                                                                                    {activity.transitDetails.scheduleList.map(
+                                                                                        (
+                                                                                            sch,
+                                                                                            sIdx,
+                                                                                        ) => (
+                                                                                            <div
+                                                                                                key={
+                                                                                                    sIdx
+                                                                                                }
+                                                                                                className="flex items-center justify-between p-1.5 rounded-md bg-white/90 dark:bg-zinc-900/90 border border-slate-200/90 dark:border-zinc-700/80 font-mono text-[11px] text-slate-800 dark:text-zinc-200 shadow-2xs"
+                                                                                            >
+                                                                                                <span className="font-bold text-sky-700 dark:text-sky-300 truncate max-w-[120px]">
+                                                                                                    {sch.name ||
+                                                                                                        `班次 ${sIdx + 1}`}
+                                                                                                </span>
+                                                                                                <div className="flex items-center gap-1.5 text-[10px] text-slate-600 dark:text-zinc-300 shrink-0">
+                                                                                                    {(sch.departureTime ||
+                                                                                                        sch.arrivalTime) && (
+                                                                                                        <span>
+                                                                                                            {sch.departureTime ||
+                                                                                                                "--:--"}{" "}
+                                                                                                            →{" "}
+                                                                                                            {sch.arrivalTime ||
+                                                                                                                "--:--"}
+                                                                                                        </span>
+                                                                                                    )}
+                                                                                                    {sch.platform && (
+                                                                                                        <span className="px-1 bg-slate-100 dark:bg-zinc-800 rounded text-slate-500 dark:text-zinc-400">
+                                                                                                            {
+                                                                                                                sch.platform
+                                                                                                            }
+                                                                                                        </span>
+                                                                                                    )}
+                                                                                                </div>
+                                                                                            </div>
+                                                                                        ),
+                                                                                    )}
+                                                                                </div>
+                                                                            </div>
                                                                         )}
-                                                                    </div>
-                                                                )}
 
-                                                                {/* 飛機資訊 */}
-                                                                {(activity.transitDetails.flightNumber || activity.transitDetails.gate) && (
-                                                                    <div className="flex items-center gap-2 flex-wrap text-slate-800 dark:text-zinc-200">
-                                                                        {activity.transitDetails.flightNumber && <span className="font-bold text-sky-600 dark:text-sky-400">航班 {activity.transitDetails.flightNumber}</span>}
-                                                                        {activity.transitDetails.gate && <span>{activity.transitDetails.gate}</span>}
-                                                                    </div>
-                                                                )}
-
-                                                                {/* 班次多行列表 (例如: Haruka16 10:44 -> 11:31) */}
-                                                                {activity.transitDetails.schedules && (
-                                                                    <div className="mt-1.5 font-mono text-[11px] whitespace-pre-wrap bg-white/90 dark:bg-zinc-900/90 p-2 rounded-lg border border-slate-200 dark:border-zinc-700/80 text-slate-800 dark:text-zinc-200 leading-relaxed shadow-sm">
-                                                                        {activity.transitDetails.schedules}
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        )}
+                                                                    {/* 舊單純文字班次備註 (相容顯示) */}
+                                                                    {activity
+                                                                        .transitDetails
+                                                                        .schedules &&
+                                                                        (!activity
+                                                                            .transitDetails
+                                                                            .scheduleList ||
+                                                                            activity
+                                                                                .transitDetails
+                                                                                .scheduleList
+                                                                                .length ===
+                                                                                0) && (
+                                                                            <div className="mt-1.5 font-mono text-[11px] whitespace-pre-wrap bg-white/90 dark:bg-zinc-900/90 p-2 rounded-lg border border-slate-200 dark:border-zinc-700/80 text-slate-800 dark:text-zinc-200 leading-relaxed shadow-sm">
+                                                                                {
+                                                                                    activity
+                                                                                        .transitDetails
+                                                                                        .schedules
+                                                                                }
+                                                                            </div>
+                                                                        )}
+                                                                </div>
+                                                            )}
                                                     </div>
                                                 )}
                                             </div>
-                                            {!isPrinting && (isEditing || activity.linkId) && (
-                                                <div
-                                                    className={`
+                                            {!isPrinting &&
+                                                (isEditing ||
+                                                    activity.linkId) && (
+                                                    <div
+                                                        className={`
                                                         flex items-center gap-1 p-0.5 bg-background/60 backdrop-blur-md rounded-full shadow-sm border border-border/50 shrink-0 ml-2 transition-all duration-300 z-10
                                                         ${activeActivityIdx === idx ? "opacity-100 translate-x-0" : "lg:opacity-0 lg:-translate-x-2 lg:group-hover/item:opacity-100 lg:group-hover/item:translate-x-0"}
                                                     `}
-                                                >
-                                                    {!isEditing &&
-                                                        activity.linkId && (
-                                                            <button
-                                                                type="button"
-                                                                onClick={() =>
-                                                                    onViewBtnClick(
-                                                                        activity.linkId!
-                                                                    )
-                                                                }
-                                                                className="p-1.5 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
-                                                                title="查看詳情"
-                                                            >
-                                                                <BookOpen
-                                                                    size={12}
-                                                                />
-                                                            </button>
+                                                    >
+                                                        {!isEditing &&
+                                                            activity.linkId && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() =>
+                                                                        onViewBtnClick(
+                                                                            activity.linkId!,
+                                                                        )
+                                                                    }
+                                                                    className="p-1.5 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                                                                    title="查看詳情"
+                                                                >
+                                                                    <BookOpen
+                                                                        size={
+                                                                            12
+                                                                        }
+                                                                    />
+                                                                </button>
+                                                            )}
+                                                        {isEditing && (
+                                                            <>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() =>
+                                                                        onEditActivityBtnClick(
+                                                                            itinerary,
+                                                                            activity,
+                                                                        )
+                                                                    }
+                                                                    className="p-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                                                                    title="編輯活動"
+                                                                >
+                                                                    <Pencil
+                                                                        size={
+                                                                            12
+                                                                        }
+                                                                    />
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() =>
+                                                                        onDeleteActivityBtnClick(
+                                                                            itinerary,
+                                                                            activity,
+                                                                        )
+                                                                    }
+                                                                    className="p-1.5 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                                                                    title="刪除活動"
+                                                                >
+                                                                    <Trash2
+                                                                        size={
+                                                                            12
+                                                                        }
+                                                                    />
+                                                                </button>
+                                                            </>
                                                         )}
-                                                    {isEditing && (
-                                                        <>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() =>
-                                                                    onEditActivityBtnClick(
-                                                                        itinerary,
-                                                                        activity
-                                                                    )
-                                                                }
-                                                                className="p-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                                                                title="編輯活動"
-                                                            >
-                                                                <Pencil
-                                                                    size={12}
-                                                                />
-                                                            </button>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() =>
-                                                                    onDeleteActivityBtnClick(
-                                                                        itinerary,
-                                                                        activity
-                                                                    )
-                                                                }
-                                                                className="p-1.5 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                                                                title="刪除活動"
-                                                            >
-                                                                <Trash2
-                                                                    size={12}
-                                                                />
-                                                            </button>
-                                                        </>
-                                                    )}
-                                                </div>
-                                            )}
+                                                    </div>
+                                                )}
                                         </div>
                                     </div>
                                 </div>
