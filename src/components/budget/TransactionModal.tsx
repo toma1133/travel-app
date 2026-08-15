@@ -2,6 +2,7 @@ import { ChangeEventHandler, FormEventHandler, MouseEventHandler, useState, useE
 import { Banknote, CreditCard, LucideIcon } from "lucide-react";
 import FormModal from "../common/FormModal";
 import { CategoryCustomSelect } from "../common/CategoryCustomSelect";
+import { formatThousands, handleThousandsInputChange, parseThousandsToNumber } from "../../utils/numberFormat";
 import type { BudgetRow } from "../../models/types/BudgetTypes";
 import type { PaymentMethodRow } from "../../models/types/PaymentMethodTypes";
 import type {
@@ -46,47 +47,25 @@ const TransactionModal = ({
     const [activeTab, setActiveTab] = useState<"basic" | "split">("basic");
 
     const [displayAmount, setDisplayAmount] = useState<string>(
-        formData.amount ? formData.amount.toLocaleString("en-US") : ""
+        formData.amount ? formatThousands(formData.amount, true) : ""
     );
 
     useEffect(() => {
-        const numDisplay = Number(displayAmount.replace(/,/g, ''));
+        const numDisplay = parseThousandsToNumber(displayAmount);
         if (numDisplay !== formData.amount && !isNaN(formData.amount)) {
-            setDisplayAmount(formData.amount ? formData.amount.toLocaleString("en-US") : "");
+            setDisplayAmount(formData.amount ? formatThousands(formData.amount, true) : "");
         }
     }, [formData.amount]);
 
     const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        let rawValue = e.target.value.replace(/[^0-9.,]/g, '');
-        const cleanValue = rawValue.replace(/,/g, '');
-        
-        if (cleanValue === '') {
-            setDisplayAmount('');
-            onFormDataChange("amount", 0);
-            return;
-        }
-
-        const dotCount = (cleanValue.match(/\./g) || []).length;
-        if (dotCount > 1) return;
-
-        let parsedStr = cleanValue;
-        if (parsedStr.length > 1 && parsedStr.startsWith('0') && !parsedStr.startsWith('0.')) {
-            parsedStr = parsedStr.replace(/^0+/, '');
-            if (parsedStr === '') parsedStr = '0';
-        }
-        if (parsedStr.startsWith('.')) {
-            parsedStr = '0' + parsedStr;
-        }
-
-        const parts = parsedStr.split('.');
-        const integerPart = parts[0];
-        const decimalPart = parts.length > 1 ? '.' + parts[1] : '';
-
-        const formattedInteger = integerPart ? parseInt(integerPart, 10).toLocaleString("en-US") : '';
-        const finalDisplay = formattedInteger + decimalPart;
-
-        setDisplayAmount(finalDisplay);
-        onFormDataChange("amount", Number(parsedStr));
+        handleThousandsInputChange(
+            e,
+            (formatted, numericValue) => {
+                setDisplayAmount(formatted);
+                onFormDataChange("amount", numericValue);
+            },
+            { allowDecimal: true }
+        );
     };
 
     return (

@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import type { PlaceVM, RecommendedItem } from "../../models/types/PlaceTypes";
 import { CURRENCIES } from "../../constants/Currencies";
+import { formatThousands, handleThousandsInputChange } from "../../utils/numberFormat";
 
 export const COMMON_PAYMENT_METHODS = [
     "僅收現金 (Cash Only)",
@@ -214,12 +215,14 @@ export const RecommendedItemsSection = ({
                                             type="text"
                                             value={itemAmount}
                                             onChange={(e) => {
-                                                const raw = e.target.value.replace(/,/g, "");
-                                                const formatted = raw.replace(/\d+/g, (match) =>
-                                                    parseInt(match, 10).toLocaleString("en-US")
+                                                handleThousandsInputChange(
+                                                    e,
+                                                    (formatted) => {
+                                                        const updatedPrice = formatted ? `${itemCurrency} ${formatted}` : itemCurrency;
+                                                        handleUpdateItem(idx, "price", updatedPrice);
+                                                    },
+                                                    { allowDecimal: true }
                                                 );
-                                                const updatedPrice = formatted ? `${itemCurrency} ${formatted}` : itemCurrency;
-                                                handleUpdateItem(idx, "price", updatedPrice);
                                             }}
                                             placeholder="金額 (例: 1,800)"
                                             className="w-24 bg-transparent text-xs font-mono font-semibold text-emerald-600 dark:text-emerald-400 outline-none text-right"
@@ -374,14 +377,16 @@ export const BudgetAndDetailsSection = ({
                                     name="info.price"
                                     value={amount}
                                     onChange={(e) => {
-                                        const raw = e.target.value.replace(/,/g, "");
-                                        const formatted = raw.replace(/\d+/g, (match) =>
-                                            parseInt(match, 10).toLocaleString("en-US")
+                                        handleThousandsInputChange(
+                                            e,
+                                            (formatted) => {
+                                                const event = {
+                                                    target: { name: "info.price", value: `${currency} ${formatted}` },
+                                                } as any;
+                                                onFormInputChange(event);
+                                            },
+                                            { isFreeText: true }
                                         );
-                                        const event = {
-                                            target: { name: "info.price", value: `${currency} ${formatted}` },
-                                        } as any;
-                                        onFormInputChange(event);
                                     }}
                                     placeholder="例如: 2,000 - 3,000 / 人"
                                     className="flex-1 bg-transparent py-1.5 outline-none font-[Noto_Sans_TC] text-sm text-foreground min-w-0"
@@ -413,16 +418,16 @@ export const BudgetAndDetailsSection = ({
                     </label>
                     <input
                         name="info.rating_count"
-                        value={(formData?.info?.rating_count || "").toString().replace(/\d+/g, (match) =>
-                            parseInt(match, 10).toLocaleString("en-US")
-                        )}
+                        value={formData?.info?.rating_count ? formatThousands(formData.info.rating_count, false) : ""}
                         onChange={(e) => {
-                            const raw = e.target.value.replace(/,/g, "");
-                            const formatted = raw.replace(/\d+/g, (match) =>
-                                parseInt(match, 10).toLocaleString("en-US")
+                            handleThousandsInputChange(
+                                e,
+                                (formatted) => {
+                                    const event = { target: { name: "info.rating_count", value: formatted } } as any;
+                                    onFormInputChange(event);
+                                },
+                                { allowDecimal: false }
                             );
-                            const event = { target: { name: "info.rating_count", value: formatted } } as any;
-                            onFormInputChange(event);
                         }}
                         placeholder="如: 1,200"
                         className="w-full bg-transparent border-b border-border py-1.5 outline-none font-mono text-sm text-foreground focus:border-primary"

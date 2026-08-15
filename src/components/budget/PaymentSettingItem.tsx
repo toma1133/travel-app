@@ -4,6 +4,7 @@ import { useSortable, defaultAnimateLayoutChanges } from "@dnd-kit/sortable";
 import type { PaymentMethodRow } from "../../models/types/PaymentMethodTypes";
 import type { TripSettingConf } from "../../models/types/TripTypes";
 import { CURRENCIES } from "../../constants/Currencies";
+import { formatThousands, handleThousandsInputChange } from "../../utils/numberFormat";
 
 type PaymentSettingItemProps = {
     id: string;
@@ -100,16 +101,23 @@ const PaymentSettingItem = ({
                         額度 / 上限
                     </label>
                     <input
-                        type="number"
+                        type="text"
+                        inputMode="numeric"
                         name="credit_limit"
-                        value={method.credit_limit || 0}
-                        onChange={(e) =>
-                            onPaymentChange(
-                                index,
-                                "credit_limit",
-                                parseInt(e.target.value) || 0
-                            )
-                        }
+                        value={method.credit_limit ? formatThousands(method.credit_limit, false) : (method.credit_limit === 0 ? "0" : "")}
+                        onChange={(e) => {
+                            handleThousandsInputChange(
+                                e,
+                                (formatted, numericValue) => {
+                                    onPaymentChange(
+                                        index,
+                                        "credit_limit",
+                                        numericValue
+                                    );
+                                },
+                                { allowDecimal: false }
+                            );
+                        }}
                         onFocus={(e) => {
                             e.currentTarget.select();
                         }}

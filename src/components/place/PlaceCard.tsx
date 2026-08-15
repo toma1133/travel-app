@@ -50,14 +50,13 @@ const PlaceCard = ({
     const [showActions, setShowActions] = useState(false);
     const [isMobileExpanded, setIsMobileExpanded] = useState(false);
     const smartNav = getSmartNavigationLabel();
-    const mapUrl =
-        place.map_url ||
-        getSmartNavigationUrl({
-            name: place.name,
-            loc: place.info?.loc,
-            lat: place.lat,
-            lng: place.lng,
-        });
+    const mapUrl = getSmartNavigationUrl({
+        name: place.name,
+        loc: place.info?.loc,
+        lat: place.lat,
+        lng: place.lng,
+        customUrl: place.map_url,
+    });
 
     const paymentList: string[] = Array.isArray(place.info?.payment_methods)
         ? place.info.payment_methods

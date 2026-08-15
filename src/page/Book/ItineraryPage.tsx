@@ -660,20 +660,11 @@ const ItineraryPage = ({
                     onConfirmClick={handleConfirmDelete}
                 />
             )}
-            {isPreviewModalOpen && (
+            {isPreviewModalOpen && place && (
                 <PreviewPlaceModal
                     onCloseBtnClick={handleClosePreviewModal}
-                    children={
-                        <PlaceCard
-                            theme={tripData?.theme_config!}
-                            place={place!}
-                            isPrinting={false}
-                            isPreview={true}
-                            onDelete={(place: PlaceVM) => {}}
-                            onEdit={(place: PlaceVM) => {}}
-                            onTagBtnClick={(tag: string) => {}}
-                        />
-                    }
+                    place={place}
+                    theme={tripData?.theme_config!}
                 />
             )}
         </div>

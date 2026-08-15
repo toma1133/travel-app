@@ -132,6 +132,7 @@ const PlaceMarkerPopupContent = ({
                 loc: place.info?.loc,
                 lat: place.lat,
                 lng: place.lng,
+                customUrl: place.map_url,
             }),
             ...getSmartNavigationLabel(),
         };
