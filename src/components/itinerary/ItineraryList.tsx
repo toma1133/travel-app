@@ -25,6 +25,7 @@ type ItineraryListProps = {
         activity: ItineraryActivitiy
     ) => void;
     onEditDayBtnClick: (itinerary: ItineraryVM) => void;
+    onOptimizeRouteBtnClick?: (itineraryDay: ItineraryVM) => void;
     onViewBtnClick: (linkId: string) => void;
     onPlaceHover?: (linkId: string | null) => void;
 };
@@ -41,6 +42,7 @@ const ItineraryList = ({
     onDeleteDayBtnClick,
     onEditActivityBtnClick,
     onEditDayBtnClick,
+    onOptimizeRouteBtnClick,
     onViewBtnClick,
     onPlaceHover,
 }: ItineraryListProps) => {
@@ -146,6 +148,7 @@ const ItineraryList = ({
                             onDeleteDayBtnClick={onDeleteDayBtnClick}
                             onEditActivityBtnClick={onEditActivityBtnClick}
                             onEditDayBtnClick={onEditDayBtnClick}
+                            onOptimizeRouteBtnClick={onOptimizeRouteBtnClick}
                             onViewBtnClick={onViewBtnClick}
                             onPlaceHover={onPlaceHover}
                         />

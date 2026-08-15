@@ -174,7 +174,7 @@ const PreviewPlaceModal = ({
                 </div>
 
                 {/* 滾動內容本體 */}
-                <div className="p-5 sm:p-6 overflow-y-auto space-y-4.5 flex-1">
+                <div className="p-5 sm:p-6 overflow-y-auto no-scrollbar space-y-4.5 flex-1">
                     {/* 地點名稱與原文稱呼 */}
                     <div className="space-y-1.5 border-b border-border/60 pb-4">
                         <div className="flex items-start justify-between gap-3">

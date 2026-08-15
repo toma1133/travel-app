@@ -14,6 +14,7 @@ import ItineraryList from "../../components/itinerary/ItineraryList";
 import ItineraryDayModal from "../../components/itinerary/ItineraryDayModal";
 import ItineraryActivityModal from "../../components/itinerary/ItineraryActivityModal";
 import PreviewPlaceModal from "../../components/itinerary/PreviewPlaceModal";
+import OptimizeRouteModal from "../../components/itinerary/OptimizeRouteModal";
 import PlaceCard from "../../components/place/PlaceCard";
 import PlaceMapView from "../../components/place/PlaceMapView";
 import type BookLayoutContextType from "../../models/types/BookLayoutContextTypes";
@@ -177,6 +178,42 @@ const ItineraryPage = ({
     const handleClosePreviewModal = () => {
         setIsPreviewModalOpen(false);
         setPlace(undefined);
+    };
+
+    // --- Optimize Route Modal Handlers ---
+    const [isOptimizeModalOpen, setIsOptimizeModalOpen] = useState(false);
+    const [dayToOptimize, setDayToOptimize] = useState<ItineraryVM | null>(null);
+
+    const placesMapById = useMemo(() => {
+        const map = new Map<string, PlaceVM>();
+        if (itineraryPlacesMap["all"]) {
+            itineraryPlacesMap["all"].forEach((p) => map.set(p.id, p));
+        }
+        return map;
+    }, [itineraryPlacesMap]);
+
+    const handleOpenOptimizeModal = (itineraryDay: ItineraryVM) => {
+        setDayToOptimize(itineraryDay);
+        setIsOptimizeModalOpen(true);
+    };
+
+    const handleCloseOptimizeModal = () => {
+        setIsOptimizeModalOpen(false);
+        setDayToOptimize(null);
+    };
+
+    const handleApplyOptimizedOrder = async (
+        itineraryDay: ItineraryVM,
+        reorderedActivities: ItineraryActivitiy[]
+    ) => {
+        try {
+            await updateItinerary.mutateAsync({
+                ...itineraryDay,
+                activities: reorderedActivities,
+            });
+        } catch (err) {
+            console.error("Failed to apply optimized itinerary order:", err);
+        }
     };
 
     const mutatingCount = useIsMutating({
@@ -604,6 +641,7 @@ const ItineraryPage = ({
                             onDeleteDayBtnClick={handleOpenDeleteDayModal}
                             onEditActivityBtnClick={handleOpenEditActivityModal}
                             onEditDayBtnClick={handleOpenEditDayModal}
+                            onOptimizeRouteBtnClick={handleOpenOptimizeModal}
                             onViewBtnClick={handleOpenPreviewModal}
                             onPlaceHover={setHoveredPlaceId}
                         />
@@ -665,6 +703,15 @@ const ItineraryPage = ({
                     onCloseBtnClick={handleClosePreviewModal}
                     place={place}
                     theme={tripData?.theme_config!}
+                />
+            )}
+            {isOptimizeModalOpen && dayToOptimize && (
+                <OptimizeRouteModal
+                    itineraryDay={dayToOptimize}
+                    placesMap={placesMapById}
+                    theme={tripData?.theme_config}
+                    onClose={handleCloseOptimizeModal}
+                    onApplyOptimizedOrder={handleApplyOptimizedOrder}
                 />
             )}
         </div>

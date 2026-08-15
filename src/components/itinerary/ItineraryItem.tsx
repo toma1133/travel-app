@@ -5,6 +5,7 @@ import {
     Plus,
     Trash2,
     Hourglass,
+    Sparkles,
 } from "lucide-react";
 import type {
     ItineraryActivitiy,
@@ -41,6 +42,7 @@ type ItineraryItemProps = {
     ) => void;
     onEditDayBtnClick: (itinerary: ItineraryVM) => void;
     onExpandedBtnToggle: (itinerary: ItineraryVM) => void;
+    onOptimizeRouteBtnClick?: (itineraryDay: ItineraryVM) => void;
     onViewBtnClick: (linkId: string) => void;
     onPlaceHover?: (linkId: string | null) => void;
 };
@@ -57,6 +59,7 @@ const ItineraryItem = ({
     onEditActivityBtnClick,
     onEditDayBtnClick,
     onExpandedBtnToggle,
+    onOptimizeRouteBtnClick,
     onViewBtnClick,
     onPlaceHover,
 }: ItineraryItemProps) => {
@@ -257,44 +260,65 @@ const ItineraryItem = ({
                             )}
                         </div>
 
-                        {/* 編輯模式下的工具列 (作為靜態 Flex 元素，手機/電腦不壓迫左側) */}
-                        {!isPrinting && isEditing && (
-                            <div
-                                className={`flex items-center gap-1 p-0.5 bg-card/90 backdrop-blur-md rounded-full shadow-sm border border-border/80 shrink-0 transition-all duration-200 z-10 ${showDayActions ? "opacity-100 scale-100" : "lg:opacity-0 lg:scale-95 lg:group-hover:opacity-100 lg:group-hover:scale-100"}`}
-                            >
-                                <button
-                                    type="button"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        onAddActivityBtnClick(itinerary);
-                                    }}
-                                    className="p-1.5 sm:p-2 rounded-full text-muted-foreground hover:text-primary-foreground hover:bg-primary transition-all"
-                                    title="新增活動"
-                                >
-                                    <Plus size={15} />
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        onEditDayBtnClick(itinerary);
-                                    }}
-                                    className="p-1.5 sm:p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
-                                    title="編輯日程"
-                                >
-                                    <Pencil size={15} />
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        onDeleteDayBtnClick(itinerary);
-                                    }}
-                                    className="p-1.5 sm:p-2 rounded-full text-muted-foreground hover:text-destructive-foreground hover:bg-destructive transition-all"
-                                    title="刪除日程"
-                                >
-                                    <Trash2 size={15} />
-                                </button>
+                        {/* 操作工具列 */}
+                        {!isPrinting && (
+                            <div className="flex items-center gap-1.5 shrink-0">
+                                {/* 最佳化路線按鈕 (活動數 >= 2 即可提供) */}
+                                {onOptimizeRouteBtnClick && Array.isArray(itinerary.activities) && itinerary.activities.length >= 2 && (
+                                    <button
+                                        type="button"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onOptimizeRouteBtnClick(itinerary);
+                                        }}
+                                        className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded-full text-xs font-bold transition-all border border-amber-500/30 active:scale-95 shadow-2xs cursor-pointer"
+                                        title="使用 OSRM / TSP 演算法最佳化當日最短動線"
+                                    >
+                                        <Sparkles size={12} className="text-amber-500" />
+                                        <span className="hidden sm:inline">動線最佳化</span>
+                                    </button>
+                                )}
+
+                                {/* 編輯模式下的工具列 */}
+                                {isEditing && (
+                                    <div
+                                        className={`flex items-center gap-1 p-0.5 bg-card/90 backdrop-blur-md rounded-full shadow-sm border border-border/80 shrink-0 transition-all duration-200 z-10 ${showDayActions ? "opacity-100 scale-100" : "lg:opacity-0 lg:scale-95 lg:group-hover:opacity-100 lg:group-hover:scale-100"}`}
+                                    >
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onAddActivityBtnClick(itinerary);
+                                            }}
+                                            className="p-1.5 sm:p-2 rounded-full text-muted-foreground hover:text-primary-foreground hover:bg-primary transition-all"
+                                            title="新增活動"
+                                        >
+                                            <Plus size={15} />
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onEditDayBtnClick(itinerary);
+                                            }}
+                                            className="p-1.5 sm:p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
+                                            title="編輯日程"
+                                        >
+                                            <Pencil size={15} />
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onDeleteDayBtnClick(itinerary);
+                                            }}
+                                            className="p-1.5 sm:p-2 rounded-full text-muted-foreground hover:text-destructive-foreground hover:bg-destructive transition-all"
+                                            title="刪除日程"
+                                        >
+                                            <Trash2 size={15} />
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
