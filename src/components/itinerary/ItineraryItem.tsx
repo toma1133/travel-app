@@ -330,54 +330,56 @@ const ItineraryItem = ({
                                         <span className="hidden sm:inline">動線最佳化</span>
                                     </button>
                                 )}
-
-                                {/* 編輯模式下的工具列 */}
-                                {isEditing && (
-                                    <div
-                                        className={`flex items-center gap-1 p-0.5 bg-card/90 backdrop-blur-md rounded-full shadow-sm border border-border/80 shrink-0 transition-all duration-200 z-10 ${
-                                            showDayActions ? "opacity-100 scale-100" : "lg:opacity-0 lg:scale-95 lg:group-hover:opacity-100 lg:group-hover:scale-100"
-                                        }`}
-                                    >
-                                        <button
-                                            type="button"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                onAddActivityBtnClick(itinerary);
-                                            }}
-                                            className="p-1.5 rounded-full text-muted-foreground hover:text-primary-foreground hover:bg-primary transition-all cursor-pointer"
-                                            title="新增活動"
-                                        >
-                                            <Plus size={14} />
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                onEditDayBtnClick(itinerary);
-                                            }}
-                                            className="p-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-all cursor-pointer"
-                                            title="編輯日程"
-                                        >
-                                            <Pencil size={14} />
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                onDeleteDayBtnClick(itinerary);
-                                            }}
-                                            className="p-1.5 rounded-full text-muted-foreground hover:text-destructive-foreground hover:bg-destructive transition-all cursor-pointer"
-                                            title="刪除日程"
-                                        >
-                                            <Trash2 size={14} />
-                                        </button>
-                                    </div>
-                                )}
                             </div>
                         )}
                     </div>
                 </div>
             </div>
+
+            {/* 📱 編輯模式專屬 iOS 快捷工具列 (iOS Sub-Toolbar - 與動線最佳化完全分離，絕不重疊) */}
+            {!isPrinting && isEditing && (
+                <div className="px-3.5 sm:px-5 py-2.5 bg-muted/40 border-b border-border/60 flex items-center justify-between gap-2 flex-wrap animate-in slide-in-from-top-1 duration-150">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onEditDayBtnClick(itinerary);
+                            }}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-card border border-border/80 text-foreground text-xs font-semibold hover:bg-muted transition-all cursor-pointer shadow-2xs active:scale-95"
+                            title="編輯日程天數與主題"
+                        >
+                            <Pencil size={11} className="text-blue-500" />
+                            <span>編輯資訊</span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onDeleteDayBtnClick(itinerary);
+                            }}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-semibold hover:bg-rose-500/20 transition-all cursor-pointer shadow-2xs active:scale-95"
+                            title="刪除此日行程"
+                        >
+                            <Trash2 size={11} />
+                            <span>刪除此天</span>
+                        </button>
+                    </div>
+
+                    <button
+                        type="button"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onAddActivityBtnClick(itinerary);
+                        }}
+                        className="inline-flex items-center gap-1 px-3 py-1 rounded-xl bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold transition-all cursor-pointer shadow-xs active:scale-95 ml-auto"
+                        title="新增活動"
+                    >
+                        <Plus size={13} />
+                        <span>新增活動</span>
+                    </button>
+                </div>
+            )}
 
             {/* --- Content (時間軸內容) --- */}
             {(isExpanded || isPrinting) && (
@@ -480,13 +482,9 @@ const ItineraryItem = ({
                                                     )}
                                                 </div>
 
-                                                {/* 編輯 / 刪除工具按鈕 */}
+                                                {/* 編輯 / 刪除工具按鈕 (在編輯模式下清晰可點擊，不需依賴 Hover) */}
                                                 {!isPrinting && isEditing && (
-                                                    <div
-                                                        className={`flex items-center gap-1 p-0.5 bg-card/90 backdrop-blur-md rounded-full shadow-xs border border-border/80 shrink-0 transition-all ${
-                                                            activeActivityIdx === idx ? "opacity-100" : "lg:opacity-0 lg:group-hover/item:opacity-100"
-                                                        }`}
-                                                    >
+                                                    <div className="flex items-center gap-1 p-0.5 bg-card/95 backdrop-blur-md rounded-full shadow-xs border border-border/80 shrink-0 transition-all">
                                                         <button
                                                             type="button"
                                                             onClick={() => onEditActivityBtnClick(itinerary, activity)}
@@ -498,7 +496,7 @@ const ItineraryItem = ({
                                                         <button
                                                             type="button"
                                                             onClick={() => onDeleteActivityBtnClick(itinerary, activity)}
-                                                            className="p-1 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
+                                                            className="p-1 rounded-full text-muted-foreground hover:text-rose-600 hover:bg-rose-500/10 transition-colors cursor-pointer"
                                                             title="刪除活動"
                                                         >
                                                             <Trash2 size={11} />
@@ -686,8 +684,23 @@ const ItineraryItem = ({
                             <div className="flex py-3">
                                 <div className="w-12 sm:w-14 shrink-0" />
                                 <p className="text-xs text-muted-foreground italic">
-                                    尚無活動，點擊上方 + 新增活動
+                                    尚無活動，點擊「新增活動」加入景點
                                 </p>
+                            </div>
+                        )}
+
+                        {/* 📱 編輯模式下，時間軸底部快速新增活動按鈕 */}
+                        {!isPrinting && isEditing && Array.isArray(itinerary.activities) && itinerary.activities.length > 0 && (
+                            <div className="flex pt-1 pb-1">
+                                <div className="w-12 sm:w-14 shrink-0" />
+                                <button
+                                    type="button"
+                                    onClick={() => onAddActivityBtnClick(itinerary)}
+                                    className="flex-1 mr-3 sm:mr-4 py-2.5 rounded-2xl border border-dashed border-border hover:border-blue-500 bg-muted/20 hover:bg-blue-500/5 text-muted-foreground hover:text-blue-600 dark:hover:text-blue-400 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-2xs active:scale-[0.99]"
+                                >
+                                    <Plus size={13} />
+                                    <span>加入新行程活動</span>
+                                </button>
                             </div>
                         )}
                     </div>

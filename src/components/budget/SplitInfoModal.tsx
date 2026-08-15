@@ -140,29 +140,38 @@ const SplitInfoModal = ({
     }, [budgets]);
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in p-0 sm:p-4">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 p-0 sm:p-4">
             <div
-                className={`bg-card w-full max-w-sm sm:max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl animate-in slide-in-from-bottom border border-border flex flex-col max-h-[85vh]`}
+                className="bg-card text-card-foreground w-full max-w-sm sm:max-w-md rounded-t-3xl sm:rounded-3xl shadow-2xl animate-in slide-in-from-bottom-6 sm:zoom-in-95 duration-200 border border-border/80 flex flex-col max-h-[90vh] overflow-hidden"
+                onClick={(e) => e.stopPropagation()}
             >
-                {/* Header */}
-                <div className="flex justify-between items-center border-b border-border/50 p-6">
-                    <div>
-                        <h3 className="text-xl font-black tracking-tight text-foreground">
-                            結算中心
+                {/* 📱 頂部行動把手 */}
+                <div className="w-10 h-1 rounded-full bg-muted-foreground/30 mx-auto mt-2.5 sm:hidden shrink-0" />
+
+                {/* 📱 iOS 原生導航列 */}
+                <div className="px-4 py-3 border-b border-border/70 bg-card/90 backdrop-blur-md flex items-center justify-between shrink-0">
+                    <span className="w-12" />
+
+                    <div className="text-center min-w-0">
+                        <h3 className="text-sm font-black tracking-tight text-foreground">
+                            分帳結算中心
                         </h3>
-                        <p className="text-xs text-muted-foreground mt-1">Settlement Overview</p>
+                        <p className="text-[10px] text-muted-foreground font-mono">
+                            Settlement Overview
+                        </p>
                     </div>
+
                     <button
                         type="button"
                         onClick={onCloseBtnClick}
-                        className="p-2 rounded-full bg-muted/50 hover:bg-muted text-muted-foreground transition-colors"
-                        title="Close"
+                        className="text-xs font-bold bg-blue-500 hover:bg-blue-600 text-white px-3.5 py-1.5 rounded-full transition-all shadow-xs cursor-pointer active:scale-95 shrink-0"
                     >
-                        <X size={18} />
+                        完成
                     </button>
                 </div>
+
                 {/* Body - Scrollable */}
-                <div className="overflow-y-auto no-scrollbar p-6 space-y-4 flex-1">
+                <div className="overflow-y-auto no-scrollbar p-4 sm:p-5 space-y-3.5 flex-1">
                     {settlements.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-12 px-4 text-center bg-muted/30 rounded-3xl border border-dashed border-border">
                             <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center mb-4">

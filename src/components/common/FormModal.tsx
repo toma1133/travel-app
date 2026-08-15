@@ -25,55 +25,53 @@ const FormModal = ({
     onCancelBtnClick,
     onCloseBtnClick,
     onSubmit,
-    maxWidthClass = "sm:max-w-2xl",
+    maxWidthClass = "sm:max-w-xl",
 }: FormModalProps) => {
     return (
-        <form id={formId} onSubmit={onSubmit}>
-            <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-background/80 backdrop-blur-sm animate-in fade-in p-0 sm:p-4">
-                <div
-                    className={`bg-card w-full ${maxWidthClass} rounded-t-3xl sm:rounded-2xl shadow-2xl animate-in slide-in-from-bottom border border-border flex flex-col max-h-[90vh]`}
-                >
-                    {/* Header */}
-                    <div className="flex justify-between items-center border-b border-border/50 p-6">
-                        <h3 className="text-lg font-bold text-foreground tracking-tight">
-                            {modalTitle}
-                        </h3>
-                        <button
-                            type="button"
-                            onClick={onCloseBtnClick}
-                            className="p-2 rounded-full hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
-                            title="Close"
-                        >
-                            <X size={20} />
-                        </button>
-                    </div>
-                    {/* Body - Scrollable Form */}
-                    <div className="overflow-y-auto no-scrollbar space-y-4 p-6 max-h-[75vh]">
-                        {children}
-                    </div>
-                    {/* Footer */}
-                    <div className="p-4 px-6 border-t border-border/50 flex justify-end items-center gap-3">
-                        <button
-                            type="button"
-                            onClick={onCancelBtnClick}
-                            className="px-4 py-2 text-sm font-medium text-foreground bg-background border border-input hover:bg-accent hover:text-accent-foreground rounded-lg transition-colors"
-                            title="取消"
-                        >
-                            取消
-                        </button>
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200">
+            <div
+                className={`bg-card text-card-foreground w-full ${maxWidthClass} rounded-t-3xl sm:rounded-3xl shadow-2xl border border-border/80 flex flex-col max-h-[92vh] overflow-hidden animate-in slide-in-from-bottom-6 sm:zoom-in-95 duration-200`}
+                onClick={(e) => e.stopPropagation()}
+            >
+                {/* 📱 頂部行動把手 (Mobile drag indicator) */}
+                <div className="w-10 h-1 rounded-full bg-muted-foreground/30 mx-auto mt-2.5 sm:hidden shrink-0" />
+
+                {/* 📱 iOS 原生導航頂部列 (iOS Navigation Top Bar) */}
+                <div className="px-4 py-3 border-b border-border/70 bg-card/90 backdrop-blur-md flex items-center justify-between shrink-0">
+                    <button
+                        type="button"
+                        onClick={onCancelBtnClick || onCloseBtnClick}
+                        className="text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors cursor-pointer px-2 py-1"
+                    >
+                        取消
+                    </button>
+
+                    <h3 className="text-sm font-black tracking-tight text-foreground truncate max-w-[60%] text-center">
+                        {modalTitle}
+                    </h3>
+
+                    <div className="flex items-center gap-2">
                         {customAction}
                         <button
                             type="submit"
                             form={formId}
-                            className={`bg-primary px-6 py-2 rounded-lg text-sm font-bold text-primary-foreground shadow-md hover:bg-primary/90 transition-all active:scale-95`}
-                            title="Submit"
+                            className="text-xs font-bold bg-blue-500 hover:bg-blue-600 text-white px-3.5 py-1.5 rounded-full transition-all shadow-xs cursor-pointer active:scale-95 shrink-0"
                         >
                             {modalSaveTitle}
                         </button>
                     </div>
                 </div>
+
+                {/* 主表單區域 (Scrollable Form Content) */}
+                <form
+                    id={formId}
+                    onSubmit={onSubmit}
+                    className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 no-scrollbar"
+                >
+                    {children}
+                </form>
             </div>
-        </form>
+        </div>
     );
 };
 

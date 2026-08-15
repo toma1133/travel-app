@@ -165,41 +165,50 @@ const OptimizeRouteModal = ({
     const hasSavings = result && (result.savedDistanceKm > 0.05 || result.savedDurationMinutes > 1);
 
     return (
-        <div className="fixed inset-0 z-100 bg-black/70 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200">
             <div
-                className="w-full max-w-2xl max-h-[92vh] sm:max-h-[90vh] bg-card text-foreground rounded-2xl sm:rounded-3xl shadow-2xl border border-border flex flex-col overflow-hidden relative animate-in zoom-in-95 duration-200"
+                className="w-full max-w-2xl max-h-[92vh] bg-card text-card-foreground rounded-t-3xl sm:rounded-3xl shadow-2xl border border-border/80 flex flex-col overflow-hidden animate-in slide-in-from-bottom-6 sm:zoom-in-95 duration-200"
                 onClick={(e) => e.stopPropagation()}
             >
-                {/* 頂部標題 */}
-                <div className="p-3.5 sm:p-5 border-b border-border flex items-center justify-between bg-muted/30 shrink-0">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl sm:rounded-2xl bg-primary/10 text-primary flex items-center justify-center shadow-xs shrink-0">
-                            <Sparkles size={16} className="sm:w-[18px] sm:h-[18px]" />
-                        </div>
-                        <div className="min-w-0">
-                            <h2 className="text-sm sm:text-lg font-bold text-foreground flex items-center gap-1.5 sm:gap-2 flex-wrap">
-                                <span className="truncate">當日動線最佳化</span>
-                                <span className="text-[10px] sm:text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-mono font-bold shrink-0">
-                                    DAY {itineraryDay.day_number}
-                                </span>
-                            </h2>
-                            <p className="text-[11px] sm:text-xs text-muted-foreground truncate sm:whitespace-normal">
-                                透過 OSRM 路網與 TSP 演算法消除折返跑，自動計算最短路徑
-                            </p>
-                        </div>
-                    </div>
+                {/* 📱 頂部行動把手 */}
+                <div className="w-10 h-1 rounded-full bg-muted-foreground/30 mx-auto mt-2.5 sm:hidden shrink-0" />
+
+                {/* 📱 iOS 原生導航列 */}
+                <div className="px-4 py-3 border-b border-border/70 bg-card/90 backdrop-blur-md flex items-center justify-between shrink-0">
                     <button
                         type="button"
                         onClick={onClose}
-                        className="p-1.5 sm:p-2 text-muted-foreground hover:text-foreground rounded-full hover:bg-muted transition-colors cursor-pointer shrink-0 ml-2"
-                        title="關閉"
+                        className="text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors cursor-pointer px-2 py-1"
                     >
-                        <X size={18} />
+                        取消
+                    </button>
+
+                    <div className="text-center min-w-0">
+                        <div className="flex items-center justify-center gap-1.5">
+                            <span className="font-black text-sm text-foreground tracking-tight">
+                                當日動線最佳化
+                            </span>
+                            <span className="text-[10px] px-2 py-0.2 rounded-full bg-blue-500/15 text-blue-600 dark:text-blue-400 font-mono font-bold">
+                                DAY {itineraryDay.day_number}
+                            </span>
+                        </div>
+                        <p className="text-[10px] text-muted-foreground hidden sm:block">
+                            透過 OSRM 路網與 TSP 演算法消除折返跑，自動計算最短路徑
+                        </p>
+                    </div>
+
+                    <button
+                        type="button"
+                        disabled={locActivities.length < 2 || isOptimizing}
+                        onClick={handleApply}
+                        className="text-xs font-bold bg-blue-500 hover:bg-blue-600 text-white px-3.5 py-1.5 rounded-full transition-all shadow-xs cursor-pointer active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+                    >
+                        套用順序
                     </button>
                 </div>
 
                 {/* 內容區塊 */}
-                <div className="p-3.5 sm:p-6 overflow-y-auto no-scrollbar space-y-4 sm:space-y-5 flex-1">
+                <div className="p-3.5 sm:p-5 overflow-y-auto no-scrollbar space-y-4 flex-1">
                     {/* 條件設定控制列 */}
                     <div className="bg-muted/40 p-3 sm:p-4 rounded-2xl border border-border/60 space-y-3">
                         <div className="space-y-3">
@@ -440,26 +449,6 @@ const OptimizeRouteModal = ({
                             </div>
                         </div>
                     )}
-                </div>
-
-                {/* 底部按鈕 (RWD: Full width / touch targets on mobile) */}
-                <div className="p-3 sm:p-4 border-t border-border bg-muted/20 flex items-center justify-end gap-2 shrink-0">
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="flex-1 sm:flex-initial px-4 py-2.5 text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted rounded-xl transition-colors cursor-pointer text-center"
-                    >
-                        取消
-                    </button>
-                    <button
-                        type="button"
-                        disabled={locActivities.length < 2 || isOptimizing}
-                        onClick={handleApply}
-                        className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-bold bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-md active:scale-95 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed text-center"
-                    >
-                        <Check size={14} />
-                        <span>套用最佳化順序</span>
-                    </button>
                 </div>
             </div>
         </div>
