@@ -41,6 +41,10 @@ import {
     getSmartNavigationUrl,
     getSmartNavigationLabel,
 } from "../../utils/MapNavigationUtil";
+import {
+    formatOpeningHours,
+    getBusinessStatus,
+} from "../../utils/OpeningHoursUtil";
 
 type PlaceMapViewProps = {
     places: PlaceVM[] | null;
@@ -248,15 +252,43 @@ const PlaceMarkerPopupContent = ({
                 {/* Practical Information List */}
                 <div className="space-y-1.5 text-muted-foreground">
                     {/* Business Hours */}
-                    {place.info?.open && (
-                        <div className="flex items-start gap-1.5">
-                            <Clock size={13} className="text-primary mt-0.5 shrink-0" />
-                            <span className="text-foreground/90 leading-tight">
-                                <span className="font-medium text-muted-foreground">營業時間：</span>
-                                {place.info.open}
-                            </span>
-                        </div>
-                    )}
+                    {place.info?.open && (() => {
+                        const businessStatus = getBusinessStatus(place.info.open, place.info.closed_days);
+                        return (
+                            <div className="flex items-start gap-1.5">
+                                <Clock size={13} className="text-primary mt-0.5 shrink-0" />
+                                <div className="text-foreground/90 leading-tight space-y-0.5 flex-1 min-w-0">
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                        {businessStatus.status === "open" && (
+                                            <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-md border border-emerald-500/20">
+                                                ● 營業中
+                                            </span>
+                                        )}
+                                        {businessStatus.status === "closing_soon" && (
+                                            <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded-md border border-amber-500/20">
+                                                ● 即將打烊
+                                            </span>
+                                        )}
+                                        {businessStatus.status === "closed" && (
+                                            <span className="text-[10px] font-bold text-rose-600 dark:text-rose-400 bg-rose-500/10 px-1.5 py-0.5 rounded-md border border-rose-500/20">
+                                                ● 休息中
+                                            </span>
+                                        )}
+                                        {businessStatus.status === "closed_today" && (
+                                            <span className="text-[10px] font-bold text-rose-600 dark:text-rose-400 bg-rose-500/15 px-1.5 py-0.5 rounded-md border border-rose-500/30">
+                                                ● 今日公休
+                                            </span>
+                                        )}
+                                        <span className="text-xs font-medium text-foreground/90 truncate">
+                                            {businessStatus.parsed.isPerDay
+                                                ? `今日(${businessStatus.parsed.todaySchedule?.shortLabel || ""}) ${businessStatus.todayHoursText}`
+                                                : businessStatus.allHoursSummary}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })()}
 
                     {/* Closed Days */}
                     {place.info?.closed_days && (

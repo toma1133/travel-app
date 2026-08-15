@@ -27,6 +27,11 @@ import {
     getSmartNavigationUrl,
     getSmartNavigationLabel,
 } from "../../utils/MapNavigationUtil";
+import {
+    formatOpeningHours,
+    parseOpeningHours,
+    getBusinessStatus,
+} from "../../utils/OpeningHoursUtil";
 
 type PlaceCardProps = {
     theme: TripThemeConf | null;
@@ -57,6 +62,7 @@ const PlaceCard = ({
         lng: place.lng,
         customUrl: place.map_url,
     });
+    const businessStatus = getBusinessStatus(place.info?.open, place.info?.closed_days);
 
     const paymentList: string[] = Array.isArray(place.info?.payment_methods)
         ? place.info.payment_methods
@@ -190,9 +196,14 @@ const PlaceCard = ({
                                 </span>
                             </div>
                         ) : place.info?.open ? (
-                            <div className="flex items-center gap-1.5">
+                            <div className="flex items-center gap-1.5 min-w-0">
                                 <Clock size={12} className="text-gray-600 shrink-0" />
-                                <span className="truncate">{place.info.open}</span>
+                                <span className={`text-[10px] font-bold shrink-0 ${
+                                    businessStatus.isOpen ? "text-emerald-700" : "text-rose-700"
+                                }`}>
+                                    [{businessStatus.badgeText}]
+                                </span>
+                                <span className="truncate">{businessStatus.allHoursSummary}</span>
                             </div>
                         ) : null}
 
@@ -521,9 +532,46 @@ const PlaceCard = ({
                             </span>
                         </div>
                     ) : place.info?.open ? (
-                        <div className="flex items-center gap-1.5 bg-muted/30 p-2 rounded-xl border border-border/40">
+                        <div
+                            className="flex items-center gap-1.5 bg-muted/30 p-2 rounded-xl border border-border/40 min-w-0 hover:bg-muted/50 transition-colors"
+                            title={
+                                businessStatus.parsed.isPerDay
+                                    ? businessStatus.parsed.days.map((d) => `${d.dayLabel}: ${d.periodsText}`).join("\n")
+                                    : businessStatus.allHoursSummary
+                            }
+                        >
                             <Clock size={13} className="text-muted-foreground/80 shrink-0" />
-                            <span className="truncate">{place.info.open}</span>
+                            <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                                {businessStatus.status === "open" && (
+                                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-md shrink-0 border border-emerald-500/20">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                        營業中
+                                    </span>
+                                )}
+                                {businessStatus.status === "closing_soon" && (
+                                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded-md shrink-0 border border-amber-500/20">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                                        即將打烊
+                                    </span>
+                                )}
+                                {businessStatus.status === "closed" && (
+                                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-rose-600 dark:text-rose-400 bg-rose-500/10 px-1.5 py-0.5 rounded-md shrink-0 border border-rose-500/20">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                                        休息中
+                                    </span>
+                                )}
+                                {businessStatus.status === "closed_today" && (
+                                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-rose-600 dark:text-rose-400 bg-rose-500/15 px-1.5 py-0.5 rounded-md shrink-0 border border-rose-500/30">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                                        今日公休
+                                    </span>
+                                )}
+                                <span className="truncate font-medium text-foreground/90">
+                                    {businessStatus.parsed.isPerDay
+                                        ? `今日(${businessStatus.parsed.todaySchedule?.shortLabel || ""}) ${businessStatus.todayHoursText}`
+                                        : businessStatus.allHoursSummary}
+                                </span>
+                            </div>
                         </div>
                     ) : null}
 

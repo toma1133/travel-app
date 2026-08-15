@@ -24,6 +24,11 @@ import {
     getSmartNavigationLabel,
     getSmartNavigationUrl,
 } from "../../utils/MapNavigationUtil";
+import {
+    formatOpeningHours,
+    parseOpeningHours,
+    getBusinessStatus,
+} from "../../utils/OpeningHoursUtil";
 
 type PreviewPlaceModalProps = {
     onCloseBtnClick: MouseEventHandler<HTMLButtonElement>;
@@ -303,13 +308,80 @@ const PreviewPlaceModal = ({
                                 </div>
                             </div>
                         ) : place.info?.open ? (
-                            <div className="flex items-start gap-2 bg-muted/40 p-3 rounded-2xl border border-border/60">
-                                <Clock size={15} className="text-primary shrink-0 mt-0.5" />
-                                <div>
-                                    <span className="font-bold text-muted-foreground block text-[11px] mb-0.5">
-                                        營業時間
-                                    </span>
-                                    <span className="text-foreground font-medium">{place.info.open}</span>
+                            <div className="flex items-start gap-2.5 bg-muted/40 p-3.5 rounded-2xl border border-border/60 sm:col-span-2">
+                                <Clock size={16} className="text-primary shrink-0 mt-0.5" />
+                                <div className="flex-1 min-w-0 space-y-1.5">
+                                    {(() => {
+                                        const businessStatus = getBusinessStatus(place.info.open, place.info.closed_days);
+                                        return (
+                                            <>
+                                                <div className="flex items-center justify-between gap-2 flex-wrap">
+                                                    <span className="font-bold text-muted-foreground block text-[11px]">
+                                                        營業時間
+                                                    </span>
+                                                    {/* 營業狀態標籤 (Google 地圖效果) */}
+                                                    <div className="flex items-center gap-1.5">
+                                                        {businessStatus.status === "open" && (
+                                                            <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
+                                                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                                                {businessStatus.detailText}
+                                                            </span>
+                                                        )}
+                                                        {businessStatus.status === "closing_soon" && (
+                                                            <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">
+                                                                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                                                                {businessStatus.detailText}
+                                                            </span>
+                                                        )}
+                                                        {businessStatus.status === "closed" && (
+                                                            <span className="inline-flex items-center gap-1 text-xs font-bold text-rose-600 dark:text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded-md border border-rose-500/20">
+                                                                <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                                                                {businessStatus.detailText}
+                                                            </span>
+                                                        )}
+                                                        {businessStatus.status === "closed_today" && (
+                                                            <span className="inline-flex items-center gap-1 text-xs font-bold text-rose-600 dark:text-rose-400 bg-rose-500/15 px-2 py-0.5 rounded-md border border-rose-500/30">
+                                                                <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                                                                今日公休
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                {businessStatus.parsed.isPerDay ? (
+                                                    <div className="space-y-1.5 pt-0.5">
+                                                        <span className="text-foreground font-semibold text-xs block">
+                                                            {businessStatus.allHoursSummary}
+                                                        </span>
+                                                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 pt-1 text-[11px] font-mono">
+                                                            {businessStatus.parsed.days.map((d) => (
+                                                                <div
+                                                                    key={d.dayIndex}
+                                                                    className={`px-2.5 py-1.5 rounded-xl border flex items-center justify-between gap-1.5 ${
+                                                                        d.isToday
+                                                                            ? "bg-primary/15 border-primary/40 text-primary font-bold shadow-2xs"
+                                                                            : "bg-background/70 border-border/60 text-muted-foreground"
+                                                                    }`}
+                                                                >
+                                                                    <span className="flex items-center gap-1">
+                                                                        {d.isToday && <span className="w-1.5 h-1.5 rounded-full bg-primary" />}
+                                                                        {d.dayLabel}
+                                                                    </span>
+                                                                    <span className={d.isClosed ? "text-rose-500 font-bold" : "text-foreground font-medium"}>
+                                                                        {d.periodsText}
+                                                                    </span>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-foreground font-medium text-xs sm:text-sm block">
+                                                        {businessStatus.allHoursSummary}
+                                                    </span>
+                                                )}
+                                            </>
+                                        );
+                                    })()}
                                 </div>
                             </div>
                         ) : null}
