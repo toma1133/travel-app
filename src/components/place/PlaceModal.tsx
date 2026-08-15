@@ -1070,7 +1070,7 @@ const PlaceModal = ({
 
             {/* TAB 1: 基本與地圖 (Basic & Map) */}
             {activeTab === "basic" && (
-                <div className="space-y-4 pt-1 animate-in fade-in duration-200">
+                <div className="space-y-3.5 pt-1 animate-in fade-in duration-200">
                     {/* 分類選擇 */}
                     <CategoryCustomSelect
                         value={formData.type || "sight"}
@@ -1083,71 +1083,67 @@ const PlaceModal = ({
                         }}
                     />
 
-                    {/* 主要名稱、英文名稱/羅馬拼音、當地原名 */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 bg-card border border-border/80 p-4 rounded-2xl shadow-2xs">
-                        <div className="sm:col-span-2 space-y-1">
+                    {/* 🏷️ 核心名稱資訊卡片 */}
+                    <div className="bg-card border border-border/80 p-4 rounded-2xl shadow-2xs space-y-3">
+                        <div className="space-y-1.5">
                             <label className="block text-xs font-bold text-muted-foreground uppercase flex items-center gap-1.5">
                                 <Sparkles size={13} className="text-primary" />
-                                <span>中文 / 主要名稱 *</span>
+                                <span>中文 / 主要名稱 <span className="text-rose-500">*</span></span>
                             </label>
-                            <div className="flex items-center gap-2 bg-muted/20 border border-border/60 px-3 py-1.5 rounded-xl focus-within:border-primary transition-colors">
-                                <input
-                                    required
-                                    name="name"
-                                    value={formData.name}
-                                    onChange={onFormInputChange}
-                                    placeholder="例：清水寺 / 敘敘苑燒肉 / 藍瓶咖啡"
-                                    className="w-full bg-transparent text-sm font-bold text-foreground outline-none placeholder:text-muted-foreground/60"
-                                />
-                            </div>
+                            <input
+                                required
+                                name="name"
+                                value={formData.name}
+                                onChange={onFormInputChange}
+                                placeholder="例：清水寺 / 敘敘苑燒肉 / 藍瓶咖啡"
+                                className="w-full bg-muted/25 border border-border/70 focus:border-primary focus:bg-background rounded-xl px-3.5 py-2 text-sm font-bold text-foreground outline-none placeholder:text-muted-foreground/45 transition-all"
+                            />
                         </div>
 
-                        <div className="space-y-1">
-                            <label className="block text-xs font-bold text-muted-foreground uppercase flex items-center gap-1.5">
-                                <Volume2 size={13} className="text-indigo-500" />
-                                <span>英文名稱 / 羅馬拼音</span>
-                            </label>
-                            <div className="flex items-center gap-2 bg-muted/20 border border-border/60 px-3 py-1.5 rounded-xl focus-within:border-primary transition-colors">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-0.5">
+                            <div className="space-y-1.5">
+                                <label className="block text-xs font-bold text-muted-foreground uppercase flex items-center gap-1.5">
+                                    <Volume2 size={13} className="text-indigo-500" />
+                                    <span>英文名稱 / 羅馬拼音</span>
+                                </label>
                                 <input
                                     name="eng_name"
                                     value={formData.eng_name || ""}
                                     onChange={onFormInputChange}
-                                    placeholder="例：Kiyomizu-dera / Jojoen (選填)"
-                                    className="w-full bg-transparent text-xs font-mono text-foreground outline-none placeholder:text-muted-foreground/60"
+                                    placeholder="例：Kiyomizu-dera"
+                                    className="w-full bg-muted/25 border border-border/70 focus:border-primary focus:bg-background rounded-xl px-3 py-2 text-xs font-mono text-foreground outline-none placeholder:text-muted-foreground/45 transition-all"
                                 />
                             </div>
-                        </div>
 
-                        <div className="space-y-1">
-                            <label className="block text-xs font-bold text-muted-foreground uppercase flex items-center gap-1.5">
-                                <Languages size={13} className="text-purple-500" />
-                                <span>當地原名 (日/韓/原文)</span>
-                            </label>
-                            <div className="flex items-center gap-2 bg-muted/20 border border-border/60 px-3 py-1.5 rounded-xl focus-within:border-primary transition-colors">
+                            <div className="space-y-1.5">
+                                <label className="block text-xs font-bold text-muted-foreground uppercase flex items-center gap-1.5">
+                                    <Languages size={13} className="text-purple-500" />
+                                    <span>當地原名 (日/韓/原文)</span>
+                                </label>
                                 <input
                                     name="info.native_name"
                                     value={formData?.info?.native_name || ""}
                                     onChange={onFormInputChange}
-                                    placeholder="例：きよみずでら / 叙々苑 (選填)"
-                                    className="w-full bg-transparent text-xs text-foreground outline-none placeholder:text-muted-foreground/60"
+                                    placeholder="例：きよみずでら / 叙々苑"
+                                    className="w-full bg-muted/25 border border-border/70 focus:border-primary focus:bg-background rounded-xl px-3 py-2 text-xs text-foreground outline-none placeholder:text-muted-foreground/45 transition-all"
                                 />
                             </div>
                         </div>
                     </div>
 
-                    {/* 🗺️ 地圖與定位專區 (Full Width Card) */}
+                    {/* 🗺️ 地圖與定位專區 */}
                     <div className="bg-card border border-border/80 p-4 rounded-2xl shadow-2xs space-y-3">
                         <div className="flex items-center justify-between">
                             <label className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-1.5">
                                 <Navigation size={13} className="text-primary" />
-                                <span>地圖連結與定位 (支援寬版輸入)</span>
+                                <span>地圖導航與聯絡資訊</span>
                             </label>
                             {hasCoordinates ? (
-                                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                                    <Check size={11} /> 座標已自動鎖定
+                                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20">
+                                    <Check size={11} /> 座標已鎖定
                                 </span>
                             ) : (
-                                <span className="text-[11px] text-muted-foreground">
+                                <span className="text-[11px] text-muted-foreground/70">
                                     貼上地圖連結自動鎖定座標
                                 </span>
                             )}
@@ -1156,20 +1152,20 @@ const PlaceModal = ({
                         <div className="relative">
                             <MapIcon
                                 size={14}
-                                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground"
                             />
                             <input
                                 name="map_url"
                                 value={formData.map_url || ""}
                                 onChange={onFormInputChange}
-                                placeholder="貼上 Apple Maps / Google Maps 分享網址..."
-                                className="w-full bg-muted/30 border border-border/70 rounded-xl pl-9 pr-3 py-2 text-xs font-mono text-foreground outline-none focus:border-primary transition-colors"
+                                placeholder="貼上 Google Maps / Apple Maps 分享網址..."
+                                className="w-full bg-muted/25 border border-border/70 focus:border-primary focus:bg-background rounded-xl pl-9 pr-3 py-2 text-xs font-mono text-foreground outline-none placeholder:text-muted-foreground/45 transition-all"
                             />
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                            <div>
-                                <label className="block text-xs font-bold text-muted-foreground uppercase mb-1 flex items-center gap-1">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-0.5">
+                            <div className="space-y-1.5">
+                                <label className="block text-xs font-bold text-muted-foreground uppercase flex items-center gap-1">
                                     <MapPin size={12} className="text-rose-500" />
                                     <span>地址 / 所在地</span>
                                 </label>
@@ -1177,156 +1173,159 @@ const PlaceModal = ({
                                     name="info.loc"
                                     value={formData?.info?.loc || ""}
                                     onChange={onFormInputChange}
-                                    placeholder="例如：京都市東山區清水..."
-                                    className="w-full bg-transparent border-b border-border py-1.5 text-xs text-foreground outline-none focus:border-primary transition-colors"
+                                    placeholder="例：京都市東山區清水1丁目"
+                                    className="w-full bg-muted/25 border border-border/70 focus:border-primary focus:bg-background rounded-xl px-3 py-2 text-xs text-foreground outline-none placeholder:text-muted-foreground/45 transition-all"
                                 />
                             </div>
 
-                            <div>
-                                <label className="block text-xs font-bold text-muted-foreground uppercase mb-1 flex items-center gap-1">
+                            <div className="space-y-1.5">
+                                <label className="block text-xs font-bold text-muted-foreground uppercase flex items-center gap-1">
                                     <Phone size={12} className="text-indigo-500" />
-                                    <span>聯絡電話 (Navi / 訂位)</span>
+                                    <span>聯絡電話 (導航/訂位)</span>
                                 </label>
                                 <input
                                     name="info.phone"
                                     value={formData?.info?.phone || ""}
                                     onChange={onFormInputChange}
-                                    placeholder="例如: +81 75-551-1171"
-                                    className="w-full bg-transparent border-b border-border py-1.5 text-xs font-mono text-foreground outline-none focus:border-primary transition-colors"
+                                    placeholder="例：+81 75-551-1171"
+                                    className="w-full bg-muted/25 border border-border/70 focus:border-primary focus:bg-background rounded-xl px-3 py-2 text-xs font-mono text-foreground outline-none placeholder:text-muted-foreground/45 transition-all"
                                 />
                             </div>
                         </div>
                     </div>
 
-                    {/* 🏷️ 自訂標籤 (移至第一頁方便快速建立) */}
-                    <div className="bg-card border border-border/80 p-4 rounded-2xl shadow-2xs space-y-2">
-                        <label className="block text-xs font-bold text-muted-foreground uppercase flex items-center gap-1.5">
-                            <Tag size={13} className="text-primary" />
-                            <span>自訂標籤 (輸入後按 Enter 新增)</span>
-                        </label>
-                        <div className="flex flex-wrap items-center gap-1.5 p-2 bg-muted/20 border border-border/60 rounded-xl">
-                            {(formData.tags
-                                ? formData.tags.split(",").filter((t) => t.trim() !== "")
-                                : []
-                            ).map((tag, index) => (
-                                <span
-                                    key={index}
-                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-primary/10 text-primary border border-primary/20"
-                                >
-                                    #{tag.trim()}
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            const currentTags = formData.tags
-                                                ? formData.tags.split(",").map((t) => t.trim()).filter(Boolean)
-                                                : [];
-                                            const newTags = currentTags.filter((_, i) => i !== index).join(",");
-                                            const event = {
-                                                target: { name: "tags", value: newTags },
-                                                currentTarget: { name: "tags", value: newTags },
-                                            } as unknown as ChangeEvent<HTMLInputElement>;
-                                            onFormInputChange(event);
-                                        }}
-                                        className="hover:bg-primary/20 rounded-full p-0.5 transition-colors"
-                                    >
-                                        <X size={12} />
-                                    </button>
-                                </span>
-                            ))}
+                    {/* 💡 筆記、標籤與媒體介紹 */}
+                    <div className="bg-card border border-border/80 p-4 rounded-2xl shadow-2xs space-y-3.5">
+                        {/* 備忘貼士 */}
+                        <div className="space-y-1.5">
+                            <label className="block text-xs font-bold text-muted-foreground uppercase flex items-center gap-1.5">
+                                <Lightbulb size={13} className="text-amber-500" />
+                                <span>景點備忘貼士 (Tips)</span>
+                            </label>
                             <input
-                                type="text"
-                                placeholder="新增標籤 (例: 必去, 伴手禮)..."
-                                className="flex-1 min-w-[120px] bg-transparent text-xs text-foreground outline-none py-1"
-                                onKeyDown={(e) => {
-                                    if (e.key === "Enter" || e.key === ",") {
-                                        e.preventDefault();
-                                        const val = e.currentTarget.value.trim().replace(/^#/, "");
-                                        if (val) {
-                                            const currentTags = formData.tags
-                                                ? formData.tags.split(",").map((t) => t.trim()).filter(Boolean)
-                                                : [];
-                                            if (!currentTags.includes(val)) {
-                                                const newTags = [...currentTags, val].join(",");
+                                name="tips"
+                                value={formData.tips || ""}
+                                onChange={onFormInputChange}
+                                placeholder="例：建議早上 8:30 前抵達人潮較少、門票只收現金"
+                                className="w-full bg-muted/25 border border-border/70 focus:border-primary focus:bg-background rounded-xl px-3 py-2 text-xs text-foreground outline-none placeholder:text-muted-foreground/45 transition-all"
+                            />
+                        </div>
+
+                        {/* 自訂標籤 */}
+                        <div className="space-y-1.5">
+                            <label className="block text-xs font-bold text-muted-foreground uppercase flex items-center gap-1.5">
+                                <Tag size={13} className="text-primary" />
+                                <span>自訂標籤 (按 Enter 新增)</span>
+                            </label>
+                            <div className="flex flex-wrap items-center gap-1.5 p-2 bg-muted/25 border border-border/70 rounded-xl min-h-[38px]">
+                                {(formData.tags
+                                    ? formData.tags.split(",").filter((t) => t.trim() !== "")
+                                    : []
+                                ).map((tag, index) => (
+                                    <span
+                                        key={index}
+                                        className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-xs font-semibold bg-primary/10 text-primary border border-primary/20"
+                                    >
+                                        #{tag.trim()}
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const currentTags = formData.tags
+                                                    ? formData.tags.split(",").map((t) => t.trim()).filter(Boolean)
+                                                    : [];
+                                                const newTags = currentTags.filter((_, i) => i !== index).join(",");
                                                 const event = {
                                                     target: { name: "tags", value: newTags },
                                                     currentTarget: { name: "tags", value: newTags },
                                                 } as unknown as ChangeEvent<HTMLInputElement>;
                                                 onFormInputChange(event);
+                                            }}
+                                            className="hover:bg-primary/20 rounded-full p-0.5 transition-colors cursor-pointer"
+                                        >
+                                            <X size={12} />
+                                        </button>
+                                    </span>
+                                ))}
+                                <input
+                                    type="text"
+                                    placeholder="新增標籤 (例: 必去, 伴手禮)..."
+                                    className="flex-1 min-w-[120px] bg-transparent text-xs text-foreground outline-none py-1 placeholder:text-muted-foreground/45"
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Enter" || e.key === ",") {
+                                            e.preventDefault();
+                                            const val = e.currentTarget.value.trim().replace(/^#/, "");
+                                            if (val) {
+                                                const currentTags = formData.tags
+                                                    ? formData.tags.split(",").map((t) => t.trim()).filter(Boolean)
+                                                    : [];
+                                                if (!currentTags.includes(val)) {
+                                                    const newTags = [...currentTags, val].join(",");
+                                                    const event = {
+                                                        target: { name: "tags", value: newTags },
+                                                        currentTarget: { name: "tags", value: newTags },
+                                                    } as unknown as ChangeEvent<HTMLInputElement>;
+                                                    onFormInputChange(event);
+                                                }
+                                                e.currentTarget.value = "";
                                             }
-                                            e.currentTarget.value = "";
                                         }
-                                    }
-                                }}
-                            />
-                        </div>
-                    </div>
-
-                    {/* 💡 Tips 備忘筆記 (移至第一頁) */}
-                    <div className="bg-card border border-border/80 p-4 rounded-2xl shadow-2xs space-y-1.5">
-                        <label className="block text-xs font-bold text-muted-foreground uppercase flex items-center gap-1.5">
-                            <Lightbulb size={13} className="text-amber-500" />
-                            <span>Tips / 景點備忘貼士</span>
-                        </label>
-                        <input
-                            name="tips"
-                            value={formData.tips || ""}
-                            onChange={onFormInputChange}
-                            placeholder="例如：建議早上 8:30 前抵達人潮較少 / 門票只收現金..."
-                            className="w-full bg-transparent border-b border-border py-1.5 text-xs text-foreground outline-none focus:border-primary transition-colors"
-                        />
-                    </div>
-
-                    {/* 🖼️ 封面圖片與即時預覽 */}
-                    <div className="bg-card border border-border/80 p-4 rounded-2xl shadow-2xs space-y-2">
-                        <label className="block text-xs font-bold text-muted-foreground uppercase flex items-center gap-1.5">
-                            <ImageIcon size={13} className="text-teal-500" />
-                            <span>封面圖片網址</span>
-                        </label>
-                        <div className="flex items-center gap-3">
-                            {formData.image_url ? (
-                                <img
-                                    src={formData.image_url}
-                                    alt="Preview"
-                                    className="w-12 h-12 rounded-xl object-cover border border-border/80 shadow-2xs shrink-0"
+                                    }}
                                 />
-                            ) : (
-                                <div className="w-12 h-12 rounded-xl bg-muted border border-border/80 flex items-center justify-center text-muted-foreground shrink-0">
-                                    <ImageIcon size={18} />
-                                </div>
-                            )}
-                            <input
-                                name="image_url"
-                                value={formData.image_url || ""}
+                            </div>
+                        </div>
+
+                        {/* 封面圖片網址 */}
+                        <div className="space-y-1.5">
+                            <label className="block text-xs font-bold text-muted-foreground uppercase flex items-center gap-1.5">
+                                <ImageIcon size={13} className="text-teal-500" />
+                                <span>封面圖片網址</span>
+                            </label>
+                            <div className="flex items-center gap-2.5">
+                                {formData.image_url ? (
+                                    <img
+                                        src={formData.image_url}
+                                        alt="Preview"
+                                        className="w-10 h-10 rounded-xl object-cover border border-border/80 shadow-2xs shrink-0"
+                                    />
+                                ) : (
+                                    <div className="w-10 h-10 rounded-xl bg-muted/50 border border-border/80 flex items-center justify-center text-muted-foreground shrink-0">
+                                        <ImageIcon size={16} />
+                                    </div>
+                                )}
+                                <input
+                                    name="image_url"
+                                    value={formData.image_url || ""}
+                                    onChange={onFormInputChange}
+                                    placeholder="https://..."
+                                    className="flex-1 bg-muted/25 border border-border/70 focus:border-primary focus:bg-background rounded-xl px-3 py-2 text-xs font-mono text-foreground outline-none placeholder:text-muted-foreground/45 transition-all"
+                                />
+                            </div>
+                        </div>
+
+                        {/* 簡介說明 */}
+                        <div className="space-y-1.5">
+                            <label className="block text-xs font-bold text-muted-foreground uppercase flex items-center gap-1.5">
+                                <FileText size={13} className="text-muted-foreground" />
+                                <span>簡介說明</span>
+                            </label>
+                            <textarea
+                                name="description"
+                                value={formData.description || ""}
                                 onChange={onFormInputChange}
-                                placeholder="https://..."
-                                className="flex-1 bg-transparent border-b border-border py-1.5 text-xs font-mono text-foreground outline-none focus:border-primary transition-colors"
+                                rows={2}
+                                placeholder="特色重點或簡短介紹..."
+                                className="w-full bg-muted/25 border border-border/70 focus:border-primary focus:bg-background rounded-xl px-3 py-2 text-xs text-foreground outline-none placeholder:text-muted-foreground/45 transition-all resize-none no-scrollbar"
                             />
                         </div>
-                    </div>
-
-                    {/* 📝 簡介說明 */}
-                    <div className="bg-card border border-border/80 p-4 rounded-2xl shadow-2xs space-y-1.5">
-                        <label className="block text-xs font-bold text-muted-foreground uppercase flex items-center gap-1.5">
-                            <FileText size={13} className="text-muted-foreground" />
-                            <span>簡介說明</span>
-                        </label>
-                        <textarea
-                            name="description"
-                            value={formData.description || ""}
-                            onChange={onFormInputChange}
-                            rows={2}
-                            placeholder="關於此地點的特色或歷史介紹..."
-                            className="w-full bg-transparent border-b border-border py-1.5 text-xs text-foreground outline-none focus:border-primary transition-colors resize-none no-scrollbar"
-                        />
                     </div>
 
                     {mode !== "create" && (
-                        <div className="flex items-center justify-between text-[11px] text-muted-foreground px-1 pt-1">
+                        <div className="flex items-center justify-between text-[11px] text-muted-foreground px-1 pt-0.5">
                             <span>ID: {formData.id}</span>
                             <button
                                 type="button"
                                 onClick={handleCopy}
-                                className="inline-flex items-center gap-1 text-primary hover:underline"
+                                className="inline-flex items-center gap-1 text-primary hover:underline cursor-pointer"
                             >
                                 <Copy size={11} /> {copiedId ? "已複製" : "複製 ID"}
                             </button>

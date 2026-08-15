@@ -174,7 +174,7 @@ export const RecommendedItemsSection = ({
                                     <select
                                         value={item.category || (isShopping ? "🎁 必買伴手禮" : "⭐ 必點招牌")}
                                         onChange={(e) => handleUpdateItem(idx, "category", e.target.value)}
-                                        className="bg-muted text-foreground text-xs px-2.5 py-1.5 rounded-xl outline-none cursor-pointer shrink-0 border border-border/60 font-semibold"
+                                        className="bg-muted text-foreground text-xs px-2.5 py-1.5 rounded-xl outline-none cursor-pointer shrink-0 border border-border/70 font-semibold"
                                     >
                                         <option value="⭐ 必點招牌">⭐ 必點招牌</option>
                                         <option value="🔥 人氣推薦">🔥 人氣推薦</option>
@@ -190,12 +190,12 @@ export const RecommendedItemsSection = ({
                                         type="text"
                                         value={item.name}
                                         onChange={(e) => handleUpdateItem(idx, "name", e.target.value)}
-                                        placeholder={isShopping ? "中文/商品名稱 (例：晴王麝香葡萄大福)" : "中文/品項名稱 (例：招牌特厚炸豬排定食)"}
-                                        className="flex-1 min-w-[150px] bg-transparent border-b border-border/70 py-1 text-sm font-bold text-foreground outline-none focus:border-primary"
+                                        placeholder={isShopping ? "中文/商品名稱 (例: 麝香葡萄大福)" : "中文/品項名稱 (例: 特厚炸豬排定食)"}
+                                        className="flex-1 min-w-[140px] bg-muted/20 border border-border/70 focus:border-primary focus:bg-background rounded-xl px-3 py-1.5 text-xs font-bold text-foreground outline-none placeholder:text-muted-foreground/45 transition-all"
                                     />
 
                                     {/* 金額與幣別（含千分位） */}
-                                    <div className="flex items-center gap-1 bg-muted/40 border border-border/60 px-2 py-1 rounded-xl shrink-0">
+                                    <div className="flex items-center gap-1 bg-muted/30 border border-border/70 px-2 py-1 rounded-xl shrink-0">
                                         <select
                                             value={itemCurrency}
                                             onChange={(e) => {
@@ -225,7 +225,7 @@ export const RecommendedItemsSection = ({
                                                 );
                                             }}
                                             placeholder="金額 (例: 1,800)"
-                                            className="w-24 bg-transparent text-xs font-mono font-semibold text-emerald-600 dark:text-emerald-400 outline-none text-right"
+                                            className="w-22 bg-transparent text-xs font-mono font-semibold text-emerald-600 dark:text-emerald-400 outline-none text-right placeholder:text-muted-foreground/45"
                                         />
                                     </div>
 
@@ -242,25 +242,25 @@ export const RecommendedItemsSection = ({
 
                                 {/* 第 2 行：當地原文名稱 + 羅馬拼音/讀音發音 */}
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-0.5">
-                                    <div className="flex items-center gap-1.5 bg-muted/20 border border-border/50 px-2.5 py-1.5 rounded-xl">
+                                    <div className="flex items-center gap-1.5 bg-muted/20 border border-border/70 focus-within:border-primary focus-within:bg-background px-2.5 py-1.5 rounded-xl transition-all">
                                         <Languages size={12} className="text-purple-500 shrink-0" />
                                         <input
                                             type="text"
                                             value={item.native_name || ""}
                                             onChange={(e) => handleUpdateItem(idx, "native_name", e.target.value)}
-                                            placeholder="當地原文 (例：厚切りとんかつ定食，選填)"
-                                            className="w-full bg-transparent text-xs text-foreground outline-none placeholder:text-muted-foreground/60"
+                                            placeholder="當地原文 (例: 厚切りとんかつ)"
+                                            className="w-full bg-transparent text-xs text-foreground outline-none placeholder:text-muted-foreground/45"
                                         />
                                     </div>
 
-                                    <div className="flex items-center gap-1.5 bg-muted/20 border border-border/50 px-2.5 py-1.5 rounded-xl">
+                                    <div className="flex items-center gap-1.5 bg-muted/20 border border-border/70 focus-within:border-primary focus-within:bg-background px-2.5 py-1.5 rounded-xl transition-all">
                                         <Volume2 size={12} className="text-indigo-500 shrink-0" />
                                         <input
                                             type="text"
                                             value={item.romaji || ""}
                                             onChange={(e) => handleUpdateItem(idx, "romaji", e.target.value)}
-                                            placeholder="羅馬拼音 / 讀音 (例：Atsugiri Tonkatsu，選填)"
-                                            className="w-full bg-transparent text-xs font-mono text-foreground outline-none placeholder:text-muted-foreground/60"
+                                            placeholder="讀音拼音 (例: Atsugiri Tonkatsu)"
+                                            className="w-full bg-transparent text-xs font-mono text-foreground outline-none placeholder:text-muted-foreground/45"
                                         />
                                     </div>
                                 </div>
@@ -271,8 +271,8 @@ export const RecommendedItemsSection = ({
                                         type="text"
                                         value={item.note || ""}
                                         onChange={(e) => handleUpdateItem(idx, "note", e.target.value)}
-                                        placeholder="推薦原因 / 點餐備註 (例：肉汁超多、每日限量 30 份、可免費續高麗菜絲)"
-                                        className="w-full bg-transparent text-xs text-muted-foreground outline-none border-b border-border/40 focus:border-primary py-1"
+                                        placeholder="推薦原因 / 點餐備註 (例: 招牌必點、每日限量 30 份)"
+                                        className="w-full bg-muted/15 border border-border/60 focus:border-primary focus:bg-background rounded-xl px-3 py-1.5 text-xs text-foreground outline-none placeholder:text-muted-foreground/45 transition-all"
                                     />
                                 </div>
                             </div>
@@ -333,234 +333,241 @@ export const BudgetAndDetailsSection = ({
     };
 
     return (
-        <div className="space-y-5">
-            {/* 人均消費預算 */}
-            <div className="bg-card border border-border/80 p-4 rounded-2xl space-y-2">
-                <label className="block text-xs font-bold text-muted-foreground uppercase flex items-center gap-1.5">
-                    <DollarSign size={13} className="text-emerald-500" />
-                    <span>人均預算 / 消費價位</span>
-                </label>
-                <div className="flex items-center gap-2 border-b border-border focus-within:border-primary transition-colors pb-1">
-                    {(() => {
-                        const knownCurrencies = CURRENCIES.map((c) => c.code);
-                        const parts = (formData?.info?.price || "").match(/^([A-Z]{3})?\s*(.*)$/);
-                        let currency = localCurrency || "JPY"; // 預設使用旅程當地幣別
-                        let amount = formData?.info?.price || "";
-
-                        if (parts && parts[1] && knownCurrencies.includes(parts[1])) {
-                            currency = parts[1];
-                            amount = parts[2];
-                        }
-
-                        amount = amount.replace(/^[¥$€₩NT£฿krfr]+\s*/i, "").trim();
-
-                        return (
-                            <>
-                                <select
-                                    className="bg-muted text-foreground px-2 py-1 rounded-lg text-xs font-mono font-bold outline-none cursor-pointer border border-border/60"
-                                    value={currency}
-                                    onChange={(e) => {
-                                        const newCurr = e.target.value;
-                                        const event = {
-                                            target: { name: "info.price", value: `${newCurr} ${amount}` },
-                                        } as any;
-                                        onFormInputChange(event);
-                                    }}
-                                >
-                                    {CURRENCIES.map((c) => (
-                                        <option key={c.code} value={c.code} className="bg-background text-foreground">
-                                            {c.code} ({c.label})
-                                        </option>
-                                    ))}
-                                </select>
-                                <input
-                                    name="info.price"
-                                    value={amount}
-                                    onChange={(e) => {
-                                        handleThousandsInputChange(
-                                            e,
-                                            (formatted) => {
-                                                const event = {
-                                                    target: { name: "info.price", value: `${currency} ${formatted}` },
-                                                } as any;
-                                                onFormInputChange(event);
-                                            },
-                                            { isFreeText: true }
-                                        );
-                                    }}
-                                    placeholder="例如: 2,000 - 3,000 / 人"
-                                    className="flex-1 bg-transparent py-1.5 outline-none font-[Noto_Sans_TC] text-sm text-foreground min-w-0"
-                                />
-                            </>
-                        );
-                    })()}
-                </div>
-            </div>
-
-            {/* 評價分數與評論來源 */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-card border border-border/80 p-4 rounded-2xl">
-                <div>
-                    <label className="block text-xs font-bold text-muted-foreground uppercase mb-1 flex items-center gap-1">
-                        <Star size={12} className="text-amber-500" />
-                        <span>評價分數</span>
+        <div className="space-y-4">
+            {/* 💰 卡片 1: 人均消費預算與評分 */}
+            <div className="bg-card border border-border/80 p-4 rounded-2xl space-y-3.5 shadow-2xs">
+                {/* 人均預算 */}
+                <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-muted-foreground uppercase flex items-center gap-1.5">
+                        <DollarSign size={13} className="text-emerald-500" />
+                        <span>人均預算 / 消費價位</span>
                     </label>
-                    <input
-                        name="info.rating"
-                        value={formData?.info?.rating || ""}
-                        onChange={onFormInputChange}
-                        placeholder="如: 4.6"
-                        className="w-full bg-transparent border-b border-border py-1.5 outline-none font-mono text-sm text-foreground focus:border-primary"
-                    />
-                </div>
-                <div>
-                    <label className="block text-xs font-bold text-muted-foreground uppercase mb-1">
-                        評價人數
-                    </label>
-                    <input
-                        name="info.rating_count"
-                        value={formData?.info?.rating_count ? formatThousands(formData.info.rating_count, false) : ""}
-                        onChange={(e) => {
-                            handleThousandsInputChange(
-                                e,
-                                (formatted) => {
-                                    const event = { target: { name: "info.rating_count", value: formatted } } as any;
-                                    onFormInputChange(event);
-                                },
-                                { allowDecimal: false }
+                    <div className="flex items-center gap-2">
+                        {(() => {
+                            const knownCurrencies = CURRENCIES.map((c) => c.code);
+                            const parts = (formData?.info?.price || "").match(/^([A-Z]{3})?\s*(.*)$/);
+                            let currency = localCurrency || "JPY";
+                            let amount = formData?.info?.price || "";
+
+                            if (parts && parts[1] && knownCurrencies.includes(parts[1])) {
+                                currency = parts[1];
+                                amount = parts[2];
+                            }
+
+                            amount = amount.replace(/^[¥$€₩NT£฿krfr]+\s*/i, "").trim();
+
+                            return (
+                                <>
+                                    <select
+                                        className="bg-muted text-foreground px-2.5 py-2 rounded-xl text-xs font-mono font-bold outline-none cursor-pointer border border-border/70 shrink-0"
+                                        value={currency}
+                                        onChange={(e) => {
+                                            const newCurr = e.target.value;
+                                            const event = {
+                                                target: { name: "info.price", value: `${newCurr} ${amount}` },
+                                            } as any;
+                                            onFormInputChange(event);
+                                        }}
+                                    >
+                                        {CURRENCIES.map((c) => (
+                                            <option key={c.code} value={c.code} className="bg-background text-foreground">
+                                                {c.code} ({c.label})
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <input
+                                        name="info.price"
+                                        value={amount}
+                                        onChange={(e) => {
+                                            handleThousandsInputChange(
+                                                e,
+                                                (formatted) => {
+                                                    const event = {
+                                                        target: { name: "info.price", value: `${currency} ${formatted}` },
+                                                    } as any;
+                                                    onFormInputChange(event);
+                                                },
+                                                { isFreeText: true }
+                                            );
+                                        }}
+                                        placeholder="例：2,000 - 3,000 / 人"
+                                        className="flex-1 bg-muted/25 border border-border/70 focus:border-primary focus:bg-background rounded-xl px-3 py-2 text-xs text-foreground outline-none placeholder:text-muted-foreground/45 transition-all min-w-0"
+                                    />
+                                </>
                             );
-                        }}
-                        placeholder="如: 1,200"
-                        className="w-full bg-transparent border-b border-border py-1.5 outline-none font-mono text-sm text-foreground focus:border-primary"
-                    />
+                        })()}
+                    </div>
                 </div>
-                <div>
-                    <label className="block text-xs font-bold text-muted-foreground uppercase mb-1">
-                        評分來源
-                    </label>
-                    <select
-                        name="info.rating_source"
-                        value={formData?.info?.rating_source || ""}
-                        onChange={onFormInputChange}
-                        className="w-full bg-transparent dark:bg-background border-b border-border py-1.5 outline-none text-sm text-foreground focus:border-primary cursor-pointer"
-                    >
-                        <option value="" className="bg-background text-foreground">請選擇</option>
-                        {(formData.type === "hotel" || formData.type === "stay"
-                            ? ["Google", "Agoda", "Booking.com", "TripAdvisor", "Airbnb"]
-                            : formData.type === "food" || formData.type === "restaurant" || formData.type === "cafe"
-                            ? ["Google", "Tabelog", "TripAdvisor", "米其林指南", "Yelp"]
-                            : ["Google", "TripAdvisor", "Yelp"]
-                        ).map((preset) => (
-                            <option key={preset} value={preset} className="bg-background text-foreground">
-                                {preset}
-                            </option>
-                        ))}
-                    </select>
+
+                {/* 評價分數與評論來源 */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 border-t border-border/50">
+                    <div className="space-y-1.5">
+                        <label className="block text-xs font-bold text-muted-foreground uppercase flex items-center gap-1">
+                            <Star size={12} className="text-amber-500" />
+                            <span>評價分數</span>
+                        </label>
+                        <input
+                            name="info.rating"
+                            value={formData?.info?.rating || ""}
+                            onChange={onFormInputChange}
+                            placeholder="例: 4.6"
+                            className="w-full bg-muted/25 border border-border/70 focus:border-primary focus:bg-background rounded-xl px-3 py-2 text-xs font-mono text-foreground outline-none placeholder:text-muted-foreground/45 transition-all"
+                        />
+                    </div>
+                    <div className="space-y-1.5">
+                        <label className="block text-xs font-bold text-muted-foreground uppercase">
+                            評價人數
+                        </label>
+                        <input
+                            name="info.rating_count"
+                            value={formData?.info?.rating_count ? formatThousands(formData.info.rating_count, false) : ""}
+                            onChange={(e) => {
+                                handleThousandsInputChange(
+                                    e,
+                                    (formatted) => {
+                                        const event = { target: { name: "info.rating_count", value: formatted } } as any;
+                                        onFormInputChange(event);
+                                    },
+                                    { allowDecimal: false }
+                                );
+                            }}
+                            placeholder="例: 1,200"
+                            className="w-full bg-muted/25 border border-border/70 focus:border-primary focus:bg-background rounded-xl px-3 py-2 text-xs font-mono text-foreground outline-none placeholder:text-muted-foreground/45 transition-all"
+                        />
+                    </div>
+                    <div className="space-y-1.5">
+                        <label className="block text-xs font-bold text-muted-foreground uppercase">
+                            評分來源
+                        </label>
+                        <select
+                            name="info.rating_source"
+                            value={formData?.info?.rating_source || ""}
+                            onChange={onFormInputChange}
+                            className="w-full bg-muted/25 dark:bg-background border border-border/70 focus:border-primary rounded-xl px-2.5 py-2 text-xs text-foreground outline-none cursor-pointer transition-all"
+                        >
+                            <option value="" className="bg-background text-foreground">請選擇來源</option>
+                            {(formData.type === "hotel" || formData.type === "stay"
+                                ? ["Google", "Agoda", "Booking.com", "TripAdvisor", "Airbnb"]
+                                : formData.type === "food" || formData.type === "restaurant" || formData.type === "cafe"
+                                ? ["Google", "Tabelog", "TripAdvisor", "米其林指南", "Yelp"]
+                                : ["Google", "TripAdvisor", "Yelp"]
+                            ).map((preset) => (
+                                <option key={preset} value={preset} className="bg-background text-foreground">
+                                    {preset}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
                 </div>
             </div>
 
-            {/* 預約與購票狀態 + 連結 */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-card border border-border/80 p-4 rounded-2xl">
-                <div>
-                    <label className="block text-xs font-bold text-muted-foreground uppercase mb-1 flex items-center gap-1">
-                        <Ticket size={13} className="text-emerald-500" />
-                        <span>預約 / 購票狀態</span>
-                    </label>
-                    <select
-                        name="info.booking_status"
-                        value={formData.info?.booking_status || ""}
-                        onChange={onFormInputChange}
-                        className="w-full bg-transparent dark:bg-background border-b border-border py-1.5 text-sm text-foreground outline-none focus:border-primary cursor-pointer"
-                    >
-                        <option value="" className="bg-background text-foreground">無需特別註明</option>
-                        <option value="none" className="bg-background text-foreground">🟢 免預約 / 自由入場</option>
-                        <option value="recommended" className="bg-background text-foreground">🟡 建議提前預約 / 網路訂位</option>
-                        <option value="required" className="bg-background text-foreground">🔴 必須提前預約 (需票券憑證)</option>
-                        <option value="walk_in" className="bg-background text-foreground">🚶 現場排隊領號碼牌</option>
-                    </select>
+            {/* 🎫 卡片 2: 預約與外部連結 */}
+            <div className="bg-card border border-border/80 p-4 rounded-2xl space-y-3 shadow-2xs">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                        <label className="block text-xs font-bold text-muted-foreground uppercase flex items-center gap-1">
+                            <Ticket size={13} className="text-emerald-500" />
+                            <span>預約 / 購票狀態</span>
+                        </label>
+                        <select
+                            name="info.booking_status"
+                            value={formData.info?.booking_status || ""}
+                            onChange={onFormInputChange}
+                            className="w-full bg-muted/25 dark:bg-background border border-border/70 focus:border-primary rounded-xl px-2.5 py-2 text-xs text-foreground outline-none cursor-pointer transition-all"
+                        >
+                            <option value="" className="bg-background text-foreground">無需特別註明</option>
+                            <option value="none" className="bg-background text-foreground">🟢 免預約 / 自由入場</option>
+                            <option value="recommended" className="bg-background text-foreground">🟡 建議提前預約 / 網路訂位</option>
+                            <option value="required" className="bg-background text-foreground">🔴 必須提前預約 (需票券憑證)</option>
+                            <option value="walk_in" className="bg-background text-foreground">🚶 現場排隊領號碼牌</option>
+                        </select>
+                    </div>
+                    <div className="space-y-1.5">
+                        <label className="block text-xs font-bold text-muted-foreground uppercase flex items-center gap-1">
+                            <ExternalLink size={13} className="text-blue-500" />
+                            <span>預約 / 購票連結</span>
+                        </label>
+                        <input
+                            type="text"
+                            name="info.booking_url"
+                            value={formData.info?.booking_url || ""}
+                            onChange={onFormInputChange}
+                            placeholder="https://... (Klook/KKday/官網)"
+                            className="w-full bg-muted/25 border border-border/70 focus:border-primary focus:bg-background rounded-xl px-3 py-2 text-xs font-mono text-foreground outline-none placeholder:text-muted-foreground/45 transition-all"
+                        />
+                    </div>
                 </div>
-                <div>
-                    <label className="block text-xs font-bold text-muted-foreground uppercase mb-1 flex items-center gap-1">
-                        <ExternalLink size={13} className="text-blue-500" />
-                        <span>預約 / 購票連結</span>
+
+                <div className="space-y-1.5 pt-0.5">
+                    <label className="block text-xs font-bold text-muted-foreground uppercase flex items-center gap-1">
+                        <Globe size={13} className="text-purple-500" />
+                        <span>官方網站 / 社群連結 (Instagram / 官網)</span>
                     </label>
                     <input
                         type="text"
-                        name="info.booking_url"
-                        value={formData.info?.booking_url || ""}
+                        name="info.website_url"
+                        value={formData.info?.website_url || ""}
                         onChange={onFormInputChange}
-                        placeholder="https://... (Klook / KKday / 官網)"
-                        className="w-full bg-transparent border-b border-border py-1.5 text-xs font-mono text-foreground outline-none focus:border-primary"
+                        placeholder="https://..."
+                        className="w-full bg-muted/25 border border-border/70 focus:border-primary focus:bg-background rounded-xl px-3 py-2 text-xs font-mono text-foreground outline-none placeholder:text-muted-foreground/45 transition-all"
                     />
                 </div>
             </div>
 
-            {/* 官方網站 / 社群連結 */}
-            <div className="bg-card border border-border/80 p-4 rounded-2xl">
-                <label className="block text-xs font-bold text-muted-foreground uppercase mb-1 flex items-center gap-1">
-                    <Globe size={13} className="text-purple-500" />
-                    <span>官方網站 / 社群連結 (Instagram, 官網)</span>
-                </label>
-                <input
-                    type="text"
-                    name="info.website_url"
-                    value={formData.info?.website_url || ""}
-                    onChange={onFormInputChange}
-                    placeholder="https://..."
-                    className="w-full bg-transparent border-b border-border py-1.5 text-xs font-mono text-foreground outline-none focus:border-primary"
-                />
-            </div>
-
-            {/* 支援支付方式 */}
-            <div className="bg-card border border-border/80 p-4 rounded-2xl space-y-2">
-                <label className="block text-xs font-bold text-muted-foreground uppercase flex items-center gap-1">
-                    <CreditCard size={13} className="text-amber-500" />
-                    <span>支援支付方式 (可多選)</span>
-                </label>
-                <div className="flex items-center gap-1.5 flex-wrap">
-                    {COMMON_PAYMENT_METHODS.map((method) => {
-                        const isSelected = paymentList.includes(method);
-                        return (
-                            <button
-                                key={method}
-                                type="button"
-                                onClick={() => togglePayment(method)}
-                                className={`px-2.5 py-1 rounded-xl text-xs font-medium transition-all border cursor-pointer ${
-                                    isSelected
-                                        ? "bg-amber-500/15 border-amber-500/40 text-amber-700 dark:text-amber-300 font-semibold"
-                                        : "bg-muted/50 border-border text-muted-foreground hover:border-border/80"
-                                }`}
-                            >
-                                {method}
-                            </button>
-                        );
-                    })}
+            {/* 💳 卡片 3: 支援支付方式與便利設施 */}
+            <div className="bg-card border border-border/80 p-4 rounded-2xl space-y-3.5 shadow-2xs">
+                {/* 支援支付方式 */}
+                <div className="space-y-2">
+                    <label className="block text-xs font-bold text-muted-foreground uppercase flex items-center gap-1">
+                        <CreditCard size={13} className="text-amber-500" />
+                        <span>支援支付方式 (可多選)</span>
+                    </label>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                        {COMMON_PAYMENT_METHODS.map((method) => {
+                            const isSelected = paymentList.includes(method);
+                            return (
+                                <button
+                                    key={method}
+                                    type="button"
+                                    onClick={() => togglePayment(method)}
+                                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border cursor-pointer ${
+                                        isSelected
+                                            ? "bg-amber-500/15 border-amber-500/40 text-amber-700 dark:text-amber-300 shadow-2xs"
+                                            : "bg-muted/35 border-border/60 text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                                    }`}
+                                >
+                                    {method}
+                                </button>
+                            );
+                        })}
+                    </div>
                 </div>
-            </div>
 
-            {/* 便利設施標籤 */}
-            <div className="bg-card border border-border/80 p-4 rounded-2xl space-y-2">
-                <label className="block text-xs font-bold text-muted-foreground uppercase flex items-center gap-1">
-                    <Wifi size={13} className="text-teal-500" />
-                    <span>便利設施標籤 (可多選)</span>
-                </label>
-                <div className="flex items-center gap-1.5 flex-wrap">
-                    {COMMON_AMENITIES.map((amenity) => {
-                        const isSelected = amenitiesList.includes(amenity);
-                        return (
-                            <button
-                                key={amenity}
-                                type="button"
-                                onClick={() => toggleAmenity(amenity)}
-                                className={`px-2.5 py-1 rounded-xl text-xs font-medium transition-all border cursor-pointer ${
-                                    isSelected
-                                        ? "bg-teal-500/15 border-teal-500/40 text-teal-700 dark:text-teal-300 font-semibold"
-                                        : "bg-muted/50 border-border text-muted-foreground hover:border-border/80"
-                                }`}
-                            >
-                                {amenity}
-                            </button>
-                        );
-                    })}
+                {/* 便利設施標籤 */}
+                <div className="space-y-2 pt-1 border-t border-border/50">
+                    <label className="block text-xs font-bold text-muted-foreground uppercase flex items-center gap-1">
+                        <Wifi size={13} className="text-teal-500" />
+                        <span>便利設施標籤 (可多選)</span>
+                    </label>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                        {COMMON_AMENITIES.map((amenity) => {
+                            const isSelected = amenitiesList.includes(amenity);
+                            return (
+                                <button
+                                    key={amenity}
+                                    type="button"
+                                    onClick={() => toggleAmenity(amenity)}
+                                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border cursor-pointer ${
+                                        isSelected
+                                            ? "bg-teal-500/15 border-teal-500/40 text-teal-700 dark:text-teal-300 shadow-2xs"
+                                            : "bg-muted/35 border-border/60 text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                                    }`}
+                                >
+                                    {amenity}
+                                </button>
+                            );
+                        })}
+                    </div>
                 </div>
             </div>
         </div>
