@@ -339,7 +339,7 @@ export const RecommendedItemsSection = ({
                                                 value={item.name}
                                                 onChange={(e) => handleUpdateItem(idx, "name", e.target.value)}
                                                 placeholder={isShopping ? "例: 麝香葡萄大福" : "例: 特厚炸豬排定食"}
-                                                className="flex-1 text-right font-bold text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40"
+                                                className="min-w-0 flex-1 text-left font-bold text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40"
                                             />
                                         </div>
 
@@ -349,13 +349,13 @@ export const RecommendedItemsSection = ({
                                                 <Languages size={13} className="text-purple-500" />
                                                 <span>當地原文</span>
                                             </span>
-                                            <div className="flex-1 flex items-center justify-end gap-2">
+                                            <div className="min-w-0 flex-1 flex items-center gap-2">
                                                 <input
                                                     type="text"
                                                     value={item.native_name || ""}
                                                     onChange={(e) => handleUpdateItem(idx, "native_name", e.target.value)}
                                                     placeholder={isShopping ? "例: マスカット大福" : "例: 厚切りとんかつ"}
-                                                    className="w-full text-right font-medium text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40"
+                                                    className="min-w-0 flex-1 text-left font-medium text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40"
                                                 />
                                                 {item.native_name && (
                                                     <button
@@ -385,7 +385,7 @@ export const RecommendedItemsSection = ({
                                                 value={item.romaji || ""}
                                                 onChange={(e) => handleUpdateItem(idx, "romaji", e.target.value)}
                                                 placeholder="例: Atsugiri Tonkatsu"
-                                                className="flex-1 text-right font-mono font-medium text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40"
+                                                className="min-w-0 flex-1 text-left font-mono font-medium text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40"
                                             />
                                         </div>
 
@@ -462,7 +462,7 @@ export const RecommendedItemsSection = ({
                                                 value={item.note || ""}
                                                 onChange={(e) => handleUpdateItem(idx, "note", e.target.value)}
                                                 placeholder="例: 招牌必點、每日限量 30 份"
-                                                className="flex-1 text-right font-medium text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40"
+                                                className="min-w-0 flex-1 text-left font-medium text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40"
                                             />
                                         </div>
                                     </div>

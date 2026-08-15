@@ -1214,7 +1214,7 @@ const PlaceModal = ({
                                             value={formData.name}
                                             onChange={onFormInputChange}
                                             placeholder="例：清水寺 / HARBS 新宿店"
-                                            className="flex-1 text-right font-bold text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40"
+                                            className="min-w-0 flex-1 text-left font-bold text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40"
                                         />
                                     </div>
 
@@ -1229,7 +1229,7 @@ const PlaceModal = ({
                                             value={formData.eng_name || ""}
                                             onChange={onFormInputChange}
                                             placeholder="例：Kiyomizu-dera / HARBS"
-                                            className="flex-1 text-right font-mono font-medium text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40"
+                                            className="min-w-0 flex-1 text-left font-mono font-medium text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40"
                                         />
                                     </div>
 
@@ -1239,14 +1239,14 @@ const PlaceModal = ({
                                             <Languages size={13} className="text-purple-500" />
                                             <span>當地原文</span>
                                         </span>
-                                        <div className="flex-1 flex items-center justify-end gap-2">
+                                        <div className="min-w-0 flex-1 flex items-center gap-2">
                                             <input
                                                 type="text"
                                                 name="info.native_name"
                                                 value={formData.info?.native_name || ""}
                                                 onChange={onFormInputChange}
                                                 placeholder="例: きよみずでら / วัดพระแก้ว"
-                                                className="w-full text-right font-medium text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40"
+                                                className="min-w-0 flex-1 text-left font-medium text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40"
                                             />
                                             {formData.info?.native_name && (
                                                 <button
@@ -1286,7 +1286,7 @@ const PlaceModal = ({
                                             value={formData.map_url || ""}
                                             onChange={onFormInputChange}
                                             placeholder="Apple / Google Maps 連結"
-                                            className="flex-1 text-right font-mono font-medium text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40"
+                                            className="min-w-0 flex-1 text-left font-mono font-medium text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40"
                                         />
                                     </div>
 
@@ -1296,14 +1296,14 @@ const PlaceModal = ({
                                             <MapPin size={13} className="text-rose-500" />
                                             <span>詳細地址</span>
                                         </span>
-                                        <div className="flex-1 flex items-center justify-end gap-1.5">
+                                        <div className="min-w-0 flex-1 flex items-center gap-1.5">
                                             <input
                                                 type="text"
                                                 name="info.loc"
                                                 value={formData.info?.loc || ""}
                                                 onChange={onFormInputChange}
                                                 placeholder="例: 京都市東山區清水1丁目294"
-                                                className="w-full text-right font-medium text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40"
+                                                className="min-w-0 flex-1 text-left font-medium text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40"
                                             />
                                             {hasCoordinates && (
                                                 <span className="px-1.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold shrink-0 font-mono">
@@ -1325,7 +1325,7 @@ const PlaceModal = ({
                                             value={formData.info?.phone || ""}
                                             onChange={onFormInputChange}
                                             placeholder="例: +81 75-551-1171"
-                                            className="flex-1 text-right font-mono font-medium text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40"
+                                            className="min-w-0 flex-1 text-left font-mono font-medium text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40"
                                         />
                                     </div>
 
@@ -1341,7 +1341,7 @@ const PlaceModal = ({
                                             value={formData.info?.transit_access || ""}
                                             onChange={onFormInputChange}
                                             placeholder="例: JR 新宿站東口步行 3 分鐘"
-                                            className="flex-1 text-right font-medium text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40"
+                                            className="min-w-0 flex-1 text-left font-medium text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40"
                                         />
                                     </div>
                                 </div>
@@ -1366,7 +1366,7 @@ const PlaceModal = ({
                                                 value={formData.image_url || ""}
                                                 onChange={onFormInputChange}
                                                 placeholder="https://... 照片網址"
-                                                className="flex-1 text-right font-mono font-medium text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40"
+                                                className="min-w-0 flex-1 text-left font-mono font-medium text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40"
                                             />
                                         </div>
                                         {formData.image_url && (

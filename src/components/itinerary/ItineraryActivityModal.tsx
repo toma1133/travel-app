@@ -520,7 +520,7 @@ const ItineraryActivityModal = ({
                                     name="time"
                                     value={formData.time}
                                     onChange={onFormInputChange}
-                                    className="flex-1 text-right font-mono font-bold text-foreground bg-transparent outline-none cursor-pointer dark:[color-scheme:dark]"
+                                    className="min-w-0 flex-1 text-left font-mono font-bold text-foreground bg-transparent outline-none cursor-pointer dark:[color-scheme:dark]"
                                 />
                             </div>
 
@@ -536,7 +536,7 @@ const ItineraryActivityModal = ({
                                     value={formData.duration || ""}
                                     onChange={onFormInputChange}
                                     placeholder="例: 1.5小時, 45分鐘"
-                                    className="flex-1 text-right font-medium text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40"
+                                    className="min-w-0 flex-1 text-left font-medium text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40"
                                 />
                             </div>
 
@@ -553,7 +553,7 @@ const ItineraryActivityModal = ({
                                     value={formData.title}
                                     onChange={onFormInputChange}
                                     placeholder="例: 清水寺"
-                                    className="flex-1 text-right font-bold text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40"
+                                    className="min-w-0 flex-1 text-left font-bold text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40"
                                 />
                             </div>
 
@@ -572,7 +572,7 @@ const ItineraryActivityModal = ({
                                 >
                                     {CATEGORY_DEFINITIONS.map((cat) => (
                                         <option key={cat.id} value={cat.id} className="bg-background text-foreground">
-                                            {getCategoryTypeName(cat.id)} ({cat.engName})
+                                             {getCategoryTypeName(cat.id)} ({cat.engName})
                                         </option>
                                     ))}
                                 </select>
@@ -589,7 +589,7 @@ const ItineraryActivityModal = ({
                                     value={formData.desc || ""}
                                     onChange={onFormInputChange}
                                     placeholder="例: Kiyomizu-dera / 記得攜帶水壺"
-                                    className="flex-1 text-right font-medium text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40"
+                                    className="min-w-0 flex-1 text-left font-medium text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40"
                                 />
                             </div>
                         </div>
@@ -678,7 +678,7 @@ const ItineraryActivityModal = ({
                                     value={formData.transitDuration || ""}
                                     onChange={onFormInputChange}
                                     placeholder="例: 15分鐘, 30分鐘 (3.2 km)"
-                                    className="flex-1 text-right font-medium text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40"
+                                    className="min-w-0 flex-1 text-left font-medium text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40"
                                 />
                             </div>
 
@@ -696,7 +696,7 @@ const ItineraryActivityModal = ({
                                                 value={formData.transitDetails?.carRentalCompany || ""}
                                                 onChange={onFormInputChange}
                                                 placeholder="例: Toyota Rent a Car (那霸機場店)"
-                                                className="flex-1 text-right font-medium text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40"
+                                                className="min-w-0 flex-1 text-left font-medium text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40"
                                             />
                                         </div>
                                     )}
@@ -712,7 +712,7 @@ const ItineraryActivityModal = ({
                                                 value={formData.transitDetails?.companyAndLine || ""}
                                                 onChange={onFormInputChange}
                                                 placeholder="例: JR京都線 (4番月台)"
-                                                className="flex-1 text-right font-medium text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40"
+                                                className="min-w-0 flex-1 text-left font-medium text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40"
                                             />
                                         </div>
                                     )}
@@ -728,7 +728,7 @@ const ItineraryActivityModal = ({
                                                 value={formData.transitDetails?.flightNumber || ""}
                                                 onChange={onFormInputChange}
                                                 placeholder="例: JX820 (T1 登機門 B5)"
-                                                className="flex-1 text-right font-medium text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40"
+                                                className="min-w-0 flex-1 text-left font-medium text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40"
                                             />
                                         </div>
                                     )}
