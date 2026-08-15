@@ -5,6 +5,7 @@ import {
     useState,
     useEffect,
     ChangeEvent,
+    useRef,
 } from "react";
 import {
     Clock,
@@ -31,13 +32,23 @@ import {
     Navigation,
     Languages,
     Volume2,
+    DollarSign,
+    Star,
+    Ticket,
+    CreditCard,
+    Wifi,
+    ExternalLink,
 } from "lucide-react";
 import { OSMService, OSMPlace, WikiData } from "../../services/api/OSMService";
 import type { PlaceCategory, PlaceVM } from "../../models/types/PlaceTypes";
 import { CategoryCustomSelect } from "../common/CategoryCustomSelect";
-import FormModal from "../common/FormModal";
 import { TripThemeConf } from "../../models/types/TripTypes";
+import { detectLanguage, playPronunciation } from "../../utils/SpeechLanguageUtil";
+import { CURRENCIES } from "../../constants/Currencies";
+import { formatThousands, handleThousandsInputChange } from "../../utils/numberFormat";
 import {
+    COMMON_PAYMENT_METHODS,
+    COMMON_AMENITIES,
     RecommendedItemsSection,
     BudgetAndDetailsSection,
 } from "./PlaceModalExtraFields";
@@ -55,6 +66,7 @@ type PlaceModalProps = {
     onFormSubmit: FormEventHandler<HTMLFormElement>;
 };
 
+// --- iOS 風格時間選單 ---
 const TimeSelect = ({
     value,
     onChange,
@@ -64,7 +76,7 @@ const TimeSelect = ({
     onChange: (e: any) => void;
     name: string;
 }) => {
-    const [hh, mm] = (value || "").split(":");
+    const [hh, mm] = (value || "09:00").split(":");
     const handleHH = (e: React.ChangeEvent<HTMLSelectElement>) => {
         onChange({
             target: { name, value: `${e.target.value}:${mm || "00"}` },
@@ -76,24 +88,24 @@ const TimeSelect = ({
         });
     };
     return (
-        <div className="flex items-center gap-1.5">
+        <div className="inline-flex items-center gap-1 bg-muted/40 border border-border/70 rounded-xl px-2 py-1">
             <select
-                className="bg-background border border-border rounded-lg px-2 py-1.5 text-sm outline-none focus:border-primary cursor-pointer font-mono"
-                value={hh || "00"}
+                className="bg-transparent text-xs font-mono font-bold text-foreground outline-none cursor-pointer"
+                value={hh || "09"}
                 onChange={handleHH}
             >
                 {Array.from({ length: 24 }).map((_, i) => {
                     const val = i.toString().padStart(2, "0");
                     return (
-                        <option key={val} value={val}>
+                        <option key={val} value={val} className="bg-background text-foreground">
                             {val}
                         </option>
                     );
                 })}
             </select>
-            <span className="font-bold text-muted-foreground">:</span>
+            <span className="font-bold text-muted-foreground text-xs">:</span>
             <select
-                className="bg-background border border-border rounded-lg px-2 py-1.5 text-sm outline-none focus:border-primary cursor-pointer font-mono"
+                className="bg-transparent text-xs font-mono font-bold text-foreground outline-none cursor-pointer"
                 value={mm || "00"}
                 onChange={handleMM}
             >
@@ -111,7 +123,7 @@ const TimeSelect = ({
                     "50",
                     "55",
                 ].map((val) => (
-                    <option key={val} value={val}>
+                    <option key={val} value={val} className="bg-background text-foreground">
                         {val}
                     </option>
                 ))}
@@ -120,6 +132,7 @@ const TimeSelect = ({
     );
 };
 
+// --- 住宿入住/退房時間設定 ---
 const CheckInOutField = ({
     label,
     name,
@@ -139,9 +152,9 @@ const CheckInOutField = ({
 
     return (
         <div className="space-y-1.5">
-            <label className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-1">
+            <span className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1">
                 <Clock size={12} className="text-primary" /> {label}
-            </label>
+            </span>
             <div className="flex items-center gap-2 flex-wrap">
                 <TimeSelect value={timeValue} onChange={onChange} name={name} />
                 <div className="flex items-center gap-1">
@@ -149,13 +162,11 @@ const CheckInOutField = ({
                         <button
                             key={p}
                             type="button"
-                            onClick={() =>
-                                onChange({ target: { name, value: p } })
-                            }
-                            className={`px-2 py-1 text-xs rounded-lg border transition-all ${
+                            onClick={() => onChange({ target: { name, value: p } })}
+                            className={`px-2 py-0.5 text-xs rounded-lg border transition-all cursor-pointer ${
                                 timeValue === p
                                     ? "bg-primary text-primary-foreground border-primary font-bold shadow-xs"
-                                    : "bg-card text-muted-foreground border-border hover:border-primary/50"
+                                    : "bg-muted/30 text-muted-foreground border-border/60 hover:border-primary/50"
                             }`}
                         >
                             {p}
@@ -167,7 +178,8 @@ const CheckInOutField = ({
     );
 };
 
-const BusinessHoursField = ({
+// --- 營業時間設定組件 (iOS Inset Grouped) ---
+const BusinessHoursSection = ({
     formData,
     onFormInputChange,
 }: {
@@ -258,31 +270,29 @@ const BusinessHoursField = ({
     if (uniformPeriods.length === 0) uniformPeriods.push("09:00 - 17:00");
 
     return (
-        <div className="space-y-3.5">
-            {/* 標題與模式分頁按鈕 (全寬大按鈕，寬敞不擁擠) */}
+        <div className="space-y-4">
+            {/* 模式切換器 */}
             <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold text-muted-foreground uppercase flex items-center">
-                        <Clock size={13} className="mr-1.5 text-primary" /> 營業時間設定模式
-                    </label>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-muted/50 p-1.5 rounded-2xl border border-border/60">
+                <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider px-1">
+                    營業模式設定 (SCHEDULE MODE)
+                </span>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 bg-muted/40 p-1 rounded-2xl border border-border/60">
                     <button
                         type="button"
                         onClick={() => setMode("24_hours")}
-                        className={`flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl font-bold text-xs transition-all cursor-pointer ${
+                        className={`flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl font-bold text-xs transition-all cursor-pointer ${
                             mode === "24_hours"
                                 ? "bg-emerald-600 text-white shadow-xs"
                                 : "text-muted-foreground hover:text-foreground hover:bg-background/60"
                         }`}
                     >
                         <Sparkles size={13} />
-                        <span>24 小時營業</span>
+                        <span>24H 營業</span>
                     </button>
                     <button
                         type="button"
                         onClick={() => setMode("uniform")}
-                        className={`flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl font-bold text-xs transition-all cursor-pointer ${
+                        className={`flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl font-bold text-xs transition-all cursor-pointer ${
                             mode === "uniform"
                                 ? "bg-primary text-primary-foreground shadow-xs"
                                 : "text-muted-foreground hover:text-foreground hover:bg-background/60"
@@ -294,7 +304,7 @@ const BusinessHoursField = ({
                     <button
                         type="button"
                         onClick={() => setMode("per_day")}
-                        className={`flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl font-bold text-xs transition-all cursor-pointer ${
+                        className={`flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl font-bold text-xs transition-all cursor-pointer ${
                             mode === "per_day"
                                 ? "bg-primary text-primary-foreground shadow-xs"
                                 : "text-muted-foreground hover:text-foreground hover:bg-background/60"
@@ -306,7 +316,7 @@ const BusinessHoursField = ({
                     <button
                         type="button"
                         onClick={() => setMode("custom")}
-                        className={`flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl font-bold text-xs transition-all cursor-pointer ${
+                        className={`flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl font-bold text-xs transition-all cursor-pointer ${
                             mode === "custom"
                                 ? "bg-primary text-primary-foreground shadow-xs"
                                 : "text-muted-foreground hover:text-foreground hover:bg-background/60"
@@ -321,7 +331,7 @@ const BusinessHoursField = ({
             {/* 常用預設快捷按鈕 */}
             <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 text-xs">
                 <span className="text-[11px] text-muted-foreground shrink-0 font-medium mr-0.5">
-                    常用：
+                    快捷：
                 </span>
                 <button
                     type="button"
@@ -329,333 +339,240 @@ const BusinessHoursField = ({
                     className={`px-2 py-0.5 rounded-lg border text-[11px] font-semibold shrink-0 transition-colors cursor-pointer ${
                         mode === "24_hours"
                             ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-700 dark:text-emerald-300"
-                            : "bg-muted/40 border-border hover:border-emerald-500/50 text-foreground/80"
+                            : "bg-muted/40 border-border/60 hover:border-emerald-500/50 text-foreground/80"
                     }`}
                 >
-                    🌟 24小時營業
+                    🌟 24小時
                 </button>
                 <button
                     type="button"
                     onClick={() => applyPreset("09:00 - 17:00")}
-                    className="px-2 py-0.5 rounded-lg border border-border bg-muted/40 hover:border-primary/50 text-[11px] font-medium shrink-0 transition-colors cursor-pointer text-foreground/80"
+                    className="px-2 py-0.5 rounded-lg border border-border/60 bg-muted/40 hover:border-primary/50 text-[11px] font-medium shrink-0 transition-colors cursor-pointer text-foreground/80"
                 >
-                    ☀️ 景點 09:00 - 17:00
+                    ☀️ 景點 09-17
                 </button>
                 <button
                     type="button"
                     onClick={() => applyPreset("08:00 - 18:00")}
-                    className="px-2 py-0.5 rounded-lg border border-border bg-muted/40 hover:border-primary/50 text-[11px] font-medium shrink-0 transition-colors cursor-pointer text-foreground/80"
+                    className="px-2 py-0.5 rounded-lg border border-border/60 bg-muted/40 hover:border-primary/50 text-[11px] font-medium shrink-0 transition-colors cursor-pointer text-foreground/80"
                 >
-                    ☕ 咖啡 08:00 - 18:00
+                    ☕ 咖啡 08-18
                 </button>
                 <button
                     type="button"
                     onClick={() => applyPreset("11:00 - 14:30, 17:00 - 21:00")}
-                    className="px-2 py-0.5 rounded-lg border border-border bg-muted/40 hover:border-primary/50 text-[11px] font-medium shrink-0 transition-colors cursor-pointer text-foreground/80"
+                    className="px-2 py-0.5 rounded-lg border border-border/60 bg-muted/40 hover:border-primary/50 text-[11px] font-medium shrink-0 transition-colors cursor-pointer text-foreground/80"
                 >
-                    🍜 餐廳 11:00-14:30, 17:00-21:00
+                    🍜 餐廳 11-14:30, 17-21
                 </button>
                 <button
                     type="button"
                     onClick={() => applyPreset("18:00 - 02:00")}
-                    className="px-2 py-0.5 rounded-lg border border-border bg-muted/40 hover:border-primary/50 text-[11px] font-medium shrink-0 transition-colors cursor-pointer text-foreground/80"
+                    className="px-2 py-0.5 rounded-lg border border-border/60 bg-muted/40 hover:border-primary/50 text-[11px] font-medium shrink-0 transition-colors cursor-pointer text-foreground/80"
                 >
-                    🌙 居酒屋/夜市 18:00 - 02:00
+                    🌙 居酒屋 18-02
                 </button>
             </div>
 
-            {/* 模式 1: 🌟 24 小時營業 */}
-            {mode === "24_hours" ? (
-                <div className="bg-emerald-500/10 border border-emerald-500/25 rounded-2xl p-4 text-xs space-y-2.5">
-                    <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                            <span className="flex h-2.5 w-2.5 relative">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-                            </span>
-                            <span className="font-bold text-sm text-emerald-700 dark:text-emerald-300">
-                                24 小時全天營業（全年無休 / 全天開放）
+            {/* 時間排程卡片 (Inset Grouped) */}
+            <div className="rounded-2xl bg-card border border-border/80 divide-y divide-border/50 text-xs overflow-hidden shadow-2xs">
+                {mode === "24_hours" ? (
+                    <div className="p-4 bg-emerald-500/10 text-xs space-y-2">
+                        <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                                <span className="flex h-2.5 w-2.5 relative">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                                </span>
+                                <span className="font-bold text-sm text-emerald-700 dark:text-emerald-300">
+                                    24 小時全天營業（全年無休 / 全天開放）
+                                </span>
+                            </div>
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-mono">
+                                24 Hours
                             </span>
                         </div>
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-700 dark:text-emerald-300">
-                            24 Hours
-                        </span>
+                        <p className="text-muted-foreground text-[11px] leading-relaxed">
+                            此地點將在行程安排、地標預覽與地圖中即時標註為「<strong className="text-emerald-600 dark:text-emerald-400">● 營業中 (24H)</strong>」。
+                        </p>
                     </div>
-                    <p className="text-muted-foreground text-[11px] leading-relaxed">
-                        此地點將在行程安排、景點卡片與地圖中即時標註為「<strong className="text-emerald-600 dark:text-emerald-400">● 營業中 (24H)</strong>」。
-                    </p>
-                    <div className="flex items-center gap-1.5 flex-wrap pt-1 text-[10px] text-muted-foreground">
-                        <span className="font-semibold text-foreground/70">適用場所：</span>
-                        <span className="bg-background/80 px-2 py-0.5 rounded-md border border-border/50">🏪 24H 便利商店 (7-11/全家)</span>
-                        <span className="bg-background/80 px-2 py-0.5 rounded-md border border-border/50">🐧 唐吉訶德 Donki</span>
-                        <span className="bg-background/80 px-2 py-0.5 rounded-md border border-border/50">🌃 戶外夜景 / 神社公園</span>
-                        <span className="bg-background/80 px-2 py-0.5 rounded-md border border-border/50">🍜 24H 牛丼/拉麵</span>
-                        <span className="bg-background/80 px-2 py-0.5 rounded-md border border-border/50">🧺 投幣洗衣店</span>
+                ) : mode === "custom" ? (
+                    <div className="p-3 sm:p-3.5">
+                        <textarea
+                            name="info.open"
+                            value={rawOpen}
+                            onChange={onFormInputChange}
+                            className="w-full bg-muted/20 border border-border/60 rounded-xl p-3 outline-none text-xs focus:border-primary min-h-[90px] resize-y placeholder:text-muted-foreground/50"
+                            placeholder="例如：每月第二個星期二公休、採預約制、或特殊活動期間開放..."
+                        />
                     </div>
-                </div>
-            ) : mode === "custom" ? (
-                <textarea
-                    name="info.open"
-                    value={rawOpen}
-                    onChange={onFormInputChange}
-                    className="w-full bg-background border border-border rounded-xl p-3 outline-none text-sm focus:border-primary min-h-[100px] resize-y placeholder:text-muted-foreground/60"
-                    placeholder="例如：每月第二個星期二公休、採預約制、或特殊活動期間開放..."
-                />
-            ) : mode === "per_day" ? (
-                <div className="flex flex-col gap-3">
-                    {/* 批次快速設定 */}
-                    <div className="flex items-center justify-between gap-2 flex-wrap bg-muted/40 p-2.5 rounded-xl border border-border/50 text-xs">
-                        <span className="text-muted-foreground font-semibold">快速批量排程：</span>
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    const all24H: Record<number, string[]> = {};
-                                    [1, 2, 3, 4, 5, 6, 7].forEach((d) => {
-                                        all24H[d] = ["24小時營業"];
-                                    });
-                                    onFormInputChange({
-                                        target: {
-                                            name: "info.open",
-                                            value: JSON.stringify({
-                                                type: "per_day",
-                                                schedule: all24H,
-                                            }),
-                                        },
-                                    });
-                                }}
-                                className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 font-bold transition-colors cursor-pointer"
-                            >
-                                🌟 全設為 24H
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    const weekend24H: Record<number, string[]> = {};
-                                    [1, 2, 3, 4, 5].forEach((d) => {
-                                        weekend24H[d] = ["09:00 - 17:00"];
-                                    });
-                                    [6, 7].forEach((d) => {
-                                        weekend24H[d] = ["24小時營業"];
-                                    });
-                                    onFormInputChange({
-                                        target: {
-                                            name: "info.open",
-                                            value: JSON.stringify({
-                                                type: "per_day",
-                                                schedule: weekend24H,
-                                            }),
-                                        },
-                                    });
-                                }}
-                                className="px-2.5 py-1 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary font-bold transition-colors cursor-pointer"
-                            >
-                                平日 09-17 / 週末 24H
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    const allUniform: Record<number, string[]> = {};
-                                    [1, 2, 3, 4, 5, 6, 7].forEach((d) => {
-                                        allUniform[d] = ["09:00 - 17:00"];
-                                    });
-                                    onFormInputChange({
-                                        target: {
-                                            name: "info.open",
-                                            value: JSON.stringify({
-                                                type: "per_day",
-                                                schedule: allUniform,
-                                            }),
-                                        },
-                                    });
-                                }}
-                                className="px-2.5 py-1 rounded-lg bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground font-bold transition-colors cursor-pointer"
-                            >
-                                🔄 全設 09-17
-                            </button>
+                ) : mode === "per_day" ? (
+                    <div className="divide-y divide-border/50">
+                        {/* 快速排程輔助列 */}
+                        <div className="p-2.5 sm:p-3 bg-muted/20 flex items-center justify-between gap-2 flex-wrap">
+                            <span className="text-[11px] font-semibold text-muted-foreground">批次排程：</span>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        const all24H: Record<number, string[]> = {};
+                                        [1, 2, 3, 4, 5, 6, 7].forEach((d) => {
+                                            all24H[d] = ["24小時營業"];
+                                        });
+                                        onFormInputChange({
+                                            target: {
+                                                name: "info.open",
+                                                value: JSON.stringify({
+                                                    type: "per_day",
+                                                    schedule: all24H,
+                                                }),
+                                            },
+                                        });
+                                    }}
+                                    className="px-2 py-0.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-700 dark:text-emerald-300 font-bold transition-colors cursor-pointer text-[11px]"
+                                >
+                                    🌟 全設 24H
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        const allUniform: Record<number, string[]> = {};
+                                        [1, 2, 3, 4, 5, 6, 7].forEach((d) => {
+                                            allUniform[d] = ["09:00 - 17:00"];
+                                        });
+                                        onFormInputChange({
+                                            target: {
+                                                name: "info.open",
+                                                value: JSON.stringify({
+                                                    type: "per_day",
+                                                    schedule: allUniform,
+                                                }),
+                                            },
+                                        });
+                                    }}
+                                    className="px-2 py-0.5 rounded-lg bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground font-bold transition-colors cursor-pointer text-[11px]"
+                                >
+                                    🔄 全設 09-17
+                                </button>
+                            </div>
                         </div>
-                    </div>
 
-                    {[1, 2, 3, 4, 5, 6, 7].map((dayNum) => {
-                        const dayNames = [
-                            "週一",
-                            "週二",
-                            "週三",
-                            "週四",
-                            "週五",
-                            "週六",
-                            "週日",
-                        ];
-                        const dayName = dayNames[dayNum - 1];
-                        const periods = perDaySchedule[dayNum] || [];
-                        const is24H = periods.some(
-                            (p) =>
-                                p.includes("24小時") ||
-                                p.includes("24 Hours") ||
-                                p.includes("24hr") ||
-                                p === "00:00 - 24:00"
-                        );
-                        const isClosed = !is24H && periods.length === 0;
+                        {[1, 2, 3, 4, 5, 6, 7].map((dayNum) => {
+                            const dayNames = ["週一", "週二", "週三", "週四", "週五", "週六", "週日"];
+                            const dayName = dayNames[dayNum - 1];
+                            const periods = perDaySchedule[dayNum] || [];
+                            const is24H = periods.some(
+                                (p) =>
+                                    p.includes("24小時") ||
+                                    p.includes("24 Hours") ||
+                                    p.includes("24hr") ||
+                                    p === "00:00 - 24:00"
+                            );
+                            const isClosed = !is24H && periods.length === 0;
 
-                        return (
-                            <div
-                                key={dayNum}
-                                className="flex flex-col sm:flex-row sm:items-center gap-3 bg-muted/20 p-2.5 sm:p-3 rounded-2xl border border-border/50 hover:border-border transition-colors"
-                            >
-                                {/* 星期標籤 + 寬版三態切換鈕 (營業 / 24H / 公休) */}
-                                <div className="flex items-center justify-between sm:justify-start gap-3 shrink-0">
-                                    <span className="text-xs sm:text-sm font-extrabold text-foreground px-2.5 py-1 bg-muted/70 rounded-xl shrink-0 text-center min-w-[50px] border border-border/40">
-                                        {dayName}
-                                    </span>
-                                    <div className="grid grid-cols-3 gap-1 bg-muted/80 p-1 rounded-xl border border-border/60 text-xs w-48 sm:w-52 shadow-2xs">
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                const newSchedule = { ...perDaySchedule };
-                                                newSchedule[dayNum] = ["09:00 - 17:00"];
-                                                onFormInputChange({
-                                                    target: {
-                                                        name: "info.open",
-                                                        value: JSON.stringify({
-                                                            type: "per_day",
-                                                            schedule: newSchedule,
-                                                        }),
-                                                    },
-                                                });
-                                            }}
-                                            className={`py-1 px-2 text-center rounded-lg font-bold transition-all cursor-pointer ${
-                                                !isClosed && !is24H
-                                                    ? "bg-primary text-primary-foreground shadow-xs"
-                                                    : "text-muted-foreground hover:text-foreground hover:bg-background/50"
-                                            }`}
-                                        >
-                                            營業
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                const newSchedule = { ...perDaySchedule };
-                                                newSchedule[dayNum] = ["24小時營業"];
-                                                onFormInputChange({
-                                                    target: {
-                                                        name: "info.open",
-                                                        value: JSON.stringify({
-                                                            type: "per_day",
-                                                            schedule: newSchedule,
-                                                        }),
-                                                    },
-                                                });
-                                            }}
-                                            className={`py-1 px-2 text-center rounded-lg font-bold transition-all cursor-pointer ${
-                                                is24H
-                                                    ? "bg-emerald-600 text-white shadow-xs"
-                                                    : "text-muted-foreground hover:text-emerald-600 hover:bg-background/50"
-                                            }`}
-                                        >
-                                            24H
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                const newSchedule = { ...perDaySchedule };
-                                                newSchedule[dayNum] = [];
-                                                onFormInputChange({
-                                                    target: {
-                                                        name: "info.open",
-                                                        value: JSON.stringify({
-                                                            type: "per_day",
-                                                            schedule: newSchedule,
-                                                        }),
-                                                    },
-                                                });
-                                            }}
-                                            className={`py-1 px-2 text-center rounded-lg font-bold transition-all cursor-pointer ${
-                                                isClosed
-                                                    ? "bg-rose-600 text-white shadow-xs"
-                                                    : "text-muted-foreground hover:text-rose-600 hover:bg-background/50"
-                                            }`}
-                                        >
-                                            公休
-                                        </button>
+                            return (
+                                <div
+                                    key={dayNum}
+                                    className="p-2.5 sm:p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-card hover:bg-muted/10 transition-colors"
+                                >
+                                    <div className="flex items-center gap-2 shrink-0">
+                                        <span className="text-xs font-bold text-foreground px-2 py-1 bg-muted/60 rounded-xl min-w-[45px] text-center border border-border/50">
+                                            {dayName}
+                                        </span>
+                                        <div className="grid grid-cols-3 gap-0.5 bg-muted/60 p-0.5 rounded-xl border border-border/60 text-[11px] w-36">
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const newSchedule = { ...perDaySchedule };
+                                                    newSchedule[dayNum] = ["09:00 - 17:00"];
+                                                    onFormInputChange({
+                                                        target: {
+                                                            name: "info.open",
+                                                            value: JSON.stringify({
+                                                                type: "per_day",
+                                                                schedule: newSchedule,
+                                                            }),
+                                                        },
+                                                    });
+                                                }}
+                                                className={`py-0.5 text-center rounded-lg font-bold transition-all cursor-pointer ${
+                                                    !isClosed && !is24H
+                                                        ? "bg-primary text-primary-foreground shadow-xs"
+                                                        : "text-muted-foreground hover:text-foreground"
+                                                }`}
+                                            >
+                                                營業
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const newSchedule = { ...perDaySchedule };
+                                                    newSchedule[dayNum] = ["24小時營業"];
+                                                    onFormInputChange({
+                                                        target: {
+                                                            name: "info.open",
+                                                            value: JSON.stringify({
+                                                                type: "per_day",
+                                                                schedule: newSchedule,
+                                                            }),
+                                                        },
+                                                    });
+                                                }}
+                                                className={`py-0.5 text-center rounded-lg font-bold transition-all cursor-pointer ${
+                                                    is24H
+                                                        ? "bg-emerald-600 text-white shadow-xs"
+                                                        : "text-muted-foreground hover:text-emerald-600"
+                                                }`}
+                                            >
+                                                24H
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const newSchedule = { ...perDaySchedule };
+                                                    newSchedule[dayNum] = [];
+                                                    onFormInputChange({
+                                                        target: {
+                                                            name: "info.open",
+                                                            value: JSON.stringify({
+                                                                type: "per_day",
+                                                                schedule: newSchedule,
+                                                            }),
+                                                        },
+                                                    });
+                                                }}
+                                                className={`py-0.5 text-center rounded-lg font-bold transition-all cursor-pointer ${
+                                                    isClosed
+                                                        ? "bg-rose-600 text-white shadow-xs"
+                                                        : "text-muted-foreground hover:text-rose-600"
+                                                }`}
+                                            >
+                                                公休
+                                            </button>
+                                        </div>
                                     </div>
-                                </div>
 
-                                {/* 右側時間區段 / 24H 狀態標籤 / 公休狀態標籤 */}
-                                <div className="flex-1 min-w-0">
-                                    {is24H ? (
-                                        <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 font-semibold px-2.5 py-1.5 bg-emerald-500/10 rounded-xl border border-emerald-500/20 w-fit">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                                            24 小時全天營業 (全天開放)
-                                        </div>
-                                    ) : isClosed ? (
-                                        <div className="text-xs text-rose-500 font-semibold px-2.5 py-1.5 bg-rose-500/10 rounded-xl border border-rose-500/20 w-fit">
-                                            當日公休不營業
-                                        </div>
-                                    ) : (
-                                        <div className="space-y-1.5">
-                                            {periods.map((period, pIdx) => {
-                                                const [start, end] = period
-                                                    .split("-")
-                                                    .map((s) => s.trim());
-                                                return (
-                                                    <div
-                                                        key={pIdx}
-                                                        className="flex items-center gap-2 flex-wrap"
-                                                    >
-                                                        <TimeSelect
-                                                            name={`p_start_${dayNum}_${pIdx}`}
-                                                            value={start || "09:00"}
-                                                            onChange={(e) => {
-                                                                const newSchedule = {
-                                                                    ...perDaySchedule,
-                                                                };
-                                                                newSchedule[dayNum][pIdx] =
-                                                                    `${e.target.value} - ${end || "17:00"}`;
-                                                                onFormInputChange({
-                                                                    target: {
-                                                                        name: "info.open",
-                                                                        value: JSON.stringify({
-                                                                            type: "per_day",
-                                                                            schedule: newSchedule,
-                                                                        }),
-                                                                    },
-                                                                });
-                                                            }}
-                                                        />
-                                                        <span className="font-bold text-muted-foreground text-xs">
-                                                            至
-                                                        </span>
-                                                        <TimeSelect
-                                                            name={`p_end_${dayNum}_${pIdx}`}
-                                                            value={end || "17:00"}
-                                                            onChange={(e) => {
-                                                                const newSchedule = {
-                                                                    ...perDaySchedule,
-                                                                };
-                                                                newSchedule[dayNum][pIdx] =
-                                                                    `${start || "09:00"} - ${e.target.value}`;
-                                                                onFormInputChange({
-                                                                    target: {
-                                                                        name: "info.open",
-                                                                        value: JSON.stringify({
-                                                                            type: "per_day",
-                                                                            schedule: newSchedule,
-                                                                        }),
-                                                                    },
-                                                                });
-                                                            }}
-                                                        />
-                                                        {periods.length > 1 && (
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => {
-                                                                    const newSchedule = {
-                                                                        ...perDaySchedule,
-                                                                    };
-                                                                    newSchedule[dayNum] =
-                                                                        periods.filter(
-                                                                            (_, i) => i !== pIdx
-                                                                        );
+                                    <div className="flex-1 min-w-0 flex justify-start sm:justify-end">
+                                        {is24H ? (
+                                            <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold px-2 py-1 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
+                                                ● 24 小時營業
+                                            </span>
+                                        ) : isClosed ? (
+                                            <span className="text-[11px] text-rose-500 font-semibold px-2 py-1 bg-rose-500/10 rounded-lg border border-rose-500/20">
+                                                公休不營業
+                                            </span>
+                                        ) : (
+                                            <div className="space-y-1">
+                                                {periods.map((period, pIdx) => {
+                                                    const [start, end] = period.split("-").map((s) => s.trim());
+                                                    return (
+                                                        <div key={pIdx} className="flex items-center gap-1.5 flex-wrap">
+                                                            <TimeSelect
+                                                                name={`p_start_${dayNum}_${pIdx}`}
+                                                                value={start || "09:00"}
+                                                                onChange={(e) => {
+                                                                    const newSchedule = { ...perDaySchedule };
+                                                                    newSchedule[dayNum][pIdx] = `${e.target.value} - ${end || "17:00"}`;
                                                                     onFormInputChange({
                                                                         target: {
                                                                             name: "info.open",
@@ -666,98 +583,90 @@ const BusinessHoursField = ({
                                                                         },
                                                                     });
                                                                 }}
-                                                                className="p-1.5 text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors cursor-pointer"
-                                                                title="移除時段"
-                                                            >
-                                                                <Trash2 size={15} />
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                );
-                                            })}
-                                            {periods.length < 3 && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => {
-                                                        const newSchedule = {
-                                                            ...perDaySchedule,
-                                                        };
-                                                        newSchedule[dayNum] = [
-                                                            ...periods,
-                                                            "17:00 - 21:00",
-                                                        ];
-                                                        onFormInputChange({
-                                                            target: {
-                                                                name: "info.open",
-                                                                value: JSON.stringify({
-                                                                    type: "per_day",
-                                                                    schedule: newSchedule,
-                                                                }),
-                                                            },
-                                                        });
-                                                    }}
-                                                    className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors font-bold mt-1 cursor-pointer"
-                                                >
-                                                    <Plus size={13} /> 新增時段
-                                                </button>
-                                            )}
-                                        </div>
-                                    )}
+                                                            />
+                                                            <span className="font-bold text-muted-foreground text-xs">至</span>
+                                                            <TimeSelect
+                                                                name={`p_end_${dayNum}_${pIdx}`}
+                                                                value={end || "17:00"}
+                                                                onChange={(e) => {
+                                                                    const newSchedule = { ...perDaySchedule };
+                                                                    newSchedule[dayNum][pIdx] = `${start || "09:00"} - ${e.target.value}`;
+                                                                    onFormInputChange({
+                                                                        target: {
+                                                                            name: "info.open",
+                                                                            value: JSON.stringify({
+                                                                                type: "per_day",
+                                                                                schedule: newSchedule,
+                                                                            }),
+                                                                        },
+                                                                    });
+                                                                }}
+                                                            />
+                                                            {periods.length > 1 && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        const newSchedule = { ...perDaySchedule };
+                                                                        newSchedule[dayNum] = periods.filter((_, i) => i !== pIdx);
+                                                                        onFormInputChange({
+                                                                            target: {
+                                                                                name: "info.open",
+                                                                                value: JSON.stringify({
+                                                                                    type: "per_day",
+                                                                                    schedule: newSchedule,
+                                                                                }),
+                                                                            },
+                                                                        });
+                                                                    }}
+                                                                    className="p-1 text-muted-foreground hover:text-red-500 rounded-md transition-colors cursor-pointer"
+                                                                    title="移除時段"
+                                                                >
+                                                                    <Trash2 size={13} />
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })}
+                                                {periods.length < 3 && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            const newSchedule = { ...perDaySchedule };
+                                                            newSchedule[dayNum] = [...periods, "17:00 - 21:00"];
+                                                            onFormInputChange({
+                                                                target: {
+                                                                    name: "info.open",
+                                                                    value: JSON.stringify({
+                                                                        type: "per_day",
+                                                                        schedule: newSchedule,
+                                                                    }),
+                                                                },
+                                                            });
+                                                        }}
+                                                        className="flex items-center gap-1 text-[11px] text-primary hover:text-primary/80 font-bold cursor-pointer"
+                                                    >
+                                                        <Plus size={12} /> 新增時段
+                                                    </button>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                        );
-                    })}
-                </div>
-            ) : (
-                <div className="space-y-2">
-                    {uniformPeriods.map((period, index) => {
-                        const [start, end] = period
-                            .split("-")
-                            .map((s) => s.trim());
-                        return (
-                            <div
-                                key={index}
-                                className="flex items-center gap-1.5 flex-wrap"
-                            >
-                                <TimeSelect
-                                    name={`open_start_${index}`}
-                                    value={start || "09:00"}
-                                    onChange={(e) => {
-                                        const newPeriods = [...uniformPeriods];
-                                        newPeriods[index] = `${e.target.value} - ${end || "17:00"}`;
-                                        onFormInputChange({
-                                            target: {
-                                                name: "info.open",
-                                                value: newPeriods.join(", "),
-                                            },
-                                        });
-                                    }}
-                                />
-                                <span className="font-bold text-muted-foreground text-xs">
-                                    至
-                                </span>
-                                <TimeSelect
-                                    name={`open_end_${index}`}
-                                    value={end || "17:00"}
-                                    onChange={(e) => {
-                                        const newPeriods = [...uniformPeriods];
-                                        newPeriods[index] = `${start || "09:00"} - ${e.target.value}`;
-                                        onFormInputChange({
-                                            target: {
-                                                name: "info.open",
-                                                value: newPeriods.join(", "),
-                                            },
-                                        });
-                                    }}
-                                />
-                                {uniformPeriods.length > 1 && (
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            const newPeriods =
-                                                uniformPeriods.filter(
-                                                    (_, i) => i !== index
-                                                );
+                            );
+                        })}
+                    </div>
+                ) : (
+                    <div className="p-3 sm:p-3.5 space-y-2">
+                        {uniformPeriods.map((period, index) => {
+                            const [start, end] = period.split("-").map((s) => s.trim());
+                            return (
+                                <div key={index} className="flex items-center gap-2 flex-wrap">
+                                    <TimeSelect
+                                        name={`open_start_${index}`}
+                                        value={start || "09:00"}
+                                        onChange={(e) => {
+                                            const newPeriods = [...uniformPeriods];
+                                            newPeriods[index] = `${e.target.value} - ${end || "17:00"}`;
                                             onFormInputChange({
                                                 target: {
                                                     name: "info.open",
@@ -765,41 +674,165 @@ const BusinessHoursField = ({
                                                 },
                                             });
                                         }}
-                                        className="p-1.5 text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors ml-1 cursor-pointer"
-                                        title="移除時段"
+                                    />
+                                    <span className="font-bold text-muted-foreground text-xs">至</span>
+                                    <TimeSelect
+                                        name={`open_end_${index}`}
+                                        value={end || "17:00"}
+                                        onChange={(e) => {
+                                            const newPeriods = [...uniformPeriods];
+                                            newPeriods[index] = `${start || "09:00"} - ${e.target.value}`;
+                                            onFormInputChange({
+                                                target: {
+                                                    name: "info.open",
+                                                    value: newPeriods.join(", "),
+                                                },
+                                            });
+                                        }}
+                                    />
+                                    {uniformPeriods.length > 1 && (
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const newPeriods = uniformPeriods.filter((_, i) => i !== index);
+                                                onFormInputChange({
+                                                    target: {
+                                                        name: "info.open",
+                                                        value: newPeriods.join(", "),
+                                                    },
+                                                });
+                                            }}
+                                            className="p-1 text-muted-foreground hover:text-red-500 rounded-md transition-colors cursor-pointer"
+                                            title="移除時段"
+                                        >
+                                            <Trash2 size={14} />
+                                        </button>
+                                    )}
+                                </div>
+                            );
+                        })}
+                        {uniformPeriods.length < 4 && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    const newPeriods = [...uniformPeriods, "17:00 - 21:00"];
+                                    onFormInputChange({
+                                        target: {
+                                            name: "info.open",
+                                            value: newPeriods.join(", "),
+                                        },
+                                    });
+                                }}
+                                className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 font-bold pt-1 cursor-pointer"
+                            >
+                                <Plus size={13} /> 新增時段
+                            </button>
+                        )}
+                    </div>
+                )}
+
+                {/* 公休日點選膠囊 (Mon - Sun) */}
+                {!(formData?.info?.open || "").includes('"type":"per_day"') && (
+                    <div className="p-3 sm:p-3.5 space-y-2 bg-muted/5">
+                        <span className="text-muted-foreground font-semibold flex items-center gap-1.5">
+                            <CalendarX size={13} className="text-rose-500" />
+                            <span>公休時間快捷設定</span>
+                        </span>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                            {[
+                                { day: "一", val: "週一" },
+                                { day: "二", val: "週二" },
+                                { day: "三", val: "週三" },
+                                { day: "四", val: "週四" },
+                                { day: "五", val: "週五" },
+                                { day: "六", val: "週六" },
+                                { day: "日", val: "週日" },
+                            ].map((item) => {
+                                const currentClosed = formData?.info?.closed_days || "";
+                                const isSelected = currentClosed.includes(item.val);
+
+                                const toggleDay = () => {
+                                    const daysList = ["週一", "週二", "週三", "週四", "週五", "週六", "週日"];
+                                    let activeDays = daysList.filter((d) => currentClosed.includes(d));
+
+                                    if (isSelected) {
+                                        activeDays = activeDays.filter((d) => d !== item.val);
+                                    } else {
+                                        activeDays.push(item.val);
+                                        activeDays.sort((a, b) => daysList.indexOf(a) - daysList.indexOf(b));
+                                    }
+
+                                    const updated = activeDays.length === 0 ? "" : `${activeDays.join(", ")} 公休`;
+                                    const event = {
+                                        target: { name: "info.closed_days", value: updated },
+                                        currentTarget: { name: "info.closed_days", value: updated },
+                                    } as unknown as ChangeEvent<HTMLInputElement>;
+                                    onFormInputChange(event);
+                                };
+
+                                return (
+                                    <button
+                                        key={item.val}
+                                        type="button"
+                                        onClick={toggleDay}
+                                        className={`w-8 h-8 rounded-full text-xs font-bold transition-all border shrink-0 cursor-pointer ${
+                                            isSelected
+                                                ? "bg-rose-500 text-white border-rose-500 shadow-xs scale-105"
+                                                : "bg-muted/30 text-muted-foreground border-border hover:border-rose-300"
+                                        }`}
                                     >
-                                        <Trash2 size={15} />
+                                        {item.day}
                                     </button>
-                                )}
-                            </div>
-                        );
-                    })}
-                    {uniformPeriods.length < 5 && (
-                        <button
-                            type="button"
-                            onClick={() => {
-                                const newPeriods = [
-                                    ...uniformPeriods,
-                                    "17:00 - 21:00",
-                                ];
-                                onFormInputChange({
-                                    target: {
-                                        name: "info.open",
-                                        value: newPeriods.join(", "),
-                                    },
-                                });
-                            }}
-                            className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors w-fit font-bold mt-1 cursor-pointer"
-                        >
-                            <Plus size={13} /> 新增時段
-                        </button>
-                    )}
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* ⏱️ 建議停留時間 */}
+            <div className="rounded-2xl bg-card border border-border/80 divide-y divide-border/50 text-xs overflow-hidden shadow-2xs">
+                <div className="p-3 sm:p-3.5 space-y-2.5">
+                    <span className="text-muted-foreground font-semibold flex items-center gap-1.5">
+                        <Clock size={13} className="text-primary" />
+                        <span>建議停留時間 (STAY DURATION)</span>
+                    </span>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                        {["30 分鐘", "1 小時", "1.5 小時", "2 小時", "半天", "一整天"].map((dur) => (
+                            <button
+                                key={dur}
+                                type="button"
+                                onClick={() =>
+                                    onFormInputChange({
+                                        target: { name: "info.stay_duration", value: dur },
+                                        currentTarget: { name: "info.stay_duration", value: dur },
+                                    } as unknown as ChangeEvent<HTMLInputElement>)
+                                }
+                                className={`px-3 py-1 rounded-xl text-xs font-medium transition-all cursor-pointer ${
+                                    formData.info?.stay_duration === dur
+                                        ? "bg-primary text-primary-foreground font-bold shadow-xs scale-105"
+                                        : "bg-muted/40 border border-border/60 text-muted-foreground hover:text-foreground hover:border-primary/50"
+                                }`}
+                            >
+                                {dur}
+                            </button>
+                        ))}
+                    </div>
+                    <input
+                        type="text"
+                        name="info.stay_duration"
+                        value={formData.info?.stay_duration || ""}
+                        onChange={onFormInputChange}
+                        placeholder="或自訂停留時間 (例: 1 小時 30 分鐘)"
+                        className="w-full bg-muted/20 border border-border/60 rounded-xl px-3 py-2 text-xs text-foreground outline-none focus:border-primary mt-1 placeholder:text-muted-foreground/45"
+                    />
                 </div>
-            )}
+            </div>
         </div>
     );
 };
 
+// --- 主要 PlaceModal 元件 (Apple HIG Inset Grouped) ---
 const PlaceModal = ({
     formData,
     mode,
@@ -812,8 +845,30 @@ const PlaceModal = ({
 }: PlaceModalProps) => {
     const [copiedId, setCopiedId] = useState(false);
     const [activeTab, setActiveTab] = useState<"basic" | "hours" | "items" | "details">("basic");
+    const [speaking, setSpeaking] = useState(false);
+    const formRef = useRef<HTMLFormElement>(null);
 
-    // Auto-fill state
+    // 語言自動偵測
+    const detectedNativeLang = detectLanguage(formData?.info?.native_name, {
+        address: formData?.info?.loc,
+        currency: formData?.info?.price,
+    });
+
+    const handleSpeakNative = () => {
+        if (!formData?.info?.native_name) return;
+        playPronunciation(formData.info.native_name, {
+            context: {
+                address: formData?.info?.loc,
+                mapUrl: formData.map_url,
+                currency: formData?.info?.price,
+            },
+            onStart: () => setSpeaking(true),
+            onEnd: () => setSpeaking(false),
+            onError: () => setSpeaking(false),
+        });
+    };
+
+    // OpenStreetMap & Wiki 自動搜尋
     const [searchTerm, setSearchTerm] = useState("");
     const [isSearching, setIsSearching] = useState(false);
     const [searchResults, setSearchResults] = useState<OSMPlace[]>([]);
@@ -876,9 +931,7 @@ const PlaceModal = ({
         if (importFields.eng_name && wiki?.title) {
             onFormInputChange(createEvent("eng_name", wiki.title));
         } else if (importFields.eng_name && osm.extratags?.["name:en"]) {
-            onFormInputChange(
-                createEvent("eng_name", osm.extratags["name:en"])
-            );
+            onFormInputChange(createEvent("eng_name", osm.extratags["name:en"]));
         }
 
         if (importFields.image_url && wiki?.thumbnailUrl) {
@@ -886,9 +939,7 @@ const PlaceModal = ({
         }
 
         if (importFields.open && osm.extratags?.opening_hours) {
-            onFormInputChange(
-                createEvent("info.open", osm.extratags.opening_hours)
-            );
+            onFormInputChange(createEvent("info.open", osm.extratags.opening_hours));
         }
 
         if (importFields.loc && osm.display_name) {
@@ -896,10 +947,10 @@ const PlaceModal = ({
         }
 
         if (importFields.map_url && osm.lat && osm.lon) {
-            const appleMapUrl = `https://maps.apple.com/?q=${encodeURIComponent(
+            const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
                 osm.name || ""
-            )}&ll=${osm.lat},${osm.lon}`;
-            onFormInputChange(createEvent("map_url", appleMapUrl));
+            )}&query_place_id=${osm.place_id}&center=${osm.lat},${osm.lon}`;
+            onFormInputChange(createEvent("map_url", mapUrl));
         }
 
         if (importFields.description && wiki?.extract) {
@@ -917,592 +968,589 @@ const PlaceModal = ({
         }
     };
 
+    // 標籤解析與新增/刪除
+    const currentTags = Array.isArray(formData.tags)
+        ? formData.tags
+        : typeof formData.tags === "string"
+        ? (formData.tags as string)
+              .split(",")
+              .map((t) => t.trim())
+              .filter(Boolean)
+        : [];
+    const [tagInput, setTagInput] = useState("");
+
+    const handleAddTag = () => {
+        if (!tagInput.trim()) return;
+        const newTag = tagInput.trim().replace(/^#/, "");
+        if (!currentTags.includes(newTag)) {
+            const updated = [...currentTags, newTag];
+            onFormInputChange({
+                target: { name: "tags", value: updated.join(",") },
+            } as any);
+        }
+        setTagInput("");
+    };
+
+    const handleRemoveTag = (tagToRemove: string) => {
+        const updated = currentTags.filter((t) => t !== tagToRemove);
+        onFormInputChange({
+            target: { name: "tags", value: updated.join(",") },
+        } as any);
+    };
+
     const recommendedCount = formData.info?.recommended_items?.length || 0;
     const hasCoordinates = !!(formData.lat && formData.lng);
 
     return (
-        <FormModal
-            formId="place-form"
-            modalTitle={mode === "create" ? "新增地點" : "編輯地點"}
-            modalSaveTitle="儲存地點"
-            theme={theme}
-            onCancelBtnClick={onCloseBtnClick}
-            onCloseBtnClick={onCloseBtnClick}
-            onSubmit={onFormSubmit}
-            maxWidthClass="sm:max-w-2xl"
-        >
-            {/* Auto Search Import Area */}
-            <div className="relative mb-2">
-                <div className="relative">
-                    <Search
-                        className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground"
-                        size={15}
-                    />
-                    <input
-                        type="text"
-                        placeholder="搜尋真實景點/店家自動帶入 (OpenStreetMap & Wiki)..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full bg-muted/40 border border-border/80 rounded-2xl pl-10 pr-10 py-2 text-xs text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-primary transition-all shadow-2xs"
-                    />
-                    {isSearching && (
-                        <Loader2
-                            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground animate-spin"
-                            size={15}
+        <div className="fixed inset-0 z-50 bg-black/65 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200">
+            <div className="relative w-full max-w-2xl max-h-[92vh] sm:max-h-[88vh] bg-background text-foreground rounded-t-3xl sm:rounded-3xl border border-border shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-6 sm:zoom-in-95 duration-200">
+                {/* 頂部把手 (手機端) */}
+                <div className="w-10 h-1 bg-muted-foreground/30 rounded-full mx-auto my-2 sm:hidden shrink-0" />
+
+                {/* iOS 經典導航標題列 */}
+                <div className="px-4 py-3 border-b border-border/80 flex items-center justify-between bg-card/60 backdrop-blur-md shrink-0">
+                    <button
+                        type="button"
+                        onClick={onCloseBtnClick}
+                        className="text-xs font-semibold text-blue-500 hover:text-blue-600 active:opacity-70 transition-opacity cursor-pointer"
+                    >
+                        取消
+                    </button>
+
+                    <div className="text-center">
+                        <h2 className="font-bold text-sm sm:text-base text-foreground flex items-center justify-center gap-1.5">
+                            {mode === "create" ? "✨ 新增地點" : "📍 編輯地點"}
+                        </h2>
+                    </div>
+
+                    <button
+                        type="button"
+                        onClick={() => formRef.current?.requestSubmit()}
+                        className="px-3.5 py-1.5 bg-blue-500 hover:bg-blue-600 text-white font-bold text-xs rounded-full shadow-xs active:scale-95 transition-all cursor-pointer"
+                    >
+                        完成
+                    </button>
+                </div>
+
+                {/* 智慧搜尋帶入列 (OpenStreetMap / Wikipedia) */}
+                <div className="p-3 border-b border-border/50 bg-muted/20 shrink-0">
+                    <div className="relative">
+                        <Search
+                            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground"
+                            size={14}
                         />
-                    )}
-                </div>
-
-                {showSuggestions && searchResults.length > 0 && (
-                    <div className="absolute top-full left-0 right-0 mt-1.5 bg-card border border-border rounded-2xl shadow-xl z-50 max-h-60 overflow-y-auto no-scrollbar p-1.5">
-                        {searchResults.map((place) => (
-                            <button
-                                key={place.place_id}
-                                type="button"
-                                onClick={() => handleSelectResult(place)}
-                                className="w-full text-left p-2.5 hover:bg-muted rounded-xl transition-colors flex items-start gap-2.5"
-                            >
-                                <MapPin
-                                    size={15}
-                                    className="text-primary mt-0.5 flex-shrink-0"
-                                />
-                                <div className="truncate">
-                                    <div className="font-bold text-xs text-foreground truncate">
-                                        {place.name || place.display_name.split(",")[0]}
-                                    </div>
-                                    <div className="text-[11px] text-muted-foreground truncate">
-                                        {place.display_name}
-                                    </div>
-                                </div>
-                            </button>
-                        ))}
-                    </div>
-                )}
-
-                {selectedPlace && (
-                    <div className="mt-2.5 bg-card border border-primary/30 p-3.5 rounded-2xl shadow-xs text-xs space-y-2">
-                        <div className="flex justify-between items-start">
-                            <span className="font-bold text-primary flex items-center gap-1">
-                                <Sparkles size={13} /> 找到地點資料：{selectedPlace.osm.name}
-                            </span>
-                            <button
-                                type="button"
-                                onClick={() => setSelectedPlace(null)}
-                                className="text-muted-foreground hover:text-foreground"
-                            >
-                                <X size={14} />
-                            </button>
-                        </div>
-                        <div className="grid grid-cols-2 gap-2 text-[11px] text-muted-foreground">
-                            {selectedPlace.wiki?.title && <div><strong>英文名:</strong> {selectedPlace.wiki.title}</div>}
-                            {selectedPlace.osm.extratags?.opening_hours && <div><strong>營業時間:</strong> {selectedPlace.osm.extratags.opening_hours}</div>}
-                        </div>
-                        <button
-                            type="button"
-                            onClick={handleApplyImport}
-                            className="w-full bg-primary text-primary-foreground py-1.5 rounded-xl text-xs font-bold hover:bg-primary/90 transition-colors"
-                        >
-                            一鍵帶入選取資料
-                        </button>
-                    </div>
-                )}
-            </div>
-
-            {/* Top Navigation Tabs (RWD: 2x2 on mobile, 4-col on desktop) */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 p-1.5 bg-muted/40 rounded-2xl border border-border/60">
-                <button
-                    type="button"
-                    onClick={() => setActiveTab("basic")}
-                    className={`flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                        activeTab === "basic"
-                            ? "bg-card text-foreground shadow-xs border border-border/80"
-                            : "text-muted-foreground hover:text-foreground hover:bg-background/50"
-                    }`}
-                >
-                    <Compass size={14} className={activeTab === "basic" ? "text-primary" : ""} />
-                    <span>基本與地圖</span>
-                </button>
-
-                <button
-                    type="button"
-                    onClick={() => setActiveTab("hours")}
-                    className={`flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                        activeTab === "hours"
-                            ? "bg-card text-foreground shadow-xs border border-border/80"
-                            : "text-muted-foreground hover:text-foreground hover:bg-background/50"
-                    }`}
-                >
-                    <Clock size={14} className={activeTab === "hours" ? "text-amber-500" : ""} />
-                    <span>營業與時間</span>
-                </button>
-
-                <button
-                    type="button"
-                    onClick={() => setActiveTab("items")}
-                    className={`flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-bold transition-all relative cursor-pointer ${
-                        activeTab === "items"
-                            ? "bg-card text-foreground shadow-xs border border-border/80"
-                            : "text-muted-foreground hover:text-foreground hover:bg-background/50"
-                    }`}
-                >
-                    <Utensils size={14} className={activeTab === "items" ? "text-rose-500" : ""} />
-                    <span>推薦品項</span>
-                    {recommendedCount > 0 && (
-                        <span className="w-4 h-4 rounded-full bg-rose-500 text-white text-[9px] font-bold flex items-center justify-center font-mono ml-0.5">
-                            {recommendedCount}
-                        </span>
-                    )}
-                </button>
-
-                <button
-                    type="button"
-                    onClick={() => setActiveTab("details")}
-                    className={`flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                        activeTab === "details"
-                            ? "bg-card text-foreground shadow-xs border border-border/80"
-                            : "text-muted-foreground hover:text-foreground hover:bg-background/50"
-                    }`}
-                >
-                    <Sparkles size={14} className={activeTab === "details" ? "text-indigo-500" : ""} />
-                    <span>預算與細節</span>
-                </button>
-            </div>
-
-            {/* TAB 1: 基本與地圖 (Basic & Map) */}
-            {activeTab === "basic" && (
-                <div className="space-y-3.5 pt-1 animate-in fade-in duration-200">
-                    {/* 分類選擇 */}
-                    <CategoryCustomSelect
-                        value={formData.type || "sight"}
-                        onChange={(newTypeId) => {
-                            const event = {
-                                target: { name: "type", value: newTypeId },
-                                currentTarget: { name: "type", value: newTypeId },
-                            } as unknown as ChangeEvent<HTMLInputElement>;
-                            onFormInputChange(event);
-                        }}
-                    />
-
-                    {/* 🏷️ 核心名稱資訊卡片 */}
-                    <div className="bg-card border border-border/80 p-4 rounded-2xl shadow-2xs space-y-3">
-                        <div className="space-y-1.5">
-                            <label className="block text-xs font-bold text-muted-foreground uppercase flex items-center gap-1.5">
-                                <Sparkles size={13} className="text-primary" />
-                                <span>中文 / 主要名稱 <span className="text-rose-500">*</span></span>
-                            </label>
-                            <input
-                                required
-                                name="name"
-                                value={formData.name}
-                                onChange={onFormInputChange}
-                                placeholder="例：清水寺 / 敘敘苑燒肉 / 藍瓶咖啡"
-                                className="w-full bg-muted/25 border border-border/70 focus:border-primary focus:bg-background rounded-xl px-3.5 py-2 text-sm font-bold text-foreground outline-none placeholder:text-muted-foreground/45 transition-all"
-                            />
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-0.5">
-                            <div className="space-y-1.5">
-                                <label className="block text-xs font-bold text-muted-foreground uppercase flex items-center gap-1.5">
-                                    <Volume2 size={13} className="text-indigo-500" />
-                                    <span>英文名稱 / 羅馬拼音</span>
-                                </label>
-                                <input
-                                    name="eng_name"
-                                    value={formData.eng_name || ""}
-                                    onChange={onFormInputChange}
-                                    placeholder="例：Kiyomizu-dera"
-                                    className="w-full bg-muted/25 border border-border/70 focus:border-primary focus:bg-background rounded-xl px-3 py-2 text-xs font-mono text-foreground outline-none placeholder:text-muted-foreground/45 transition-all"
-                                />
-                            </div>
-
-                            <div className="space-y-1.5">
-                                <label className="block text-xs font-bold text-muted-foreground uppercase flex items-center gap-1.5">
-                                    <Languages size={13} className="text-purple-500" />
-                                    <span>當地原名 (日/韓/原文)</span>
-                                </label>
-                                <input
-                                    name="info.native_name"
-                                    value={formData?.info?.native_name || ""}
-                                    onChange={onFormInputChange}
-                                    placeholder="例：きよみずでら / 叙々苑"
-                                    className="w-full bg-muted/25 border border-border/70 focus:border-primary focus:bg-background rounded-xl px-3 py-2 text-xs text-foreground outline-none placeholder:text-muted-foreground/45 transition-all"
-                                />
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* 🗺️ 地圖與定位專區 */}
-                    <div className="bg-card border border-border/80 p-4 rounded-2xl shadow-2xs space-y-3">
-                        <div className="flex items-center justify-between">
-                            <label className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-1.5">
-                                <Navigation size={13} className="text-primary" />
-                                <span>地圖導航與聯絡資訊</span>
-                            </label>
-                            {hasCoordinates ? (
-                                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20">
-                                    <Check size={11} /> 座標已鎖定
-                                </span>
-                            ) : (
-                                <span className="text-[11px] text-muted-foreground/70">
-                                    貼上地圖連結自動鎖定座標
-                                </span>
-                            )}
-                        </div>
-
-                        <div className="relative">
-                            <MapIcon
+                        <input
+                            type="text"
+                            placeholder="🔍 搜尋真實景點/店家自動帶入 (OpenStreetMap & Wiki)..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full bg-card border border-border/80 rounded-xl pl-9 pr-9 py-2 text-xs text-foreground placeholder:text-muted-foreground/60 outline-none focus:border-blue-500 transition-all shadow-2xs"
+                        />
+                        {isSearching && (
+                            <Loader2
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground animate-spin"
                                 size={14}
-                                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground"
                             />
-                            <input
-                                name="map_url"
-                                value={formData.map_url || ""}
-                                onChange={onFormInputChange}
-                                placeholder="貼上 Google Maps / Apple Maps 分享網址..."
-                                className="w-full bg-muted/25 border border-border/70 focus:border-primary focus:bg-background rounded-xl pl-9 pr-3 py-2 text-xs font-mono text-foreground outline-none placeholder:text-muted-foreground/45 transition-all"
-                            />
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-0.5">
-                            <div className="space-y-1.5">
-                                <label className="block text-xs font-bold text-muted-foreground uppercase flex items-center gap-1">
-                                    <MapPin size={12} className="text-rose-500" />
-                                    <span>地址 / 所在地</span>
-                                </label>
-                                <input
-                                    name="info.loc"
-                                    value={formData?.info?.loc || ""}
-                                    onChange={onFormInputChange}
-                                    placeholder="例：京都市東山區清水1丁目"
-                                    className="w-full bg-muted/25 border border-border/70 focus:border-primary focus:bg-background rounded-xl px-3 py-2 text-xs text-foreground outline-none placeholder:text-muted-foreground/45 transition-all"
-                                />
-                            </div>
-
-                            <div className="space-y-1.5">
-                                <label className="block text-xs font-bold text-muted-foreground uppercase flex items-center gap-1">
-                                    <Phone size={12} className="text-indigo-500" />
-                                    <span>聯絡電話 (導航/訂位)</span>
-                                </label>
-                                <input
-                                    name="info.phone"
-                                    value={formData?.info?.phone || ""}
-                                    onChange={onFormInputChange}
-                                    placeholder="例：+81 75-551-1171"
-                                    className="w-full bg-muted/25 border border-border/70 focus:border-primary focus:bg-background rounded-xl px-3 py-2 text-xs font-mono text-foreground outline-none placeholder:text-muted-foreground/45 transition-all"
-                                />
-                            </div>
-                        </div>
+                        )}
                     </div>
 
-                    {/* 💡 筆記、標籤與媒體介紹 */}
-                    <div className="bg-card border border-border/80 p-4 rounded-2xl shadow-2xs space-y-3.5">
-                        {/* 備忘貼士 */}
-                        <div className="space-y-1.5">
-                            <label className="block text-xs font-bold text-muted-foreground uppercase flex items-center gap-1.5">
-                                <Lightbulb size={13} className="text-amber-500" />
-                                <span>景點備忘貼士 (Tips)</span>
-                            </label>
-                            <input
-                                name="tips"
-                                value={formData.tips || ""}
-                                onChange={onFormInputChange}
-                                placeholder="例：建議早上 8:30 前抵達人潮較少、門票只收現金"
-                                className="w-full bg-muted/25 border border-border/70 focus:border-primary focus:bg-background rounded-xl px-3 py-2 text-xs text-foreground outline-none placeholder:text-muted-foreground/45 transition-all"
-                            />
-                        </div>
-
-                        {/* 自訂標籤 */}
-                        <div className="space-y-1.5">
-                            <label className="block text-xs font-bold text-muted-foreground uppercase flex items-center gap-1.5">
-                                <Tag size={13} className="text-primary" />
-                                <span>自訂標籤 (按 Enter 新增)</span>
-                            </label>
-                            <div className="flex flex-wrap items-center gap-1.5 p-2 bg-muted/25 border border-border/70 rounded-xl min-h-[38px]">
-                                {(formData.tags
-                                    ? formData.tags.split(",").filter((t) => t.trim() !== "")
-                                    : []
-                                ).map((tag, index) => (
-                                    <span
-                                        key={index}
-                                        className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-xs font-semibold bg-primary/10 text-primary border border-primary/20"
-                                    >
-                                        #{tag.trim()}
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                const currentTags = formData.tags
-                                                    ? formData.tags.split(",").map((t) => t.trim()).filter(Boolean)
-                                                    : [];
-                                                const newTags = currentTags.filter((_, i) => i !== index).join(",");
-                                                const event = {
-                                                    target: { name: "tags", value: newTags },
-                                                    currentTarget: { name: "tags", value: newTags },
-                                                } as unknown as ChangeEvent<HTMLInputElement>;
-                                                onFormInputChange(event);
-                                            }}
-                                            className="hover:bg-primary/20 rounded-full p-0.5 transition-colors cursor-pointer"
-                                        >
-                                            <X size={12} />
-                                        </button>
-                                    </span>
-                                ))}
-                                <input
-                                    type="text"
-                                    placeholder="新增標籤 (例: 必去, 伴手禮)..."
-                                    className="flex-1 min-w-[120px] bg-transparent text-xs text-foreground outline-none py-1 placeholder:text-muted-foreground/45"
-                                    onKeyDown={(e) => {
-                                        if (e.key === "Enter" || e.key === ",") {
-                                            e.preventDefault();
-                                            const val = e.currentTarget.value.trim().replace(/^#/, "");
-                                            if (val) {
-                                                const currentTags = formData.tags
-                                                    ? formData.tags.split(",").map((t) => t.trim()).filter(Boolean)
-                                                    : [];
-                                                if (!currentTags.includes(val)) {
-                                                    const newTags = [...currentTags, val].join(",");
-                                                    const event = {
-                                                        target: { name: "tags", value: newTags },
-                                                        currentTarget: { name: "tags", value: newTags },
-                                                    } as unknown as ChangeEvent<HTMLInputElement>;
-                                                    onFormInputChange(event);
-                                                }
-                                                e.currentTarget.value = "";
-                                            }
-                                        }
-                                    }}
-                                />
-                            </div>
-                        </div>
-
-                        {/* 封面圖片網址 */}
-                        <div className="space-y-1.5">
-                            <label className="block text-xs font-bold text-muted-foreground uppercase flex items-center gap-1.5">
-                                <ImageIcon size={13} className="text-teal-500" />
-                                <span>封面圖片網址</span>
-                            </label>
-                            <div className="flex items-center gap-2.5">
-                                {formData.image_url ? (
-                                    <img
-                                        src={formData.image_url}
-                                        alt="Preview"
-                                        className="w-10 h-10 rounded-xl object-cover border border-border/80 shadow-2xs shrink-0"
-                                    />
-                                ) : (
-                                    <div className="w-10 h-10 rounded-xl bg-muted/50 border border-border/80 flex items-center justify-center text-muted-foreground shrink-0">
-                                        <ImageIcon size={16} />
-                                    </div>
-                                )}
-                                <input
-                                    name="image_url"
-                                    value={formData.image_url || ""}
-                                    onChange={onFormInputChange}
-                                    placeholder="https://..."
-                                    className="flex-1 bg-muted/25 border border-border/70 focus:border-primary focus:bg-background rounded-xl px-3 py-2 text-xs font-mono text-foreground outline-none placeholder:text-muted-foreground/45 transition-all"
-                                />
-                            </div>
-                        </div>
-
-                        {/* 簡介說明 */}
-                        <div className="space-y-1.5">
-                            <label className="block text-xs font-bold text-muted-foreground uppercase flex items-center gap-1.5">
-                                <FileText size={13} className="text-muted-foreground" />
-                                <span>簡介說明</span>
-                            </label>
-                            <textarea
-                                name="description"
-                                value={formData.description || ""}
-                                onChange={onFormInputChange}
-                                rows={2}
-                                placeholder="特色重點或簡短介紹..."
-                                className="w-full bg-muted/25 border border-border/70 focus:border-primary focus:bg-background rounded-xl px-3 py-2 text-xs text-foreground outline-none placeholder:text-muted-foreground/45 transition-all resize-none no-scrollbar"
-                            />
-                        </div>
-                    </div>
-
-                    {mode !== "create" && (
-                        <div className="flex items-center justify-between text-[11px] text-muted-foreground px-1 pt-0.5">
-                            <span>ID: {formData.id}</span>
-                            <button
-                                type="button"
-                                onClick={handleCopy}
-                                className="inline-flex items-center gap-1 text-primary hover:underline cursor-pointer"
-                            >
-                                <Copy size={11} /> {copiedId ? "已複製" : "複製 ID"}
-                            </button>
-                        </div>
-                    )}
-                </div>
-            )}
-
-            {/* TAB 2: 營業與時間 (Hours & Schedule) */}
-            {activeTab === "hours" && (
-                <div className="space-y-4 pt-1 animate-in fade-in duration-200">
-                    {/* 住宿 Check-in / Out 或 營業時間 */}
-                    {formData.type === "hotel" || formData.type === "stay" ? (
-                        <div className="bg-card border border-border/80 p-4 rounded-2xl space-y-3">
-                            <span className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-1.5">
-                                <Clock size={13} className="text-primary" />
-                                <span>住宿時間設定 (Check-in & Check-out)</span>
-                            </span>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <CheckInOutField
-                                    label="入住時間 (Check-in)"
-                                    name="info.check_in"
-                                    value={formData?.info?.check_in || "15:00"}
-                                    onChange={onFormInputChange}
-                                />
-                                <CheckInOutField
-                                    label="退房時間 (Check-out)"
-                                    name="info.check_out"
-                                    value={formData?.info?.check_out || "11:00"}
-                                    onChange={onFormInputChange}
-                                />
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="bg-card border border-border/80 p-4 rounded-2xl space-y-4">
-                            <BusinessHoursField
-                                formData={formData}
-                                onFormInputChange={onFormInputChange}
-                            />
-
-                            {/* 公休日點選膠囊 (Mon - Sun) */}
-                            {!(formData?.info?.open || "").includes('"type":"per_day"') && (
-                                <div className="pt-2 border-t border-border/40">
-                                    <label className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-1.5 mb-2">
-                                        <CalendarX size={13} className="text-rose-500" />
-                                        <span>公休時間快捷設定</span>
-                                    </label>
-                                    <div className="flex items-center gap-1.5 flex-wrap">
-                                        {[
-                                            { day: "一", val: "週一" },
-                                            { day: "二", val: "週二" },
-                                            { day: "三", val: "週三" },
-                                            { day: "四", val: "週四" },
-                                            { day: "五", val: "週五" },
-                                            { day: "六", val: "週六" },
-                                            { day: "日", val: "週日" },
-                                        ].map((item) => {
-                                            const currentClosed = formData?.info?.closed_days || "";
-                                            const isSelected = currentClosed.includes(item.val);
-
-                                            const toggleDay = () => {
-                                                const daysList = ["週一", "週二", "週三", "週四", "週五", "週六", "週日"];
-                                                let activeDays = daysList.filter((d) => currentClosed.includes(d));
-
-                                                if (isSelected) {
-                                                    activeDays = activeDays.filter((d) => d !== item.val);
-                                                } else {
-                                                    activeDays.push(item.val);
-                                                    activeDays.sort((a, b) => daysList.indexOf(a) - daysList.indexOf(b));
-                                                }
-
-                                                const updated = activeDays.length === 0 ? "" : `${activeDays.join(", ")} 公休`;
-                                                const event = {
-                                                    target: { name: "info.closed_days", value: updated },
-                                                    currentTarget: { name: "info.closed_days", value: updated },
-                                                } as unknown as ChangeEvent<HTMLInputElement>;
-                                                onFormInputChange(event);
-                                            };
-
-                                            return (
-                                                <button
-                                                    key={item.val}
-                                                    type="button"
-                                                    onClick={toggleDay}
-                                                    className={`w-8 h-8 rounded-full text-xs font-bold transition-all border ${
-                                                        isSelected
-                                                            ? "bg-rose-500 text-white border-rose-500 shadow-xs"
-                                                            : "bg-muted/50 text-muted-foreground border-border hover:border-rose-300"
-                                                    }`}
-                                                >
-                                                    {item.day}
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    )}
-
-                    {/* ⏱️ 建議停留時間 */}
-                    <div className="bg-card border border-border/80 p-4 rounded-2xl space-y-2">
-                        <label className="block text-xs font-bold text-muted-foreground uppercase flex items-center gap-1.5">
-                            <Clock size={13} className="text-primary" />
-                            <span>建議停留時間</span>
-                        </label>
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                            {["30 分鐘", "1 小時", "1.5 小時", "2 小時", "半天", "一整天"].map((dur) => (
+                    {showSuggestions && searchResults.length > 0 && (
+                        <div className="mt-2 bg-card border border-border rounded-2xl shadow-xl max-h-56 overflow-y-auto no-scrollbar p-1.5 z-20">
+                            {searchResults.map((place) => (
                                 <button
-                                    key={dur}
+                                    key={place.place_id}
                                     type="button"
-                                    onClick={() =>
-                                        onFormInputChange({
-                                            target: { name: "info.stay_duration", value: dur },
-                                            currentTarget: { name: "info.stay_duration", value: dur },
-                                        } as unknown as ChangeEvent<HTMLInputElement>)
-                                    }
-                                    className={`px-3 py-1 rounded-xl text-xs font-medium transition-all ${
-                                        formData.info?.stay_duration === dur
-                                            ? "bg-primary text-primary-foreground font-bold shadow-xs"
-                                            : "bg-muted text-muted-foreground hover:text-foreground"
-                                    }`}
+                                    onClick={() => handleSelectResult(place)}
+                                    className="w-full text-left p-2.5 hover:bg-muted/70 rounded-xl transition-colors flex items-start gap-2.5 cursor-pointer"
                                 >
-                                    {dur}
+                                    <MapPin size={14} className="text-primary mt-0.5 shrink-0" />
+                                    <div className="truncate flex-1">
+                                        <div className="font-bold text-xs text-foreground truncate">
+                                            {place.name || place.display_name.split(",")[0]}
+                                        </div>
+                                        <div className="text-[10px] text-muted-foreground truncate">
+                                            {place.display_name}
+                                        </div>
+                                    </div>
                                 </button>
                             ))}
                         </div>
-                        <input
-                            type="text"
-                            name="info.stay_duration"
-                            value={formData.info?.stay_duration || ""}
-                            onChange={onFormInputChange}
-                            placeholder="或自訂停留時間 (例:1 小時 30 分鐘)"
-                            className="w-full bg-transparent border-b border-border py-1.5 text-xs text-foreground outline-none focus:border-primary"
-                        />
+                    )}
+
+                    {selectedPlace && (
+                        <div className="mt-2 bg-card border border-blue-500/30 p-3 rounded-2xl shadow-xs text-xs space-y-2">
+                            <div className="flex justify-between items-start">
+                                <span className="font-bold text-blue-500 flex items-center gap-1">
+                                    <Sparkles size={13} /> 找到地點資料：{selectedPlace.osm.name}
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={() => setSelectedPlace(null)}
+                                    className="text-muted-foreground hover:text-foreground cursor-pointer"
+                                >
+                                    <X size={14} />
+                                </button>
+                            </div>
+                            <div className="grid grid-cols-2 gap-1.5 text-[11px] text-muted-foreground">
+                                {selectedPlace.wiki?.title && <div><strong>英文:</strong> {selectedPlace.wiki.title}</div>}
+                                {selectedPlace.osm.extratags?.opening_hours && <div><strong>營業:</strong> {selectedPlace.osm.extratags.opening_hours}</div>}
+                            </div>
+                            <button
+                                type="button"
+                                onClick={handleApplyImport}
+                                className="w-full bg-blue-500 text-white py-1.5 rounded-xl text-xs font-bold hover:bg-blue-600 transition-colors cursor-pointer"
+                            >
+                                一鍵帶入選取資料
+                            </button>
+                        </div>
+                    )}
+                </div>
+
+                {/* iOS Segmented Control 分段切換列 */}
+                <div className="p-2.5 border-b border-border/60 bg-muted/30 shrink-0">
+                    <div className="flex items-center gap-1 p-1 bg-muted/60 rounded-xl border border-border/60 overflow-x-auto no-scrollbar">
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab("basic")}
+                            className={`flex-1 min-w-[85px] py-1.5 px-2 rounded-lg text-xs font-bold transition-all cursor-pointer shrink-0 flex items-center justify-center gap-1.5 ${
+                                activeTab === "basic"
+                                    ? "bg-card text-foreground shadow-xs border border-border/70"
+                                    : "text-muted-foreground hover:text-foreground"
+                            }`}
+                        >
+                            <Compass size={13} className={activeTab === "basic" ? "text-blue-500" : ""} />
+                            <span>基本與地圖</span>
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab("hours")}
+                            className={`flex-1 min-w-[85px] py-1.5 px-2 rounded-lg text-xs font-bold transition-all cursor-pointer shrink-0 flex items-center justify-center gap-1.5 ${
+                                activeTab === "hours"
+                                    ? "bg-card text-foreground shadow-xs border border-border/70"
+                                    : "text-muted-foreground hover:text-foreground"
+                            }`}
+                        >
+                            <Clock size={13} className={activeTab === "hours" ? "text-amber-500" : ""} />
+                            <span>營業與時間</span>
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab("items")}
+                            className={`flex-1 min-w-[85px] py-1.5 px-2 rounded-lg text-xs font-bold transition-all cursor-pointer shrink-0 flex items-center justify-center gap-1.5 ${
+                                activeTab === "items"
+                                    ? "bg-card text-foreground shadow-xs border border-border/70"
+                                    : "text-muted-foreground hover:text-foreground"
+                            }`}
+                        >
+                            <Utensils size={13} className={activeTab === "items" ? "text-rose-500" : ""} />
+                            <span>推薦品項</span>
+                            {recommendedCount > 0 && (
+                                <span className="w-4 h-4 rounded-full bg-rose-500 text-white text-[9px] font-bold flex items-center justify-center font-mono">
+                                    {recommendedCount}
+                                </span>
+                            )}
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab("details")}
+                            className={`flex-1 min-w-[85px] py-1.5 px-2 rounded-lg text-xs font-bold transition-all cursor-pointer shrink-0 flex items-center justify-center gap-1.5 ${
+                                activeTab === "details"
+                                    ? "bg-card text-foreground shadow-xs border border-border/70"
+                                    : "text-muted-foreground hover:text-foreground"
+                            }`}
+                        >
+                            <Sparkles size={13} className={activeTab === "details" ? "text-indigo-500" : ""} />
+                            <span>預算與細節</span>
+                        </button>
                     </div>
-
-                    {/* 🚇 交通指引 / 最近出口 */}
-                    <div className="bg-card border border-border/80 p-4 rounded-2xl space-y-2">
-                        <label className="block text-xs font-bold text-muted-foreground uppercase flex items-center gap-1.5">
-                            <Train size={13} className="text-indigo-500" />
-                            <span>交通指引 / 最近車站出口</span>
-                        </label>
-                        <input
-                            type="text"
-                            name="info.transit_access"
-                            value={formData.info?.transit_access || ""}
-                            onChange={onFormInputChange}
-                            placeholder="例：JR 新宿站東口步行 3 分鐘 / 清水道站下車"
-                            className="w-full bg-transparent border-b border-border py-1.5 text-xs text-foreground outline-none focus:border-primary"
-                        />
-                    </div>
                 </div>
-            )}
 
-            {/* TAB 3: 推薦品項 (Recommended Menu & Items) */}
-            {activeTab === "items" && (
-                <div className="pt-1 animate-in fade-in duration-200">
-                    <RecommendedItemsSection
-                        formData={formData}
-                        localCurrency={localCurrency}
-                        onFormInputChange={onFormInputChange}
-                    />
-                </div>
-            )}
+                {/* 表單主體 (滾動區域) */}
+                <form
+                    ref={formRef}
+                    id="place-form"
+                    onSubmit={onFormSubmit}
+                    className="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar"
+                >
+                    {/* TAB 1: 基本與地圖 (Apple HIG Inset Grouped) */}
+                    {activeTab === "basic" && (
+                        <div className="space-y-4 animate-in fade-in duration-150">
+                            {/* 分類選擇 */}
+                            <div className="space-y-1.5">
+                                <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider px-1">
+                                    地點分類 (CATEGORY)
+                                </span>
+                                <CategoryCustomSelect
+                                    value={formData.type || "sight"}
+                                    onChange={(newTypeId) => {
+                                        const event = {
+                                            target: { name: "type", value: newTypeId },
+                                            currentTarget: { name: "type", value: newTypeId },
+                                        } as unknown as ChangeEvent<HTMLInputElement>;
+                                        onFormInputChange(event);
+                                    }}
+                                />
+                            </div>
 
-            {/* TAB 4: 預算與細節 (Budget & Details) */}
-            {activeTab === "details" && (
-                <div className="pt-1 animate-in fade-in duration-200">
-                    <BudgetAndDetailsSection
-                        formData={formData}
-                        localCurrency={localCurrency}
-                        onFormInputChange={onFormInputChange}
-                    />
-                </div>
-            )}
-        </FormModal>
+                            {/* Section 1: 核心名稱 (iOS Inset Grouped Table) */}
+                            <div className="space-y-1.5">
+                                <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider px-1">
+                                    基本識別 (BASIC INFO)
+                                </span>
+                                <div className="bg-card border border-border/80 rounded-2xl overflow-hidden divide-y divide-border/60 text-xs shadow-2xs">
+                                    {/* 中文 / 主要名稱 */}
+                                    <div className="p-3 sm:p-3.5 flex items-center justify-between gap-3 bg-card hover:bg-muted/10 transition-colors">
+                                        <span className="text-muted-foreground w-24 sm:w-28 shrink-0 font-medium flex items-center gap-1">
+                                            <span>主要名稱</span>
+                                            <span className="text-rose-500 font-bold">*</span>
+                                        </span>
+                                        <input
+                                            type="text"
+                                            name="name"
+                                            required
+                                            value={formData.name}
+                                            onChange={onFormInputChange}
+                                            placeholder="例：清水寺 / HARBS 新宿店"
+                                            className="flex-1 text-right font-bold text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40"
+                                        />
+                                    </div>
+
+                                    {/* 英文名稱 / 羅馬拼音 */}
+                                    <div className="p-3 sm:p-3.5 flex items-center justify-between gap-3 bg-card hover:bg-muted/10 transition-colors">
+                                        <span className="text-muted-foreground w-24 sm:w-28 shrink-0 font-medium">
+                                            英文/拼音
+                                        </span>
+                                        <input
+                                            type="text"
+                                            name="eng_name"
+                                            value={formData.eng_name || ""}
+                                            onChange={onFormInputChange}
+                                            placeholder="例：Kiyomizu-dera / HARBS"
+                                            className="flex-1 text-right font-mono font-medium text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40"
+                                        />
+                                    </div>
+
+                                    {/* 當地原文 + 智慧多語系發音 */}
+                                    <div className="p-3 sm:p-3.5 flex items-center justify-between gap-3 bg-card hover:bg-muted/10 transition-colors">
+                                        <span className="text-muted-foreground w-24 sm:w-28 shrink-0 font-medium flex items-center gap-1">
+                                            <Languages size={13} className="text-purple-500" />
+                                            <span>當地原文</span>
+                                        </span>
+                                        <div className="flex-1 flex items-center justify-end gap-2">
+                                            <input
+                                                type="text"
+                                                name="info.native_name"
+                                                value={formData.info?.native_name || ""}
+                                                onChange={onFormInputChange}
+                                                placeholder="例: きよみずでら / วัดพระแก้ว"
+                                                className="w-full text-right font-medium text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40"
+                                            />
+                                            {formData.info?.native_name && (
+                                                <button
+                                                    type="button"
+                                                    onClick={handleSpeakNative}
+                                                    disabled={speaking}
+                                                    className={`p-1.5 rounded-full border transition-all shrink-0 cursor-pointer ${
+                                                        speaking
+                                                            ? "bg-blue-500 text-white border-blue-500 animate-pulse"
+                                                            : "bg-muted/40 text-blue-500 border-border/70 hover:bg-blue-500/10"
+                                                    }`}
+                                                    title={`點擊發音 (${detectedNativeLang.flag} ${detectedNativeLang.name})`}
+                                                >
+                                                    <Volume2 size={13} />
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Section 2: 地圖導航與交通 (iOS Inset Grouped Table) */}
+                            <div className="space-y-1.5">
+                                <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider px-1">
+                                    地圖與交通 (MAP & LOCATION)
+                                </span>
+                                <div className="bg-card border border-border/80 rounded-2xl overflow-hidden divide-y divide-border/60 text-xs shadow-2xs">
+                                    {/* 地圖連結 */}
+                                    <div className="p-3 sm:p-3.5 flex items-center justify-between gap-3 bg-card hover:bg-muted/10 transition-colors">
+                                        <span className="text-muted-foreground w-24 sm:w-28 shrink-0 font-medium flex items-center gap-1">
+                                            <MapIcon size={13} className="text-blue-500" />
+                                            <span>地圖網址</span>
+                                        </span>
+                                        <input
+                                            type="text"
+                                            name="map_url"
+                                            value={formData.map_url || ""}
+                                            onChange={onFormInputChange}
+                                            placeholder="Apple / Google Maps 連結"
+                                            className="flex-1 text-right font-mono font-medium text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40"
+                                        />
+                                    </div>
+
+                                    {/* 詳細地址 */}
+                                    <div className="p-3 sm:p-3.5 flex items-center justify-between gap-3 bg-card hover:bg-muted/10 transition-colors">
+                                        <span className="text-muted-foreground w-24 sm:w-28 shrink-0 font-medium flex items-center gap-1">
+                                            <MapPin size={13} className="text-rose-500" />
+                                            <span>詳細地址</span>
+                                        </span>
+                                        <div className="flex-1 flex items-center justify-end gap-1.5">
+                                            <input
+                                                type="text"
+                                                name="info.loc"
+                                                value={formData.info?.loc || ""}
+                                                onChange={onFormInputChange}
+                                                placeholder="例: 京都市東山區清水1丁目294"
+                                                className="w-full text-right font-medium text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40"
+                                            />
+                                            {hasCoordinates && (
+                                                <span className="px-1.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold shrink-0 font-mono">
+                                                    📍 GPS
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* 聯絡電話 */}
+                                    <div className="p-3 sm:p-3.5 flex items-center justify-between gap-3 bg-card hover:bg-muted/10 transition-colors">
+                                        <span className="text-muted-foreground w-24 sm:w-28 shrink-0 font-medium flex items-center gap-1">
+                                            <Phone size={13} className="text-emerald-500" />
+                                            <span>聯絡電話</span>
+                                        </span>
+                                        <input
+                                            type="text"
+                                            name="info.phone"
+                                            value={formData.info?.phone || ""}
+                                            onChange={onFormInputChange}
+                                            placeholder="例: +81 75-551-1171"
+                                            className="flex-1 text-right font-mono font-medium text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40"
+                                        />
+                                    </div>
+
+                                    {/* 交通指引 / 最近出口 */}
+                                    <div className="p-3 sm:p-3.5 flex items-center justify-between gap-3 bg-card hover:bg-muted/10 transition-colors">
+                                        <span className="text-muted-foreground w-24 sm:w-28 shrink-0 font-medium flex items-center gap-1">
+                                            <Train size={13} className="text-indigo-500" />
+                                            <span>交通指引</span>
+                                        </span>
+                                        <input
+                                            type="text"
+                                            name="info.transit_access"
+                                            value={formData.info?.transit_access || ""}
+                                            onChange={onFormInputChange}
+                                            placeholder="例: JR 新宿站東口步行 3 分鐘"
+                                            className="flex-1 text-right font-medium text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Section 3: 封面照片、備忘與標籤 (iOS Inset Grouped Table) */}
+                            <div className="space-y-1.5">
+                                <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider px-1">
+                                    封面照片與筆記 (PHOTO & NOTES)
+                                </span>
+                                <div className="bg-card border border-border/80 rounded-2xl overflow-hidden divide-y divide-border/60 text-xs shadow-2xs">
+                                    {/* 封面照片網址 + 即時預覽 */}
+                                    <div className="p-3 sm:p-3.5 space-y-2 bg-card">
+                                        <div className="flex items-center justify-between gap-3">
+                                            <span className="text-muted-foreground w-24 sm:w-28 shrink-0 font-medium flex items-center gap-1">
+                                                <ImageIcon size={13} className="text-blue-500" />
+                                                <span>封面照片</span>
+                                            </span>
+                                            <input
+                                                type="text"
+                                                name="image_url"
+                                                value={formData.image_url || ""}
+                                                onChange={onFormInputChange}
+                                                placeholder="https://... 照片網址"
+                                                className="flex-1 text-right font-mono font-medium text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40"
+                                            />
+                                        </div>
+                                        {formData.image_url && (
+                                            <div className="relative h-28 rounded-xl overflow-hidden border border-border/60 group">
+                                                <img
+                                                    src={formData.image_url}
+                                                    alt={formData.name || "預覽"}
+                                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                                    onError={(e) => {
+                                                        (e.target as HTMLElement).style.display = "none";
+                                                    }}
+                                                />
+                                                <span className="absolute bottom-1.5 right-1.5 px-2 py-0.5 rounded-md bg-black/60 backdrop-blur-md text-[10px] text-white font-bold">
+                                                    即時預覽
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* 旅遊備忘 / Tips 便箋 */}
+                                    <div className="p-3 sm:p-3.5 space-y-1.5 bg-card">
+                                        <span className="text-muted-foreground font-medium flex items-center gap-1.5">
+                                            <Lightbulb size={13} className="text-amber-500" />
+                                            <span>旅遊備忘 / 注意事項 (Tips)</span>
+                                        </span>
+                                        <textarea
+                                            name="tips"
+                                            value={formData.tips || ""}
+                                            onChange={onFormInputChange}
+                                            placeholder="例：建議早上 08:30 前抵達避開人潮，門票僅收現金 600 JPY，可自備水壺裝音羽之水。"
+                                            className="w-full bg-muted/20 border border-border/60 rounded-xl p-2.5 text-xs text-foreground outline-none focus:border-blue-500 min-h-[60px] resize-y placeholder:text-muted-foreground/40 leading-relaxed"
+                                        />
+                                    </div>
+
+                                    {/* 景點簡介說明 */}
+                                    <div className="p-3 sm:p-3.5 space-y-1.5 bg-card">
+                                        <span className="text-muted-foreground font-medium flex items-center gap-1.5">
+                                            <FileText size={13} className="text-indigo-500" />
+                                            <span>景點詳細簡介 (Description)</span>
+                                        </span>
+                                        <textarea
+                                            name="description"
+                                            value={formData.description || ""}
+                                            onChange={onFormInputChange}
+                                            placeholder="可記錄歷史背景、特色看點或網友推薦精華..."
+                                            className="w-full bg-muted/20 border border-border/60 rounded-xl p-2.5 text-xs text-foreground outline-none focus:border-blue-500 min-h-[60px] resize-y placeholder:text-muted-foreground/40 leading-relaxed"
+                                        />
+                                    </div>
+
+                                    {/* 自訂標籤管理 */}
+                                    <div className="p-3 sm:p-3.5 space-y-2 bg-card">
+                                        <span className="text-muted-foreground font-medium flex items-center gap-1.5">
+                                            <Tag size={13} className="text-emerald-500" />
+                                            <span>自訂標籤 (Tags)</span>
+                                        </span>
+                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                            {currentTags.map((tag) => (
+                                                <span
+                                                    key={tag}
+                                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 font-semibold border border-blue-500/20 text-xs shadow-2xs"
+                                                >
+                                                    <span>#{tag}</span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleRemoveTag(tag)}
+                                                        className="hover:text-rose-500 transition-colors cursor-pointer"
+                                                    >
+                                                        <X size={12} />
+                                                    </button>
+                                                </span>
+                                            ))}
+                                            <div className="inline-flex items-center gap-1 bg-muted/30 border border-border/60 rounded-xl px-2.5 py-1 text-xs">
+                                                <input
+                                                    type="text"
+                                                    value={tagInput}
+                                                    onChange={(e) => setTagInput(e.target.value)}
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === "Enter") {
+                                                            e.preventDefault();
+                                                            handleAddTag();
+                                                        }
+                                                    }}
+                                                    placeholder="輸入標籤按 Enter"
+                                                    className="bg-transparent outline-none text-xs w-28 text-foreground placeholder:text-muted-foreground/40"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={handleAddTag}
+                                                    className="text-blue-500 hover:text-blue-600 cursor-pointer font-bold"
+                                                >
+                                                    <Plus size={13} />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* 地點 ID 複製 (編輯模式) */}
+                                    {mode === "edit" && formData.id && (
+                                        <div className="p-3 sm:p-3.5 flex items-center justify-between gap-3 bg-muted/5">
+                                            <span className="text-muted-foreground text-[11px] font-medium font-mono">
+                                                ID: {formData.id}
+                                            </span>
+                                            <button
+                                                type="button"
+                                                onClick={handleCopy}
+                                                className="inline-flex items-center gap-1 text-[11px] text-blue-500 hover:text-blue-600 font-semibold cursor-pointer"
+                                            >
+                                                {copiedId ? (
+                                                    <>
+                                                        <Check size={12} className="text-emerald-500" />
+                                                        <span>已複製</span>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Copy size={12} />
+                                                        <span>複製 ID</span>
+                                                    </>
+                                                )}
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* TAB 2: 營業與時間 (Apple HIG Inset Grouped) */}
+                    {activeTab === "hours" && (
+                        <div className="space-y-4 animate-in fade-in duration-150">
+                            {formData.type === "hotel" || formData.type === "stay" ? (
+                                <div className="space-y-1.5">
+                                    <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider px-1">
+                                        住宿時間設定 (CHECK-IN / OUT)
+                                    </span>
+                                    <div className="rounded-2xl bg-card border border-border/80 divide-y divide-border/50 text-xs overflow-hidden shadow-2xs">
+                                        <div className="p-3 sm:p-3.5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            <CheckInOutField
+                                                label="入住時間 (Check-in)"
+                                                name="info.check_in"
+                                                value={formData?.info?.check_in || "15:00"}
+                                                onChange={onFormInputChange}
+                                            />
+                                            <CheckInOutField
+                                                label="退房時間 (Check-out)"
+                                                name="info.check_out"
+                                                value={formData?.info?.check_out || "11:00"}
+                                                onChange={onFormInputChange}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <BusinessHoursSection
+                                    formData={formData}
+                                    onFormInputChange={onFormInputChange}
+                                />
+                            )}
+                        </div>
+                    )}
+
+                    {/* TAB 3: 推薦品項 (Apple HIG Inset Grouped) */}
+                    {activeTab === "items" && (
+                        <div className="space-y-4 animate-in fade-in duration-150">
+                            <RecommendedItemsSection
+                                formData={formData}
+                                localCurrency={localCurrency}
+                                onFormInputChange={onFormInputChange}
+                            />
+                        </div>
+                    )}
+
+                    {/* TAB 4: 預算與細節 (Apple HIG Inset Grouped) */}
+                    {activeTab === "details" && (
+                        <div className="space-y-4 animate-in fade-in duration-150">
+                            <BudgetAndDetailsSection
+                                formData={formData}
+                                localCurrency={localCurrency}
+                                onFormInputChange={onFormInputChange}
+                            />
+                        </div>
+                    )}
+                </form>
+            </div>
+        </div>
     );
 };
 

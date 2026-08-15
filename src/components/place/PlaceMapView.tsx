@@ -23,10 +23,14 @@ import {
     Train,
     Ticket,
     Utensils,
+    Volume2,
+    Globe,
+    Sparkles,
 } from "lucide-react";
 import type { PlaceVM } from "../../models/types/PlaceTypes";
 import PlaceMapController from "./PlaceMapController";
 import { useTheme } from "../../contexts/ThemeContext";
+import { detectLanguage, playPronunciation } from "../../utils/SpeechLanguageUtil";
 import {
     RoutingService,
     RouteMode,
@@ -115,19 +119,36 @@ const MAP_STYLES: {
     },
 ];
 
-// Rich Interactive Landmark Popup Component
-const PlaceMarkerPopupContent = ({
-    place,
-    index,
-}: {
-    place: PlaceVM;
-    index: number;
-}) => {
+// Rich Interactive Landmark Popup Component (iOS Style Map Card)
+const PlaceMarkerPopupContent = ({ place, index }: { place: PlaceVM; index: number }) => {
     const [isCopied, setIsCopied] = useState(false);
-    const CategoryIcon = getCategoryIcon(place.type);
+    const [speaking, setSpeaking] = useState(false);
+
     const categoryColor =
-        DEFAULT_CATEGORY_COLORS[place.type || ""] || "#4f46e5";
+        DEFAULT_CATEGORY_COLORS[place.type || ""] || "#3b82f6";
+    const CategoryIcon = getCategoryIcon(place.type);
     const categoryLabel = getCategoryLabel(place.type);
+
+    const detectedLang = detectLanguage(place.info?.native_name, {
+        address: place.info?.loc,
+        currency: place.info?.price,
+    });
+
+    const handleSpeak = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!place.info?.native_name) return;
+        playPronunciation(place.info.native_name, {
+            context: {
+                address: place.info?.loc,
+                mapUrl: place.map_url,
+                currency: place.info?.price,
+            },
+            onStart: () => setSpeaking(true),
+            onEnd: () => setSpeaking(false),
+            onError: () => setSpeaking(false),
+        });
+    };
 
     const smartNav = useMemo(() => {
         return {
@@ -154,351 +175,242 @@ const PlaceMarkerPopupContent = ({
         }
     };
 
+    const businessStatus = getBusinessStatus(place.info?.open, place.info?.closed_days);
+
     return (
-        <div className="w-[280px] sm:w-[310px] overflow-hidden text-card-foreground">
-            {/* Header Image or Gradient Banner */}
+        <div className="w-[280px] sm:w-[310px] max-w-[calc(100vw-36px)] overflow-hidden text-card-foreground font-sans box-border">
+            {/* Header Image with Floating Badges */}
             {place.image_url ? (
-                <div className="relative w-full h-32 overflow-hidden bg-muted">
+                <div className="relative w-full h-34 overflow-hidden bg-muted">
                     <img
                         src={place.image_url}
                         alt={place.name}
                         className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
                     
-                    {/* Top Badges */}
+                    {/* Top Left Badges */}
                     <div className="absolute top-2 left-2 flex items-center gap-1.5 z-10">
-                        <span className="w-5 h-5 rounded-full bg-white/90 text-zinc-900 font-extrabold text-[11px] flex items-center justify-center shadow-md">
+                        <span className="w-5 h-5 rounded-full bg-white text-zinc-900 font-extrabold text-[11px] flex items-center justify-center shadow-md">
                             {index + 1}
                         </span>
                         <span
                             className="px-2 py-0.5 rounded-full text-[10px] font-bold text-white shadow-sm flex items-center gap-1 backdrop-blur-md"
-                            style={{ backgroundColor: `${categoryColor}cc` }}
+                            style={{ backgroundColor: `${categoryColor}ee` }}
                         >
                             <CategoryIcon size={10} />
                             {categoryLabel}
                         </span>
                     </div>
-
-                    {/* Rating Badge (if available) */}
-                    {place.info?.rating && (
-                        <div className="absolute top-2 right-8 flex items-center gap-1 bg-black/60 backdrop-blur-md px-2 py-0.5 rounded-full text-[10px] text-amber-300 font-bold border border-white/15">
-                            <Star size={11} className="fill-amber-400 text-amber-400" />
-                            <span>{place.info.rating}</span>
-                            {place.info.rating_count && (
-                                <span className="text-white/60 text-[9px]">
-                                    ({place.info.rating_count})
-                                </span>
-                            )}
-                        </div>
-                    )}
-
-                    {/* Title Overlay in Image */}
-                    <div className="absolute bottom-2 left-3 right-3 text-white">
-                        <h3 className="font-bold text-sm leading-tight drop-shadow-md truncate">
-                            {place.name}
-                        </h3>
-                        {place.info?.native_name && (
-                            <p className="text-[11px] text-white/80 truncate">
-                                {place.info.native_name}
-                            </p>
-                        )}
-                    </div>
                 </div>
             ) : (
-                <div className="p-3 border-b border-border bg-muted/40">
-                    <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                            <span className="w-5 h-5 rounded-full bg-primary text-primary-foreground font-extrabold text-[11px] flex items-center justify-center shrink-0 shadow-xs">
-                                {index + 1}
-                            </span>
-                            <span
-                                className="px-2 py-0.5 rounded-full text-[10px] font-bold text-white shrink-0 flex items-center gap-1"
-                                style={{ backgroundColor: categoryColor }}
-                            >
-                                <CategoryIcon size={10} />
-                                {categoryLabel}
-                            </span>
-                            {place.info?.rating && (
-                                <div className="flex items-center gap-1 text-[10px] text-amber-500 font-bold ml-auto">
-                                    <Star size={11} className="fill-amber-500 text-amber-500" />
-                                    <span>{place.info.rating}</span>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                    <div className="mt-1.5">
-                        <h3 className="font-bold text-sm text-foreground leading-snug">
-                            {place.name}
-                        </h3>
-                        {place.info?.native_name && (
-                            <p className="text-[11px] text-muted-foreground">
-                                {place.info.native_name}
-                            </p>
-                        )}
-                    </div>
+                <div className="p-3 border-b border-border bg-muted/40 flex items-center gap-1.5">
+                    <span className="w-5 h-5 rounded-full bg-primary text-primary-foreground font-extrabold text-[11px] flex items-center justify-center shrink-0 shadow-xs">
+                        {index + 1}
+                    </span>
+                    <span
+                        className="px-2 py-0.5 rounded-full text-[10px] font-bold text-white shrink-0 flex items-center gap-1"
+                        style={{ backgroundColor: categoryColor }}
+                    >
+                        <CategoryIcon size={10} />
+                        {categoryLabel}
+                    </span>
                 </div>
             )}
 
             {/* Body Content */}
-            <div className="p-3 space-y-2 text-xs">
-                {/* Description / Note */}
-                {place.description && (
-                    <div className="bg-muted/60 p-2 rounded-lg text-muted-foreground text-[11px] leading-relaxed whitespace-pre-wrap border border-border/50">
-                        {place.description}
-                    </div>
+            <div className="p-3.5 space-y-2.5 text-xs">
+                {/* 1. 地點名稱與英文副標題 (iOS POC 樣式) */}
+                <div className="space-y-0.5">
+                    <h3 className="font-black text-sm sm:text-base text-foreground leading-snug tracking-tight">
+                        {place.name}
+                    </h3>
+                    {place.eng_name && (
+                        <p className="text-[11px] text-muted-foreground font-mono truncate">
+                            {place.eng_name}
+                        </p>
+                    )}
+                </div>
+
+                {/* 2. 原文發音按鈕 */}
+                {place.info?.native_name && (
+                    <button
+                        type="button"
+                        onClick={handleSpeak}
+                        className="w-full flex items-center justify-between gap-1.5 p-1.5 px-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 hover:bg-blue-500/15 transition-all text-left cursor-pointer"
+                        title={`以 ${detectedLang.name} 發音`}
+                    >
+                        <div className="flex items-center gap-1.5 truncate">
+                            <Volume2 size={13} className={speaking ? "text-amber-500 animate-pulse" : ""} />
+                            <span className="font-bold text-foreground text-[11px] truncate">
+                                {place.info.native_name}
+                            </span>
+                        </div>
+                        <span className="text-[10px] text-muted-foreground font-mono shrink-0">
+                            {detectedLang.flag} {detectedLang.name}
+                        </span>
+                    </button>
                 )}
 
-                {/* Practical Information List */}
-                <div className="space-y-1.5 text-muted-foreground">
-                    {/* Business Hours */}
-                    {place.info?.open && (() => {
-                        const businessStatus = getBusinessStatus(place.info.open, place.info.closed_days);
-                        return (
-                            <div className="flex items-start gap-1.5">
-                                <Clock size={13} className="text-primary mt-0.5 shrink-0" />
-                                <div className="text-foreground/90 leading-tight space-y-0.5 flex-1 min-w-0">
-                                    <div className="flex items-center gap-1.5 flex-wrap">
-                                        {businessStatus.status === "open" && (
-                                            <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-md border border-emerald-500/20">
-                                                ● 營業中
-                                            </span>
-                                        )}
-                                        {businessStatus.status === "closing_soon" && (
-                                            <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded-md border border-amber-500/20">
-                                                ● 即將打烊
-                                            </span>
-                                        )}
-                                        {businessStatus.status === "closed" && (
-                                            <span className="text-[10px] font-bold text-rose-600 dark:text-rose-400 bg-rose-500/10 px-1.5 py-0.5 rounded-md border border-rose-500/20">
-                                                ● 休息中
-                                            </span>
-                                        )}
-                                        {businessStatus.status === "closed_today" && (
-                                            <span className="text-[10px] font-bold text-rose-600 dark:text-rose-400 bg-rose-500/15 px-1.5 py-0.5 rounded-md border border-rose-500/30">
-                                                ● 今日公休
-                                            </span>
-                                        )}
-                                        <span className="text-xs font-medium text-foreground/90 truncate">
-                                            {businessStatus.parsed.isPerDay
-                                                ? `今日(${businessStatus.parsed.todaySchedule?.shortLabel || ""}) ${businessStatus.todayHoursText}`
-                                                : businessStatus.allHoursSummary}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        );
-                    })()}
-
-                    {/* Closed Days */}
-                    {place.info?.closed_days && (
-                        <div className="flex items-start gap-1.5">
-                            <CalendarX size={13} className="text-destructive mt-0.5 shrink-0" />
-                            <span className="text-foreground/90 leading-tight">
-                                <span className="font-medium text-muted-foreground">公休日：</span>
-                                {place.info.closed_days}
-                            </span>
-                        </div>
+                {/* 3. 營業狀態與評分列 (不與關閉按鈕重疊) */}
+                <div className="flex items-center gap-2 flex-wrap text-[11px]">
+                    {place.info?.open && (
+                        <span className={`px-1.5 py-0.5 rounded font-extrabold text-[10px] ${businessStatus.badgeColor}`}>
+                            {businessStatus.badgeText}
+                        </span>
                     )}
 
-                    {/* Hotel Check-in / Check-out */}
-                    {(place.info?.check_in || place.info?.check_out) && (
-                        <div className="flex items-start gap-1.5">
-                            <Bed size={13} className="text-blue-500 mt-0.5 shrink-0" />
-                            <span className="text-foreground/90 leading-tight">
-                                {place.info.check_in && `入住 ${place.info.check_in}`}
-                                {place.info.check_in && place.info.check_out && " • "}
-                                {place.info.check_out && `退房 ${place.info.check_out}`}
-                            </span>
-                        </div>
-                    )}
-
-                    {/* Price / Budget */}
-                    {place.info?.price && (
-                        <div className="flex items-start gap-1.5">
-                            <DollarSign size={13} className="text-emerald-500 mt-0.5 shrink-0" />
-                            <span className="text-foreground/90 leading-tight">
-                                <span className="font-medium text-muted-foreground">門票/預算：</span>
-                                {place.info.price}
-                            </span>
-                        </div>
-                    )}
-
-                    {/* Phone Number */}
-                    {place.info?.phone && (
-                        <div className="flex items-center gap-1.5">
-                            <Phone size={13} className="text-indigo-500 shrink-0" />
-                            <a
-                                href={`tel:${place.info.phone}`}
-                                className="text-primary hover:underline font-mono"
-                            >
-                                {place.info.phone}
-                            </a>
-                        </div>
-                    )}
-
-                    {/* Location Address */}
-                    {place.info?.loc && (
-                        <div className="flex items-start justify-between gap-1.5">
-                            <div className="flex items-start gap-1.5 flex-1 min-w-0">
-                                <MapPin size={13} className="text-rose-500 mt-0.5 shrink-0" />
-                                <span className="text-foreground/80 leading-tight line-clamp-2">
-                                    {place.info.loc}
+                    {place.info?.rating && (
+                        <span className="flex items-center gap-0.5 text-amber-500 text-[10px] font-bold">
+                            <Star size={11} className="fill-amber-400 text-amber-400" />
+                            <span>{place.info.rating}</span>
+                            {place.info.rating_count && (
+                                <span className="text-muted-foreground text-[9px]">
+                                    ({place.info.rating_count})
                                 </span>
-                            </div>
-                            <button
-                                type="button"
-                                onClick={handleCopyAddress}
-                                title="複製地址"
-                                className="p-1 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors shrink-0"
-                            >
-                                {isCopied ? (
-                                    <Check size={12} className="text-emerald-600" />
-                                ) : (
-                                    <Copy size={12} />
-                                )}
-                            </button>
-                        </div>
-                    )}
-
-                    {/* Stay Duration */}
-                    {place.info?.stay_duration && (
-                        <div className="flex items-center gap-1.5">
-                            <Clock size={13} className="text-primary mt-0.5 shrink-0" />
-                            <span className="text-foreground/90 leading-tight">
-                                <span className="font-medium text-muted-foreground">建議停留：</span>
-                                <strong className="font-semibold text-foreground">{place.info.stay_duration}</strong>
-                            </span>
-                        </div>
-                    )}
-
-                    {/* Transit Access */}
-                    {place.info?.transit_access && (
-                        <div className="flex items-start gap-1.5">
-                            <Train size={13} className="text-indigo-500 mt-0.5 shrink-0" />
-                            <span className="text-foreground/90 leading-tight">
-                                {place.info.transit_access}
-                            </span>
-                        </div>
-                    )}
-
-                    {/* Booking Status & Link */}
-                    {(place.info?.booking_status || place.info?.booking_url) && (
-                        <div className="flex items-center justify-between gap-1 pt-1 border-t border-border/40 text-[11px]">
-                            <div className="flex items-center gap-1">
-                                <Ticket size={12} className="text-emerald-500 shrink-0" />
-                                <span>
-                                    {place.info?.booking_status === "required" && (
-                                        <span className="text-rose-600 dark:text-rose-400 font-semibold">需提前預約</span>
-                                    )}
-                                    {place.info?.booking_status === "recommended" && (
-                                        <span className="text-amber-600 dark:text-amber-400 font-semibold">建議預約</span>
-                                    )}
-                                    {place.info?.booking_status === "walk_in" && (
-                                        <span className="text-blue-600 dark:text-blue-400 font-semibold">現場排隊</span>
-                                    )}
-                                    {place.info?.booking_status === "none" && (
-                                        <span className="text-emerald-600 dark:text-emerald-400 font-semibold">免預約</span>
-                                    )}
-                                    {!["required", "recommended", "walk_in", "none"].includes(place.info?.booking_status || "") && place.info?.booking_status}
-                                </span>
-                            </div>
-                            {place.info?.booking_url && (
-                                <a
-                                    href={place.info.booking_url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold hover:underline"
-                                >
-                                    <span>預約購票</span>
-                                    <ExternalLink size={9} />
-                                </a>
                             )}
+                        </span>
+                    )}
+
+                    {place.info?.stay_duration && (
+                        <span className="text-[10px] text-muted-foreground">
+                            ⏱️ {place.info.stay_duration}
+                        </span>
+                    )}
+                </div>
+
+                {/* 4. iOS 4 大快捷動作行 (導航 / 致電 / 預約 / 官網) */}
+                <div className="grid grid-cols-4 gap-1 p-1 bg-muted/40 rounded-xl border border-border/50 text-center">
+                    {/* 導航 */}
+                    <a
+                        href={smartNav.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex flex-col items-center justify-center gap-0.5 p-1.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 transition-all cursor-pointer shadow-2xs"
+                        title={`在 ${smartNav.appName} 中開啟`}
+                    >
+                        <Navigation size={13} />
+                        <span className="text-[9px] font-bold">導航</span>
+                    </a>
+
+                    {/* 致電 */}
+                    {place.info?.phone ? (
+                        <a
+                            href={`tel:${place.info.phone}`}
+                            className="flex flex-col items-center justify-center gap-0.5 p-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 transition-all cursor-pointer shadow-2xs"
+                            title="撥打電話"
+                        >
+                            <Phone size={13} />
+                            <span className="text-[9px] font-bold">致電</span>
+                        </a>
+                    ) : (
+                        <div className="flex flex-col items-center justify-center gap-0.5 p-1.5 rounded-lg opacity-30 text-muted-foreground">
+                            <Phone size={13} />
+                            <span className="text-[9px]">致電</span>
                         </div>
                     )}
 
-                    {/* Recommended Items Preview */}
-                    {place.info?.recommended_items && place.info.recommended_items.length > 0 && (
-                        <div className="bg-muted/30 p-2 rounded-lg border border-border/50 space-y-1">
-                            <div className="flex items-center gap-1 text-[11px] font-bold text-foreground">
-                                <Utensils size={11} className="text-amber-500" />
-                                <span>{place.type === "shopping" ? "🛍️ 推薦商品" : "🍽️ 必點推薦"}</span>
-                            </div>
-                            <div className="space-y-1">
-                                {place.info.recommended_items.slice(0, 3).map((item, i) => (
-                                    <div key={i} className="flex items-center justify-between text-[11px] gap-1">
-                                        <div className="truncate min-w-0">
-                                            <span className="text-foreground/90 font-medium">{item.name}</span>
-                                            {item.native_name && (
-                                                <span className="text-[10px] text-muted-foreground ml-1 font-mono">
-                                                    ({item.native_name})
-                                                </span>
-                                            )}
-                                        </div>
-                                        {item.price && (
-                                            <span className="font-mono text-[10px] font-bold text-emerald-600 dark:text-emerald-400 shrink-0 ml-1">
-                                                {item.price}
-                                            </span>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
+                    {/* 預約 */}
+                    {place.info?.booking_url ? (
+                        <a
+                            href={place.info.booking_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex flex-col items-center justify-center gap-0.5 p-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 transition-all cursor-pointer shadow-2xs"
+                            title="預約/購票"
+                        >
+                            <Ticket size={13} />
+                            <span className="text-[9px] font-bold">預約</span>
+                        </a>
+                    ) : (
+                        <div className="flex flex-col items-center justify-center gap-0.5 p-1.5 rounded-lg opacity-30 text-muted-foreground">
+                            <Ticket size={13} />
+                            <span className="text-[9px]">預約</span>
                         </div>
                     )}
 
-                    {/* Tags */}
-                    {place.tags && (
-                        <div className="flex items-center gap-1 flex-wrap pt-1">
-                            <Tag size={11} className="text-muted-foreground shrink-0" />
-                            {place.tags
-                                .split(",")
-                                .map((t) => t.trim())
-                                .filter(Boolean)
-                                .map((tag, tagIdx) => (
-                                    <span
-                                        key={tagIdx}
-                                        className="px-1.5 py-0.2 text-[10px] bg-secondary text-secondary-foreground rounded font-medium"
-                                    >
-                                        #{tag}
-                                    </span>
-                                ))}
+                    {/* 官網 */}
+                    {place.info?.website_url ? (
+                        <a
+                            href={place.info.website_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex flex-col items-center justify-center gap-0.5 p-1.5 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-600 dark:text-purple-400 transition-all cursor-pointer shadow-2xs"
+                            title="官方網站"
+                        >
+                            <Globe size={13} />
+                            <span className="text-[9px] font-bold">官網</span>
+                        </a>
+                    ) : (
+                        <div className="flex flex-col items-center justify-center gap-0.5 p-1.5 rounded-lg opacity-30 text-muted-foreground">
+                            <Globe size={13} />
+                            <span className="text-[9px]">官網</span>
                         </div>
                     )}
                 </div>
-            </div>
 
-            {/* Quick Actions Footer */}
-            <div className="px-3 pb-3 pt-1 flex items-center gap-2 border-t border-border/50">
-                <a
-                    href={smartNav.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-1 flex items-center justify-center gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-semibold py-1.5 px-3 rounded-lg transition-all shadow-xs"
-                >
-                    <Navigation size={12} />
-                    <span>{smartNav.label}</span>
-                    <ExternalLink size={10} className="opacity-70" />
-                </a>
+                {/* 5. Tips 便箋 */}
+                {place.tips && (
+                    <div className="bg-amber-500/10 border border-amber-500/30 p-2 rounded-xl text-[11px] text-foreground flex items-start gap-1.5">
+                        <Sparkles size={13} className="text-amber-500 shrink-0 mt-0.5" />
+                        <div className="line-clamp-2">
+                            <strong className="text-amber-600 dark:text-amber-400 font-bold mr-1">Tips:</strong>
+                            {place.tips}
+                        </div>
+                    </div>
+                )}
 
+                {/* 6. 推薦商品 / 必點菜單 */}
+                {place.info?.recommended_items && place.info.recommended_items.length > 0 && (
+                    <div className="bg-muted/30 p-2 rounded-xl border border-border/50 space-y-1">
+                        <div className="flex items-center gap-1 text-[11px] font-bold text-foreground">
+                            <Utensils size={11} className="text-amber-500" />
+                            <span>{place.type === "shopping" ? "🛍️ 推薦商品" : "🍽️ 必點推薦"}</span>
+                        </div>
+                        <div className="space-y-1">
+                            {place.info.recommended_items.slice(0, 2).map((item, i) => (
+                                <div key={i} className="flex items-center justify-between text-[11px] gap-1">
+                                    <div className="truncate min-w-0">
+                                        <span className="text-foreground font-medium">{item.name}</span>
+                                        {item.native_name && (
+                                            <span className="text-[10px] text-muted-foreground ml-1 font-mono">
+                                                ({item.native_name})
+                                            </span>
+                                        )}
+                                    </div>
+                                    {item.price && (
+                                        <span className="font-mono text-[10px] font-bold text-emerald-600 dark:text-emerald-400 shrink-0 ml-1">
+                                            {item.price}
+                                        </span>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* 7. 地址與複製按鈕 */}
                 {place.info?.loc && (
-                    <button
-                        type="button"
-                        onClick={handleCopyAddress}
-                        className="flex items-center justify-center gap-1 bg-secondary text-secondary-foreground hover:bg-secondary/80 text-xs font-medium py-1.5 px-2.5 rounded-lg transition-all border border-border/60"
-                        title="複製完整地址"
-                    >
-                        {isCopied ? (
-                            <>
+                    <div className="flex items-start justify-between gap-1.5 pt-0.5">
+                        <div className="flex items-start gap-1.5 flex-1 min-w-0">
+                            <MapPin size={12} className="text-rose-500 mt-0.5 shrink-0" />
+                            <span className="text-foreground/80 leading-tight text-[11px] line-clamp-2">
+                                {place.info.loc}
+                            </span>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={handleCopyAddress}
+                            title="複製地址"
+                            className="p-1 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors shrink-0 cursor-pointer"
+                        >
+                            {isCopied ? (
                                 <Check size={12} className="text-emerald-600" />
-                                <span className="text-emerald-600 font-semibold">已複製</span>
-                            </>
-                        ) : (
-                            <>
+                            ) : (
                                 <Copy size={12} />
-                                <span>複製</span>
-                            </>
-                        )}
-                    </button>
+                            )}
+                        </button>
+                    </div>
                 )}
             </div>
         </div>
@@ -674,7 +586,7 @@ const PlaceMapView = ({
     const routeStyle = getRouteStyle();
 
     return (
-        <div className="w-full h-full relative">
+        <div className="w-full h-full relative max-w-full overflow-hidden">
             <MapContainer
                 key={`${isDark ? "map-dark" : "map-light"}-${selectedMapStyle}`}
                 className="w-full h-full flex-1 rounded-xl overflow-hidden shadow-md relative z-0"
@@ -749,109 +661,109 @@ const PlaceMapView = ({
             </MapContainer>
 
             {/* Top-Right Control Bar: Multi-Mode Selector & Map Style Switcher */}
-            <div className="absolute top-3 right-3 z-10 flex flex-col items-end gap-2 pointer-events-auto">
+            <div className="absolute top-2.5 right-2.5 z-10 flex flex-col items-end gap-1.5 pointer-events-auto max-w-[calc(100%-20px)]">
                 {/* 1. Multi-transit Routing Mode Buttons */}
                 {showRouteLine && validPlaces.length >= 2 && (
-                    <div className="flex flex-col items-end gap-1.5">
-                        <div className="flex items-center gap-1 bg-background/95 backdrop-blur-md px-1.5 py-1 rounded-xl shadow-md border border-border/80 text-xs">
+                    <div className="flex flex-col items-end gap-1.5 max-w-full">
+                        <div className="flex items-center gap-0.5 sm:gap-1 bg-background/95 backdrop-blur-md p-1 rounded-xl shadow-md border border-border/80 text-xs max-w-full overflow-x-auto no-scrollbar">
                             {/* 開車 */}
                             <button
                                 type="button"
                                 onClick={() => setRouteMode("driving")}
-                                className={`flex items-center gap-1 px-2 py-1 rounded-lg transition-all font-medium ${
+                                className={`flex items-center gap-1 px-1.5 sm:px-2 py-1 rounded-lg transition-all font-medium shrink-0 ${
                                     routeMode === "driving"
                                         ? "bg-blue-600 text-white shadow-xs"
                                         : "text-muted-foreground hover:text-foreground hover:bg-muted"
                                 }`}
                                 title="開車路線"
                             >
-                                <Car size={13} />
-                                <span className="text-[11px]">開車</span>
+                                <Car size={12} />
+                                <span className="text-[10px] sm:text-[11px]">開車</span>
                             </button>
 
                             {/* 機車 */}
                             <button
                                 type="button"
                                 onClick={() => setRouteMode("motorcycle")}
-                                className={`flex items-center gap-1 px-2 py-1 rounded-lg transition-all font-medium ${
+                                className={`flex items-center gap-1 px-1.5 sm:px-2 py-1 rounded-lg transition-all font-medium shrink-0 ${
                                     routeMode === "motorcycle"
                                         ? "bg-purple-600 text-white shadow-xs"
                                         : "text-muted-foreground hover:text-foreground hover:bg-muted"
                                 }`}
                                 title="機車 / 摩托車"
                             >
-                                <span className="text-[12px] leading-none">🛵</span>
-                                <span className="text-[11px]">機車</span>
+                                <span className="text-[11px] leading-none">🛵</span>
+                                <span className="text-[10px] sm:text-[11px]">機車</span>
                             </button>
 
                             {/* 騎車 */}
                             <button
                                 type="button"
                                 onClick={() => setRouteMode("cycling")}
-                                className={`flex items-center gap-1 px-2 py-1 rounded-lg transition-all font-medium ${
+                                className={`flex items-center gap-1 px-1.5 sm:px-2 py-1 rounded-lg transition-all font-medium shrink-0 ${
                                     routeMode === "cycling"
                                         ? "bg-amber-600 text-white shadow-xs"
                                         : "text-muted-foreground hover:text-foreground hover:bg-muted"
                                 }`}
                                 title="自行車路線"
                             >
-                                <Bike size={13} />
-                                <span className="text-[11px]">自行車</span>
+                                <Bike size={12} />
+                                <span className="text-[10px] sm:text-[11px]">單車</span>
                             </button>
 
                             {/* 步行 */}
                             <button
                                 type="button"
                                 onClick={() => setRouteMode("walking")}
-                                className={`flex items-center gap-1 px-2 py-1 rounded-lg transition-all font-medium ${
+                                className={`flex items-center gap-1 px-1.5 sm:px-2 py-1 rounded-lg transition-all font-medium shrink-0 ${
                                     routeMode === "walking"
                                         ? "bg-emerald-600 text-white shadow-xs"
                                         : "text-muted-foreground hover:text-foreground hover:bg-muted"
                                 }`}
                                 title="步行路線"
                             >
-                                <Footprints size={13} />
-                                <span className="text-[11px]">步行</span>
+                                <Footprints size={12} />
+                                <span className="text-[10px] sm:text-[11px]">步行</span>
                             </button>
 
                             {/* 直線/航線 */}
                             <button
                                 type="button"
                                 onClick={() => setRouteMode("direct")}
-                                className={`flex items-center gap-1 px-2 py-1 rounded-lg transition-all font-medium ${
+                                className={`flex items-center gap-1 px-1.5 sm:px-2 py-1 rounded-lg transition-all font-medium shrink-0 ${
                                     routeMode === "direct"
                                         ? "bg-pink-600 text-white shadow-xs"
                                         : "text-muted-foreground hover:text-foreground hover:bg-muted"
                                 }`}
                                 title="直線距離 / 飛航路線"
                             >
-                                <Plane size={13} />
-                                <span className="text-[11px]">直線</span>
+                                <Plane size={12} />
+                                <span className="text-[10px] sm:text-[11px]">直線</span>
                             </button>
                         </div>
 
                         {/* Distance & Time Summary Capsule */}
-                        <div className="bg-background/95 backdrop-blur-md px-3 py-1.5 rounded-xl shadow-md border border-border/80 text-xs flex items-center gap-2">
+                        <div className="bg-background/95 backdrop-blur-md px-2.5 py-1 rounded-xl shadow-md border border-border/80 text-xs flex items-center gap-2 max-w-full">
                             {isRouteLoading ? (
-                                <div className="flex items-center gap-1.5 text-muted-foreground text-[11px]">
-                                    <Loader2 size={12} className="animate-spin text-primary" />
-                                    <span>計算路線中...</span>
+                                <div className="flex items-center gap-1.5 text-muted-foreground text-[10px] sm:text-[11px]">
+                                    <Loader2 size={11} className="animate-spin text-primary" />
+                                    <span>計算中...</span>
                                 </div>
                             ) : routeData ? (
-                                <div className="flex items-center gap-2 font-mono text-[11px] font-semibold text-foreground">
+                                <div className="flex items-center gap-1.5 font-mono text-[10px] sm:text-[11px] font-semibold text-foreground truncate">
                                     <span className="text-primary font-bold">
                                         {routeData.totalDistanceFormatted}
                                     </span>
                                     <span className="text-muted-foreground">•</span>
                                     <span>{routeData.totalDurationFormatted}</span>
                                     {routeData.isEstimated && (
-                                        <span className="text-[10px] text-amber-500 font-normal">
+                                        <span className="text-[9px] text-amber-500 font-normal">
                                             (預估)
                                         </span>
                                     )}
                                 </div>
                             ) : (
-                                <span className="text-[11px] text-muted-foreground">點對點直接連線</span>
+                                <span className="text-[10px] sm:text-[11px] text-muted-foreground">點對點連線</span>
                             )}
                         </div>
                     </div>

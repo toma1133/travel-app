@@ -4,22 +4,50 @@ import {
     FormEventHandler,
     MouseEventHandler,
     useState,
+    useEffect,
+    useMemo,
 } from "react";
-import { Clock, Tag, Hourglass, Navigation, Sparkles, Loader2, CheckCircle2, AlertCircle, Info } from "lucide-react";
+import {
+    Clock,
+    Tag,
+    Hourglass,
+    Navigation,
+    Sparkles,
+    Loader2,
+    CheckCircle2,
+    AlertCircle,
+    Info,
+    MapPin,
+    Search,
+    Check,
+    X,
+    Train,
+    Car,
+    Plane,
+    Bus,
+    Footprints,
+    Plus,
+    Trash2,
+    Languages,
+    Compass,
+    Sliders,
+    Building2,
+} from "lucide-react";
 import type {
     ItineraryActivitiy,
     ItineraryVM,
+    TransitScheduleItem,
 } from "../../models/types/ItineraryTypes";
 import type { TripThemeConf } from "../../models/types/TripTypes";
 import type { PlaceVM } from "../../models/types/PlaceTypes";
 import {
     CATEGORY_DEFINITIONS,
     TRANSIT_MODES,
+    getCategoryTypeName,
 } from "../../constants/Categories";
 import { CategoryCustomSelect } from "../common/CategoryCustomSelect";
-import FormModal from "../common/FormModal";
-import PlaceLinkAutocomplete from "../common/PlaceLinkAutoComplete";
 import { placeRepo } from "../../services/repositories/PlaceRepo";
+import { toPlacesVM } from "../../services/mappers/PlaceMapper";
 import { RoutingService } from "../../services/api/RoutingService";
 
 type ItineraryActivityModalProps = {
@@ -44,39 +72,104 @@ const ItineraryActivityModal = ({
     onFormInputChange,
     onFormSubmit,
 }: ItineraryActivityModalProps) => {
+    // 建立模式下：預設為 "place" (從地點優先新增)，若為手動輸入或編輯無地點活動則切換
+    const [entryMode, setEntryMode] = useState<"place" | "manual">(
+        mode === "create" || formData.linkId ? "place" : "manual"
+    );
+    const [places, setPlaces] = useState<PlaceVM[]>([]);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [isLoadingPlaces, setIsLoadingPlaces] = useState(false);
     const [isCalculatingRoute, setIsCalculatingRoute] = useState(false);
     const [routingMessage, setRoutingMessage] = useState<{
         type: "success" | "error" | "info";
         text: string;
     } | null>(null);
 
-    const handlePlaceSelect = (place: PlaceVM) => {
+    // 載入當前行程的所有景點/地點清單
+    useEffect(() => {
+        if (!itinerary?.trip_id) return;
+        let isMounted = true;
+        setIsLoadingPlaces(true);
+
+        placeRepo.list(itinerary.trip_id)
+            .then((rows) => {
+                if (isMounted) {
+                    setPlaces(toPlacesVM(rows || []));
+                }
+            })
+            .catch(console.error)
+            .finally(() => {
+                if (isMounted) setIsLoadingPlaces(false);
+            });
+
+        return () => {
+            isMounted = false;
+        };
+    }, [itinerary?.trip_id]);
+
+    // 篩選地點清單
+    const filteredPlaces = useMemo(() => {
+        if (!searchQuery.trim()) return places;
+        const q = searchQuery.toLowerCase().trim();
+        return places.filter(
+            (p) =>
+                p.name.toLowerCase().includes(q) ||
+                (p.eng_name && p.eng_name.toLowerCase().includes(q)) ||
+                (p.info?.native_name && p.info.native_name.toLowerCase().includes(q)) ||
+                (p.info?.loc && p.info.loc.toLowerCase().includes(q))
+        );
+    }, [places, searchQuery]);
+
+    const selectedPlace = useMemo(() => {
+        if (!formData.linkId) return null;
+        return places.find((p) => p.id === formData.linkId) || null;
+    }, [places, formData.linkId]);
+
+    // 選擇地點並自動填入各項欄位
+    const handleSelectPlace = (place: PlaceVM) => {
         const createEvent = (name: string, value: string) =>
             ({
                 target: { name, value },
                 currentTarget: { name, value },
             }) as unknown as ChangeEvent<HTMLInputElement>;
 
+        onFormInputChange(createEvent("linkId", place.id));
         if (place.name) {
             onFormInputChange(createEvent("title", place.name));
         }
         if (place.type) {
             onFormInputChange(createEvent("type", place.type));
         }
-        if (place.eng_name) {
-            onFormInputChange(createEvent("desc", place.eng_name));
+        if (place.eng_name || place.info?.native_name) {
+            onFormInputChange(
+                createEvent("desc", place.eng_name || place.info?.native_name || "")
+            );
+        }
+        if (place.info?.stay_duration) {
+            onFormInputChange(createEvent("duration", place.info.stay_duration));
         }
     };
 
+    // 清除選取的地點 (改為自由填寫)
+    const handleClearPlaceLink = () => {
+        const createEvent = (name: string, value: string) =>
+            ({
+                target: { name, value },
+                currentTarget: { name, value },
+            }) as unknown as ChangeEvent<HTMLInputElement>;
+
+        onFormInputChange(createEvent("linkId", ""));
+    };
+
+    // 自動計算至下一站路程
     const handleAutoCalculateRoute = async () => {
         setRoutingMessage(null);
         if (!itinerary) return;
 
-        // 1. Determine origin place
         if (!formData.linkId) {
             setRoutingMessage({
                 type: "info",
-                text: "請先在最下方的「連結地點 ID」中選擇地點，才能取得出發經緯度！",
+                text: "請先選取「連結地點」，才能取得起點經緯度！",
             });
             return;
         }
@@ -92,13 +185,12 @@ const ItineraryActivityModal = ({
             ) {
                 setRoutingMessage({
                     type: "error",
-                    text: "出發地點尚未包含經緯度座標，請確認地標設定。",
+                    text: "出發地點尚未設定經緯度座標。",
                 });
                 setIsCalculatingRoute(false);
                 return;
             }
 
-            // 2. Determine destination place (next activity in the same day)
             const activities = (itinerary.activities || [])
                 .slice()
                 .sort((a, b) => a.time.localeCompare(b.time));
@@ -108,14 +200,13 @@ const ItineraryActivityModal = ({
                     (formData.activityIndex !== undefined &&
                         a.activityIndex === formData.activityIndex) ||
                     (a.title === formData.title && a.time === formData.time) ||
-                    (a.linkId === formData.linkId)
+                    a.linkId === formData.linkId
             );
 
             let nextActivity: ItineraryActivitiy | null = null;
             if (currentIndex >= 0 && currentIndex < activities.length - 1) {
                 nextActivity = activities[currentIndex + 1];
             } else if (activities.length > 0) {
-                // If not found or this is newly created, find first activity after its time with linkId
                 nextActivity =
                     activities.find((a) => a.time > formData.time && a.linkId) || null;
             }
@@ -143,7 +234,6 @@ const ItineraryActivityModal = ({
                 return;
             }
 
-            // 3. Request route
             const profile = RoutingService.mapTransitModeToProfile(formData.transitMode);
             const routeResult = await RoutingService.getRoute(
                 { lat: originPlace.lat, lng: originPlace.lng },
@@ -152,7 +242,6 @@ const ItineraryActivityModal = ({
             );
 
             if (routeResult) {
-                // Update duration
                 const durationEvent = {
                     target: {
                         name: "transitDuration",
@@ -165,7 +254,6 @@ const ItineraryActivityModal = ({
                 } as unknown as ChangeEvent<HTMLInputElement>;
                 onFormInputChange(durationEvent);
 
-                // Auto-set transit mode if not selected
                 if (!formData.transitMode || formData.transitMode === "none") {
                     const suggestedMode = routeResult.distanceKm <= 1.5 ? "walk" : "car";
                     const modeEvent = {
@@ -197,755 +285,460 @@ const ItineraryActivityModal = ({
     };
 
     return (
-        <FormModal
-            formId={"itinerary-activity-form"}
-            modalTitle={
-                mode === "create"
-                    ? `新增 Day ${itinerary?.day_number} 活動`
-                    : `編輯活動 ${formData.title}`
-            }
-            modalSaveTitle={mode === "create" ? "新增活動" : "儲存變更"}
-            theme={theme}
-            onCancelBtnClick={onCloseBtnClick}
-            onCloseBtnClick={onCloseBtnClick}
-            onSubmit={onFormSubmit}
-        >
-            {/* Time and Title */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                    <label
-                        htmlFor="time"
-                        className="block font-bold uppercase mb-1 flex items-center text-muted-foreground text-xs"
-                    >
-                        <Clock size={12} className="mr-1" /> 時間 *
-                    </label>
-                    <input
-                        required
-                        type="time"
-                        name="time"
-                        value={formData.time}
-                        onChange={onFormInputChange}
-                        placeholder="例如: 09:30"
-                        className="w-full bg-transparent text-foreground border-b border-border py-2 outline-none font-mono text-base dark:[color-scheme:dark]"
-                    />
-                </div>
-                <div>
-                    <label
-                        htmlFor="duration"
-                        className="block font-bold uppercase mb-1 flex items-center text-muted-foreground text-xs"
-                    >
-                        <Hourglass size={12} className="mr-1" /> 停留時間 (選填)
-                    </label>
-                    <input
-                        name="duration"
-                        value={formData.duration || ""}
-                        onChange={onFormInputChange}
-                        placeholder="例如：1.5小時, 45分鐘"
-                        className="w-full bg-transparent text-foreground border-b border-border py-2 outline-none font-[Noto_Sans_TC] text-base"
-                    />
-                </div>
-            </div>
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-200">
+            <div
+                className="w-full max-w-xl bg-card text-card-foreground rounded-3xl shadow-2xl border border-border/80 flex flex-col max-h-[92vh] overflow-hidden animate-in zoom-in-95 duration-200"
+                onClick={(e) => e.stopPropagation()}
+            >
+                {/* 📱 頂部行動把手 (Mobile drag indicator) */}
+                <div className="w-10 h-1 rounded-full bg-muted-foreground/30 mx-auto mt-2.5 sm:hidden shrink-0" />
 
-            <div>
-                <label
-                    htmlFor="title"
-                    className="block font-bold uppercase mb-1 flex items-center text-muted-foreground text-xs"
-                >
-                    標題 *
-                </label>
-                <input
-                    required
-                    name="title"
-                    value={formData.title}
-                    onChange={onFormInputChange}
-                    placeholder="例如：清水寺"
-                    className="w-full bg-transparent text-foreground border-b border-border py-2 outline-none font-[Noto_Sans_TC] text-base"
-                />
-            </div>
-
-            {/* Category Type Selection with Custom Icons */}
-            <CategoryCustomSelect
-                label="活動類型 *"
-                value={formData.type || "sight"}
-                onChange={(newTypeId) => {
-                    const event = {
-                        target: { name: "type", value: newTypeId },
-                        currentTarget: { name: "type", value: newTypeId },
-                    } as unknown as ChangeEvent<HTMLInputElement>;
-                    onFormInputChange(event);
-                }}
-            />
-
-            {/* Transit Section (路程與交通) */}
-            <div className="p-3.5 rounded-xl bg-accent/30 border border-border/50 space-y-3">
-                <div className="flex items-center justify-between">
-                    <label className="font-bold uppercase flex items-center text-muted-foreground text-xs">
-                        <Navigation size={12} className="mr-1 text-primary" />{" "}
-                        前往下一站的交通與車程 (選填)
-                    </label>
-
-                    {/* Auto-calculate button with OSM */}
+                {/* 📱 iOS 原生導航列 (iOS Navigation Top Bar) */}
+                <div className="px-4 py-3 border-b border-border/70 bg-card/90 backdrop-blur-md flex items-center justify-between shrink-0">
                     <button
                         type="button"
-                        onClick={handleAutoCalculateRoute}
-                        disabled={isCalculatingRoute}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-all border border-primary/20 cursor-pointer disabled:opacity-50"
-                        title="透過 OpenStreetMap 自動計算至下一站的距離與行車/步行時間"
+                        onClick={onCloseBtnClick}
+                        className="text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors cursor-pointer px-2 py-1"
                     >
-                        {isCalculatingRoute ? (
-                            <>
-                                <Loader2 size={11} className="animate-spin" />
-                                <span>計算中...</span>
-                            </>
-                        ) : (
-                            <>
-                                <Sparkles size={11} />
-                                <span>⚡ 自動透過地圖估算</span>
-                            </>
-                        )}
+                        取消
+                    </button>
+
+                    <h3 className="text-sm font-black tracking-tight text-foreground">
+                        {mode === "create"
+                            ? `新增 Day ${itinerary?.day_number || ""} 行程`
+                            : `編輯行程 · ${formData.title || ""}`}
+                    </h3>
+
+                    <button
+                        type="submit"
+                        form="itinerary-activity-form"
+                        className="text-xs font-bold bg-blue-500 hover:bg-blue-600 text-white px-3.5 py-1.5 rounded-full transition-all shadow-xs cursor-pointer active:scale-95"
+                    >
+                        {mode === "create" ? "加入" : "完成"}
                     </button>
                 </div>
 
-                {/* Routing status message feedback */}
-                {routingMessage && (
-                    <div
-                        className={`p-2 rounded-lg text-xs flex items-start gap-1.5 animate-fadeIn ${
-                            routingMessage.type === "success"
-                                ? "bg-emerald-50 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
-                                : routingMessage.type === "error"
-                                ? "bg-destructive/10 text-destructive border border-destructive/20"
-                                : "bg-sky-50 text-sky-800 dark:bg-sky-950/60 dark:text-sky-300 border border-sky-200 dark:border-sky-800"
-                        }`}
-                    >
-                        {routingMessage.type === "success" ? (
-                            <CheckCircle2 size={13} className="shrink-0 mt-0.5" />
-                        ) : routingMessage.type === "error" ? (
-                            <AlertCircle size={13} className="shrink-0 mt-0.5" />
-                        ) : (
-                            <Info size={13} className="shrink-0 mt-0.5" />
-                        )}
-                        <span className="leading-tight">{routingMessage.text}</span>
-                    </div>
-                )}
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                        <span className="block text-[10px] font-semibold text-muted-foreground mb-1">
-                            交通工具
-                        </span>
-                        <select
-                            name="transitMode"
-                            value={formData.transitMode || "none"}
-                            onChange={onFormInputChange as any}
-                            className="w-full bg-background border border-input rounded-lg py-1.5 px-2 text-xs text-foreground outline-none cursor-pointer"
+                {/* 主表單區域 */}
+                <form
+                    id="itinerary-activity-form"
+                    onSubmit={onFormSubmit}
+                    className="flex-1 overflow-y-auto p-3.5 sm:p-5 space-y-4 no-scrollbar"
+                >
+                    {/* 🧭 新增模式：地點優先選取 vs 手動填寫 分段控制器 */}
+                    <div className="p-1 rounded-2xl bg-muted/60 border border-border/60 flex items-center gap-1 text-xs">
+                        <button
+                            type="button"
+                            onClick={() => setEntryMode("place")}
+                            className={`flex-1 py-1.5 px-3 rounded-xl font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                                entryMode === "place"
+                                    ? "bg-card text-foreground shadow-xs"
+                                    : "text-muted-foreground hover:text-foreground"
+                            }`}
                         >
-                            {TRANSIT_MODES.map((mode) => (
-                                <option key={mode.id} value={mode.id}>
-                                    {mode.label}
-                                </option>
-                            ))}
-                        </select>
+                            <MapPin size={13} className="text-blue-500" />
+                            <span>從已加入景點選取 (推薦)</span>
+                            {places.length > 0 && (
+                                <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 font-bold">
+                                    {places.length}
+                                </span>
+                            )}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setEntryMode("manual")}
+                            className={`flex-1 py-1.5 px-3 rounded-xl font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                                entryMode === "manual"
+                                    ? "bg-card text-foreground shadow-xs"
+                                    : "text-muted-foreground hover:text-foreground"
+                            }`}
+                        >
+                            <Building2 size={13} className="text-purple-500" />
+                            <span>手動自由填寫</span>
+                        </button>
                     </div>
-                    <div>
-                        <span className="block text-[10px] font-semibold text-muted-foreground mb-1">
-                            預估路程時間
-                        </span>
-                        <input
-                            name="transitDuration"
-                            value={formData.transitDuration || ""}
-                            onChange={onFormInputChange}
-                            placeholder="例如：30分鐘, 45分鐘"
-                            className="w-full bg-background border border-input rounded-lg py-1.5 px-2 text-xs text-foreground outline-none"
-                        />
-                    </div>
-                </div>
 
-                {/* 動態交通詳細備註 (Transit Details) */}
-                {formData.transitMode && formData.transitMode !== "none" && (
-                    <div className="pt-2 border-t border-border/40 space-y-2.5">
-                        {/* 1. 自駕 / 租車 */}
-                        {formData.transitMode === "car" && (
-                            <div className="space-y-2 text-xs">
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                    <div>
-                                        <span className="block text-[10px] text-muted-foreground mb-0.5">
-                                            租車公司 (選填)
-                                        </span>
-                                        <input
-                                            name="transitDetails.carRentalCompany"
-                                            value={
-                                                formData.transitDetails
-                                                    ?.carRentalCompany || ""
-                                            }
-                                            onChange={onFormInputChange}
-                                            placeholder="例如：Toyota Rent a Car / Times"
-                                            className="w-full bg-background border border-input rounded py-1 px-2 text-xs"
-                                        />
-                                    </div>
-                                    <div>
-                                        <span className="block text-[10px] text-muted-foreground mb-0.5">
-                                            取車/取件分店 (選填)
-                                        </span>
-                                        <input
-                                            name="transitDetails.carRentalBranch"
-                                            value={
-                                                formData.transitDetails
-                                                    ?.carRentalBranch || ""
-                                            }
-                                            onChange={onFormInputChange}
-                                            placeholder="例如：那霸機場店 / 札幌站前店"
-                                            className="w-full bg-background border border-input rounded py-1 px-2 text-xs"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* 2. 計程車 / 包車 / 接送 */}
-                        {formData.transitMode === "taxi" && (
-                            <div className="space-y-2 text-xs">
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                    <div>
-                                        <span className="block text-[10px] text-muted-foreground mb-0.5">
-                                            預估車資 (選填)
-                                        </span>
-                                        <input
-                                            name="transitDetails.fare"
-                                            value={
-                                                formData.transitDetails?.fare ||
-                                                ""
-                                            }
-                                            onChange={onFormInputChange}
-                                            placeholder="例如：NT$ 1,200 或 JPY 3,000"
-                                            className="w-full bg-background border border-input rounded py-1 px-2 text-xs"
-                                        />
-                                    </div>
-                                    <div className="flex items-end pb-1.5">
-                                        <label className="flex items-center gap-1.5 cursor-pointer text-muted-foreground select-none">
-                                            <input
-                                                type="checkbox"
-                                                name="transitDetails.isReservationRequired"
-                                                checked={
-                                                    formData.transitDetails
-                                                        ?.isReservationRequired ||
-                                                    false
-                                                }
-                                                onChange={(e) => {
-                                                    const event = {
-                                                        target: {
-                                                            name: "transitDetails.isReservationRequired",
-                                                            value: e.target
-                                                                .checked,
-                                                            type: "checkbox",
-                                                            checked:
-                                                                e.target
-                                                                    .checked,
-                                                        },
-                                                        currentTarget: {
-                                                            name: "transitDetails.isReservationRequired",
-                                                            value: e.target
-                                                                .checked,
-                                                        },
-                                                    } as unknown as ChangeEvent<HTMLInputElement>;
-                                                    onFormInputChange(event);
-                                                }}
-                                                className="rounded border-input text-primary focus:ring-primary h-3.5 w-3.5"
-                                            />
-                                            <span>
-                                                預約機場接送 / 需事先叫車
-                                            </span>
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* 3. 電車 / 新幹線 / 公車 / 渡輪 */}
-                        {(formData.transitMode === "train" ||
-                            formData.transitMode === "bus" ||
-                            formData.transitMode === "ferry") && (
-                            <div className="space-y-2.5 text-xs">
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                    <div>
-                                        <span className="block text-[10px] text-muted-foreground mb-0.5">
-                                            票券 / Pass 種類
-                                        </span>
-                                        <input
-                                            name="transitDetails.passName"
-                                            value={
-                                                formData.transitDetails
-                                                    ?.passName || ""
-                                            }
-                                            onChange={onFormInputChange}
-                                            placeholder="例如：關西廣域周遊券 5 Days / 船票"
-                                            className="w-full bg-background border border-input rounded py-1 px-2 text-xs"
-                                        />
-                                    </div>
-                                    <div>
-                                        <span className="block text-[10px] text-muted-foreground mb-0.5">
-                                            票價 / 車資
-                                        </span>
-                                        <input
-                                            name="transitDetails.fare"
-                                            value={
-                                                formData.transitDetails?.fare ||
-                                                ""
-                                            }
-                                            onChange={onFormInputChange}
-                                            placeholder="例如：JPY 420 或 JPY 1,800"
-                                            className="w-full bg-background border border-input rounded py-1 px-2 text-xs"
-                                        />
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                    <div>
-                                        <span className="block text-[10px] text-muted-foreground mb-0.5">
-                                            {formData.transitMode === "ferry"
-                                                ? "船公司與航線名稱"
-                                                : "鐵路/公車公司與路線"}
-                                        </span>
-                                        <input
-                                            name="transitDetails.companyAndLine"
-                                            value={
-                                                formData.transitDetails
-                                                    ?.companyAndLine || ""
-                                            }
-                                            onChange={onFormInputChange}
-                                            placeholder={
-                                                formData.transitMode === "ferry"
-                                                    ? "例如：南海渡輪 德島航線"
-                                                    : "例如：JR神戶京都琵琶湖線"
-                                            }
-                                            className="w-full bg-background border border-input rounded py-1 px-2 text-xs"
-                                        />
-                                    </div>
-                                    <div>
-                                        <span className="block text-[10px] text-muted-foreground mb-0.5">
-                                            {formData.transitMode === "ferry"
-                                                ? "碼頭/棧橋"
-                                                : "月台資訊"}
-                                        </span>
-                                        <input
-                                            name="transitDetails.platform"
-                                            value={
-                                                formData.transitDetails
-                                                    ?.platform || ""
-                                            }
-                                            onChange={onFormInputChange}
-                                            placeholder={
-                                                formData.transitMode === "ferry"
-                                                    ? "例如：1號碼頭"
-                                                    : "例如：5番ホーム / 4番月台"
-                                            }
-                                            className="w-full bg-background border border-input rounded py-1 px-2 text-xs"
-                                        />
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                    <div>
-                                        <span className="block text-[10px] text-muted-foreground mb-0.5">
-                                            開往方向 / 目的地
-                                        </span>
-                                        <input
-                                            name="transitDetails.destination"
-                                            value={
-                                                formData.transitDetails
-                                                    ?.destination || ""
-                                            }
-                                            onChange={onFormInputChange}
-                                            placeholder="例如：姬路 / 小豆島土庄港"
-                                            className="w-full bg-background border border-input rounded py-1 px-2 text-xs"
-                                        />
-                                    </div>
-                                </div>
-
-                                {/* 動態班次清單編輯器 (Schedule List Editor) */}
-                                <div className="pt-2 border-t border-border/30">
-                                    <div className="flex justify-between items-center mb-1.5">
-                                        <span className="block text-[11px] font-bold text-foreground">
-                                            選搭班次列表 (
-                                            {formData.transitDetails
-                                                ?.scheduleList?.length || 0}
-                                            )
-                                        </span>
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                const currentList =
-                                                    formData.transitDetails
-                                                        ?.scheduleList || [];
-                                                const newList = [
-                                                    ...currentList,
-                                                    {
-                                                        name: "",
-                                                        departureTime: "",
-                                                        arrivalTime: "",
-                                                        platform: "",
-                                                    },
-                                                ];
-                                                const event = {
-                                                    target: {
-                                                        name: "transitDetails.scheduleList",
-                                                        value: newList,
-                                                    },
-                                                    currentTarget: {
-                                                        name: "transitDetails.scheduleList",
-                                                        value: newList,
-                                                    },
-                                                } as unknown as ChangeEvent<HTMLInputElement>;
-                                                onFormInputChange(event);
-                                            }}
-                                            className="px-2 py-0.5 text-[10px] font-semibold bg-primary/10 text-primary hover:bg-primary/20 rounded transition-colors"
-                                        >
-                                            + 新增班次
-                                        </button>
-                                    </div>
-
-                                    {/* 班次列表 */}
-                                    {Array.isArray(
-                                        formData.transitDetails?.scheduleList,
-                                    ) &&
-                                    formData.transitDetails.scheduleList
-                                        .length > 0 ? (
-                                        <div className="space-y-2">
-                                            {formData.transitDetails.scheduleList.map(
-                                                (item, idx) => (
-                                                    <div
-                                                        key={idx}
-                                                        className="p-2 rounded-lg bg-background border border-border/60 space-y-1.5 relative group"
-                                                    >
-                                                        <div className="grid grid-cols-12 gap-1.5 items-center">
-                                                            <div className="col-span-4">
-                                                                <input
-                                                                    placeholder="車次/班名 (如: Haruka 16号)"
-                                                                    value={
-                                                                        item.name
-                                                                    }
-                                                                    onChange={(
-                                                                        e,
-                                                                    ) => {
-                                                                        const newList =
-                                                                            [
-                                                                                ...(formData
-                                                                                    .transitDetails
-                                                                                    ?.scheduleList ||
-                                                                                    []),
-                                                                            ];
-                                                                        newList[
-                                                                            idx
-                                                                        ] = {
-                                                                            ...newList[
-                                                                                idx
-                                                                            ],
-                                                                            name: e
-                                                                                .target
-                                                                                .value,
-                                                                        };
-                                                                        const event =
-                                                                            {
-                                                                                target: {
-                                                                                    name: "transitDetails.scheduleList",
-                                                                                    value: newList,
-                                                                                },
-                                                                                currentTarget:
-                                                                                    {
-                                                                                        name: "transitDetails.scheduleList",
-                                                                                        value: newList,
-                                                                                    },
-                                                                            } as unknown as ChangeEvent<HTMLInputElement>;
-                                                                        onFormInputChange(
-                                                                            event,
-                                                                        );
-                                                                    }}
-                                                                    className="w-full bg-transparent border border-input rounded py-1 px-1.5 text-[11px]"
-                                                                />
-                                                            </div>
-                                                            <div className="col-span-3">
-                                                                <input
-                                                                    type="time"
-                                                                    placeholder="發車"
-                                                                    value={
-                                                                        item.departureTime ||
-                                                                        ""
-                                                                    }
-                                                                    onChange={(
-                                                                        e,
-                                                                    ) => {
-                                                                        const newList =
-                                                                            [
-                                                                                ...(formData
-                                                                                    .transitDetails
-                                                                                    ?.scheduleList ||
-                                                                                    []),
-                                                                            ];
-                                                                        newList[
-                                                                            idx
-                                                                        ] = {
-                                                                            ...newList[
-                                                                                idx
-                                                                            ],
-                                                                            departureTime:
-                                                                                e
-                                                                                    .target
-                                                                                    .value,
-                                                                        };
-                                                                        const event =
-                                                                            {
-                                                                                target: {
-                                                                                    name: "transitDetails.scheduleList",
-                                                                                    value: newList,
-                                                                                },
-                                                                                currentTarget:
-                                                                                    {
-                                                                                        name: "transitDetails.scheduleList",
-                                                                                        value: newList,
-                                                                                    },
-                                                                            } as unknown as ChangeEvent<HTMLInputElement>;
-                                                                        onFormInputChange(
-                                                                            event,
-                                                                        );
-                                                                    }}
-                                                                    className="w-full bg-transparent border border-input rounded py-1 px-1 text-[11px] font-mono"
-                                                                />
-                                                            </div>
-                                                            <div className="col-span-3">
-                                                                <input
-                                                                    type="time"
-                                                                    placeholder="到達"
-                                                                    value={
-                                                                        item.arrivalTime ||
-                                                                        ""
-                                                                    }
-                                                                    onChange={(
-                                                                        e,
-                                                                    ) => {
-                                                                        const newList =
-                                                                            [
-                                                                                ...(formData
-                                                                                    .transitDetails
-                                                                                    ?.scheduleList ||
-                                                                                    []),
-                                                                            ];
-                                                                        newList[
-                                                                            idx
-                                                                        ] = {
-                                                                            ...newList[
-                                                                                idx
-                                                                            ],
-                                                                            arrivalTime:
-                                                                                e
-                                                                                    .target
-                                                                                    .value,
-                                                                        };
-                                                                        const event =
-                                                                            {
-                                                                                target: {
-                                                                                    name: "transitDetails.scheduleList",
-                                                                                    value: newList,
-                                                                                },
-                                                                                currentTarget:
-                                                                                    {
-                                                                                        name: "transitDetails.scheduleList",
-                                                                                        value: newList,
-                                                                                    },
-                                                                            } as unknown as ChangeEvent<HTMLInputElement>;
-                                                                        onFormInputChange(
-                                                                            event,
-                                                                        );
-                                                                    }}
-                                                                    className="w-full bg-transparent border border-input rounded py-1 px-1 text-[11px] font-mono"
-                                                                />
-                                                            </div>
-                                                            <div className="col-span-2 flex items-center gap-1">
-                                                                <input
-                                                                    placeholder="月台"
-                                                                    value={
-                                                                        item.platform ||
-                                                                        ""
-                                                                    }
-                                                                    onChange={(
-                                                                        e,
-                                                                    ) => {
-                                                                        const newList =
-                                                                            [
-                                                                                ...(formData
-                                                                                    .transitDetails
-                                                                                    ?.scheduleList ||
-                                                                                    []),
-                                                                            ];
-                                                                        newList[
-                                                                            idx
-                                                                        ] = {
-                                                                            ...newList[
-                                                                                idx
-                                                                            ],
-                                                                            platform:
-                                                                                e
-                                                                                    .target
-                                                                                    .value,
-                                                                        };
-                                                                        const event =
-                                                                            {
-                                                                                target: {
-                                                                                    name: "transitDetails.scheduleList",
-                                                                                    value: newList,
-                                                                                },
-                                                                                currentTarget:
-                                                                                    {
-                                                                                        name: "transitDetails.scheduleList",
-                                                                                        value: newList,
-                                                                                    },
-                                                                            } as unknown as ChangeEvent<HTMLInputElement>;
-                                                                        onFormInputChange(
-                                                                            event,
-                                                                        );
-                                                                    }}
-                                                                    className="w-full bg-transparent border border-input rounded py-1 px-1 text-[11px]"
-                                                                />
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => {
-                                                                        const newList =
-                                                                            (
-                                                                                formData
-                                                                                    .transitDetails
-                                                                                    ?.scheduleList ||
-                                                                                []
-                                                                            ).filter(
-                                                                                (
-                                                                                    _,
-                                                                                    i,
-                                                                                ) =>
-                                                                                    i !==
-                                                                                    idx,
-                                                                            );
-                                                                        const event =
-                                                                            {
-                                                                                target: {
-                                                                                    name: "transitDetails.scheduleList",
-                                                                                    value: newList,
-                                                                                },
-                                                                                currentTarget:
-                                                                                    {
-                                                                                        name: "transitDetails.scheduleList",
-                                                                                        value: newList,
-                                                                                    },
-                                                                            } as unknown as ChangeEvent<HTMLInputElement>;
-                                                                        onFormInputChange(
-                                                                            event,
-                                                                        );
-                                                                    }}
-                                                                    className="text-destructive hover:bg-destructive/10 p-1 rounded transition-colors shrink-0"
-                                                                    title="刪除班次"
-                                                                >
-                                                                    ✕
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                ),
+                    {/* 📍 地點快速選擇區塊 (Place Picker Grid) */}
+                    {entryMode === "place" && (
+                        <div className="space-y-2.5">
+                            {/* 已選取地點高亮狀態 */}
+                            {selectedPlace ? (
+                                <div className="p-3 rounded-2xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-between gap-3 shadow-2xs">
+                                    <div className="flex items-center gap-3 min-w-0">
+                                        <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 border border-blue-500/30 bg-muted">
+                                            {selectedPlace.image_url ? (
+                                                <img
+                                                    src={selectedPlace.image_url}
+                                                    alt={selectedPlace.name}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center text-blue-500">
+                                                    <MapPin size={18} />
+                                                </div>
                                             )}
                                         </div>
-                                    ) : (
-                                        <p className="text-[10px] text-muted-foreground italic">
-                                            尚未加入預選班次，點擊「+
-                                            新增班次」建立動態時刻清單
-                                        </p>
-                                    )}
+                                        <div className="min-w-0 flex-1">
+                                            <div className="flex items-center gap-1.5">
+                                                <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-blue-500/20 text-blue-600 dark:text-blue-400">
+                                                    {getCategoryTypeName(selectedPlace.type)}
+                                                </span>
+                                                <h4 className="font-bold text-xs text-foreground truncate">
+                                                    {selectedPlace.name}
+                                                </h4>
+                                            </div>
+                                            <p className="text-[11px] text-muted-foreground font-mono truncate mt-0.5">
+                                                {selectedPlace.eng_name || selectedPlace.info?.loc || ""}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={handleClearPlaceLink}
+                                        className="text-xs text-muted-foreground hover:text-rose-500 p-1.5 rounded-lg hover:bg-muted transition-colors cursor-pointer shrink-0"
+                                        title="取消連結此地點"
+                                    >
+                                        <X size={14} />
+                                    </button>
                                 </div>
-                            </div>
-                        )}
+                            ) : (
+                                <div className="space-y-2">
+                                    {/* 搜尋過濾輸入框 */}
+                                    <div className="relative">
+                                        <Search
+                                            size={14}
+                                            className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/60"
+                                        />
+                                        <input
+                                            type="text"
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                            placeholder="搜尋旅行景點、餐廳、飯店名稱..."
+                                            className="w-full bg-muted/40 border border-border/80 rounded-xl pl-9 pr-4 py-2 text-xs text-foreground outline-none focus:border-blue-500 transition-colors"
+                                        />
+                                    </div>
 
-                        {/* 4. 飛機 */}
-                        {formData.transitMode === "flight" && (
-                            <div className="space-y-2 text-xs">
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                    <div>
-                                        <span className="block text-[10px] text-muted-foreground mb-0.5">
-                                            航班號碼
-                                        </span>
-                                        <input
-                                            name="transitDetails.flightNumber"
-                                            value={
-                                                formData.transitDetails
-                                                    ?.flightNumber || ""
-                                            }
-                                            onChange={onFormInputChange}
-                                            placeholder="例如：JX820 / CI156"
-                                            className="w-full bg-background border border-input rounded py-1 px-2 text-xs"
-                                        />
-                                    </div>
-                                    <div>
-                                        <span className="block text-[10px] text-muted-foreground mb-0.5">
-                                            航廈 / 登機門
-                                        </span>
-                                        <input
-                                            name="transitDetails.gate"
-                                            value={
-                                                formData.transitDetails?.gate ||
-                                                ""
-                                            }
-                                            onChange={onFormInputChange}
-                                            placeholder="例如：T1 B5登機門"
-                                            className="w-full bg-background border border-input rounded py-1 px-2 text-xs"
-                                        />
+                                    {/* 地點卡片列表 (Scrollable Grid) */}
+                                    <div className="max-h-48 overflow-y-auto space-y-1.5 pr-1 no-scrollbar border border-border/60 rounded-2xl p-1.5 bg-muted/20">
+                                        {isLoadingPlaces ? (
+                                            <div className="p-4 text-center text-xs text-muted-foreground flex items-center justify-center gap-2">
+                                                <Loader2 size={13} className="animate-spin text-blue-500" />
+                                                <span>載入地點清單...</span>
+                                            </div>
+                                        ) : filteredPlaces.length === 0 ? (
+                                            <div className="p-4 text-center text-xs text-muted-foreground">
+                                                {places.length === 0
+                                                    ? "此旅行尚未新增任何景點，請先至地點庫建立或使用手動填寫。"
+                                                    : "找不到符合的地點"}
+                                            </div>
+                                        ) : (
+                                            filteredPlaces.map((place) => {
+                                                const isSelected = formData.linkId === place.id;
+                                                return (
+                                                    <div
+                                                        key={place.id}
+                                                        onClick={() => handleSelectPlace(place)}
+                                                        className={`p-2 rounded-xl border flex items-center justify-between gap-2.5 transition-all cursor-pointer ${
+                                                            isSelected
+                                                                ? "bg-blue-500/15 border-blue-500 text-foreground"
+                                                                : "bg-card border-border/60 hover:border-border hover:bg-muted/30"
+                                                        }`}
+                                                    >
+                                                        <div className="flex items-center gap-2.5 min-w-0">
+                                                            <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0 bg-muted">
+                                                                {place.image_url ? (
+                                                                    <img
+                                                                        src={place.image_url}
+                                                                        alt={place.name}
+                                                                        className="w-full h-full object-cover"
+                                                                    />
+                                                                ) : (
+                                                                    <div className="w-full h-full flex items-center justify-center text-muted-foreground/50">
+                                                                        <MapPin size={14} />
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                            <div className="min-w-0 flex-1">
+                                                                <div className="flex items-center gap-1.5">
+                                                                    <span className="text-[9px] font-bold px-1 py-0.2 rounded bg-muted text-muted-foreground">
+                                                                        {getCategoryTypeName(place.type)}
+                                                                    </span>
+                                                                    <span className="font-bold text-xs text-foreground truncate">
+                                                                        {place.name}
+                                                                    </span>
+                                                                </div>
+                                                                {(place.eng_name || place.info?.stay_duration) && (
+                                                                    <div className="text-[10px] text-muted-foreground font-mono truncate mt-0.5 flex items-center gap-2">
+                                                                        {place.eng_name && <span>{place.eng_name}</span>}
+                                                                        {place.info?.stay_duration && (
+                                                                            <span className="text-primary font-sans">
+                                                                                ⏱️ {place.info.stay_duration}
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="shrink-0">
+                                                            {isSelected ? (
+                                                                <span className="w-5 h-5 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs font-bold">
+                                                                    <Check size={12} />
+                                                                </span>
+                                                            ) : (
+                                                                <span className="text-[10px] font-bold text-blue-500 hover:underline px-1.5 py-0.5">
+                                                                    選擇
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })
+                                        )}
                                     </div>
                                 </div>
-                                <div>
-                                    <span className="block text-[10px] text-muted-foreground mb-0.5">
-                                        機票/費用/行李等備註
-                                    </span>
-                                    <input
-                                        name="transitDetails.fare"
-                                        value={
-                                            formData.transitDetails?.fare || ""
-                                        }
-                                        onChange={onFormInputChange}
-                                        placeholder="例如：含20kg託運行李, 請提早2.5小時報到"
-                                        className="w-full bg-background border border-input rounded py-1 px-2 text-xs"
-                                    />
-                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Section: 基本排程設定 (Inset Grouped Table) */}
+                    <div className="space-y-1.5">
+                        <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider px-1">
+                            時間與活動資訊 (TIMING & INFO)
+                        </span>
+
+                        <div className="bg-card border border-border/80 rounded-2xl overflow-hidden divide-y divide-border/60 text-xs shadow-2xs">
+                            {/* 1. 時間 */}
+                            <div className="p-3 sm:p-3.5 flex items-center justify-between gap-3 bg-card hover:bg-muted/10 transition-colors">
+                                <span className="text-muted-foreground w-24 sm:w-28 shrink-0 font-medium flex items-center gap-1">
+                                    <Clock size={13} className="text-blue-500" />
+                                    <span>開始時間</span>
+                                    <span className="text-rose-500 font-bold">*</span>
+                                </span>
+                                <input
+                                    required
+                                    type="time"
+                                    name="time"
+                                    value={formData.time}
+                                    onChange={onFormInputChange}
+                                    className="flex-1 text-right font-mono font-bold text-foreground bg-transparent outline-none cursor-pointer dark:[color-scheme:dark]"
+                                />
                             </div>
-                        )}
+
+                            {/* 2. 停留時間 */}
+                            <div className="p-3 sm:p-3.5 flex items-center justify-between gap-3 bg-card hover:bg-muted/10 transition-colors">
+                                <span className="text-muted-foreground w-24 sm:w-28 shrink-0 font-medium flex items-center gap-1">
+                                    <Hourglass size={13} className="text-amber-500" />
+                                    <span>預計停留</span>
+                                </span>
+                                <input
+                                    type="text"
+                                    name="duration"
+                                    value={formData.duration || ""}
+                                    onChange={onFormInputChange}
+                                    placeholder="例: 1.5小時, 45分鐘"
+                                    className="flex-1 text-right font-medium text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40"
+                                />
+                            </div>
+
+                            {/* 3. 活動標題 */}
+                            <div className="p-3 sm:p-3.5 flex items-center justify-between gap-3 bg-card hover:bg-muted/10 transition-colors">
+                                <span className="text-muted-foreground w-24 sm:w-28 shrink-0 font-medium flex items-center gap-1">
+                                    <span>活動標題</span>
+                                    <span className="text-rose-500 font-bold">*</span>
+                                </span>
+                                <input
+                                    required
+                                    type="text"
+                                    name="title"
+                                    value={formData.title}
+                                    onChange={onFormInputChange}
+                                    placeholder="例: 清水寺"
+                                    className="flex-1 text-right font-bold text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40"
+                                />
+                            </div>
+
+                            {/* 4. 活動類型 */}
+                            <div className="p-3 sm:p-3.5 flex items-center justify-between gap-3 bg-card hover:bg-muted/10 transition-colors">
+                                <span className="text-muted-foreground w-24 sm:w-28 shrink-0 font-medium flex items-center gap-1">
+                                    <Tag size={13} className="text-teal-500" />
+                                    <span>活動分類</span>
+                                    <span className="text-rose-500 font-bold">*</span>
+                                </span>
+                                <select
+                                    name="type"
+                                    value={formData.type || "sight"}
+                                    onChange={onFormInputChange as any}
+                                    className="bg-muted/40 text-foreground text-xs font-semibold px-2.5 py-1 rounded-xl outline-none cursor-pointer border border-border/60"
+                                >
+                                    {CATEGORY_DEFINITIONS.map((cat) => (
+                                        <option key={cat.id} value={cat.id} className="bg-background text-foreground">
+                                            {getCategoryTypeName(cat.id)} ({cat.engName})
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* 5. 備註描述 */}
+                            <div className="p-3 sm:p-3.5 flex items-center justify-between gap-3 bg-card hover:bg-muted/10 transition-colors">
+                                <span className="text-muted-foreground w-24 sm:w-28 shrink-0 font-medium">
+                                    備註說明
+                                </span>
+                                <input
+                                    type="text"
+                                    name="desc"
+                                    value={formData.desc || ""}
+                                    onChange={onFormInputChange}
+                                    placeholder="例: Kiyomizu-dera / 記得攜帶水壺"
+                                    className="flex-1 text-right font-medium text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40"
+                                />
+                            </div>
+                        </div>
                     </div>
-                )}
-            </div>
 
-            {/* Description */}
-            <div>
-                <label
-                    htmlFor="desc"
-                    className="block font-bold uppercase mb-1 flex items-center text-muted-foreground text-xs"
-                >
-                    詳細說明
-                </label>
-                <textarea
-                    name="desc"
-                    value={formData.desc}
-                    onChange={onFormInputChange}
-                    rows={2}
-                    placeholder="活動的細節或備註..."
-                    className="w-full bg-transparent text-foreground border-b border-border py-2 outline-none font-[Noto_Sans_TC] text-base resize-none no-scrollbar"
-                />
-            </div>
+                    {/* Section: 前往下一站的交通 (Transit & Navigation) */}
+                    <div className="space-y-1.5">
+                        <div className="flex items-center justify-between px-1">
+                            <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+                                <Navigation size={12} className="text-blue-500" />
+                                <span>前往下一站的交通 (TRANSIT)</span>
+                            </span>
 
-            {/* Link ID */}
-            <div>
-                <label
-                    htmlFor="linkId"
-                    className="block font-bold uppercase mb-1 flex items-center text-muted-foreground text-xs"
-                >
-                    <Tag size={12} className="mr-1" /> 連結地點 ID
-                </label>
-                <PlaceLinkAutocomplete
-                    tripId={itinerary?.trip_id}
-                    name="linkId"
-                    value={formData.linkId}
-                    onChange={onFormInputChange}
-                    onPlaceSelect={handlePlaceSelect}
-                />
+                            {/* 自動路線估算按鈕 */}
+                            {formData.linkId && (
+                                <button
+                                    type="button"
+                                    onClick={handleAutoCalculateRoute}
+                                    disabled={isCalculatingRoute}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-bold rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 transition-all border border-blue-500/20 cursor-pointer disabled:opacity-50"
+                                    title="透過地圖服務自動計算距離與路程時間"
+                                >
+                                    {isCalculatingRoute ? (
+                                        <>
+                                            <Loader2 size={10} className="animate-spin" />
+                                            <span>計算中...</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Sparkles size={10} />
+                                            <span>⚡ 地圖自動估算</span>
+                                        </>
+                                    )}
+                                </button>
+                            )}
+                        </div>
+
+                        {/* 計算狀態提示 */}
+                        {routingMessage && (
+                            <div
+                                className={`p-2.5 rounded-xl text-xs flex items-start gap-1.5 ${
+                                    routingMessage.type === "success"
+                                        ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20"
+                                        : routingMessage.type === "error"
+                                        ? "bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-500/20"
+                                        : "bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-500/20"
+                                }`}
+                            >
+                                {routingMessage.type === "success" ? (
+                                    <CheckCircle2 size={13} className="shrink-0 mt-0.5" />
+                                ) : (
+                                    <Info size={13} className="shrink-0 mt-0.5" />
+                                )}
+                                <span className="leading-tight">{routingMessage.text}</span>
+                            </div>
+                        )}
+
+                        <div className="bg-card border border-border/80 rounded-2xl overflow-hidden divide-y divide-border/60 text-xs shadow-2xs">
+                            {/* 交通工具 */}
+                            <div className="p-3 sm:p-3.5 flex items-center justify-between gap-3 bg-card hover:bg-muted/10 transition-colors">
+                                <span className="text-muted-foreground w-24 sm:w-28 shrink-0 font-medium">
+                                    交通工具
+                                </span>
+                                <select
+                                    name="transitMode"
+                                    value={formData.transitMode || "none"}
+                                    onChange={onFormInputChange as any}
+                                    className="bg-muted/40 text-foreground text-xs font-semibold px-2.5 py-1 rounded-xl outline-none cursor-pointer border border-border/60"
+                                >
+                                    {TRANSIT_MODES.map((mode) => (
+                                        <option key={mode.id} value={mode.id} className="bg-background text-foreground">
+                                            {mode.label}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* 預估路程時間 */}
+                            <div className="p-3 sm:p-3.5 flex items-center justify-between gap-3 bg-card hover:bg-muted/10 transition-colors">
+                                <span className="text-muted-foreground w-24 sm:w-28 shrink-0 font-medium">
+                                    預估路程時間
+                                </span>
+                                <input
+                                    type="text"
+                                    name="transitDuration"
+                                    value={formData.transitDuration || ""}
+                                    onChange={onFormInputChange}
+                                    placeholder="例: 15分鐘, 30分鐘 (3.2 km)"
+                                    className="flex-1 text-right font-medium text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40"
+                                />
+                            </div>
+
+                            {/* 交通細節 (自駕、鐵路路線等) */}
+                            {formData.transitMode && formData.transitMode !== "none" && (
+                                <>
+                                    {formData.transitMode === "car" && (
+                                        <div className="p-3 sm:p-3.5 flex items-center justify-between gap-3 bg-card">
+                                            <span className="text-muted-foreground w-24 sm:w-28 shrink-0 font-medium">
+                                                租車/自駕備註
+                                            </span>
+                                            <input
+                                                type="text"
+                                                name="transitDetails.carRentalCompany"
+                                                value={formData.transitDetails?.carRentalCompany || ""}
+                                                onChange={onFormInputChange}
+                                                placeholder="例: Toyota Rent a Car (那霸機場店)"
+                                                className="flex-1 text-right font-medium text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40"
+                                            />
+                                        </div>
+                                    )}
+
+                                    {["train", "subway", "bus", "ferry"].includes(formData.transitMode) && (
+                                        <div className="p-3 sm:p-3.5 flex items-center justify-between gap-3 bg-card">
+                                            <span className="text-muted-foreground w-24 sm:w-28 shrink-0 font-medium">
+                                                搭乘路線/月台
+                                            </span>
+                                            <input
+                                                type="text"
+                                                name="transitDetails.companyAndLine"
+                                                value={formData.transitDetails?.companyAndLine || ""}
+                                                onChange={onFormInputChange}
+                                                placeholder="例: JR京都線 (4番月台)"
+                                                className="flex-1 text-right font-medium text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40"
+                                            />
+                                        </div>
+                                    )}
+
+                                    {formData.transitMode === "flight" && (
+                                        <div className="p-3 sm:p-3.5 flex items-center justify-between gap-3 bg-card">
+                                            <span className="text-muted-foreground w-24 sm:w-28 shrink-0 font-medium">
+                                                航班資訊
+                                            </span>
+                                            <input
+                                                type="text"
+                                                name="transitDetails.flightNumber"
+                                                value={formData.transitDetails?.flightNumber || ""}
+                                                onChange={onFormInputChange}
+                                                placeholder="例: JX820 (T1 登機門 B5)"
+                                                className="flex-1 text-right font-medium text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40"
+                                            />
+                                        </div>
+                                    )}
+                                </>
+                            )}
+                        </div>
+                    </div>
+                </form>
             </div>
-        </FormModal>
+        </div>
     );
 };
 

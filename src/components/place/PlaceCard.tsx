@@ -19,6 +19,7 @@ import {
     ChevronDown,
     ChevronUp,
     Sparkles,
+    Volume2,
 } from "lucide-react";
 import { getCategoryTypeName } from "../../constants/Categories";
 import type { PlaceVM } from "../../models/types/PlaceTypes";
@@ -32,6 +33,7 @@ import {
     parseOpeningHours,
     getBusinessStatus,
 } from "../../utils/OpeningHoursUtil";
+import { detectLanguage, playPronunciation } from "../../utils/SpeechLanguageUtil";
 
 type PlaceCardProps = {
     theme: TripThemeConf | null;
@@ -52,8 +54,9 @@ const PlaceCard = ({
     onEdit,
     onTagBtnClick,
 }: PlaceCardProps) => {
-    const [showActions, setShowActions] = useState(false);
-    const [isMobileExpanded, setIsMobileExpanded] = useState(false);
+    const [isExpanded, setIsExpanded] = useState(false);
+    const [speaking, setSpeaking] = useState(false);
+
     const smartNav = getSmartNavigationLabel();
     const mapUrl = getSmartNavigationUrl({
         name: place.name,
@@ -63,6 +66,26 @@ const PlaceCard = ({
         customUrl: place.map_url,
     });
     const businessStatus = getBusinessStatus(place.info?.open, place.info?.closed_days);
+
+    const detectedLang = detectLanguage(place.info?.native_name, {
+        address: place.info?.loc,
+        currency: place.info?.price,
+    });
+
+    const handleSpeak = (e?: React.MouseEvent) => {
+        e?.stopPropagation();
+        if (!place.info?.native_name) return;
+        playPronunciation(place.info.native_name, {
+            context: {
+                address: place.info?.loc,
+                mapUrl: place.map_url,
+                currency: place.info?.price,
+            },
+            onStart: () => setSpeaking(true),
+            onEnd: () => setSpeaking(false),
+            onError: () => setSpeaking(false),
+        });
+    };
 
     const paymentList: string[] = Array.isArray(place.info?.payment_methods)
         ? place.info.payment_methods
@@ -77,10 +100,14 @@ const PlaceCard = ({
         : [];
 
     const recommendedItems = place.info?.recommended_items || [];
+    const firstRecItem = recommendedItems[0];
 
-    // 檢查是否有額外旅遊細節（用於手機端判斷是否需要展開按鈕）
+    // 檢查是否有次要旅遊細節
     const hasSecondaryDetails =
+        !!place.description ||
+        !!place.tips ||
         !!place.info?.transit_access ||
+        !!place.info?.phone ||
         !!place.info?.booking_status ||
         !!place.info?.booking_url ||
         !!place.info?.website_url ||
@@ -89,9 +116,11 @@ const PlaceCard = ({
         recommendedItems.length > 0;
 
     // ==========================================
-    // 🖨️ 列印模式專屬排版 (Print / Preview Mode)
+    // 🖨️ 列印模式專屬排版 (Print Mode)
     // ==========================================
     if (isPrinting) {
+        const parsedHours = parseOpeningHours(place.info?.open);
+
         return (
             <div
                 id={place.id}
@@ -117,7 +146,6 @@ const PlaceCard = ({
 
                 {/* 右側：主體內容 */}
                 <div className="flex-1 min-w-0 space-y-2">
-                    {/* 標題與副標題 */}
                     <div className="border-b border-gray-200 pb-1.5">
                         <div className="flex items-baseline justify-between gap-2">
                             <h3 className="text-lg font-bold text-black tracking-tight">
@@ -130,11 +158,6 @@ const PlaceCard = ({
                                     {place.info.rating_count && (
                                         <span className="text-gray-500 font-normal ml-1">
                                             ({place.info.rating_count})
-                                        </span>
-                                    )}
-                                    {place.info.rating_source && (
-                                        <span className="ml-1 text-[9px] bg-gray-200 px-1 rounded text-gray-700">
-                                            {place.info.rating_source}
                                         </span>
                                     )}
                                 </div>
@@ -151,7 +174,6 @@ const PlaceCard = ({
                             </div>
                         )}
 
-                        {/* 標籤 (列印呈現) */}
                         {place.tags && (
                             <div className="flex flex-wrap gap-1.5 mt-1.5">
                                 {place.tags
@@ -170,14 +192,12 @@ const PlaceCard = ({
                         )}
                     </div>
 
-                    {/* 景點描述 */}
                     {place.description && (
                         <p className="text-xs text-gray-800 leading-relaxed text-justify">
                             {place.description}
                         </p>
                     )}
 
-                    {/* 景點 Tips 備忘 */}
                     {place.tips && (
                         <div className="bg-gray-100 p-2 rounded border-l-2 border-black text-xs text-black">
                             <strong className="font-bold mr-1">Tips:</strong>
@@ -185,33 +205,36 @@ const PlaceCard = ({
                         </div>
                     )}
 
-                    {/* 實用資訊 2 欄網格 */}
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-gray-800 pt-1 border-t border-gray-200">
+                    {/* 實用資訊網格 (列印時完整顯示所有時間，不帶當天營業/休息狀態) */}
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs text-gray-800 pt-1 border-t border-gray-200">
+                        {/* 營業時間 / 住宿入住退房 (完整顯示全部營業時間) */}
                         {place.info?.check_in ? (
                             <div className="flex items-center gap-1.5">
                                 <Clock size={12} className="text-gray-600 shrink-0" />
                                 <span>
-                                    入住 {place.info.check_in}
-                                    {place.info.check_out && ` / 退房 ${place.info.check_out}`}
+                                    入住：<strong>{place.info.check_in}</strong>
+                                    {place.info.check_out && ` / 退房：${place.info.check_out}`}
                                 </span>
                             </div>
                         ) : place.info?.open ? (
-                            <div className="flex items-center gap-1.5 min-w-0">
-                                <Clock size={12} className="text-gray-600 shrink-0" />
-                                <span className={`text-[10px] font-bold shrink-0 ${
-                                    businessStatus.isOpen ? "text-emerald-700" : "text-rose-700"
-                                }`}>
-                                    [{businessStatus.badgeText}]
-                                </span>
-                                <span className="truncate">{businessStatus.allHoursSummary}</span>
+                            <div className="flex items-start gap-1.5 col-span-2">
+                                <Clock size={12} className="text-gray-600 shrink-0 mt-0.5" />
+                                <div className="leading-relaxed">
+                                    <span className="font-bold mr-1">營業時間：</span>
+                                    <span>
+                                        {parsedHours.isPerDay
+                                            ? parsedHours.summaryText || businessStatus.allHoursSummary
+                                            : place.info.open}
+                                    </span>
+                                </div>
                             </div>
                         ) : null}
 
                         {place.info?.closed_days && (
                             <div className="flex items-center gap-1.5">
-                                <CalendarX size={12} className="text-rose-700 shrink-0" />
-                                <span className="font-medium text-rose-800">
-                                    {place.info.closed_days}
+                                <CalendarX size={12} className="text-gray-600 shrink-0" />
+                                <span>
+                                    公休日：<strong>{place.info.closed_days}</strong>
                                 </span>
                             </div>
                         )}
@@ -225,50 +248,52 @@ const PlaceCard = ({
                             </div>
                         )}
 
-                        {place.info?.transit_access && (
-                            <div className="flex items-center gap-1.5">
-                                <Train size={12} className="text-gray-600 shrink-0" />
-                                <span className="truncate">{place.info.transit_access}</span>
-                            </div>
-                        )}
-
-                        {place.info?.loc && (
-                            <div className="flex items-center gap-1.5 col-span-2">
-                                <MapPin size={12} className="text-gray-600 shrink-0" />
-                                <span className="truncate">{place.info.loc}</span>
-                            </div>
-                        )}
-
                         {place.info?.phone && (
-                            <div className="flex items-center gap-1.5">
+                            <div className="flex items-center gap-1.5 font-mono">
                                 <Phone size={12} className="text-gray-600 shrink-0" />
-                                <span className="font-mono">{place.info.phone}</span>
+                                <span>{place.info.phone}</span>
                             </div>
                         )}
 
                         {place.info?.price && (
                             <div className="flex items-center gap-1.5">
                                 <DollarSign size={12} className="text-gray-600 shrink-0" />
-                                <span>預算: {place.info.price}</span>
+                                <span>預算：{place.info.price}</span>
                             </div>
                         )}
 
                         {place.info?.booking_status && (
                             <div className="flex items-center gap-1.5">
                                 <Ticket size={12} className="text-gray-600 shrink-0" />
-                                <span className="font-medium">
-                                    {place.info.booking_status === "required" && "🔴 需提前預約"}
-                                    {place.info.booking_status === "recommended" && "🟡 建議預約"}
-                                    {place.info.booking_status === "walk_in" && "🚶 現場排隊"}
-                                    {place.info.booking_status === "none" && "🟢 免預約"}
+                                <span>
+                                    預約：
+                                    {place.info.booking_status === "required" && "需提前預約"}
+                                    {place.info.booking_status === "recommended" && "建議預約"}
+                                    {place.info.booking_status === "walk_in" && "現場排隊"}
+                                    {place.info.booking_status === "none" && "免預約"}
                                     {!["required", "recommended", "walk_in", "none"].includes(place.info.booking_status) && place.info.booking_status}
                                 </span>
+                            </div>
+                        )}
+
+                        {place.info?.transit_access && (
+                            <div className="flex items-center gap-1.5 col-span-2">
+                                <Train size={12} className="text-gray-600 shrink-0" />
+                                <span>交通：{place.info.transit_access}</span>
+                            </div>
+                        )}
+
+                        {place.info?.loc && (
+                            <div className="flex items-center gap-1.5 col-span-2">
+                                <MapPin size={12} className="text-gray-600 shrink-0" />
+                                <span>地址：{place.info.loc}</span>
                             </div>
                         )}
 
                         {paymentList.length > 0 && (
                             <div className="flex items-center gap-1 col-span-2 flex-wrap pt-0.5">
                                 <CreditCard size={12} className="text-gray-600 shrink-0 mr-1" />
+                                <span className="mr-1">支付方式：</span>
                                 {paymentList.map((p, i) => (
                                     <span key={i} className="text-[10px] bg-gray-100 border border-gray-300 px-1.5 py-0.2 rounded">
                                         {p}
@@ -280,6 +305,7 @@ const PlaceCard = ({
                         {amenitiesList.length > 0 && (
                             <div className="flex items-center gap-1 col-span-2 flex-wrap">
                                 <Wifi size={12} className="text-gray-600 shrink-0 mr-1" />
+                                <span className="mr-1">設施：</span>
                                 {amenitiesList.map((a, i) => (
                                     <span key={i} className="text-[10px] bg-gray-100 border border-gray-300 px-1.5 py-0.2 rounded">
                                         {a}
@@ -289,13 +315,13 @@ const PlaceCard = ({
                         )}
                     </div>
 
-                    {/* 🍽️ 推薦菜單 / 必買商品 (列印紙本表格) */}
+                    {/* 🍽️ 推薦品項清單 (列印表格) */}
                     {recommendedItems.length > 0 && (
                         <div className="bg-gray-50 border border-gray-300 rounded p-2.5 mt-2 space-y-1.5">
                             <div className="flex items-center justify-between text-xs font-bold text-black border-b border-gray-200 pb-1">
                                 <span className="flex items-center gap-1.5">
                                     <Utensils size={12} />
-                                    <span>{place.type === "shopping" ? "🛍️ 必買推薦商品清單" : "🍽️ 必點推薦菜色清單"}</span>
+                                    <span>{place.type === "shopping" ? "🛍️ 推薦購買商品" : "🍽️ 必點推薦菜色"}</span>
                                 </span>
                                 <span className="text-[10px] text-gray-500 font-mono">
                                     共 {recommendedItems.length} 項
@@ -344,297 +370,226 @@ const PlaceCard = ({
     }
 
     // ==========================================
-    // 💻 現代化橫式雜誌卡片 (Desktop & Responsive Mobile)
+    // 📱 iOS POC 原生卡片風格 (iOS PlaceCard)
     // ==========================================
     return (
         <div
             id={place.id}
-            className="bg-card rounded-3xl overflow-hidden shadow-sm border border-border/80 transition-all duration-300 group hover:shadow-lg flex flex-col md:flex-row w-full"
-            onMouseEnter={() => setShowActions(true)}
-            onMouseLeave={() => setShowActions(false)}
-            onTouchStart={() => setShowActions(true)}
+            className="w-full p-3.5 sm:p-4 rounded-3xl border border-border/80 bg-card text-card-foreground shadow-xl hover:shadow-2xl transition-all duration-300 hover:border-border group"
         >
-            {/* 左側照片區塊 (固定黃金比例裁切壓縮，避免直式長圖撐大卡片) */}
-            <div className="relative overflow-hidden shrink-0 w-full md:w-72 lg:w-80 h-56 sm:h-64 md:h-auto md:min-h-[260px] md:self-stretch bg-muted">
-                {place.image_url ? (
-                    <img
-                        src={place.image_url}
-                        alt={place.name}
-                        className="absolute inset-0 w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-105"
-                    />
-                ) : (
-                    <div className="absolute inset-0 w-full h-full flex flex-col items-center justify-center text-xs text-muted-foreground/50 gap-1.5 p-4">
-                        <MapPin size={28} className="opacity-30" />
-                        <span>尚未設定照片</span>
-                    </div>
-                )}
-
-                {/* 漸層遮罩 */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-black/30 pointer-events-none" />
-
-                {/* 分類標籤 */}
-                <div className="absolute top-4 left-4 z-10">
-                    <span className="px-3 py-1 uppercase tracking-widest font-bold shadow-md text-[11px] bg-background/90 backdrop-blur-md text-foreground rounded-full border border-border/40">
+            {/* 上半部：縮圖 + 主要資訊 */}
+            <div className="flex items-start gap-3.5">
+                {/* 16:9 圓角縮圖 */}
+                <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden shrink-0 border border-border/60 shadow-xs bg-muted">
+                    {place.image_url ? (
+                        <img
+                            src={place.image_url}
+                            alt={place.name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                    ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground/50 text-[10px] gap-1">
+                            <MapPin size={20} className="opacity-40" />
+                            <span>無照片</span>
+                        </div>
+                    )}
+                    <span className="absolute bottom-1.5 left-1.5 px-1.5 py-0.5 rounded-md bg-black/60 backdrop-blur-md text-[10px] text-white font-bold tracking-wider">
                         {getCategoryTypeName(place.type)}
                     </span>
                 </div>
 
-                {/* 浮動操作按鈕 (編輯 / 刪除) */}
-                {!isPreview && (
-                    <div
-                        className={`absolute top-4 right-4 flex space-x-1.5 p-1 bg-black/40 backdrop-blur-md rounded-full border border-white/20 transition-all duration-300 z-10 ${
-                            showActions
-                                ? "opacity-100 translate-y-0"
-                                : "opacity-0 -translate-y-2 md:group-hover:opacity-100 md:group-hover:translate-y-0"
-                        }`}
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <button
-                            type="button"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                onEdit(place);
-                            }}
-                            className="p-2 rounded-full text-white/90 hover:text-white hover:bg-white/20 transition-colors cursor-pointer"
-                            title="編輯"
-                        >
-                            <Pencil size={14} />
-                        </button>
-                        <button
-                            type="button"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                onDelete(place);
-                            }}
-                            className="p-2 rounded-full text-white/90 hover:text-rose-400 hover:bg-white/20 transition-colors cursor-pointer"
-                            title="刪除"
-                        >
-                            <Trash2 size={14} />
-                        </button>
-                    </div>
-                )}
-
-                {/* 左側照片底部亮點標籤 (評分、停留時間、預算) */}
-                <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between gap-1.5 z-10 flex-wrap text-white">
-                    {place.info?.rating ? (
-                        <div className="flex items-center gap-1 bg-black/50 backdrop-blur-md px-2.5 py-1 rounded-xl text-xs font-bold border border-white/10">
-                            <Star size={13} className="text-amber-400 fill-amber-400" />
-                            <span>{place.info.rating}</span>
-                            {place.info.rating_count && (
-                                <span className="text-[10px] text-white/70 font-normal">
-                                    ({place.info.rating_count})
-                                </span>
-                            )}
-                        </div>
-                    ) : (
-                        <div />
-                    )}
-
-                    {place.info?.stay_duration && (
-                        <div className="flex items-center gap-1 bg-black/50 backdrop-blur-md px-2 py-1 rounded-xl text-[11px] font-medium border border-white/10 text-white/90">
-                            <Clock size={11} className="text-primary" />
-                            <span>{place.info.stay_duration}</span>
-                        </div>
-                    )}
-                </div>
-            </div>
-
-            {/* 右側主體內容區 (PC 寬版水平展開) */}
-            <div className="p-5 md:p-6 flex flex-col justify-between flex-1 min-w-0 space-y-3.5">
-                {/* 頂部：標題、副標題與導航按鈕 */}
-                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2.5 border-b border-border/50 pb-3">
-                    <div className="space-y-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                            <h3 className="text-xl md:text-2xl font-bold font-[Noto_Sans_TC] tracking-tight text-foreground">
+                {/* 卡片主體文字資訊 */}
+                <div className="flex-1 min-w-0 space-y-1.5">
+                    <div className="flex items-start justify-between gap-1">
+                        <div className="min-w-0 flex-1">
+                            <h3 className="text-base sm:text-lg font-bold leading-tight line-clamp-1 text-foreground">
                                 {place.name}
                             </h3>
-                            {place.info?.price && (
-                                <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-lg border border-emerald-500/20">
-                                    {place.info.price}
-                                </span>
+                            {(place.eng_name || place.info?.native_name) && (
+                                <p className="text-xs text-muted-foreground font-mono truncate mt-0.5">
+                                    {place.eng_name}
+                                    {place.eng_name && place.info?.native_name && " · "}
+                                    {place.info?.native_name}
+                                </p>
                             )}
                         </div>
 
-                        {(place.eng_name || place.info?.native_name) && (
-                            <div className="text-xs text-muted-foreground font-mono flex items-center gap-2 flex-wrap">
-                                {place.eng_name && <span>{place.eng_name}</span>}
-                                {place.eng_name && place.info?.native_name && <span>•</span>}
-                                {place.info?.native_name && (
-                                    <span className="font-sans font-medium text-foreground/80">
-                                        {place.info.native_name}
-                                    </span>
-                                )}
-                            </div>
+                        {place.info?.native_name && (
+                            <button
+                                type="button"
+                                onClick={handleSpeak}
+                                className={`p-1.5 rounded-full hover:bg-muted text-blue-500 transition-colors shrink-0 cursor-pointer ${
+                                    speaking ? "animate-pulse scale-110 text-amber-500" : ""
+                                }`}
+                                title={`播放原文發音 (${detectedLang.name})`}
+                            >
+                                <Volume2 size={15} />
+                            </button>
                         )}
                     </div>
 
-                    {/* 快速導航按鈕 (連動 Apple / Google 地圖) */}
+                    {/* 即時營業狀態 + 評分 */}
+                    <div className="flex items-center gap-2 flex-wrap text-xs">
+                        {place.info?.open && (
+                            <>
+                                <span
+                                    className={`px-2 py-0.5 rounded-lg font-extrabold text-[11px] ${businessStatus.badgeColor}`}
+                                >
+                                    {businessStatus.badgeText}
+                                </span>
+                                <span className="text-muted-foreground text-[11px] truncate max-w-[130px] sm:max-w-none">
+                                    {businessStatus.detailText}
+                                </span>
+                            </>
+                        )}
+
+                        {place.info?.rating && (
+                            <span className="flex items-center gap-0.5 text-amber-500 text-[11px] font-bold">
+                                <Star size={11} className="fill-amber-400 text-amber-400" />
+                                <span>{place.info.rating}</span>
+                                {place.info.rating_count && (
+                                    <span className="text-muted-foreground text-[10px] font-normal">
+                                        ({place.info.rating_count})
+                                    </span>
+                                )}
+                            </span>
+                        )}
+                    </div>
+
+                    {/* 必吃 / 必買重點膠囊 or 預算 */}
+                    <div className="flex items-center gap-1.5 pt-0.5 flex-wrap">
+                        {firstRecItem ? (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-rose-500 dark:text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded-lg border border-rose-500/20 truncate max-w-full">
+                                <span>{place.type === "shopping" ? "🎁" : "🍽️"}</span>
+                                <span className="truncate">{firstRecItem.name}</span>
+                                {firstRecItem.price && (
+                                    <span className="font-mono opacity-80">{firstRecItem.price}</span>
+                                )}
+                            </span>
+                        ) : place.info?.price ? (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-lg border border-emerald-500/20">
+                                <span>預算: {place.info.price}</span>
+                            </span>
+                        ) : null}
+
+                        {place.info?.stay_duration && (
+                            <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded-md font-medium">
+                                <Clock size={10} />
+                                <span>{place.info.stay_duration}</span>
+                            </span>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            {/* 卡片底線操作按鈕 (地址 + 編輯/刪除 + 導航) */}
+            <div className="mt-3 pt-2.5 border-t border-border/70 flex items-center justify-between gap-2 text-xs">
+                <div className="flex items-center gap-1.5 text-muted-foreground truncate min-w-0 flex-1">
+                    <MapPin size={12} className="text-rose-500 shrink-0" />
+                    <span className="truncate">{place.info?.loc || "尚未設定地址"}</span>
+                </div>
+
+                <div className="flex items-center gap-1.5 shrink-0">
+                    {!isPreview && (
+                        <>
+                            <button
+                                type="button"
+                                onClick={() => onEdit(place)}
+                                className="p-1.5 rounded-xl hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                                title="編輯地點"
+                            >
+                                <Pencil size={13} />
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => onDelete(place)}
+                                className="p-1.5 rounded-xl hover:bg-rose-500/10 text-muted-foreground hover:text-rose-500 transition-colors cursor-pointer"
+                                title="刪除地點"
+                            >
+                                <Trash2 size={13} />
+                            </button>
+                        </>
+                    )}
+
                     {!isPreview && (
                         <a
                             href={mapUrl}
                             target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-xs shrink-0 self-start cursor-pointer active:scale-95"
-                            title={`在 ${smartNav.appName} 中開啟`}
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold transition-all shadow-xs cursor-pointer active:scale-95"
+                            title={`在 ${smartNav.appName} 中開啟導航`}
                         >
-                            <Navigation size={13} />
-                            <span>{smartNav.label}</span>
-                            <ExternalLink size={10} className="opacity-70" />
+                            <Navigation size={12} />
+                            <span>導航</span>
                         </a>
                     )}
-                </div>
 
-                {/* 標籤列 */}
-                {!!place.tags && (
-                    <div className="flex flex-wrap gap-1.5">
-                        {place.tags.split(",").map((tag) => (
-                            <button
-                                key={tag}
-                                type="button"
-                                onClick={() => onTagBtnClick(tag.trim())}
-                                className="text-[11px] font-medium bg-muted/60 text-muted-foreground px-2.5 py-0.5 rounded-lg hover:bg-primary/20 hover:text-primary transition-colors cursor-pointer border border-border/50"
-                            >
-                                #{tag.trim()}
-                            </button>
-                        ))}
-                    </div>
-                )}
-
-                {/* 景點描述 */}
-                {place.description && (
-                    <p className="text-xs md:text-sm leading-relaxed text-justify text-muted-foreground/90 line-clamp-2 md:line-clamp-3">
-                        {place.description}
-                    </p>
-                )}
-
-                {/* Tips 備忘筆記 */}
-                {place.tips && (
-                    <div className="bg-amber-500/10 border border-amber-500/30 p-2.5 rounded-xl text-xs text-foreground/90 flex items-start gap-2">
-                        <Sparkles size={14} className="text-amber-500 shrink-0 mt-0.5" />
-                        <div>
-                            <strong className="font-bold text-amber-600 dark:text-amber-400 mr-1">
-                                Tips:
-                            </strong>
-                            {place.tips}
-                        </div>
-                    </div>
-                )}
-
-                {/* 常用重要資訊網格 (營業、地址、電話、交通) */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 text-xs text-muted-foreground pt-1">
-                    {/* 營業時間 / 入住退房 */}
-                    {place.info?.check_in ? (
-                        <div className="flex items-center gap-1.5 bg-muted/30 p-2 rounded-xl border border-border/40">
-                            <Clock size={13} className="text-primary shrink-0" />
-                            <span className="truncate">
-                                入住 {place.info.check_in}
-                                {place.info.check_out && ` / 退房 ${place.info.check_out}`}
-                            </span>
-                        </div>
-                    ) : place.info?.open ? (
-                        <div
-                            className="flex items-center gap-1.5 bg-muted/30 p-2 rounded-xl border border-border/40 min-w-0 hover:bg-muted/50 transition-colors"
-                            title={
-                                businessStatus.parsed.isPerDay
-                                    ? businessStatus.parsed.days.map((d) => `${d.dayLabel}: ${d.periodsText}`).join("\n")
-                                    : businessStatus.allHoursSummary
-                            }
+                    {hasSecondaryDetails && (
+                        <button
+                            type="button"
+                            onClick={() => setIsExpanded(!isExpanded)}
+                            className="p-1.5 rounded-xl bg-muted/60 hover:bg-muted text-muted-foreground transition-colors cursor-pointer"
+                            title={isExpanded ? "收起詳細細節" : "展開更多細節"}
                         >
-                            <Clock size={13} className="text-muted-foreground/80 shrink-0" />
-                            <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                                {businessStatus.status === "open" && (
-                                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-md shrink-0 border border-emerald-500/20">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                                        營業中
-                                    </span>
-                                )}
-                                {businessStatus.status === "closing_soon" && (
-                                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded-md shrink-0 border border-amber-500/20">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                                        即將打烊
-                                    </span>
-                                )}
-                                {businessStatus.status === "closed" && (
-                                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-rose-600 dark:text-rose-400 bg-rose-500/10 px-1.5 py-0.5 rounded-md shrink-0 border border-rose-500/20">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                                        休息中
-                                    </span>
-                                )}
-                                {businessStatus.status === "closed_today" && (
-                                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-rose-600 dark:text-rose-400 bg-rose-500/15 px-1.5 py-0.5 rounded-md shrink-0 border border-rose-500/30">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                                        今日公休
-                                    </span>
-                                )}
-                                <span className="truncate font-medium text-foreground/90">
-                                    {businessStatus.parsed.isPerDay
-                                        ? `今日(${businessStatus.parsed.todaySchedule?.shortLabel || ""}) ${businessStatus.todayHoursText}`
-                                        : businessStatus.allHoursSummary}
-                                </span>
+                            {isExpanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                        </button>
+                    )}
+                </div>
+            </div>
+
+            {/* 展開後的詳細旅遊資訊 (Tips, 完整推薦菜單, 預約, 支付方式) */}
+            {isExpanded && (
+                <div className="mt-3 pt-3 border-t border-border/60 space-y-2.5 text-xs animate-in slide-in-from-top-2 duration-150">
+                    {/* Tips 備忘便箋 */}
+                    {place.tips && (
+                        <div className="bg-amber-500/10 border border-amber-500/25 p-2.5 rounded-2xl text-foreground/90 flex items-start gap-2">
+                            <Sparkles size={13} className="text-amber-500 shrink-0 mt-0.5" />
+                            <div className="leading-relaxed">
+                                <strong className="font-bold text-amber-600 dark:text-amber-400 mr-1">
+                                    Tips:
+                                </strong>
+                                {place.tips}
                             </div>
                         </div>
-                    ) : null}
-
-                    {/* 公休日 */}
-                    {place.info?.closed_days && (
-                        <div className="flex items-center gap-1.5 bg-rose-500/10 text-rose-600 dark:text-rose-400 p-2 rounded-xl border border-rose-500/20 font-medium">
-                            <CalendarX size={13} className="shrink-0" />
-                            <span className="truncate">{place.info.closed_days}</span>
-                        </div>
                     )}
 
-                    {/* 交通指引 */}
-                    {place.info?.transit_access && (
-                        <div className="flex items-center gap-1.5 bg-muted/30 p-2 rounded-xl border border-border/40">
-                            <Train size={13} className="text-indigo-500 shrink-0" />
-                            <span className="truncate">{place.info.transit_access}</span>
-                        </div>
+                    {/* 景點描述 */}
+                    {place.description && (
+                        <p className="text-muted-foreground leading-relaxed">
+                            {place.description}
+                        </p>
                     )}
 
-                    {/* 詳細地址 */}
-                    {place.info?.loc && (
-                        <div className="flex items-center gap-1.5 bg-muted/30 p-2 rounded-xl border border-border/40 sm:col-span-2">
-                            <MapPin size={13} className="text-rose-500 shrink-0" />
-                            <span className="truncate">{place.info.loc}</span>
-                        </div>
-                    )}
+                    {/* 實用資訊網格 (電話、交通出口、公休日) */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-muted-foreground">
+                        {place.info?.transit_access && (
+                            <div className="flex items-center gap-1.5 bg-muted/30 p-2 rounded-xl border border-border/40">
+                                <Train size={12} className="text-indigo-500 shrink-0" />
+                                <span className="truncate">{place.info.transit_access}</span>
+                            </div>
+                        )}
 
-                    {/* 電話 */}
-                    {place.info?.phone && (
-                        <div className="flex items-center gap-1.5 bg-muted/30 p-2 rounded-xl border border-border/40 font-mono">
-                            <Phone size={13} className="text-muted-foreground/80 shrink-0" />
-                            <span>{place.info.phone}</span>
-                        </div>
-                    )}
-                </div>
+                        {place.info?.phone && (
+                            <div className="flex items-center gap-1.5 bg-muted/30 p-2 rounded-xl border border-border/40 font-mono">
+                                <Phone size={12} className="text-emerald-500 shrink-0" />
+                                <span>{place.info.phone}</span>
+                            </div>
+                        )}
 
-                {/* 手機端「展開/收起」控制紐 (在 PC 上一律自動完整展開) */}
-                {hasSecondaryDetails && (
-                    <button
-                        type="button"
-                        onClick={() => setIsMobileExpanded(!isMobileExpanded)}
-                        className="md:hidden flex items-center justify-center gap-1.5 py-2 px-3 bg-muted/60 text-xs font-semibold text-foreground rounded-xl border border-border/60 hover:bg-muted transition-colors cursor-pointer w-full mt-1"
-                    >
-                        <span>
-                            {isMobileExpanded
-                                ? "收起詳細旅遊資訊 ▴"
-                                : `展開更多旅遊細節 & 推薦品項 (${recommendedItems.length > 0 ? `推薦 ${recommendedItems.length} 項` : "預約/支付/設施"}) ▾`}
-                        </span>
-                    </button>
-                )}
+                        {place.info?.closed_days && (
+                            <div className="flex items-center gap-1.5 bg-rose-500/10 text-rose-600 dark:text-rose-400 p-2 rounded-xl border border-rose-500/20 font-medium">
+                                <CalendarX size={12} className="shrink-0" />
+                                <span className="truncate">{place.info.closed_days}</span>
+                            </div>
+                        )}
+                    </div>
 
-                {/* 次要細節與推薦菜單 (PC 寬版直接展開 / Mobile 依開關展開) */}
-                <div
-                    className={`space-y-3 pt-2 border-t border-border/50 ${
-                        isMobileExpanded ? "block" : "hidden md:block"
-                    }`}
-                >
-                    {/* 預約購票 & 官方網站行動列 */}
+                    {/* 預約購票與官方網站列 */}
                     {(place.info?.booking_status || place.info?.booking_url || place.info?.website_url) && (
-                        <div className="flex items-center justify-between flex-wrap gap-2 text-xs">
-                            <div className="flex items-center gap-2">
+                        <div className="flex items-center justify-between flex-wrap gap-2 pt-1">
+                            <div className="flex items-center gap-2 flex-wrap">
                                 {place.info?.booking_status && (
-                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold border border-emerald-500/20">
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold border border-emerald-500/20 text-xs">
                                         <Ticket size={12} />
                                         {place.info.booking_status === "required" && "🔴 需提前預約"}
                                         {place.info.booking_status === "recommended" && "🟡 建議預約"}
@@ -665,14 +620,14 @@ const PlaceCard = ({
                                     className="inline-flex items-center gap-1 text-purple-600 dark:text-purple-400 hover:underline font-medium"
                                 >
                                     <Globe size={12} />
-                                    <span>官方網站 / 社群</span>
+                                    <span>官方網站</span>
                                     <ExternalLink size={10} />
                                 </a>
                             )}
                         </div>
                     )}
 
-                    {/* 支付方式與便利設施標籤 */}
+                    {/* 支付與設施標籤 */}
                     {(paymentList.length > 0 || amenitiesList.length > 0) && (
                         <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs pt-1">
                             {paymentList.length > 0 && (
@@ -705,37 +660,37 @@ const PlaceCard = ({
                         </div>
                     )}
 
-                    {/* 🍽️ 推薦菜單 / 必買商品清單 (PC: 多欄美觀卡片 / Mobile: 清爽卡片) */}
+                    {/* 🍽️ 推薦菜單 / 必買清單 */}
                     {recommendedItems.length > 0 && (
-                        <div className="mt-2 pt-2.5 bg-muted/20 border border-border/70 p-3.5 rounded-2xl space-y-2">
+                        <div className="bg-muted/20 border border-border/70 p-3 rounded-2xl space-y-2 mt-2">
                             <div className="flex items-center justify-between text-xs font-bold text-foreground">
                                 <span className="flex items-center gap-1.5">
-                                    <Utensils size={13} className="text-amber-500" />
+                                    <Utensils size={12} className="text-amber-500" />
                                     <span>
                                         {place.type === "shopping"
-                                            ? "🛍️ 推薦購買商品 / 必買清單"
-                                            : "🍽️ 推薦菜單 / 必點品項"}
+                                            ? "🛍️ 推薦購買商品"
+                                            : "🍽️ 推薦菜單品項"}
                                     </span>
                                 </span>
                                 <span className="text-[10px] font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-                                    共 {recommendedItems.length} 項推薦
+                                    共 {recommendedItems.length} 項
                                 </span>
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 pt-1">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                 {recommendedItems.map((item, idx) => (
                                     <div
                                         key={idx}
-                                        className="text-xs bg-card p-3 rounded-xl border border-border/80 space-y-1 shadow-2xs hover:border-primary/40 transition-colors"
+                                        className="text-xs bg-card p-2.5 rounded-xl border border-border/80 space-y-0.5 shadow-2xs"
                                     >
-                                        <div className="flex items-start justify-between gap-1.5">
-                                            <div className="flex items-center gap-1.5 font-bold text-foreground min-w-0">
+                                        <div className="flex items-start justify-between gap-1">
+                                            <div className="font-bold text-foreground truncate">
                                                 {item.category && (
-                                                    <span className="text-[9px] bg-amber-500/15 text-amber-600 dark:text-amber-400 px-1.5 py-0.2 rounded font-semibold shrink-0">
+                                                    <span className="text-[9px] bg-amber-500/15 text-amber-600 dark:text-amber-400 px-1 py-0.2 rounded mr-1 font-semibold">
                                                         {item.category}
                                                     </span>
                                                 )}
-                                                <span className="truncate">{item.name}</span>
+                                                <span>{item.name}</span>
                                             </div>
                                             {item.price && (
                                                 <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 shrink-0">
@@ -745,23 +700,15 @@ const PlaceCard = ({
                                         </div>
 
                                         {(item.native_name || item.romaji) && (
-                                            <div className="text-[11px] text-muted-foreground font-mono flex items-center gap-1 flex-wrap">
-                                                {item.native_name && (
-                                                    <span className="font-sans text-foreground/90 font-medium">
-                                                        {item.native_name}
-                                                    </span>
-                                                )}
-                                                {item.native_name && item.romaji && <span>•</span>}
-                                                {item.romaji && (
-                                                    <span className="text-muted-foreground italic">
-                                                        {item.romaji}
-                                                    </span>
-                                                )}
+                                            <div className="text-[10px] text-muted-foreground font-mono truncate">
+                                                {item.native_name}
+                                                {item.native_name && item.romaji && " · "}
+                                                {item.romaji}
                                             </div>
                                         )}
 
                                         {item.note && (
-                                            <p className="text-[11px] text-muted-foreground line-clamp-2 pl-1.5 border-l-2 border-primary/40 mt-1">
+                                            <p className="text-[10px] text-muted-foreground pl-1 border-l border-blue-500/40 mt-0.5 truncate">
                                                 {item.note}
                                             </p>
                                         )}
@@ -770,8 +717,28 @@ const PlaceCard = ({
                             </div>
                         </div>
                     )}
+
+                    {/* 標籤列 */}
+                    {!!place.tags && (
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                            {place.tags
+                                .split(",")
+                                .map((t) => t.trim())
+                                .filter(Boolean)
+                                .map((tag) => (
+                                    <button
+                                        key={tag}
+                                        type="button"
+                                        onClick={() => onTagBtnClick(tag)}
+                                        className="text-[10px] font-medium bg-muted/60 text-muted-foreground hover:text-blue-500 px-2 py-0.5 rounded-md hover:bg-blue-500/10 transition-colors cursor-pointer border border-border/50"
+                                    >
+                                        #{tag}
+                                    </button>
+                                ))}
+                        </div>
+                    )}
                 </div>
-            </div>
+            )}
         </div>
     );
 };

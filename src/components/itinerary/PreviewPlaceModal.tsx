@@ -29,6 +29,8 @@ import {
     parseOpeningHours,
     getBusinessStatus,
 } from "../../utils/OpeningHoursUtil";
+import { Volume2 } from "lucide-react";
+import { detectLanguage, playPronunciation } from "../../utils/SpeechLanguageUtil";
 
 type PreviewPlaceModalProps = {
     onCloseBtnClick: MouseEventHandler<HTMLButtonElement>;
@@ -44,6 +46,7 @@ const PreviewPlaceModal = ({
     children,
 }: PreviewPlaceModalProps) => {
     const [copied, setCopied] = useState(false);
+    const [speaking, setSpeaking] = useState(false);
 
     if (!place) {
         return (
@@ -181,23 +184,58 @@ const PreviewPlaceModal = ({
                 {/* 滾動內容本體 */}
                 <div className="p-5 sm:p-6 overflow-y-auto no-scrollbar space-y-4.5 flex-1">
                     {/* 地點名稱與原文稱呼 */}
-                    <div className="space-y-1.5 border-b border-border/60 pb-4">
+                    <div className="space-y-2 border-b border-border/60 pb-4">
                         <div className="flex items-start justify-between gap-3">
-                            <div>
-                                <h2 className="text-2xl sm:text-3xl font-extrabold font-[Noto_Sans_TC] tracking-tight text-foreground">
+                            <div className="flex-1 min-w-0">
+                                <h2 className="text-2xl sm:text-3xl font-black font-[Noto_Sans_TC] tracking-tight text-foreground leading-tight">
                                     {place.name}
                                 </h2>
-                                {(place.eng_name || place.info?.native_name) && (
-                                    <div className="text-xs text-muted-foreground font-mono flex items-center gap-2 flex-wrap mt-1">
-                                        {place.eng_name && <span className="font-semibold">{place.eng_name}</span>}
-                                        {place.eng_name && place.info?.native_name && <span>•</span>}
-                                        {place.info?.native_name && (
-                                            <span className="font-sans font-medium text-foreground/90">
-                                                {place.info.native_name}
-                                            </span>
-                                        )}
+                                {place.eng_name && (
+                                    <div className="text-xs text-muted-foreground font-mono mt-1 leading-normal">
+                                        {place.eng_name}
                                     </div>
                                 )}
+                                {place.info?.native_name && (() => {
+                                    const detected = detectLanguage(place.info?.native_name, {
+                                        address: place.info?.loc,
+                                        currency: place.info?.price,
+                                    });
+                                    return (
+                                        <div className="pt-1.5">
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    playPronunciation(place.info?.native_name, {
+                                                        context: {
+                                                            address: place.info?.loc,
+                                                            mapUrl: place.map_url,
+                                                            currency: place.info?.price,
+                                                        },
+                                                        onStart: () => setSpeaking(true),
+                                                        onEnd: () => setSpeaking(false),
+                                                        onError: () => setSpeaking(false),
+                                                    });
+                                                }}
+                                                className="inline-flex items-center gap-1.5 text-xs text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 font-medium px-2.5 py-1 bg-blue-500/10 rounded-xl border border-blue-500/25 transition-all cursor-pointer group shadow-2xs hover:bg-blue-500/15"
+                                                title={`以 ${detected.name} 發音`}
+                                            >
+                                                <Volume2
+                                                    size={13}
+                                                    className={`shrink-0 transition-transform ${
+                                                        speaking ? "scale-125 text-amber-500 animate-pulse" : "group-hover:scale-110"
+                                                    }`}
+                                                />
+                                                <span className="font-sans font-semibold tracking-wide text-foreground">
+                                                    {place.info.native_name}
+                                                </span>
+                                                <span className="text-[10px] text-muted-foreground font-mono flex items-center gap-0.5">
+                                                    <span>{detected.flag}</span>
+                                                    <span>{detected.name}</span>
+                                                </span>
+                                            </button>
+                                        </div>
+                                    );
+                                })()}
                             </div>
                         </div>
 
@@ -324,19 +362,19 @@ const PreviewPlaceModal = ({
                                                         {businessStatus.status === "open" && (
                                                             <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
                                                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                                                                {businessStatus.detailText}
+                                                                營業中 • {businessStatus.detailText}
                                                             </span>
                                                         )}
                                                         {businessStatus.status === "closing_soon" && (
                                                             <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">
                                                                 <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                                                                {businessStatus.detailText}
+                                                                即將打烊 • {businessStatus.detailText}
                                                             </span>
                                                         )}
                                                         {businessStatus.status === "closed" && (
                                                             <span className="inline-flex items-center gap-1 text-xs font-bold text-rose-600 dark:text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded-md border border-rose-500/20">
                                                                 <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                                                                {businessStatus.detailText}
+                                                                休息中 • {businessStatus.detailText}
                                                             </span>
                                                         )}
                                                         {businessStatus.status === "closed_today" && (
@@ -353,21 +391,21 @@ const PreviewPlaceModal = ({
                                                         <span className="text-foreground font-semibold text-xs block">
                                                             {businessStatus.allHoursSummary}
                                                         </span>
-                                                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 pt-1 text-[11px] font-mono">
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5 pt-1 text-xs font-mono">
                                                             {businessStatus.parsed.days.map((d) => (
                                                                 <div
                                                                     key={d.dayIndex}
-                                                                    className={`px-2.5 py-1.5 rounded-xl border flex items-center justify-between gap-1.5 ${
+                                                                    className={`px-3 py-1.5 rounded-xl border flex items-center justify-between gap-2 whitespace-nowrap min-w-0 ${
                                                                         d.isToday
-                                                                            ? "bg-primary/15 border-primary/40 text-primary font-bold shadow-2xs"
-                                                                            : "bg-background/70 border-border/60 text-muted-foreground"
+                                                                            ? "bg-blue-500/10 border-blue-500/40 text-blue-600 dark:text-blue-400 font-bold shadow-2xs ring-1 ring-blue-500/20"
+                                                                            : "bg-background/80 border-border/60 text-muted-foreground"
                                                                     }`}
                                                                 >
-                                                                    <span className="flex items-center gap-1">
-                                                                        {d.isToday && <span className="w-1.5 h-1.5 rounded-full bg-primary" />}
-                                                                        {d.dayLabel}
+                                                                    <span className="flex items-center gap-1.5 shrink-0 font-bold">
+                                                                        {d.isToday && <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0 animate-pulse" />}
+                                                                        <span>{d.dayLabel}</span>
                                                                     </span>
-                                                                    <span className={d.isClosed ? "text-rose-500 font-bold" : "text-foreground font-medium"}>
+                                                                    <span className={`font-mono text-right shrink-0 ${d.isClosed ? "text-rose-500 font-bold" : "text-foreground font-medium"}`}>
                                                                         {d.periodsText}
                                                                     </span>
                                                                 </div>

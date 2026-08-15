@@ -6,6 +6,7 @@ export default interface IRepo
         TKey = string
     > {
     getById(id: TKey | undefined): Promise<TRow | null>;
+    getByIds?(ids: TKey[]): Promise<TRow[]>;
     list(parentId?: string): Promise<TRow[]>;
     insert(payload: TInsert): Promise<TRow | null>;
     update(patch: Partial<TUpdate>): Promise<TRow | null>;

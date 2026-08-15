@@ -1,20 +1,27 @@
 import { useEffect, useState } from "react";
 import {
-    BookOpen,
     Pencil,
     Plus,
     Trash2,
     Hourglass,
     Sparkles,
+    Star,
+    Clock,
+    MapPin,
+    Volume2,
+    Navigation,
+    CalendarX,
 } from "lucide-react";
 import type {
     ItineraryActivitiy,
     ItineraryVM,
 } from "../../models/types/ItineraryTypes";
 import type { TripThemeConf } from "../../models/types/TripTypes";
+import type { PlaceVM } from "../../models/types/PlaceTypes";
 import {
     getCategoryIcon,
     getTransitIcon,
+    getCategoryTypeName,
     DEFAULT_CATEGORY_COLORS,
 } from "../../constants/Categories";
 import {
@@ -23,6 +30,9 @@ import {
     WeatherForecastData,
 } from "../../services/WeatherService";
 import { placeRepo } from "../../services/repositories/PlaceRepo";
+import { toPlaceVM } from "../../services/mappers/PlaceMapper";
+import { getBusinessStatus } from "../../utils/OpeningHoursUtil";
+import { detectLanguage, playPronunciation } from "../../utils/SpeechLanguageUtil";
 
 type ItineraryItemProps = {
     itinerary: ItineraryVM;
@@ -67,12 +77,44 @@ const ItineraryItem = ({
     const primaryTextColor = theme?.primary || "text-gray-900";
 
     const [showDayActions, setShowDayActions] = useState(false);
-    const [activeActivityIdx, setActiveActivityIdx] = useState<number | null>(
-        null,
-    );
+    const [activeActivityIdx, setActiveActivityIdx] = useState<number | null>(null);
     const [weatherData, setWeatherData] = useState<WeatherForecastData | null>(null);
     const [isWeatherLoading, setIsWeatherLoading] = useState(false);
+    const [placeMap, setPlaceMap] = useState<Record<string, PlaceVM>>({});
+    const [speakingId, setSpeakingId] = useState<string | null>(null);
 
+    // 載入當天活動所有已連結的地點資料
+    useEffect(() => {
+        const linkIds = (itinerary.activities || [])
+            .map((a) => a.linkId)
+            .filter(Boolean) as string[];
+
+        if (linkIds.length === 0) {
+            setPlaceMap({});
+            return;
+        }
+
+        let isMounted = true;
+        if (placeRepo.getByIds) {
+            placeRepo.getByIds(linkIds)
+                .then((places) => {
+                    if (isMounted) {
+                        const map: Record<string, PlaceVM> = {};
+                        (places || []).forEach((p) => {
+                            if (p) map[p.id] = toPlaceVM(p);
+                        });
+                        setPlaceMap(map);
+                    }
+                })
+                .catch(console.error);
+        }
+
+        return () => {
+            isMounted = false;
+        };
+    }, [itinerary.activities]);
+
+    // 載入天氣預報
     useEffect(() => {
         if (isPrinting || !itinerary.date) {
             setWeatherData(null);
@@ -81,10 +123,9 @@ const ItineraryItem = ({
         }
 
         let isMounted = true;
-        // 每次日期變更時，立即重置天氣狀態並開啟 Loading 轉圈
         setWeatherData(null);
         setIsWeatherLoading(true);
-        
+
         let targetLat = 25.033;
         let targetLng = 121.565;
 
@@ -109,7 +150,7 @@ const ItineraryItem = ({
             if (isMounted) {
                 const res = await fetchDailyWeather(targetLat, targetLng, itinerary.date);
                 if (isMounted) {
-                    setWeatherData(res); // 若無資料會被歸零重置 (null)
+                    setWeatherData(res);
                     setIsWeatherLoading(false);
                 }
             }
@@ -122,18 +163,30 @@ const ItineraryItem = ({
         };
     }, [itinerary.date, itinerary.activities, isPrinting]);
 
+    const handleSpeakPlace = (place: PlaceVM, e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!place.info?.native_name) return;
+        playPronunciation(place.info.native_name, {
+            context: {
+                address: place.info?.loc,
+                mapUrl: place.map_url,
+                currency: place.info?.price,
+            },
+            onStart: () => setSpeakingId(place.id),
+            onEnd: () => setSpeakingId(null),
+            onError: () => setSpeakingId(null),
+        });
+    };
+
     return (
         <div
             className={`
-              group relative
-                /* 螢幕: 卡片懸浮感、圓角 */
+                group relative
                 ${
                     !isPrinting
-                        ? "overflow-hidden bg-card rounded-2xl shadow-sm border border-border mb-4 transition-all duration-300 hover:shadow-md lg:mb-0"
-                        : "overflow-visible block"
+                        ? "overflow-hidden bg-card rounded-3xl shadow-sm border border-border/80 mb-4 transition-all duration-300 hover:shadow-md lg:mb-0"
+                        : "overflow-visible block mb-6 break-inside-avoid"
                 }
-                /* 列印: 每個日程作為完整單元，避免中間換頁 (break-inside-avoid) */
-                ${isPrinting ? "mb-6 break-inside-avoid" : ""}
             `}
             onMouseEnter={() => setShowDayActions(true)}
             onMouseLeave={() => setShowDayActions(false)}
@@ -147,9 +200,9 @@ const ItineraryItem = ({
                         : () => onExpandedBtnToggle(itinerary)
                 }
                 className={`
-                    w-full flex items-stretch rounded-t-2xl
+                    w-full flex items-stretch rounded-t-3xl
                     ${!isPrinting && !isEditing ? "cursor-pointer hover:bg-muted/10" : ""}
-                    ${!isPrinting ? "bg-card z-20 shadow-sm border-b border-border/50" : ""}
+                    ${!isPrinting ? "bg-card z-20 shadow-2xs border-b border-border/50" : ""}
                     ${
                         isPrinting
                             ? "cursor-default border-b border-black pb-1 rounded-none overflow-visible break-inside-avoid break-after-avoid"
@@ -161,11 +214,10 @@ const ItineraryItem = ({
                 <div
                     className={`
                         flex flex-col items-center justify-center 
-                        /* 列印: 縮小日期區塊寬度與內距 */
                         ${
                             isPrinting
                                 ? "p-2 min-w-[50px]"
-                                : "p-4 min-w-[80px] bg-muted/30 border-r border-border"
+                                : "p-4 min-w-[80px] bg-muted/30 border-r border-border/60"
                         }
                     `}
                 >
@@ -191,7 +243,7 @@ const ItineraryItem = ({
                         className={`mt-1 ${
                             isPrinting
                                 ? "text-[8px] text-gray-600"
-                                : "text-[10px] text-muted-foreground"
+                                : "text-[10px] text-muted-foreground font-medium"
                         }`}
                     >
                         {itinerary.date.split("-")[1]}月
@@ -202,7 +254,7 @@ const ItineraryItem = ({
                 <div
                     className={`
                         flex-1 flex flex-col justify-center relative 
-                        ${isPrinting ? "px-3 py-1" : "px-5 py-3"} 
+                        ${isPrinting ? "px-3 py-1" : "px-4 sm:px-5 py-3"} 
                         min-w-0
                     `}
                 >
@@ -212,7 +264,7 @@ const ItineraryItem = ({
                                 {/* Day Badge */}
                                 <span
                                     className={`
-                                        rounded-full font-bold text-white tracking-wide shadow-sm shrink-0 whitespace-nowrap
+                                        rounded-full font-bold text-white tracking-wide shadow-xs shrink-0 whitespace-nowrap
                                         ${
                                             !isPrinting
                                                 ? `px-2.5 py-0.5 text-[10px] ${accentColor}`
@@ -228,7 +280,7 @@ const ItineraryItem = ({
                                         ${
                                             isPrinting
                                                 ? "text-base text-black whitespace-normal"
-                                                : "text-md truncate text-foreground"
+                                                : "text-sm sm:text-base truncate text-foreground font-[Noto_Sans_TC]"
                                         }
                                     `}
                                 >
@@ -236,17 +288,17 @@ const ItineraryItem = ({
                                 </h3>
                             </div>
 
-                            {/* 天氣預報資訊膠囊 (Weather Forecast Badge - 支援手機/電腦響應式) */}
+                            {/* 天氣預報資訊膠囊 */}
                             {!isPrinting && isWeatherLoading && (
-                                 <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-accent/40 border border-border/40 text-[11px] sm:text-xs font-mono text-muted-foreground shrink-0 animate-pulse w-fit">
-                                     <span className="w-2.5 h-2.5 rounded-full border-2 border-primary/40 border-t-primary animate-spin" />
-                                     <span>查詢天氣...</span>
-                                 </span>
+                                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-muted/40 border border-border/40 text-[11px] font-mono text-muted-foreground shrink-0 animate-pulse w-fit">
+                                    <span className="w-2.5 h-2.5 rounded-full border-2 border-primary/40 border-t-primary animate-spin" />
+                                    <span>查詢天氣...</span>
+                                </span>
                             )}
 
                             {!isPrinting && !isWeatherLoading && weatherData && (
                                 <span 
-                                    className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-accent/60 border border-border/60 text-[11px] sm:text-xs font-mono font-medium text-foreground shrink-0 shadow-2xs w-fit"
+                                    className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-muted/50 border border-border/60 text-[11px] font-mono font-medium text-foreground shrink-0 shadow-2xs w-fit"
                                     title={`降雨機率: ${weatherData.precipitationProbabilityMax ?? 0}%`}
                                 >
                                     <span>{getWeatherInfoByCode(weatherData.weatherCode).icon}</span>
@@ -263,7 +315,7 @@ const ItineraryItem = ({
                         {/* 操作工具列 */}
                         {!isPrinting && (
                             <div className="flex items-center gap-1.5 shrink-0">
-                                {/* 最佳化路線按鈕 (活動數 >= 2 即可提供) */}
+                                {/* 最佳化路線按鈕 */}
                                 {onOptimizeRouteBtnClick && Array.isArray(itinerary.activities) && itinerary.activities.length >= 2 && (
                                     <button
                                         type="button"
@@ -282,7 +334,9 @@ const ItineraryItem = ({
                                 {/* 編輯模式下的工具列 */}
                                 {isEditing && (
                                     <div
-                                        className={`flex items-center gap-1 p-0.5 bg-card/90 backdrop-blur-md rounded-full shadow-sm border border-border/80 shrink-0 transition-all duration-200 z-10 ${showDayActions ? "opacity-100 scale-100" : "lg:opacity-0 lg:scale-95 lg:group-hover:opacity-100 lg:group-hover:scale-100"}`}
+                                        className={`flex items-center gap-1 p-0.5 bg-card/90 backdrop-blur-md rounded-full shadow-sm border border-border/80 shrink-0 transition-all duration-200 z-10 ${
+                                            showDayActions ? "opacity-100 scale-100" : "lg:opacity-0 lg:scale-95 lg:group-hover:opacity-100 lg:group-hover:scale-100"
+                                        }`}
                                     >
                                         <button
                                             type="button"
@@ -290,10 +344,10 @@ const ItineraryItem = ({
                                                 e.stopPropagation();
                                                 onAddActivityBtnClick(itinerary);
                                             }}
-                                            className="p-1.5 sm:p-2 rounded-full text-muted-foreground hover:text-primary-foreground hover:bg-primary transition-all"
+                                            className="p-1.5 rounded-full text-muted-foreground hover:text-primary-foreground hover:bg-primary transition-all cursor-pointer"
                                             title="新增活動"
                                         >
-                                            <Plus size={15} />
+                                            <Plus size={14} />
                                         </button>
                                         <button
                                             type="button"
@@ -301,10 +355,10 @@ const ItineraryItem = ({
                                                 e.stopPropagation();
                                                 onEditDayBtnClick(itinerary);
                                             }}
-                                            className="p-1.5 sm:p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
+                                            className="p-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-all cursor-pointer"
                                             title="編輯日程"
                                         >
-                                            <Pencil size={15} />
+                                            <Pencil size={14} />
                                         </button>
                                         <button
                                             type="button"
@@ -312,10 +366,10 @@ const ItineraryItem = ({
                                                 e.stopPropagation();
                                                 onDeleteDayBtnClick(itinerary);
                                             }}
-                                            className="p-1.5 sm:p-2 rounded-full text-muted-foreground hover:text-destructive-foreground hover:bg-destructive transition-all"
+                                            className="p-1.5 rounded-full text-muted-foreground hover:text-destructive-foreground hover:bg-destructive transition-all cursor-pointer"
                                             title="刪除日程"
                                         >
-                                            <Trash2 size={15} />
+                                            <Trash2 size={14} />
                                         </button>
                                     </div>
                                 )}
@@ -331,558 +385,309 @@ const ItineraryItem = ({
                     className={`relative ${
                         isPrinting
                             ? "pt-2 pb-2"
-                            : "pb-6 pt-2 lg:flex-1 overflow-x-hidden lg:overflow-y-auto no-scrollbar"
+                            : "pb-6 pt-3 lg:flex-1 overflow-x-hidden lg:overflow-y-auto no-scrollbar"
                     }`}
                 >
-                    <div className="absolute top-0 bottom-6 left-0 w-14 flex justify-center pointer-events-none">
+                    {/* 左側時間軸貫穿線 */}
+                    <div className="absolute top-0 bottom-6 left-0 w-12 sm:w-14 flex justify-center pointer-events-none">
                         <div
                             className={`w-[2px] h-full ${
-                                !isPrinting ? "bg-border" : "bg-gray-300"
+                                !isPrinting ? "bg-border/70" : "bg-gray-300"
                             }`}
-                        ></div>
+                        />
                     </div>
 
-                    <div
-                        className={`
-                            ${isPrinting ? "space-y-2" : "space-y-6"}
-                        `}
-                    >
-                        {Array.isArray(itinerary.activities) &&
-                        itinerary.activities.length > 0 ? (
-                            itinerary.activities.map((activity, idx) => (
-                                /* [Flex 排版核心]
-                                   使用 Flex 將 "左側軌道" 與 "右側內容" 分開
-                                   這樣圓點跟文字永遠會對齊，不會因為 padding 跑掉
-                                */
-                                <div
-                                    key={idx}
-                                    className={`
-                                        flex group/item items-start
-                                        ${
-                                            isPrinting
-                                                ? "min-h-0 break-inside-avoid"
-                                                : "min-h-[40px]"
-                                        }
-                                    `}
-                                    onMouseEnter={() => {
-                                        setActiveActivityIdx(idx);
-                                        if (activity.linkId && onPlaceHover) {
-                                            onPlaceHover(activity.linkId);
-                                        }
-                                    }}
-                                    onMouseLeave={() => {
-                                        setActiveActivityIdx(null);
-                                        if (onPlaceHover) {
-                                            onPlaceHover(null);
-                                        }
-                                    }}
-                                    onTouchStart={() => {
-                                        setActiveActivityIdx(idx);
-                                        if (activity.linkId && onPlaceHover) {
-                                            onPlaceHover(activity.linkId);
-                                        }
-                                    }}
-                                >
-                                    {/* 1. 左側軌道 (Track Column with Lucide Font Icon) */}
-                                    <div className="w-14 shrink-0 flex justify-center items-start z-10 pt-0.5">
-                                        {(() => {
-                                            const IconComp = getCategoryIcon(
-                                                activity.type,
-                                            );
-                                            const bgColor =
-                                                theme?.categoryColor?.[
-                                                    activity.type
-                                                ] ||
-                                                DEFAULT_CATEGORY_COLORS[
-                                                    activity.type
-                                                ] ||
-                                                "#6b7280";
+                    <div className={isPrinting ? "space-y-2.5" : "space-y-4"}>
+                        {Array.isArray(itinerary.activities) && itinerary.activities.length > 0 ? (
+                            itinerary.activities.map((activity, idx) => {
+                                const linkedPlace = activity.linkId ? placeMap[activity.linkId] : null;
+                                const businessStatus = linkedPlace
+                                    ? getBusinessStatus(linkedPlace.info?.open, linkedPlace.info?.closed_days)
+                                    : null;
+                                const firstRec = linkedPlace?.info?.recommended_items?.[0];
+                                const detectedLang = linkedPlace
+                                    ? detectLanguage(linkedPlace.info?.native_name, {
+                                          address: linkedPlace.info?.loc,
+                                          currency: linkedPlace.info?.price,
+                                      })
+                                    : null;
 
-                                            return (
-                                                <div
-                                                    className={`
-                                                        flex items-center justify-center rounded-full shadow-md text-white shrink-0
-                                                        ${
-                                                            !isPrinting
-                                                                ? "w-7 h-7 ring-2 ring-background"
-                                                                : "w-5 h-5 bg-black text-white"
-                                                        }
-                                                    `}
-                                                    style={{
-                                                        backgroundColor:
-                                                            bgColor,
-                                                    }}
-                                                >
-                                                    <IconComp
-                                                        size={
-                                                            isPrinting ? 11 : 14
-                                                        }
-                                                        className="text-white drop-shadow-sm"
-                                                    />
-                                                </div>
-                                            );
-                                        })()}
-                                    </div>
-
-                                    {/* 2. 右側內容 (Content Column) */}
+                                return (
                                     <div
-                                        className={`
-                                            flex-1 min-w-0 flex flex-col items-start pr-1
-                                            ${
-                                                !isPrinting
-                                                    ? "transition-transform duration-200 group-hover/item:translate-x-0.5"
-                                                    : ""
+                                        key={idx}
+                                        className={`flex group/item items-start ${
+                                            isPrinting ? "min-h-0 break-inside-avoid" : "min-h-[40px]"
+                                        }`}
+                                        onMouseEnter={() => {
+                                            setActiveActivityIdx(idx);
+                                            if (activity.linkId && onPlaceHover) {
+                                                onPlaceHover(activity.linkId);
                                             }
-                                        `}
+                                        }}
+                                        onMouseLeave={() => {
+                                            setActiveActivityIdx(null);
+                                            if (onPlaceHover) {
+                                                onPlaceHover(null);
+                                            }
+                                        }}
+                                        onTouchStart={() => {
+                                            setActiveActivityIdx(idx);
+                                            if (activity.linkId && onPlaceHover) {
+                                                onPlaceHover(activity.linkId);
+                                            }
+                                        }}
                                     >
-                                        <div className="flex items-start gap-3 w-full">
-                                            {/* 時間 */}
-                                            <div className="flex items-center shrink-0">
-                                                <span
-                                                    className={`
-                                                        font-mono font-bold 
-                                                        ${
-                                                            isPrinting
-                                                                ? "text-xs text-black"
-                                                                : "text-sm text-muted-foreground group-hover/item:text-foreground"
-                                                        }
-                                                    `}
-                                                >
-                                                    {activity.time}
-                                                </span>
-                                            </div>
+                                        {/* 1. 左側軌道節點 (Timeline Node Icon) */}
+                                        <div className="w-12 sm:w-14 shrink-0 flex justify-center items-start z-10 pt-1">
+                                            {(() => {
+                                                const IconComp = getCategoryIcon(activity.type);
+                                                const bgColor =
+                                                    theme?.categoryColor?.[activity.type] ||
+                                                    DEFAULT_CATEGORY_COLORS[activity.type] ||
+                                                    "#3b82f6";
 
-                                            {/* 標題與描述 */}
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex items-center gap-2 flex-wrap">
-                                                    <h4
-                                                        className={`
-                                                            font-bold leading-tight
-                                                            ${
-                                                                isPrinting
-                                                                    ? "text-sm text-black"
-                                                                    : "text-sm text-foreground"
-                                                            }
-                                                        `}
+                                                return (
+                                                    <div
+                                                        className={`flex items-center justify-center rounded-full shadow-xs text-white shrink-0 ${
+                                                            !isPrinting
+                                                                ? "w-6 h-6 sm:w-7 sm:h-7 ring-2 ring-background"
+                                                                : "w-5 h-5 bg-black text-white"
+                                                        }`}
+                                                        style={{ backgroundColor: bgColor }}
                                                     >
-                                                        {activity.title}
-                                                    </h4>
+                                                        <IconComp
+                                                            size={isPrinting ? 10 : 13}
+                                                            className="text-white drop-shadow-2xs"
+                                                        />
+                                                    </div>
+                                                );
+                                            })()}
+                                        </div>
+
+                                        {/* 2. 右側活動卡片主體 (Activity Body) */}
+                                        <div className="flex-1 min-w-0 pr-3 sm:pr-4 space-y-2">
+                                            {/* 時間與停留標籤列 */}
+                                            <div className="flex items-center justify-between gap-2">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-mono font-bold text-xs sm:text-sm text-muted-foreground group-hover/item:text-foreground">
+                                                        {activity.time}
+                                                    </span>
                                                     {activity.duration && (
-                                                        <span
-                                                            className={`
-                                                                inline-flex items-center gap-0.5 text-[10px] font-semibold rounded-full
-                                                                ${
-                                                                    isPrinting
-                                                                        ? "text-gray-700 bg-gray-100 border border-gray-300 px-1.5 py-0"
-                                                                        : "text-primary/80 bg-primary/10 px-2 py-0.5"
-                                                                }
-                                                            `}
-                                                        >
-                                                            <Hourglass
-                                                                size={10}
-                                                            />
-                                                            {activity.duration}
+                                                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold rounded-full text-blue-600 dark:text-blue-400 bg-blue-500/10 px-2 py-0.5 border border-blue-500/20">
+                                                            <Hourglass size={9} />
+                                                            <span>停留 {activity.duration}</span>
                                                         </span>
                                                     )}
                                                 </div>
 
-                                                {activity.desc && (
-                                                    <p
-                                                        className={`
-                                                            leading-relaxed whitespace-pre-wrap
-                                                            ${
-                                                                isPrinting
-                                                                    ? "text-[10px] mt-0.5 text-gray-700"
-                                                                    : "text-xs mt-1 text-muted-foreground"
-                                                            }
-                                                        `}
-                                                    >
-                                                        {activity.desc}
-                                                    </p>
-                                                )}
-
-                                                {/* 移動/路程時間節點 (Transit Connector Card) */}
-                                                {((activity.transitMode &&
-                                                    activity.transitMode !==
-                                                        "none") ||
-                                                    activity.transitDuration) && (
+                                                {/* 編輯 / 刪除工具按鈕 */}
+                                                {!isPrinting && isEditing && (
                                                     <div
-                                                        className={`
-                                                            mt-2.5 rounded-xl text-[11px] font-medium transition-all block w-full max-w-xl
-                                                            ${
-                                                                isPrinting
-                                                                    ? "p-2 bg-white border border-gray-400 text-black text-[9px]"
-                                                                    : "p-3 bg-white dark:bg-zinc-800/95 border border-gray-300 dark:border-zinc-700/90 text-gray-900 dark:text-zinc-100 shadow-sm"
-                                                            }
-                                                        `}
+                                                        className={`flex items-center gap-1 p-0.5 bg-card/90 backdrop-blur-md rounded-full shadow-xs border border-border/80 shrink-0 transition-all ${
+                                                            activeActivityIdx === idx ? "opacity-100" : "lg:opacity-0 lg:group-hover/item:opacity-100"
+                                                        }`}
                                                     >
-                                                        {/* 標頭：圖示 + 模式 + 預估時間 + 標籤膠囊 */}
-                                                        <div className="flex items-center gap-2 flex-wrap">
-                                                            <div className={`flex items-center gap-1.5 font-bold ${isPrinting ? "text-black" : "text-gray-900 dark:text-zinc-100"}`}>
-                                                                {(() => {
-                                                                    const TransitIconComp =
-                                                                        getTransitIcon(
-                                                                            activity.transitMode,
-                                                                        );
-                                                                    return (
-                                                                        <TransitIconComp
-                                                                            size={
-                                                                                isPrinting
-                                                                                    ? 11
-                                                                                    : 14
-                                                                            }
-                                                                            className={`${isPrinting ? "text-black" : "text-gray-700 dark:text-sky-400"} shrink-0`}
-                                                                        />
-                                                                    );
-                                                                })()}
-                                                                <span>
-                                                                    {activity.transitDuration
-                                                                        ? `預估 ${activity.transitDuration}`
-                                                                        : "前往下一站"}
-                                                                </span>
-                                                            </div>
-
-                                                            {/* 租車公司膠囊標籤 */}
-                                                            {(activity
-                                                                .transitDetails
-                                                                ?.carRentalCompany ||
-                                                                activity
-                                                                    .transitDetails
-                                                                    ?.carRentalBranch) && (
-                                                                <span className="px-2 py-0.5 rounded-md bg-indigo-100/90 text-indigo-800 border border-indigo-200/70 dark:bg-indigo-950/80 dark:text-indigo-300 dark:border-indigo-800/60 text-[10px] font-semibold flex items-center gap-1">
-                                                                    🚗{" "}
-                                                                    {
-                                                                        activity
-                                                                            .transitDetails
-                                                                            .carRentalCompany
-                                                                    }{" "}
-                                                                    {activity
-                                                                        .transitDetails
-                                                                        .carRentalBranch &&
-                                                                        `(${activity.transitDetails.carRentalBranch})`}
-                                                                </span>
-                                                            )}
-
-                                                            {/* Pass 周遊券膠囊 */}
-                                                            {activity
-                                                                .transitDetails
-                                                                ?.passName && (
-                                                                <span className="px-2 py-0.5 rounded-md bg-sky-100/90 text-sky-800 border border-sky-200/70 dark:bg-sky-950/80 dark:text-sky-300 dark:border-sky-800/60 text-[10px] font-semibold">
-                                                                    🎫{" "}
-                                                                    {
-                                                                        activity
-                                                                            .transitDetails
-                                                                            .passName
-                                                                    }
-                                                                </span>
-                                                            )}
-
-                                                            {/* 車資膠囊 */}
-                                                            {activity
-                                                                .transitDetails
-                                                                ?.fare && (
-                                                                <span className="px-2 py-0.5 rounded-md bg-amber-100/90 text-amber-800 border border-amber-200/70 dark:bg-amber-950/80 dark:text-amber-300 dark:border-amber-700/60 text-[10px] font-semibold">
-                                                                    💰{" "}
-                                                                    {
-                                                                        activity
-                                                                            .transitDetails
-                                                                            .fare
-                                                                    }
-                                                                </span>
-                                                            )}
-
-                                                            {/* 叫車/接送標籤 */}
-                                                            {activity
-                                                                .transitDetails
-                                                                ?.isReservationRequired && (
-                                                                <span className="px-2 py-0.5 rounded-md bg-emerald-100/90 text-emerald-800 border border-emerald-200/70 dark:bg-emerald-950/80 dark:text-emerald-300 dark:border-emerald-700/60 text-[10px] font-semibold">
-                                                                    ✓
-                                                                    已預約機場接送
-                                                                </span>
-                                                            )}
-                                                        </div>
-
-                                                        {/* 詳細交通欄位內容 */}
-                                                        {activity.transitDetails &&
-                                                            (activity
-                                                                .transitDetails
-                                                                .companyAndLine ||
-                                                                activity
-                                                                    .transitDetails
-                                                                    .destination ||
-                                                                activity
-                                                                    .transitDetails
-                                                                    .platform ||
-                                                                activity
-                                                                    .transitDetails
-                                                                    .flightNumber ||
-                                                                activity
-                                                                    .transitDetails
-                                                                    .gate ||
-                                                                (activity
-                                                                    .transitDetails
-                                                                    .scheduleList &&
-                                                                    activity
-                                                                        .transitDetails
-                                                                        .scheduleList
-                                                                        .length >
-                                                                        0) ||
-                                                                activity
-                                                                    .transitDetails
-                                                                    .schedules) && (
-                                                                <div className={`mt-2.5 pt-2 space-y-2 text-xs ${isPrinting ? "border-t border-gray-400" : "border-t border-gray-200 dark:border-zinc-700/70"}`}>
-                                                                    {/* 電車/公車/渡輪 路線、目的地、月台碼頭 */}
-                                                                    {(activity
-                                                                        .transitDetails
-                                                                        .companyAndLine ||
-                                                                        activity
-                                                                            .transitDetails
-                                                                            .destination ||
-                                                                        activity
-                                                                            .transitDetails
-                                                                            .platform) && (
-                                                                        <div className={`flex items-center gap-2 flex-wrap font-medium ${isPrinting ? "text-black" : "text-gray-800 dark:text-zinc-200"}`}>
-                                                                            {activity
-                                                                                .transitDetails
-                                                                                .companyAndLine && (
-                                                                                <span className="font-semibold">
-                                                                                    {
-                                                                                        activity
-                                                                                            .transitDetails
-                                                                                            .companyAndLine
-                                                                                    }
-                                                                                </span>
-                                                                            )}
-                                                                            {activity
-                                                                                .transitDetails
-                                                                                .destination && (
-                                                                                <span className={isPrinting ? "text-gray-600" : "text-gray-500 dark:text-zinc-400"}>
-                                                                                    往{" "}
-                                                                                    {
-                                                                                        activity
-                                                                                            .transitDetails
-                                                                                            .destination
-                                                                                    }
-                                                                                </span>
-                                                                            )}
-                                                                            {activity
-                                                                                .transitDetails
-                                                                                .platform && (
-                                                                                <span className={`px-1.5 py-0.5 rounded text-[10px] ${isPrinting ? "bg-gray-200 text-black" : "bg-gray-100 text-gray-700 dark:bg-zinc-700 dark:text-zinc-200"}`}>
-                                                                                    {activity.transitMode ===
-                                                                                    "ferry"
-                                                                                        ? "碼頭"
-                                                                                        : "月台"}
-
-                                                                                    :{" "}
-                                                                                    {
-                                                                                        activity
-                                                                                            .transitDetails
-                                                                                            .platform
-                                                                                    }
-                                                                                </span>
-                                                                            )}
-                                                                        </div>
-                                                                    )}
-
-                                                                    {/* 飛機資訊 */}
-                                                                    {(activity
-                                                                        .transitDetails
-                                                                        .flightNumber ||
-                                                                        activity
-                                                                            .transitDetails
-                                                                            .gate) && (
-                                                                        <div className={`flex items-center gap-2 flex-wrap ${isPrinting ? "text-black" : "text-gray-800 dark:text-zinc-200"}`}>
-                                                                            {activity
-                                                                                .transitDetails
-                                                                                .flightNumber && (
-                                                                                <span className="font-bold text-gray-800 dark:text-sky-400">
-                                                                                    航班{" "}
-                                                                                    {
-                                                                                        activity
-                                                                                            .transitDetails
-                                                                                            .flightNumber
-                                                                                    }
-                                                                                </span>
-                                                                            )}
-                                                                            {activity
-                                                                                .transitDetails
-                                                                                .gate && (
-                                                                                <span>
-                                                                                    {
-                                                                                        activity
-                                                                                            .transitDetails
-                                                                                            .gate
-                                                                                    }
-                                                                                </span>
-                                                                            )}
-                                                                        </div>
-                                                                    )}
-
-                                                                    {/* 🆕 動態結構化選搭班次表格 (Structured Schedule Table) */}
-                                                                    {Array.isArray(
-                                                                        activity
-                                                                            .transitDetails
-                                                                            .scheduleList,
-                                                                    ) &&
-                                                                        activity
-                                                                            .transitDetails
-                                                                            .scheduleList
-                                                                            .length >
-                                                                            0 && (
-                                                                            <div className="space-y-1 mt-2">
-                                                                                <span className="block text-[10px] font-bold uppercase text-gray-500 dark:text-zinc-400 tracking-wider">
-                                                                                    備選/預選班次列表
-                                                                                </span>
-                                                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                                                                                    {activity.transitDetails.scheduleList.map(
-                                                                                        (
-                                                                                            sch,
-                                                                                            sIdx,
-                                                                                        ) => (
-                                                                                            <div
-                                                                                                key={
-                                                                                                    sIdx
-                                                                                                }
-                                                                                                className="flex items-center justify-between p-1.5 rounded-md bg-white dark:bg-zinc-900/90 border border-gray-200 dark:border-zinc-700/80 font-mono text-[11px] text-gray-800 dark:text-zinc-200 shadow-2xs"
-                                                                                            >
-                                                                                                <span className="font-bold text-gray-800 dark:text-sky-300 truncate max-w-[120px]">
-                                                                                                    {sch.name ||
-                                                                                                        `班次 ${sIdx + 1}`}
-                                                                                                </span>
-                                                                                                <div className="flex items-center gap-1.5 text-[10px] text-gray-600 dark:text-zinc-300 shrink-0">
-                                                                                                    {(sch.departureTime ||
-                                                                                                        sch.arrivalTime) && (
-                                                                                                        <span>
-                                                                                                            {sch.departureTime ||
-                                                                                                                "--:--"}{" "}
-                                                                                                            →{" "}
-                                                                                                            {sch.arrivalTime ||
-                                                                                                                "--:--"}
-                                                                                                        </span>
-                                                                                                    )}
-                                                                                                    {sch.platform && (
-                                                                                                        <span className="px-1 bg-gray-100 dark:bg-zinc-800 rounded text-gray-500 dark:text-zinc-400">
-                                                                                                            {
-                                                                                                                sch.platform
-                                                                                                            }
-                                                                                                        </span>
-                                                                                                    )}
-                                                                                                </div>
-                                                                                            </div>
-                                                                                        ),
-                                                                                    )}
-                                                                                </div>
-                                                                            </div>
-                                                                        )}
-
-                                                                    {/* 舊單純文字班次備註 (相容顯示) */}
-                                                                    {activity
-                                                                        .transitDetails
-                                                                        .schedules &&
-                                                                        (!activity
-                                                                            .transitDetails
-                                                                            .scheduleList ||
-                                                                            activity
-                                                                                .transitDetails
-                                                                                .scheduleList
-                                                                                .length ===
-                                                                                0) && (
-                                                                            <div className="mt-1.5 font-mono text-[11px] whitespace-pre-wrap bg-white dark:bg-zinc-900/90 p-2 rounded-lg border border-gray-200 dark:border-zinc-700/80 text-gray-800 dark:text-zinc-200 leading-relaxed shadow-sm">
-                                                                                {
-                                                                                    activity
-                                                                                        .transitDetails
-                                                                                        .schedules
-                                                                                }
-                                                                            </div>
-                                                                        )}
-                                                                </div>
-                                                            )}
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => onEditActivityBtnClick(itinerary, activity)}
+                                                            className="p-1 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+                                                            title="編輯活動"
+                                                        >
+                                                            <Pencil size={11} />
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => onDeleteActivityBtnClick(itinerary, activity)}
+                                                            className="p-1 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
+                                                            title="刪除活動"
+                                                        >
+                                                            <Trash2 size={11} />
+                                                        </button>
                                                     </div>
                                                 )}
                                             </div>
-                                            {!isPrinting &&
-                                                (isEditing ||
-                                                    activity.linkId) && (
-                                                    <div
-                                                        className={`
-                                                        flex items-center gap-1 p-0.5 bg-card/90 backdrop-blur-md rounded-full shadow-sm border border-border/80 shrink-0 ml-1.5 transition-all duration-200 z-10 self-start mt-0.5
-                                                        ${activeActivityIdx === idx ? "opacity-100 scale-100" : "lg:opacity-0 lg:scale-95 lg:group-hover/item:opacity-100 lg:group-hover/item:scale-100"}
-                                                    `}
-                                                    >
-                                                        {!isEditing &&
-                                                            activity.linkId && (
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() =>
-                                                                        onViewBtnClick(
-                                                                            activity.linkId!,
-                                                                        )
-                                                                    }
-                                                                    className="p-1.5 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
-                                                                    title="查看詳情"
-                                                                >
-                                                                    <BookOpen
-                                                                        size={
-                                                                            12
-                                                                        }
-                                                                    />
-                                                                </button>
+
+                                            {/* 🌟 核心：有連結地點時，呈現 iOS 原生風格卡片 (點擊直接開啟地點預覽) */}
+                                            {linkedPlace ? (
+                                                <div
+                                                    onClick={() => !isPrinting && onViewBtnClick(linkedPlace.id)}
+                                                    className={`p-3 sm:p-3.5 rounded-2xl border transition-all ${
+                                                        !isPrinting
+                                                            ? "bg-card border-border/80 hover:border-blue-500/50 hover:shadow-md cursor-pointer active:scale-[0.99] group/card shadow-2xs text-card-foreground"
+                                                            : "bg-white border-gray-400 text-black font-[Noto_Sans_TC]"
+                                                    }`}
+                                                    title={!isPrinting ? "點擊查看地點詳細卡片" : undefined}
+                                                >
+                                                    <div className="flex items-start gap-3">
+                                                        {/* 左側縮圖 */}
+                                                        <div className="relative w-18 h-18 sm:w-20 sm:h-20 rounded-xl overflow-hidden shrink-0 bg-muted border border-border/60 shadow-2xs">
+                                                            {linkedPlace.image_url ? (
+                                                                <img
+                                                                    src={linkedPlace.image_url}
+                                                                    alt={linkedPlace.name}
+                                                                    className="w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-500"
+                                                                />
+                                                            ) : (
+                                                                <div className="w-full h-full flex items-center justify-center text-muted-foreground/40">
+                                                                    <MapPin size={18} />
+                                                                </div>
                                                             )}
-                                                        {isEditing && (
-                                                            <>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() =>
-                                                                        onEditActivityBtnClick(
-                                                                            itinerary,
-                                                                            activity,
-                                                                        )
-                                                                    }
-                                                                    className="p-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                                                                    title="編輯活動"
-                                                                >
-                                                                    <Pencil
-                                                                        size={
-                                                                            12
-                                                                        }
+                                                            <span className="absolute bottom-1 left-1 px-1.5 py-0.2 rounded bg-black/60 backdrop-blur-md text-[9px] text-white font-bold tracking-wider">
+                                                                {getCategoryTypeName(linkedPlace.type)}
+                                                            </span>
+                                                        </div>
+
+                                                        {/* 右側資訊 */}
+                                                        <div className="flex-1 min-w-0 space-y-1">
+                                                            {/* 標題與語音按鈕 */}
+                                                            <div className="flex items-start justify-between gap-1">
+                                                                <div className="min-w-0 flex-1">
+                                                                    <h4 className={`text-xs sm:text-sm font-bold truncate leading-tight ${
+                                                                        isPrinting ? "text-black text-sm" : "text-foreground group-hover/card:text-blue-500 transition-colors"
+                                                                    }`}>
+                                                                        {linkedPlace.name}
+                                                                    </h4>
+                                                                    {(linkedPlace.eng_name || linkedPlace.info?.native_name) && (
+                                                                        <p className={`text-[11px] font-mono truncate mt-0.5 ${
+                                                                            isPrinting ? "text-gray-700" : "text-muted-foreground"
+                                                                        }`}>
+                                                                            {linkedPlace.eng_name}
+                                                                            {linkedPlace.eng_name && linkedPlace.info?.native_name && " · "}
+                                                                            {linkedPlace.info?.native_name}
+                                                                        </p>
+                                                                    )}
+                                                                </div>
+
+                                                                {!isPrinting && linkedPlace.info?.native_name && (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={(e) => handleSpeakPlace(linkedPlace, e)}
+                                                                        className={`p-1 rounded-full hover:bg-muted text-blue-500 transition-colors shrink-0 cursor-pointer ${
+                                                                            speakingId === linkedPlace.id ? "animate-pulse scale-110 text-amber-500" : ""
+                                                                        }`}
+                                                                        title={`發音 (${detectedLang?.name || ""})`}
+                                                                    >
+                                                                        <Volume2 size={13} />
+                                                                    </button>
+                                                                )}
+                                                            </div>
+
+                                                            {/* 營業狀態 + 評分 */}
+                                                            {businessStatus && (
+                                                                <div className={`flex items-center gap-2 flex-wrap text-[11px] ${
+                                                                    isPrinting ? "text-black" : ""
+                                                                }`}>
+                                                                    {linkedPlace.info?.open && !isPrinting && (
+                                                                        <span className={`px-1.5 py-0.2 rounded font-extrabold text-[10px] ${businessStatus.badgeColor}`}>
+                                                                            {businessStatus.badgeText}
+                                                                        </span>
+                                                                    )}
+
+                                                                    {linkedPlace.info?.open && isPrinting && (
+                                                                        <span className="text-[10px] text-gray-800 font-bold">
+                                                                            營業時間：{businessStatus.allHoursSummary}
+                                                                        </span>
+                                                                    )}
+
+                                                                    {linkedPlace.info?.rating && (
+                                                                        <span className={`flex items-center gap-0.5 text-[10px] font-bold ${
+                                                                            isPrinting ? "text-black" : "text-amber-500"
+                                                                        }`}>
+                                                                            <Star size={10} className={isPrinting ? "text-black fill-black" : "fill-amber-400 text-amber-400"} />
+                                                                            <span>{linkedPlace.info.rating}</span>
+                                                                        </span>
+                                                                    )}
+
+                                                                    {firstRec && (
+                                                                        <span className={`text-[10px] truncate max-w-[140px] font-medium hidden sm:inline-block ${
+                                                                            isPrinting ? "text-black" : "text-rose-600 dark:text-rose-400"
+                                                                        }`}>
+                                                                            🍽️ {firstRec.name}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            )}
+
+                                                            {/* 地址 */}
+                                                            {linkedPlace.info?.loc && (
+                                                                <div className={`flex items-center gap-1 text-[10px] truncate pt-0.5 ${
+                                                                    isPrinting ? "text-black" : "text-muted-foreground"
+                                                                }`}>
+                                                                    <MapPin size={10} className={isPrinting ? "text-black shrink-0" : "text-rose-500 shrink-0"} />
+                                                                    <span className="truncate">{linkedPlace.info.loc}</span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                /* 無連結地點時的自訂手動活動卡片 */
+                                                <div className={`p-3 rounded-2xl border text-xs space-y-1 ${
+                                                    isPrinting ? "bg-white border-gray-400 text-black" : "bg-card border-border/70 text-card-foreground shadow-2xs"
+                                                }`}>
+                                                    <h4 className={`font-bold text-sm ${
+                                                        isPrinting ? "text-black" : "text-foreground"
+                                                    }`}>
+                                                        {activity.title}
+                                                    </h4>
+                                                    {activity.desc && (
+                                                        <p className={`leading-relaxed text-xs ${
+                                                            isPrinting ? "text-gray-800" : "text-muted-foreground"
+                                                        }`}>
+                                                            {activity.desc}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            )}
+
+                                            {/* 🚆 前往下一站的交通時間節點 (Transit Connector Card) */}
+                                            {((activity.transitMode && activity.transitMode !== "none") || activity.transitDuration) && (
+                                                <div
+                                                    className={`mt-2 rounded-xl text-xs font-medium p-2.5 ${
+                                                        isPrinting
+                                                            ? "bg-gray-100 border border-gray-400 text-black text-[9px] font-bold"
+                                                            : "bg-muted/30 border border-border/60 text-foreground"
+                                                    }`}
+                                                >
+                                                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                                                        <div className="flex items-center gap-1.5 font-bold">
+                                                            {(() => {
+                                                                const TransitIconComp = getTransitIcon(activity.transitMode);
+                                                                return (
+                                                                    <TransitIconComp
+                                                                        size={13}
+                                                                        className={isPrinting ? "text-black shrink-0" : "text-blue-500 shrink-0"}
                                                                     />
-                                                                </button>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() =>
-                                                                        onDeleteActivityBtnClick(
-                                                                            itinerary,
-                                                                            activity,
-                                                                        )
-                                                                    }
-                                                                    className="p-1.5 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                                                                    title="刪除活動"
-                                                                >
-                                                                    <Trash2
-                                                                        size={
-                                                                            12
-                                                                        }
-                                                                    />
-                                                                </button>
-                                                            </>
+                                                                );
+                                                            })()}
+                                                            <span>
+                                                                {activity.transitDuration
+                                                                    ? `路程約 ${activity.transitDuration}`
+                                                                    : "前往下一站"}
+                                                            </span>
+                                                        </div>
+
+                                                        {/* 詳細備註膠囊 */}
+                                                        {activity.transitDetails?.companyAndLine && (
+                                                            <span className={`text-[10px] px-2 py-0.2 rounded font-mono font-semibold ${
+                                                                isPrinting ? "bg-gray-200 text-black border border-gray-400" : "bg-muted text-muted-foreground"
+                                                            }`}>
+                                                                {activity.transitDetails.companyAndLine}
+                                                            </span>
                                                         )}
                                                     </div>
-                                                )}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
-                                </div>
-                            ))
+                                );
+                            })
                         ) : (
-                            // 空狀態
-                            <div className="flex">
-                                <div className="w-14 shrink-0"></div>{" "}
-                                {/* 佔位符保持對齊 */}
-                                <div className="py-2">
-                                    <p className="text-xs text-muted-foreground italic">
-                                        尚無活動，點擊上方 + 新增
-                                    </p>
-                                </div>
+                            <div className="flex py-3">
+                                <div className="w-12 sm:w-14 shrink-0" />
+                                <p className="text-xs text-muted-foreground italic">
+                                    尚無活動，點擊上方 + 新增活動
+                                </p>
                             </div>
                         )}
                     </div>
