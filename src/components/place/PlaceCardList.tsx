@@ -6,6 +6,7 @@ type PlaceCardListProps = {
     isPrinting: boolean | undefined;
     places: PlaceVM[] | null;
     theme: TripThemeConf | null;
+    selectedTags?: string[];
     onDeleteBtnClick: (place: PlaceVM) => void;
     onEditBtnClick: (place: PlaceVM) => void;
     onTagBtnClick: (tag: string) => void;
@@ -15,6 +16,7 @@ const PlaceCardList = ({
     isPrinting,
     places,
     theme,
+    selectedTags = [],
     onDeleteBtnClick,
     onEditBtnClick,
     onTagBtnClick,
@@ -33,6 +35,7 @@ const PlaceCardList = ({
                       place={place}
                       isPrinting={isPrinting}
                       isPreview={false}
+                      selectedTags={selectedTags}
                       onDelete={onDeleteBtnClick}
                       onEdit={onEditBtnClick}
                       onTagBtnClick={onTagBtnClick}

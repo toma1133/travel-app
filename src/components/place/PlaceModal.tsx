@@ -4,6 +4,7 @@ import {
     MouseEventHandler,
     useState,
     useEffect,
+    useMemo,
     ChangeEvent,
     useRef,
 } from "react";
@@ -32,6 +33,7 @@ import {
     Navigation,
     Languages,
     Volume2,
+    ChevronDown,
     DollarSign,
     Star,
     Ticket,
@@ -40,6 +42,12 @@ import {
     ExternalLink,
 } from "lucide-react";
 import { OSMService, OSMPlace, WikiData } from "../../services/api/OSMService";
+import { KakaoLocalService } from "../../services/api/KakaoLocalService";
+import { parseMapUrl } from "../../utils/MapUrlParserUtil";
+import {
+    PlaceSearchMapPickerModal,
+    ImportedPlacePayload,
+} from "./PlaceSearchMapPickerModal";
 import type { PlaceCategory, PlaceVM } from "../../models/types/PlaceTypes";
 import { CategoryCustomSelect } from "../common/CategoryCustomSelect";
 import { TripThemeConf } from "../../models/types/TripTypes";
@@ -276,7 +284,27 @@ const BusinessHoursSection = ({
                 <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider px-1">
                     營業模式設定 (SCHEDULE MODE)
                 </span>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 bg-muted/40 p-1 rounded-2xl border border-border/60">
+
+                {/* 手機版：美觀下拉式選單 */}
+                <div className="sm:hidden relative">
+                    <select
+                        value={mode}
+                        onChange={(e) => setMode(e.target.value as any)}
+                        className="w-full bg-card border border-border/80 rounded-xl px-3.5 py-2.5 text-xs font-bold text-foreground appearance-none shadow-xs outline-none focus:ring-2 focus:ring-blue-500/40 pr-9 cursor-pointer"
+                    >
+                        <option value="24_hours">✨ 24H 營業 (24 Hours Open)</option>
+                        <option value="uniform">⏰ 每日統一 (Daily Uniform Hours)</option>
+                        <option value="per_day">📅 依星期設定 (Set by Day of Week)</option>
+                        <option value="custom">📝 自訂文字 (Custom Text)</option>
+                    </select>
+                    <ChevronDown
+                        size={14}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
+                    />
+                </div>
+
+                {/* 平板與桌面版：4 欄式切換按鈕 */}
+                <div className="hidden sm:grid grid-cols-4 gap-1.5 bg-muted/40 p-1 rounded-2xl border border-border/60">
                     <button
                         type="button"
                         onClick={() => setMode("24_hours")}
@@ -878,6 +906,7 @@ const PlaceModal = ({
         wiki: WikiData | null;
     } | null>(null);
     const [importFields, setImportFields] = useState({
+        name: true,
         eng_name: true,
         image_url: true,
         open: true,
@@ -885,12 +914,58 @@ const PlaceModal = ({
         map_url: true,
         description: true,
     });
+    const [preserveExistingTop, setPreserveExistingTop] = useState(true);
 
     useEffect(() => {
         const timer = setTimeout(async () => {
             if (searchTerm.trim().length > 1) {
                 setIsSearching(true);
-                const results = await OSMService.searchPlaces(searchTerm);
+                let results: OSMPlace[] = [];
+
+                if (KakaoLocalService.isConfigured()) {
+                    try {
+                        const [kakaoPlaces, kakaoAddrs] = await Promise.all([
+                            KakaoLocalService.searchKeyword(searchTerm),
+                            KakaoLocalService.searchAddress(searchTerm),
+                        ]);
+
+                        const mappedKakao: OSMPlace[] = [
+                            ...kakaoPlaces.map((kp) => ({
+                                place_id: `kakao-${kp.id}`,
+                                name: kp.place_name,
+                                lat: kp.y,
+                                lon: kp.x,
+                                display_name: `${kp.place_name}, ${kp.road_address_name || kp.address_name}`,
+                                type: kp.category_group_name || "place",
+                                class: "amenity",
+                                extratags: {
+                                    phone: kp.phone,
+                                    category: kp.category_name,
+                                },
+                            })),
+                            ...kakaoAddrs.map((ka, idx) => ({
+                                place_id: `kakao-addr-${idx}`,
+                                name: ka.road_address?.building_name || ka.address_name,
+                                lat: ka.y,
+                                lon: ka.x,
+                                display_name: ka.road_address?.address_name || ka.address_name,
+                                type: "address",
+                                class: "place",
+                            })),
+                        ];
+
+                        if (mappedKakao.length > 0) {
+                            results = mappedKakao;
+                        }
+                    } catch (e) {
+                        console.error("Kakao top search error:", e);
+                    }
+                }
+
+                if (results.length === 0) {
+                    results = await OSMService.searchPlaces(searchTerm);
+                }
+
                 setSearchResults(results);
                 setIsSearching(false);
                 setShowSuggestions(true);
@@ -898,7 +973,7 @@ const PlaceModal = ({
                 setSearchResults([]);
                 setShowSuggestions(false);
             }
-        }, 500);
+        }, 400);
         return () => clearTimeout(timer);
     }, [searchTerm]);
 
@@ -923,9 +998,15 @@ const PlaceModal = ({
             }) as unknown as ChangeEvent<HTMLInputElement>;
 
         const { osm, wiki } = selectedPlace;
+        const placeName = osm.name || "";
 
-        if (osm.name) {
-            onFormInputChange(createEvent("name", osm.name));
+        // 1. 名稱智慧處理：若使用者已經有輸入名稱且開啟保護，保留使用者中文名，將外文原名存入 native_name
+        if (importFields.name && placeName) {
+            if (preserveExistingTop && formData.name && formData.name.trim() !== "") {
+                onFormInputChange(createEvent("info.native_name", placeName));
+            } else {
+                onFormInputChange(createEvent("name", placeName));
+            }
         }
 
         if (importFields.eng_name && wiki?.title) {
@@ -934,11 +1015,11 @@ const PlaceModal = ({
             onFormInputChange(createEvent("eng_name", osm.extratags["name:en"]));
         }
 
-        if (importFields.image_url && wiki?.thumbnailUrl) {
+        if (importFields.image_url && wiki?.thumbnailUrl && (!preserveExistingTop || !formData.image_url)) {
             onFormInputChange(createEvent("image_url", wiki.thumbnailUrl));
         }
 
-        if (importFields.open && osm.extratags?.opening_hours) {
+        if (importFields.open && osm.extratags?.opening_hours && (!preserveExistingTop || !formData.info?.open)) {
             onFormInputChange(createEvent("info.open", osm.extratags.opening_hours));
         }
 
@@ -946,16 +1027,36 @@ const PlaceModal = ({
             onFormInputChange(createEvent("info.loc", osm.display_name));
         }
 
-        if (importFields.map_url && osm.lat && osm.lon) {
+        if (osm.lat && osm.lon) {
+            onFormInputChange(createEvent("lat", osm.lat));
+            onFormInputChange(createEvent("lng", osm.lon));
+        }
+
+        if (osm.extratags?.phone) {
+            onFormInputChange(createEvent("info.phone", osm.extratags.phone));
+        }
+
+        // 2. 地圖網址智慧處理：若使用者已經貼上自訂網址且開啟保護，則不覆蓋
+        if (
+            importFields.map_url &&
+            (!preserveExistingTop || !formData.map_url || formData.map_url.trim() === "") &&
+            osm.lat &&
+            osm.lon
+        ) {
             const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
                 osm.name || ""
             )}&query_place_id=${osm.place_id}&center=${osm.lat},${osm.lon}`;
             onFormInputChange(createEvent("map_url", mapUrl));
         }
 
-        if (importFields.description && wiki?.extract) {
+        if (importFields.description && wiki?.extract && (!preserveExistingTop || !formData.description)) {
             onFormInputChange(createEvent("description", wiki.extract));
         }
+
+        setGeocodeMsg({
+            type: "success",
+            text: `已成功帶入地點資料：${placeName}`,
+        });
 
         setSelectedPlace(null);
     };
@@ -1001,6 +1102,162 @@ const PlaceModal = ({
     const recommendedCount = formData.info?.recommended_items?.length || 0;
     const hasCoordinates = !!(formData.lat && formData.lng);
 
+    const [isGeocoding, setIsGeocoding] = useState(false);
+    const [geocodeMsg, setGeocodeMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+    const [isMapPickerOpen, setIsMapPickerOpen] = useState(false);
+
+    const handleApplyMapPicker = (
+        payload: ImportedPlacePayload,
+        options?: { preserveExisting?: boolean }
+    ) => {
+        const preserve = options?.preserveExisting ?? true;
+        const createEvent = (name: string, value: string | number) =>
+            ({
+                target: { name, value: String(value) },
+                currentTarget: { name, value: String(value) },
+            }) as unknown as ChangeEvent<HTMLInputElement>;
+
+        // 1. 景點名稱智慧處理：若使用者已輸入自訂名稱且開啟保護，不覆蓋中文名，外文存入 native_name
+        if (payload.name) {
+            if (preserve && formData.name && formData.name.trim() !== "") {
+                onFormInputChange(
+                    createEvent("info.native_name", payload.native_name || payload.name)
+                );
+            } else {
+                onFormInputChange(createEvent("name", payload.name));
+                if (payload.native_name) {
+                    onFormInputChange(
+                        createEvent("info.native_name", payload.native_name)
+                    );
+                }
+            }
+        }
+        if (payload.eng_name) {
+            onFormInputChange(createEvent("eng_name", payload.eng_name));
+        }
+        if (payload.loc) {
+            onFormInputChange(createEvent("info.loc", payload.loc));
+        }
+        if (payload.phone) {
+            onFormInputChange(createEvent("info.phone", payload.phone));
+        }
+        if (payload.lat && payload.lng) {
+            onFormInputChange(createEvent("lat", payload.lat));
+            onFormInputChange(createEvent("lng", payload.lng));
+        }
+        // 2. 地圖網址智慧處理：若使用者已經貼上自訂網址且開啟保護，則不覆蓋
+        if (payload.map_url) {
+            if (preserve && formData.map_url && formData.map_url.trim() !== "") {
+                // 保留使用者自己的地圖網址
+            } else {
+                onFormInputChange(createEvent("map_url", payload.map_url));
+            }
+        }
+        if (payload.image_url && (!preserve || !formData.image_url)) {
+            onFormInputChange(createEvent("image_url", payload.image_url));
+        }
+        if (payload.description && (!preserve || !formData.description)) {
+            onFormInputChange(createEvent("description", payload.description));
+        }
+
+        setGeocodeMsg({
+            type: "success",
+            text: `已成功套用地圖地標：${payload.name} (GPS: ${payload.lat ? payload.lat.toFixed(4) : ""}, ${payload.lng ? payload.lng.toFixed(4) : ""})`,
+        });
+    };
+
+    const parsedMapInfo = useMemo(() => {
+        return parseMapUrl(formData.map_url || "");
+    }, [formData.map_url]);
+
+    const handleAutoGeocode = async () => {
+        // 優先嘗試地址 (地址在韓國地理搜尋中準確率最高)，其次嘗試韓文名稱與地標名稱
+        const candidateQueries = [
+            formData.info?.loc,
+            formData.info?.native_name,
+            formData.name,
+            parsedMapInfo?.placeName,
+        ].filter(Boolean) as string[];
+
+        if (candidateQueries.length === 0) {
+            setGeocodeMsg({
+                type: "error",
+                text: "請先填寫詳細地址（例如: 부산 광복로 83-1）或景點韓文/中文名稱",
+            });
+            return;
+        }
+
+        setIsGeocoding(true);
+        setGeocodeMsg(null);
+        try {
+            const createEvent = (name: string, value: string | number) =>
+                ({
+                    target: { name, value: String(value) },
+                    currentTarget: { name, value: String(value) },
+                }) as unknown as ChangeEvent<HTMLInputElement>;
+
+            // 1. 優先使用 Kakao Local API (若已在 .env 設定 VITE_KAKAO_REST_API_KEY)
+            if (KakaoLocalService.isConfigured()) {
+                for (const q of candidateQueries) {
+                    const kakaoRes = await KakaoLocalService.geocode(q);
+                    if (kakaoRes) {
+                        onFormInputChange(createEvent("lat", kakaoRes.lat));
+                        onFormInputChange(createEvent("lng", kakaoRes.lng));
+
+                        if (!formData.info?.loc && kakaoRes.roadAddress) {
+                            onFormInputChange(createEvent("info.loc", kakaoRes.roadAddress));
+                        }
+                        if (!formData.info?.phone && kakaoRes.phone) {
+                            onFormInputChange(createEvent("info.phone", kakaoRes.phone));
+                        }
+
+                        setGeocodeMsg({
+                            type: "success",
+                            text: `已透過 🇰🇷 Kakao Local API 成功定位 GPS (${kakaoRes.lat.toFixed(4)}, ${kakaoRes.lng.toFixed(4)})`,
+                        });
+                        return;
+                    }
+                }
+            }
+
+            // 2. 備援使用 OSM & Photon 多重圖資引擎
+            let foundResult: OSMPlace | null = null;
+            let matchedQuery = "";
+
+            for (const q of candidateQueries) {
+                const results = await OSMService.searchPlaces(q);
+                if (results && results.length > 0) {
+                    foundResult = results[0];
+                    matchedQuery = q;
+                    break;
+                }
+            }
+
+            if (foundResult) {
+                onFormInputChange(createEvent("lat", parseFloat(foundResult.lat)));
+                onFormInputChange(createEvent("lng", parseFloat(foundResult.lon)));
+
+                if (!formData.info?.loc && foundResult.display_name) {
+                    onFormInputChange(createEvent("info.loc", foundResult.display_name));
+                }
+
+                setGeocodeMsg({
+                    type: "success",
+                    text: `已依「${matchedQuery}」成功定位 GPS (${parseFloat(foundResult.lat).toFixed(4)}, ${parseFloat(foundResult.lon).toFixed(4)})`,
+                });
+            } else {
+                setGeocodeMsg({
+                    type: "error",
+                    text: `未能透過名稱或地址定位，請檢查地址關鍵字或提供完整地名`,
+                });
+            }
+        } catch (e) {
+            setGeocodeMsg({ type: "error", text: "定位查詢失敗，請檢查網路連線" });
+        } finally {
+            setIsGeocoding(false);
+        }
+    };
+
     return (
         <div className="fixed inset-0 z-50 bg-black/65 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200">
             <div className="relative w-full max-w-2xl max-h-[92vh] sm:max-h-[88vh] bg-background text-foreground rounded-t-3xl sm:rounded-3xl border border-border shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-6 sm:zoom-in-95 duration-200">
@@ -1032,26 +1289,39 @@ const PlaceModal = ({
                     </button>
                 </div>
 
-                {/* 智慧搜尋帶入列 (OpenStreetMap / Wikipedia) */}
+                {/* 智慧搜尋帶入列 (OpenStreetMap / Kakao / Wikipedia) */}
                 <div className="p-3 border-b border-border/50 bg-muted/20 shrink-0">
-                    <div className="relative">
-                        <Search
-                            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground"
-                            size={14}
-                        />
-                        <input
-                            type="text"
-                            placeholder="🔍 搜尋真實景點/店家自動帶入 (OpenStreetMap & Wiki)..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full bg-card border border-border/80 rounded-xl pl-9 pr-9 py-2 text-xs text-foreground placeholder:text-muted-foreground/60 outline-none focus:border-blue-500 transition-all shadow-2xs"
-                        />
-                        {isSearching && (
-                            <Loader2
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground animate-spin"
+                    <div className="flex items-center gap-2">
+                        <div className="relative flex-1 min-w-0">
+                            <Search
+                                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground"
                                 size={14}
                             />
-                        )}
+                            <input
+                                type="text"
+                                placeholder="🔍 搜尋真實景點/店家自動帶入 (Kakao / OSM)..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="w-full bg-card border border-border/80 rounded-xl pl-9 pr-9 py-2 text-xs text-foreground placeholder:text-muted-foreground/60 outline-none focus:border-blue-500 transition-all shadow-2xs"
+                            />
+                            {isSearching && (
+                                <Loader2
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground animate-spin"
+                                    size={14}
+                                />
+                            )}
+                        </div>
+
+                        <button
+                            type="button"
+                            onClick={() => setIsMapPickerOpen(true)}
+                            className="px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-95 shrink-0"
+                            title="開啟互動地圖搜尋與視覺化確認"
+                        >
+                            <MapPin size={13} />
+                            <span className="hidden sm:inline">地圖選點預覽</span>
+                            <span className="sm:hidden">地圖</span>
+                        </button>
                     </div>
 
                     {showSuggestions && searchResults.length > 0 && (
@@ -1078,7 +1348,7 @@ const PlaceModal = ({
                     )}
 
                     {selectedPlace && (
-                        <div className="mt-2 bg-card border border-blue-500/30 p-3 rounded-2xl shadow-xs text-xs space-y-2">
+                        <div className="mt-2 bg-card border border-blue-500/30 p-3 rounded-2xl shadow-xs text-xs space-y-2.5">
                             <div className="flex justify-between items-start">
                                 <span className="font-bold text-blue-500 flex items-center gap-1">
                                     <Sparkles size={13} /> 找到地點資料：{selectedPlace.osm.name}
@@ -1095,20 +1365,103 @@ const PlaceModal = ({
                                 {selectedPlace.wiki?.title && <div><strong>英文:</strong> {selectedPlace.wiki.title}</div>}
                                 {selectedPlace.osm.extratags?.opening_hours && <div><strong>營業:</strong> {selectedPlace.osm.extratags.opening_hours}</div>}
                             </div>
+
+                            {/* 欄位勾選與保護開關 */}
+                            <div className="pt-2 border-t border-border/50 flex flex-wrap items-center justify-between gap-1.5 text-[11px]">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                    <label className="inline-flex items-center gap-1 text-foreground cursor-pointer select-none">
+                                        <input
+                                            type="checkbox"
+                                            checked={importFields.name}
+                                            onChange={(e) =>
+                                                setImportFields((prev) => ({
+                                                    ...prev,
+                                                    name: e.target.checked,
+                                                }))
+                                            }
+                                            className="rounded text-blue-600 focus:ring-0 cursor-pointer"
+                                        />
+                                        <span>名稱</span>
+                                    </label>
+                                    <label className="inline-flex items-center gap-1 text-foreground cursor-pointer select-none">
+                                        <input
+                                            type="checkbox"
+                                            checked={importFields.loc}
+                                            onChange={(e) =>
+                                                setImportFields((prev) => ({
+                                                    ...prev,
+                                                    loc: e.target.checked,
+                                                }))
+                                            }
+                                            className="rounded text-blue-600 focus:ring-0 cursor-pointer"
+                                        />
+                                        <span>地址</span>
+                                    </label>
+                                    <label className="inline-flex items-center gap-1 text-foreground cursor-pointer select-none">
+                                        <input
+                                            type="checkbox"
+                                            checked={importFields.map_url}
+                                            onChange={(e) =>
+                                                setImportFields((prev) => ({
+                                                    ...prev,
+                                                    map_url: e.target.checked,
+                                                }))
+                                            }
+                                            className="rounded text-blue-600 focus:ring-0 cursor-pointer"
+                                        />
+                                        <span>地圖網址</span>
+                                    </label>
+                                </div>
+
+                                <label className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-400 font-bold cursor-pointer select-none">
+                                    <input
+                                        type="checkbox"
+                                        checked={preserveExistingTop}
+                                        onChange={(e) =>
+                                            setPreserveExistingTop(e.target.checked)
+                                        }
+                                        className="rounded text-blue-600 focus:ring-0 cursor-pointer"
+                                    />
+                                    <span>🔒 保護已填寫內容</span>
+                                </label>
+                            </div>
+
                             <button
                                 type="button"
                                 onClick={handleApplyImport}
-                                className="w-full bg-blue-500 text-white py-1.5 rounded-xl text-xs font-bold hover:bg-blue-600 transition-colors cursor-pointer"
+                                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs active:scale-95 flex items-center justify-center gap-1.5"
                             >
-                                一鍵帶入選取資料
+                                <Sparkles size={13} />
+                                <span>確認帶入選取資料</span>
                             </button>
                         </div>
                     )}
                 </div>
 
-                {/* iOS Segmented Control 分段切換列 */}
+                {/* 頁籤切換列 (手機端下拉選單 + 平板/桌面端分段按鈕) */}
                 <div className="p-2.5 border-b border-border/60 bg-muted/30 shrink-0">
-                    <div className="flex items-center gap-1 p-1 bg-muted/60 rounded-xl border border-border/60 overflow-x-auto no-scrollbar">
+                    {/* 手機版：美觀下拉式選單 */}
+                    <div className="sm:hidden relative">
+                        <select
+                            value={activeTab}
+                            onChange={(e) => setActiveTab(e.target.value as any)}
+                            className="w-full bg-card border border-border/80 rounded-xl px-3.5 py-2.5 text-xs font-bold text-foreground appearance-none shadow-xs outline-none focus:ring-2 focus:ring-blue-500/40 pr-9 cursor-pointer"
+                        >
+                            <option value="basic">🧭 基本與地圖 (Basic & Map)</option>
+                            <option value="hours">⏰ 營業與時間 (Hours & Schedule)</option>
+                            <option value="items">
+                                🍽️ 推薦品項 (Recommended Items){recommendedCount > 0 ? ` (${recommendedCount})` : ""}
+                            </option>
+                            <option value="details">💰 預算與細節 (Budget & Details)</option>
+                        </select>
+                        <ChevronDown
+                            size={14}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
+                        />
+                    </div>
+
+                    {/* 平板與桌面版：iOS Segmented Control 分段切換列 */}
+                    <div className="hidden sm:flex items-center gap-1 p-1 bg-muted/60 rounded-xl border border-border/60 overflow-x-auto no-scrollbar">
                         <button
                             type="button"
                             onClick={() => setActiveTab("basic")}
@@ -1162,7 +1515,7 @@ const PlaceModal = ({
                                     : "text-muted-foreground hover:text-foreground"
                             }`}
                         >
-                            <Sparkles size={13} className={activeTab === "details" ? "text-indigo-500" : ""} />
+                            <Tag size={13} className={activeTab === "details" ? "text-purple-500" : ""} />
                             <span>預算與細節</span>
                         </button>
                     </div>
@@ -1270,48 +1623,136 @@ const PlaceModal = ({
 
                             {/* Section 2: 地圖導航與交通 (iOS Inset Grouped Table) */}
                             <div className="space-y-1.5">
-                                <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider px-1">
-                                    地圖與交通 (MAP & LOCATION)
-                                </span>
+                                <div className="flex items-center justify-between px-1">
+                                    <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+                                        地圖與交通 (MAP & LOCATION)
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsMapPickerOpen(true)}
+                                        className="text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer"
+                                    >
+                                        <MapPin size={11} />
+                                        <span>🗺️ 開啟地圖選點預覽</span>
+                                    </button>
+                                </div>
                                 <div className="bg-card border border-border/80 rounded-2xl overflow-hidden divide-y divide-border/60 text-xs shadow-2xs">
                                     {/* 地圖連結 */}
-                                    <div className="p-3 sm:p-3.5 flex items-center justify-between gap-3 bg-card hover:bg-muted/10 transition-colors">
-                                        <span className="text-muted-foreground w-24 sm:w-28 shrink-0 font-medium flex items-center gap-1">
+                                    <div className="p-3 sm:p-3.5 flex items-center justify-between gap-3 bg-card hover:bg-muted/10 transition-colors flex-wrap sm:flex-nowrap">
+                                        <div className="flex items-center gap-1.5 w-24 sm:w-28 shrink-0">
                                             <MapIcon size={13} className="text-blue-500" />
-                                            <span>地圖網址</span>
-                                        </span>
-                                        <input
-                                            type="text"
-                                            name="map_url"
-                                            value={formData.map_url || ""}
-                                            onChange={onFormInputChange}
-                                            placeholder="Apple / Google Maps 連結"
-                                            className="min-w-0 flex-1 text-left font-mono font-medium text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40"
-                                        />
+                                            <span className="text-muted-foreground font-medium">地圖網址</span>
+                                        </div>
+                                        <div className="min-w-0 flex-1 flex items-center gap-2">
+                                            <input
+                                                type="text"
+                                                name="map_url"
+                                                value={formData.map_url || ""}
+                                                onChange={onFormInputChange}
+                                                placeholder="Naver / Google / Apple Maps 連結或經緯度"
+                                                className="min-w-0 flex-1 text-left font-mono font-medium text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40 text-xs"
+                                            />
+                                            {(() => {
+                                                const source =
+                                                    parsedMapInfo?.source ||
+                                                    (formData.map_url?.includes("naver.com") || formData.map_url?.includes("naver.me")
+                                                        ? "Naver Map"
+                                                        : formData.map_url?.includes("kakao.com") || formData.map_url?.includes("kko.to")
+                                                        ? "Kakao Map"
+                                                        : formData.map_url?.includes("maps.apple.com")
+                                                        ? "Apple Maps"
+                                                        : formData.map_url?.includes("google")
+                                                        ? "Google Maps"
+                                                        : null);
+
+                                                if (!source) return null;
+                                                return (
+                                                    <span className="px-1.5 py-0.5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[10px] font-bold shrink-0">
+                                                        {source === "Naver Map" && "🇰🇷 Naver"}
+                                                        {source === "Kakao Map" && "🇰🇷 Kakao"}
+                                                        {source === "Apple Maps" && "🍎 Apple"}
+                                                        {source === "Google Maps" && "🌐 Google"}
+                                                        {source === "Direct Coordinate" && "📍 座標"}
+                                                    </span>
+                                                );
+                                            })()}
+                                        </div>
                                     </div>
 
+                                    {/* Naver / Kakao 網址未帶座標時的專屬智慧提示與一鍵定位按鈕 */}
+                                    {formData.map_url &&
+                                        (formData.map_url.includes("naver") ||
+                                            formData.map_url.includes("kakao")) &&
+                                        !hasCoordinates && (
+                                            <div className="p-2.5 bg-blue-500/10 border-b border-border/60 flex items-center justify-between gap-2 text-xs text-blue-700 dark:text-blue-300">
+                                                <div className="flex items-center gap-1.5 min-w-0">
+                                                    <span className="shrink-0">💡</span>
+                                                    <span className="truncate text-[11px]">
+                                                        此 Naver 網址未包含經緯度，點擊右側即可自動定位
+                                                    </span>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={handleAutoGeocode}
+                                                    disabled={isGeocoding}
+                                                    className="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-[11px] shrink-0 flex items-center gap-1 transition-all cursor-pointer shadow-xs active:scale-95"
+                                                >
+                                                    {isGeocoding ? (
+                                                        <Loader2 size={11} className="animate-spin" />
+                                                    ) : (
+                                                        <Search size={11} />
+                                                    )}
+                                                    <span>{isGeocoding ? "定位中..." : "自動定位 GPS"}</span>
+                                                </button>
+                                            </div>
+                                        )}
+
                                     {/* 詳細地址 */}
-                                    <div className="p-3 sm:p-3.5 flex items-center justify-between gap-3 bg-card hover:bg-muted/10 transition-colors">
-                                        <span className="text-muted-foreground w-24 sm:w-28 shrink-0 font-medium flex items-center gap-1">
+                                    <div className="p-3 sm:p-3.5 flex items-center justify-between gap-3 bg-card hover:bg-muted/10 transition-colors flex-wrap sm:flex-nowrap">
+                                        <div className="flex items-center gap-1.5 w-24 sm:w-28 shrink-0">
                                             <MapPin size={13} className="text-rose-500" />
-                                            <span>詳細地址</span>
-                                        </span>
+                                            <span className="text-muted-foreground font-medium">詳細地址</span>
+                                        </div>
                                         <div className="min-w-0 flex-1 flex items-center gap-1.5">
                                             <input
                                                 type="text"
                                                 name="info.loc"
                                                 value={formData.info?.loc || ""}
                                                 onChange={onFormInputChange}
-                                                placeholder="例: 京都市東山區清水1丁目294"
+                                                placeholder="例: 서울특별시 중구 명동길 29"
                                                 className="min-w-0 flex-1 text-left font-medium text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40"
                                             />
                                             {hasCoordinates && (
-                                                <span className="px-1.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold shrink-0 font-mono">
-                                                    📍 GPS
+                                                <span
+                                                    className="px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold font-mono shrink-0 flex items-center gap-1"
+                                                    title={`GPS 座標: ${formData.lat}, ${formData.lng}`}
+                                                >
+                                                    <span>📍 GPS</span>
+                                                    <span className="opacity-80">
+                                                        ({(() => {
+                                                            const latNum = typeof formData.lat === "number" ? formData.lat : parseFloat(String(formData.lat));
+                                                            const lngNum = typeof formData.lng === "number" ? formData.lng : parseFloat(String(formData.lng));
+                                                            return `${!isNaN(latNum) ? latNum.toFixed(3) : ""}, ${!isNaN(lngNum) ? lngNum.toFixed(3) : ""}`;
+                                                        })()})
+                                                    </span>
                                                 </span>
                                             )}
                                         </div>
                                     </div>
+
+                                    {/* 提示訊息 (自動定位回饋) */}
+                                    {geocodeMsg && (
+                                        <div
+                                            className={`px-3.5 py-1.5 text-[11px] flex items-center gap-1.5 ${
+                                                geocodeMsg.type === "success"
+                                                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                                                    : "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                                            }`}
+                                        >
+                                            {geocodeMsg.type === "success" ? <Check size={12} /> : <Lightbulb size={12} />}
+                                            <span>{geocodeMsg.text}</span>
+                                        </div>
+                                    )}
 
                                     {/* 聯絡電話 */}
                                     <div className="p-3 sm:p-3.5 flex items-center justify-between gap-3 bg-card hover:bg-muted/10 transition-colors">
@@ -1550,6 +1991,23 @@ const PlaceModal = ({
                     )}
                 </form>
             </div>
+
+            {/* 視覺化地圖搜尋與選點彈窗 */}
+            <PlaceSearchMapPickerModal
+                isOpen={isMapPickerOpen}
+                onClose={() => setIsMapPickerOpen(false)}
+                initialQuery={
+                    searchTerm ||
+                    formData.info?.loc ||
+                    formData.info?.native_name ||
+                    formData.name
+                }
+                initialCoords={{
+                    lat: formData.lat,
+                    lng: formData.lng,
+                }}
+                onSelectPlace={handleApplyMapPicker}
+            />
         </div>
     );
 };

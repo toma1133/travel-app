@@ -159,7 +159,7 @@ const PlaceMarkerPopupContent = ({ place, index }: { place: PlaceVM; index: numb
                 lng: place.lng,
                 customUrl: place.map_url,
             }),
-            ...getSmartNavigationLabel(),
+            ...getSmartNavigationLabel(place.map_url),
         };
     }, [place]);
 

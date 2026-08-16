@@ -16,6 +16,7 @@ import type { PlaceCategory, PlaceVM } from "../../models/types/PlaceTypes";
 import type { TripVM } from "../../models/types/TripTypes";
 
 import { PLACE_CATEGORIES } from "../../constants/Categories";
+import { parseMapUrl } from "../../utils/MapUrlParserUtil";
 
 type CoverPageProps = {
     isPrinting?: boolean;
@@ -62,8 +63,8 @@ const GuidePage = ({
             type: "sight",
             user_id: session ? session.user.id : "",
             updated_at: "",
-            lat: 23.973875,
-            lng: 120.982025,
+            lat: null,
+            lng: null,
             map_url: "",
         }),
         [tripId, session]
@@ -89,7 +90,7 @@ const GuidePage = ({
 
             // 檢查標籤 (必須包含所有選取的標籤)
             const placeTags = p.tags
-                ? p.tags.split(",").map((t) => t.trim())
+                ? p.tags.split(",").map((t) => t.trim()).filter(Boolean)
                 : [];
             const matchTags =
                 selectedTags.length === 0 ||
@@ -101,97 +102,27 @@ const GuidePage = ({
         setFilteredPlaces(targetPlaces);
     }, [places, filter, selectedTags]);
 
+    // 計算所有地點包含的標籤與其出現次數
+    const availableTags = useMemo(() => {
+        if (!Array.isArray(places)) return [];
+        const tagMap: Record<string, number> = {};
+        places.forEach((p) => {
+            if (p.tags) {
+                p.tags
+                    .split(",")
+                    .map((t) => t.trim())
+                    .filter(Boolean)
+                    .forEach((tag) => {
+                        tagMap[tag] = (tagMap[tag] || 0) + 1;
+                    });
+            }
+        });
+        return Object.entries(tagMap)
+            .sort((a, b) => b[1] - a[1])
+            .map(([tag, count]) => ({ tag, count }));
+    }, [places]);
+
     const mutatingCount = useIsMutating({ mutationKey: ["place"] });
-
-    const parseUrl = (url: string) => {
-        if (!url.trim()) return null;
-
-        try {
-            // 1. Apple Maps 解析
-            if (url.includes("maps.apple.com")) {
-                let urlObj;
-                try {
-                    urlObj = new URL(url);
-                } catch (e) {
-                    return null;
-                }
-
-                const params = new URLSearchParams(urlObj.search);
-                // Apple Maps 通常使用 'coordinate' 或 'll'
-                const coordinate = params.get("coordinate") || params.get("ll");
-
-                if (coordinate) {
-                    const [lat, lng] = coordinate.split(",");
-
-                    if (lat && lng) {
-                        return {
-                            source: "Apple Maps",
-                            lat: +lat.trim(),
-                            lng: +lng.trim(),
-                            originalUrl: url,
-                        };
-                    }
-                }
-
-                return null;
-            }
-
-            // 2. Google Maps 解析
-            if (url.includes("google") && url.includes("maps")) {
-                // 優先順序 A: 視窗中心點 (@lat,lng) - 使用者範例 1 的情況
-                // Regex: 尋找 @ 之後的數字, 逗號, 數字
-                const atRegex = /@(-?\d+\.\d+),(-?\d+\.\d+)/;
-                const atMatch = url.match(atRegex);
-
-                if (atMatch) {
-                    return {
-                        source: "Google Maps",
-                        lat: +atMatch[1],
-                        lng: +atMatch[2],
-                        originalUrl: url,
-                    };
-                }
-
-                // 優先順序 B: 圖釘資料 (!3d...!4d)
-                // 有時候分享的連結沒有 @，但有 data 參數 (!3d瑋度!4d經度)
-                const latPinRegex = /!3d(-?\d+\.\d+)/;
-                const lngPinRegex = /!4d(-?\d+\.\d+)/;
-
-                const latMatch = url.match(latPinRegex);
-                const lngMatch = url.match(lngPinRegex);
-
-                if (latMatch && lngMatch) {
-                    return {
-                        source: "Google Maps",
-                        lat: +latMatch[1],
-                        lng: +lngMatch[2],
-                        originalUrl: url,
-                    };
-                }
-
-                // 優先順序 C: 搜尋參數 (?q=lat,lng)
-                const urlObj = new URL(url);
-                const q = urlObj.searchParams.get("q");
-
-                if (q && q.includes(",")) {
-                    const [lat, lng] = q.split(",");
-
-                    if (!isNaN(parseFloat(lat)) && !isNaN(parseFloat(lng))) {
-                        return {
-                            source: "Google Maps",
-                            lat: +lat.trim(),
-                            lng: +lng.trim(),
-                            originalUrl: url,
-                        };
-                    }
-                }
-
-                return null;
-            }
-        } catch (err) {
-            console.error(err);
-        }
-    };
 
     useEffect(() => {
         let timer: number | undefined;
@@ -227,17 +158,25 @@ const GuidePage = ({
                 },
             }));
         } else if (name === "map_url") {
-            setFormPlace((prev) => ({ ...prev, [name]: value }));
+            setFormPlace((prev) => {
+                const updated = { ...prev, [name]: value };
+                const parseResult = parseMapUrl(value);
 
-            const parseResult = parseUrl(value);
-
-            if (parseResult) {
-                setFormPlace((prev) => ({
-                    ...prev,
-                    lat: parseResult.lat,
-                    lng: parseResult.lng,
-                }));
-            }
+                if (parseResult) {
+                    updated.lat = parseResult.lat;
+                    updated.lng = parseResult.lng;
+                    if (!updated.name && parseResult.placeName) {
+                        updated.name = parseResult.placeName;
+                    }
+                }
+                return updated;
+            });
+        } else if (name === "lat" || name === "lng") {
+            const num = parseFloat(value);
+            setFormPlace((prev) => ({
+                ...prev,
+                [name]: isNaN(num) ? null : num,
+            }));
         } else {
             setFormPlace((prev) => ({ ...prev, [name]: value }));
         }
@@ -311,7 +250,9 @@ const GuidePage = ({
     };
 
     const handleTagClick = (tag: string) => {
-        if (!selectedTags.includes(tag)) {
+        if (selectedTags.includes(tag)) {
+            setSelectedTags(selectedTags.filter((t) => t !== tag));
+        } else {
             setSelectedTags([...selectedTags, tag]);
         }
     };
@@ -364,9 +305,12 @@ const GuidePage = ({
                     <PlaceFilter
                         activeFilterId={filter}
                         placeCategories={placeCategories}
+                        availableTags={availableTags}
                         selectedTags={selectedTags}
+                        filteredPlacesCount={filteredPlaces?.length ?? 0}
                         theme={tripData?.theme_config!}
                         onFilterBtnClick={handleFilterBtnClick}
+                        onTagBtnClick={handleTagClick}
                         onRemoveTagBtnClick={handleRemoveTag}
                         onClearAllFilters={handleClearAllFilters}
                     />
@@ -375,6 +319,7 @@ const GuidePage = ({
                     isPrinting={isPrinting}
                     places={filteredPlaces}
                     theme={tripData?.theme_config!}
+                    selectedTags={selectedTags}
                     onDeleteBtnClick={handleOpenDeleteModal}
                     onEditBtnClick={handleOpenEditModal}
                     onTagBtnClick={handleTagClick}

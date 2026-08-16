@@ -69,7 +69,7 @@ const PreviewPlaceModal = ({
         );
     }
 
-    const smartNav = getSmartNavigationLabel();
+    const smartNav = getSmartNavigationLabel(place.map_url);
     const mapUrl = getSmartNavigationUrl({
         name: place.name,
         loc: place.info?.loc,

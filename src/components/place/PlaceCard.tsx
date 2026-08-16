@@ -40,6 +40,7 @@ type PlaceCardProps = {
     place: PlaceVM;
     isPrinting?: boolean;
     isPreview: boolean;
+    selectedTags?: string[];
     onDelete: (place: PlaceVM) => void;
     onEdit: (place: PlaceVM) => void;
     onTagBtnClick: (tag: string) => void;
@@ -50,6 +51,7 @@ const PlaceCard = ({
     place,
     isPrinting,
     isPreview,
+    selectedTags = [],
     onDelete,
     onEdit,
     onTagBtnClick,
@@ -57,7 +59,7 @@ const PlaceCard = ({
     const [isExpanded, setIsExpanded] = useState(false);
     const [speaking, setSpeaking] = useState(false);
 
-    const smartNav = getSmartNavigationLabel();
+    const smartNav = getSmartNavigationLabel(place.map_url);
     const mapUrl = getSmartNavigationUrl({
         name: place.name,
         loc: place.info?.loc,
@@ -479,6 +481,37 @@ const PlaceCard = ({
                             </span>
                         )}
                     </div>
+
+                    {/* 🏷️ 標籤列 (直接在卡片正面展示，點擊可立即篩選/切換標籤) */}
+                    {place.tags && (
+                        <div className="flex flex-wrap gap-1 pt-1 items-center">
+                            {place.tags
+                                .split(",")
+                                .map((t) => t.trim())
+                                .filter(Boolean)
+                                .map((tag) => {
+                                    const isTagSelected = selectedTags?.includes(tag);
+                                    return (
+                                        <button
+                                            key={tag}
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onTagBtnClick(tag);
+                                            }}
+                                            className={`inline-flex items-center text-[10px] font-medium px-1.5 py-0.5 rounded-md transition-all cursor-pointer border ${
+                                                isTagSelected
+                                                    ? "bg-primary text-primary-foreground border-primary font-bold shadow-2xs"
+                                                    : "bg-muted/70 text-muted-foreground hover:text-foreground hover:bg-muted border-border/50"
+                                            }`}
+                                            title={isTagSelected ? `取消篩選標籤: #${tag}` : `篩選標籤: #${tag}`}
+                                        >
+                                            <span>#{tag}</span>
+                                        </button>
+                                    );
+                                })}
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -523,19 +556,26 @@ const PlaceCard = ({
                             <span>導航</span>
                         </a>
                     )}
-
-                    {hasSecondaryDetails && (
-                        <button
-                            type="button"
-                            onClick={() => setIsExpanded(!isExpanded)}
-                            className="p-1.5 rounded-xl bg-muted/60 hover:bg-muted text-muted-foreground transition-colors cursor-pointer"
-                            title={isExpanded ? "收起詳細細節" : "展開更多細節"}
-                        >
-                            {isExpanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-                        </button>
-                    )}
                 </div>
             </div>
+
+            {/* 展開更多細節按鈕 (僅在有次要資訊時顯示，獨立置底整齊排列) */}
+            {hasSecondaryDetails && (
+                <button
+                    type="button"
+                    onClick={() => setIsExpanded(!isExpanded)}
+                    className="w-full mt-2.5 pt-2 border-t border-dashed border-border/70 flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/30 rounded-xl transition-all duration-200 cursor-pointer py-1 group/expand"
+                >
+                    <span className="font-medium">
+                        {isExpanded ? "收起詳細資訊" : "查看詳細資訊 (Tips / 推薦 / 交通)"}
+                    </span>
+                    {isExpanded ? (
+                        <ChevronUp size={13} className="transition-transform duration-200 group-hover/expand:-translate-y-0.5" />
+                    ) : (
+                        <ChevronDown size={13} className="transition-transform duration-200 group-hover/expand:translate-y-0.5" />
+                    )}
+                </button>
+            )}
 
             {/* 展開後的詳細旅遊資訊 (Tips, 完整推薦菜單, 預約, 支付方式) */}
             {isExpanded && (
@@ -715,26 +755,6 @@ const PlaceCard = ({
                                     </div>
                                 ))}
                             </div>
-                        </div>
-                    )}
-
-                    {/* 標籤列 */}
-                    {!!place.tags && (
-                        <div className="flex flex-wrap gap-1.5 pt-1">
-                            {place.tags
-                                .split(",")
-                                .map((t) => t.trim())
-                                .filter(Boolean)
-                                .map((tag) => (
-                                    <button
-                                        key={tag}
-                                        type="button"
-                                        onClick={() => onTagBtnClick(tag)}
-                                        className="text-[10px] font-medium bg-muted/60 text-muted-foreground hover:text-blue-500 px-2 py-0.5 rounded-md hover:bg-blue-500/10 transition-colors cursor-pointer border border-border/50"
-                                    >
-                                        #{tag}
-                                    </button>
-                                ))}
                         </div>
                     )}
                 </div>
