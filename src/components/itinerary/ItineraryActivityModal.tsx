@@ -43,6 +43,7 @@ import type { PlaceVM } from "../../models/types/PlaceTypes";
 import {
     CATEGORY_DEFINITIONS,
     TRANSIT_MODES,
+    getCategoryLabel,
     getCategoryTypeName,
 } from "../../constants/Categories";
 import { CategoryCustomSelect } from "../common/CategoryCustomSelect";
@@ -380,7 +381,7 @@ const ItineraryActivityModal = ({
                                         <div className="min-w-0 flex-1">
                                             <div className="flex items-center gap-1.5">
                                                 <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-blue-500/20 text-blue-600 dark:text-blue-400">
-                                                    {getCategoryTypeName(selectedPlace.type)}
+                                                    {getCategoryLabel(selectedPlace.type)}
                                                 </span>
                                                 <h4 className="font-bold text-xs text-foreground truncate">
                                                     {selectedPlace.name}
@@ -460,7 +461,7 @@ const ItineraryActivityModal = ({
                                                             <div className="min-w-0 flex-1">
                                                                 <div className="flex items-center gap-1.5">
                                                                     <span className="text-[9px] font-bold px-1 py-0.2 rounded bg-muted text-muted-foreground">
-                                                                        {getCategoryTypeName(place.type)}
+                                                                        {getCategoryLabel(place.type)}
                                                                     </span>
                                                                     <span className="font-bold text-xs text-foreground truncate">
                                                                         {place.name}
@@ -499,6 +500,23 @@ const ItineraryActivityModal = ({
                             )}
                         </div>
                     )}
+
+                    {/* 分類選擇 */}
+                    <div className="space-y-1.5">
+                        <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider px-1">
+                            活動分類 (CATEGORY)
+                        </span>
+                        <CategoryCustomSelect
+                            value={formData.type || "sight"}
+                            onChange={(newTypeId) => {
+                                const event = {
+                                    target: { name: "type", value: newTypeId },
+                                    currentTarget: { name: "type", value: newTypeId },
+                                } as unknown as ChangeEvent<HTMLInputElement>;
+                                onFormInputChange(event);
+                            }}
+                        />
+                    </div>
 
                     {/* Section: 基本排程設定 (Inset Grouped Table) */}
                     <div className="space-y-1.5">
@@ -557,28 +575,7 @@ const ItineraryActivityModal = ({
                                 />
                             </div>
 
-                            {/* 4. 活動類型 */}
-                            <div className="p-3 sm:p-3.5 flex items-center justify-between gap-3 bg-card hover:bg-muted/10 transition-colors">
-                                <span className="text-muted-foreground w-24 sm:w-28 shrink-0 font-medium flex items-center gap-1">
-                                    <Tag size={13} className="text-teal-500" />
-                                    <span>活動分類</span>
-                                    <span className="text-rose-500 font-bold">*</span>
-                                </span>
-                                <select
-                                    name="type"
-                                    value={formData.type || "sight"}
-                                    onChange={onFormInputChange as any}
-                                    className="bg-muted/40 text-foreground text-xs font-semibold px-2.5 py-1 rounded-xl outline-none cursor-pointer border border-border/60"
-                                >
-                                    {CATEGORY_DEFINITIONS.map((cat) => (
-                                        <option key={cat.id} value={cat.id} className="bg-background text-foreground">
-                                             {getCategoryTypeName(cat.id)} ({cat.engName})
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            {/* 5. 備註描述 */}
+                            {/* 4. 備註描述 */}
                             <div className="p-3 sm:p-3.5 flex items-center justify-between gap-3 bg-card hover:bg-muted/10 transition-colors">
                                 <span className="text-muted-foreground w-24 sm:w-28 shrink-0 font-medium">
                                     備註說明
