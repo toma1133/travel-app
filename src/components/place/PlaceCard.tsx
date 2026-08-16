@@ -108,6 +108,7 @@ const PlaceCard = ({
     const hasSecondaryDetails =
         !!place.description ||
         !!place.tips ||
+        !!place.info?.open ||
         !!place.info?.transit_access ||
         !!place.info?.phone ||
         !!place.info?.booking_status ||
@@ -623,6 +624,53 @@ const PlaceCard = ({
                             </div>
                         )}
                     </div>
+
+                    {/* 完整每週營業時間表 (展開時呈現) */}
+                    {place.info?.open && (
+                        <div className="bg-muted/20 border border-border/60 p-3 rounded-2xl space-y-2">
+                            <div className="flex items-center justify-between gap-2 flex-wrap text-xs font-bold text-foreground">
+                                <span className="flex items-center gap-1.5">
+                                    <Clock size={13} className="text-primary" />
+                                    <span>全部營業時間</span>
+                                </span>
+                                <span className={`px-2 py-0.5 rounded-md font-bold text-[10px] ${businessStatus.badgeColor}`}>
+                                    {businessStatus.badgeText} • {businessStatus.detailText}
+                                </span>
+                            </div>
+
+                            {businessStatus.parsed.isPerDay ? (
+                                <div className="space-y-1.5 pt-0.5">
+                                    <span className="text-muted-foreground text-xs block">
+                                        {businessStatus.allHoursSummary}
+                                    </span>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5 pt-1 text-xs font-mono">
+                                        {businessStatus.parsed.days.map((d) => (
+                                            <div
+                                                key={d.dayIndex}
+                                                className={`px-2.5 py-1.5 rounded-xl border flex items-center justify-between gap-2 text-xs ${
+                                                    d.isToday
+                                                        ? "bg-blue-500/10 border-blue-500/40 text-blue-600 dark:text-blue-400 font-bold ring-1 ring-blue-500/20"
+                                                        : "bg-background/80 border-border/50 text-muted-foreground"
+                                                }`}
+                                            >
+                                                <span className="flex items-center gap-1 shrink-0 font-bold">
+                                                    {d.isToday && <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0 animate-pulse" />}
+                                                    <span>{d.dayLabel}</span>
+                                                </span>
+                                                <span className={`font-mono text-right shrink-0 ${d.isClosed ? "text-rose-500 font-semibold" : "text-foreground"}`}>
+                                                    {d.periodsText}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="text-foreground text-xs font-medium pl-0.5">
+                                    {businessStatus.allHoursSummary || place.info.open}
+                                </div>
+                            )}
+                        </div>
+                    )}
 
                     {/* 預約購票與官方網站列 */}
                     {(place.info?.booking_status || place.info?.booking_url || place.info?.website_url) && (

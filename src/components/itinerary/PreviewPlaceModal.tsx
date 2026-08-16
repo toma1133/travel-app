@@ -380,7 +380,7 @@ const PreviewPlaceModal = ({
                                                         {businessStatus.status === "closed_today" && (
                                                             <span className="inline-flex items-center gap-1 text-xs font-bold text-rose-600 dark:text-rose-400 bg-rose-500/15 px-2 py-0.5 rounded-md border border-rose-500/30">
                                                                 <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                                                                今日公休
+                                                                今日公休 • {businessStatus.detailText}
                                                             </span>
                                                         )}
                                                     </div>
