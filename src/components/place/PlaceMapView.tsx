@@ -252,13 +252,17 @@ const PlaceMarkerPopupContent = ({ place, index }: { place: PlaceVM; index: numb
                     </button>
                 )}
 
-                {/* 3. 營業狀態與評分列 (不與關閉按鈕重疊) */}
+                {/* 3. 營業狀態 / 住宿時間與評分列 (不與關閉按鈕重疊) */}
                 <div className="flex items-center gap-2 flex-wrap text-[11px]">
-                    {place.info?.open && (
+                    {place.type === "hotel" || place.type === "stay" ? (
+                        <span className="text-[10px] text-blue-600 dark:text-blue-400 font-medium">
+                            🏨 入住 {place.info?.check_in || "15:00"} · 退房 {place.info?.check_out || "11:00"}
+                        </span>
+                    ) : place.info?.open ? (
                         <span className={`px-1.5 py-0.5 rounded font-extrabold text-[10px] ${businessStatus.badgeColor}`}>
                             {businessStatus.badgeText}
                         </span>
-                    )}
+                    ) : null}
 
                     {place.info?.rating && (
                         <span className="flex items-center gap-0.5 text-amber-500 text-[10px] font-bold">

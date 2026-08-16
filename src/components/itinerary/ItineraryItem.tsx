@@ -570,22 +570,36 @@ const ItineraryItem = ({
                                                                 )}
                                                             </div>
 
-                                                            {/* 營業狀態 + 評分 */}
-                                                            {businessStatus && (
+                                                            {/* 營業狀態 / 住宿時間 + 評分 */}
+                                                            {linkedPlace && (
                                                                 <div className={`flex items-center gap-2 flex-wrap text-[11px] ${
                                                                     isPrinting ? "text-black" : ""
                                                                 }`}>
-                                                                    {linkedPlace.info?.open && !isPrinting && (
-                                                                        <span className={`px-1.5 py-0.2 rounded font-extrabold text-[10px] ${businessStatus.badgeColor}`}>
-                                                                            {businessStatus.badgeText}
-                                                                        </span>
-                                                                    )}
+                                                                    {linkedPlace.type === "hotel" || linkedPlace.type === "stay" ? (
+                                                                        !isPrinting ? (
+                                                                            <span className="text-[10px] text-blue-600 dark:text-blue-400 font-medium">
+                                                                                🏨 入住 {linkedPlace.info?.check_in || "15:00"} · 退房 {linkedPlace.info?.check_out || "11:00"}
+                                                                            </span>
+                                                                        ) : (
+                                                                            <span className="text-[10px] text-gray-800 font-bold">
+                                                                                入住：{linkedPlace.info?.check_in || "15:00"} / 退房：{linkedPlace.info?.check_out || "11:00"}
+                                                                            </span>
+                                                                        )
+                                                                    ) : businessStatus ? (
+                                                                        <>
+                                                                            {linkedPlace.info?.open && !isPrinting && (
+                                                                                <span className={`px-1.5 py-0.2 rounded font-extrabold text-[10px] ${businessStatus.badgeColor}`}>
+                                                                                    {businessStatus.badgeText}
+                                                                                </span>
+                                                                            )}
 
-                                                                    {linkedPlace.info?.open && isPrinting && (
-                                                                        <span className="text-[10px] text-gray-800 font-bold">
-                                                                            營業時間：{businessStatus.allHoursSummary}
-                                                                        </span>
-                                                                    )}
+                                                                            {linkedPlace.info?.open && isPrinting && (
+                                                                                <span className="text-[10px] text-gray-800 font-bold">
+                                                                                    營業時間：{businessStatus.allHoursSummary}
+                                                                                </span>
+                                                                            )}
+                                                                        </>
+                                                                    ) : null}
 
                                                                     {linkedPlace.info?.rating && (
                                                                         <span className={`flex items-center gap-0.5 text-[10px] font-bold ${

@@ -332,7 +332,7 @@ const PreviewPlaceModal = ({
                     {/* 重點資訊卡片網格 (營業時間、公休日、交通、地址) */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
                         {/* 營業時間 / 入住退房 */}
-                        {place.info?.check_in ? (
+                        {place.type === "hotel" || place.type === "stay" || place.info?.check_in ? (
                             <div className="flex items-start gap-2 bg-muted/40 p-3 rounded-2xl border border-border/60">
                                 <Clock size={15} className="text-primary shrink-0 mt-0.5" />
                                 <div>
@@ -340,8 +340,8 @@ const PreviewPlaceModal = ({
                                         入住 / 退房時間
                                     </span>
                                     <span className="text-foreground font-medium">
-                                        入住 {place.info.check_in}
-                                        {place.info.check_out && ` / 退房 ${place.info.check_out}`}
+                                        入住 {place.info?.check_in || "15:00"}
+                                        {` / 退房 ${place.info?.check_out || "11:00"}`}
                                     </span>
                                 </div>
                             </div>

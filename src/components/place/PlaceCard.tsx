@@ -104,11 +104,13 @@ const PlaceCard = ({
     const recommendedItems = place.info?.recommended_items || [];
     const firstRecItem = recommendedItems[0];
 
+    const isHotel = place.type === "hotel" || place.type === "stay";
+
     // 檢查是否有次要旅遊細節
     const hasSecondaryDetails =
         !!place.description ||
         !!place.tips ||
-        !!place.info?.open ||
+        (isHotel ? (!!place.info?.check_in || !!place.info?.check_out || true) : !!place.info?.open) ||
         !!place.info?.transit_access ||
         !!place.info?.phone ||
         !!place.info?.booking_status ||
@@ -211,12 +213,13 @@ const PlaceCard = ({
                     {/* 實用資訊網格 (列印時完整顯示所有時間，不帶當天營業/休息狀態) */}
                     <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs text-gray-800 pt-1 border-t border-gray-200">
                         {/* 營業時間 / 住宿入住退房 (完整顯示全部營業時間) */}
-                        {place.info?.check_in ? (
-                            <div className="flex items-center gap-1.5">
+                        {isHotel ? (
+                            <div className="flex items-center gap-1.5 col-span-2">
                                 <Clock size={12} className="text-gray-600 shrink-0" />
                                 <span>
-                                    入住：<strong>{place.info.check_in}</strong>
-                                    {place.info.check_out && ` / 退房：${place.info.check_out}`}
+                                    入住：<strong>{place.info?.check_in || "15:00"}</strong>
+                                    {" / 退房："}
+                                    <strong>{place.info?.check_out || "11:00"}</strong>
                                 </span>
                             </div>
                         ) : place.info?.open ? (
@@ -431,9 +434,18 @@ const PlaceCard = ({
                         )}
                     </div>
 
-                    {/* 即時營業狀態 + 評分 */}
+                    {/* 即時營業狀態 / 住宿入住退房 + 評分 */}
                     <div className="flex items-center gap-2 flex-wrap text-xs">
-                        {place.info?.open && (
+                        {isHotel ? (
+                            <div className="flex items-center gap-1.5">
+                                <span className="px-2 py-0.5 rounded-lg font-extrabold text-[11px] bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                                    🏨 住宿
+                                </span>
+                                <span className="text-muted-foreground text-[11px]">
+                                    入住 {place.info?.check_in || "15:00"} · 退房 {place.info?.check_out || "11:00"}
+                                </span>
+                            </div>
+                        ) : place.info?.open ? (
                             <>
                                 <span
                                     className={`px-2 py-0.5 rounded-lg font-extrabold text-[11px] ${businessStatus.badgeColor}`}
@@ -444,7 +456,7 @@ const PlaceCard = ({
                                     {businessStatus.detailText}
                                 </span>
                             </>
-                        )}
+                        ) : null}
 
                         {place.info?.rating && (
                             <span className="flex items-center gap-0.5 text-amber-500 text-[11px] font-bold">
@@ -625,8 +637,38 @@ const PlaceCard = ({
                         )}
                     </div>
 
-                    {/* 完整每週營業時間表 (展開時呈現) */}
-                    {place.info?.open && (
+                    {/* 完整每週營業時間表 / 住宿入住退房 (展開時呈現) */}
+                    {isHotel ? (
+                        <div className="bg-muted/20 border border-border/60 p-3 rounded-2xl space-y-2">
+                            <div className="flex items-center justify-between gap-2 flex-wrap text-xs font-bold text-foreground">
+                                <span className="flex items-center gap-1.5">
+                                    <Clock size={13} className="text-blue-500" />
+                                    <span>住宿入住 / 退房時間</span>
+                                </span>
+                                <span className="px-2 py-0.5 rounded-md font-bold text-[10px] bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                                    Check-in & Check-out
+                                </span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2 pt-0.5">
+                                <div className="bg-background/80 border border-border/50 p-2.5 rounded-xl text-xs space-y-0.5">
+                                    <span className="text-muted-foreground text-[11px] block font-medium">
+                                        入住時間 (Check-in)
+                                    </span>
+                                    <span className="font-bold font-mono text-sm text-foreground">
+                                        {place.info?.check_in || "15:00"}
+                                    </span>
+                                </div>
+                                <div className="bg-background/80 border border-border/50 p-2.5 rounded-xl text-xs space-y-0.5">
+                                    <span className="text-muted-foreground text-[11px] block font-medium">
+                                        退房時間 (Check-out)
+                                    </span>
+                                    <span className="font-bold font-mono text-sm text-foreground">
+                                        {place.info?.check_out || "11:00"}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    ) : place.info?.open ? (
                         <div className="bg-muted/20 border border-border/60 p-3 rounded-2xl space-y-2">
                             <div className="flex items-center justify-between gap-2 flex-wrap text-xs font-bold text-foreground">
                                 <span className="flex items-center gap-1.5">
@@ -645,7 +687,7 @@ const PlaceCard = ({
                                     </span>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5 pt-1 text-xs font-mono">
                                         {businessStatus.parsed.days.map((d) => (
-                                            <div
+                                             <div
                                                 key={d.dayIndex}
                                                 className={`px-2.5 py-1.5 rounded-xl border flex items-center justify-between gap-2 text-xs ${
                                                     d.isToday
@@ -670,7 +712,7 @@ const PlaceCard = ({
                                 </div>
                             )}
                         </div>
-                    )}
+                    ) : null}
 
                     {/* 預約購票與官方網站列 */}
                     {(place.info?.booking_status || place.info?.booking_url || place.info?.website_url) && (

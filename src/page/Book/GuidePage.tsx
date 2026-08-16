@@ -203,8 +203,18 @@ const GuidePage = ({
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
 
+        const isHotel = formPlace.type === "hotel" || formPlace.type === "stay";
         const placeData = {
             ...formPlace,
+            info: {
+                ...formPlace.info,
+                ...(isHotel
+                    ? {
+                          check_in: formPlace.info?.check_in || "15:00",
+                          check_out: formPlace.info?.check_out || "11:00",
+                      }
+                    : {}),
+            },
         };
 
         try {

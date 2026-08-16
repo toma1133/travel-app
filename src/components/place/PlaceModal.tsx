@@ -1544,6 +1544,20 @@ const PlaceModal = ({
                                             currentTarget: { name: "type", value: newTypeId },
                                         } as unknown as ChangeEvent<HTMLInputElement>;
                                         onFormInputChange(event);
+                                        if (newTypeId === "hotel" || newTypeId === "stay") {
+                                            if (!formData?.info?.check_in) {
+                                                onFormInputChange({
+                                                    target: { name: "info.check_in", value: "15:00" },
+                                                    currentTarget: { name: "info.check_in", value: "15:00" },
+                                                } as any);
+                                            }
+                                            if (!formData?.info?.check_out) {
+                                                onFormInputChange({
+                                                    target: { name: "info.check_out", value: "11:00" },
+                                                    currentTarget: { name: "info.check_out", value: "11:00" },
+                                                } as any);
+                                            }
+                                        }
                                     }}
                                 />
                             </div>
