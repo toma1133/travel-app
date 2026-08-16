@@ -183,7 +183,7 @@ const PrintableFullPage = ({ tripData, onClose }: PrintableFullPageProps) => {
                         />
                     </div>
                     <div className="pt-4 print:pt-1 block page-content-wrapper px-8 print:px-6">
-                        <div className="mb-6 print:mb-3 border-b-4 print:border-b-2 border-black pb-3 print:pb-1.5 flex justify-between items-end">
+                        <div className="mb-6 print:mb-3 border-b-4 print:border-b-2 border-black pb-3 print:pb-1.5 flex justify-between items-end break-inside-avoid break-after-avoid">
                             <div>
                                 <h1 className="text-3xl print:text-2xl font-black text-black uppercase tracking-tighter">
                                     ITINERARY
@@ -202,7 +202,7 @@ const PrintableFullPage = ({ tripData, onClose }: PrintableFullPageProps) => {
                     <PageBreak />
 
                     <div className="pt-4 print:pt-1 block page-content-wrapper px-8 print:px-6">
-                        <div className="mb-6 print:mb-3 border-b-4 print:border-b-2 border-black pb-3 print:pb-1.5 flex justify-between items-end">
+                        <div className="mb-6 print:mb-3 border-b-4 print:border-b-2 border-black pb-3 print:pb-1.5 flex justify-between items-end break-inside-avoid break-after-avoid">
                             <div>
                                 <h1 className="text-3xl print:text-2xl font-black text-black uppercase tracking-tighter">
                                     TRANSACTIONS
@@ -221,7 +221,7 @@ const PrintableFullPage = ({ tripData, onClose }: PrintableFullPageProps) => {
                     <PageBreak />
 
                     <div className="pt-4 print:pt-1 block page-content-wrapper px-8 print:px-6">
-                        <div className="mb-6 print:mb-3 border-b-4 print:border-b-2 border-black pb-3 print:pb-1.5 flex justify-between items-end">
+                        <div className="mb-6 print:mb-3 border-b-4 print:border-b-2 border-black pb-3 print:pb-1.5 flex justify-between items-end break-inside-avoid break-after-avoid">
                             <div>
                                 <h1 className="text-3xl print:text-2xl font-black text-black uppercase tracking-tighter">
                                     PLACES
@@ -242,7 +242,7 @@ const PrintableFullPage = ({ tripData, onClose }: PrintableFullPageProps) => {
                     <PageBreak />
 
                     <div className="pt-4 print:pt-1 block page-content-wrapper px-8 print:px-6 pb-0">
-                        <div className="mb-6 print:mb-3 border-b-4 print:border-b-2 border-black pb-3 print:pb-1.5 flex justify-between items-end">
+                        <div className="mb-6 print:mb-3 border-b-4 print:border-b-2 border-black pb-3 print:pb-1.5 flex justify-between items-end break-inside-avoid break-after-avoid">
                             <div>
                                 <h1 className="text-3xl print:text-2xl font-black text-black uppercase tracking-tighter">
                                     RESERVATIONS

@@ -1811,7 +1811,7 @@ const PlaceModal = ({
                                             />
                                         </div>
                                         {formData.image_url && (
-                                            <div className="relative h-28 rounded-xl overflow-hidden border border-border/60 group">
+                                            <div className="relative aspect-square max-h-64 sm:max-h-72 w-full max-w-xs mx-auto rounded-2xl overflow-hidden border border-border/60 bg-muted/20 group shadow-2xs flex items-center justify-center">
                                                 <img
                                                     src={formData.image_url}
                                                     alt={formData.name || "預覽"}
@@ -1820,8 +1820,8 @@ const PlaceModal = ({
                                                         (e.target as HTMLElement).style.display = "none";
                                                     }}
                                                 />
-                                                <span className="absolute bottom-1.5 right-1.5 px-2 py-0.5 rounded-md bg-black/60 backdrop-blur-md text-[10px] text-white font-bold">
-                                                    即時預覽
+                                                <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded-md bg-black/60 backdrop-blur-md text-[10px] text-white font-bold tracking-wide shadow-xs">
+                                                    即時預覽 (1:1)
                                                 </span>
                                             </div>
                                         )}

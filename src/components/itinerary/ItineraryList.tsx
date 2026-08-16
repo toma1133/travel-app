@@ -130,7 +130,11 @@ const ItineraryList = ({
                         ref={(el: HTMLDivElement | null) => {
                             itemRefs.current[i] = el;
                         }}
-                        className={`${isPrinting ? "overflow-visible block break-inside-avoid" : "scroll-mt-16 lg:scroll-mt-0"} ${
+                        className={`${
+                            isPrinting
+                                ? `overflow-visible block ${i > 0 ? "break-before-page" : ""}`
+                                : "scroll-mt-16 lg:scroll-mt-0"
+                        } ${
                             !isPrinting && pcSelectedDayId && pcSelectedDayId !== "all" && pcSelectedDayId !== itinerary.id 
                                 ? "block lg:hidden" 
                                 : "block"

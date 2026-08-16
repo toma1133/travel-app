@@ -185,7 +185,7 @@ const ItineraryItem = ({
                 ${
                     !isPrinting
                         ? "overflow-hidden bg-card rounded-3xl shadow-sm border border-border/80 mb-4 transition-all duration-300 hover:shadow-md lg:mb-0"
-                        : "overflow-visible block mb-6 break-inside-avoid"
+                        : "overflow-visible block mb-6"
                 }
             `}
             onMouseEnter={() => setShowDayActions(true)}
