@@ -1107,40 +1107,15 @@ const PlaceModal = ({
     const [isMapPickerOpen, setIsMapPickerOpen] = useState(false);
 
     const handleApplyMapPicker = (
-        payload: ImportedPlacePayload,
-        options?: { preserveExisting?: boolean }
+        payload: ImportedPlacePayload
     ) => {
-        const preserve = options?.preserveExisting ?? true;
         const createEvent = (name: string, value: string | number) =>
             ({
                 target: { name, value: String(value) },
                 currentTarget: { name, value: String(value) },
             }) as unknown as ChangeEvent<HTMLInputElement>;
 
-        // 1. 景點名稱智慧處理：若使用者已輸入自訂名稱且開啟保護，不覆蓋中文名，外文存入 native_name
-        if (payload.name) {
-            if (preserve && formData.name && formData.name.trim() !== "") {
-                onFormInputChange(
-                    createEvent("info.native_name", payload.native_name || payload.name)
-                );
-            } else {
-                onFormInputChange(createEvent("name", payload.name));
-                if (payload.native_name) {
-                    onFormInputChange(
-                        createEvent("info.native_name", payload.native_name)
-                    );
-                }
-            }
-        }
-        if (payload.eng_name) {
-            onFormInputChange(createEvent("eng_name", payload.eng_name));
-        }
-        if (payload.loc) {
-            onFormInputChange(createEvent("info.loc", payload.loc));
-        }
-        if (payload.phone) {
-            onFormInputChange(createEvent("info.phone", payload.phone));
-        }
+        // 1. 強制寫入 GPS 經緯度
         if (
             typeof payload.lat === "number" &&
             typeof payload.lng === "number" &&
@@ -1150,25 +1125,40 @@ const PlaceModal = ({
             onFormInputChange(createEvent("lat", payload.lat));
             onFormInputChange(createEvent("lng", payload.lng));
         }
-        // 2. 地圖網址智慧處理：若使用者已經貼上自訂網址且開啟保護，則不覆蓋
+
+        // 2. 更新地圖網址 (讓地圖連結直接對應選定的座標)
         if (payload.map_url) {
-            if (preserve && formData.map_url && formData.map_url.trim() !== "") {
-                // 保留使用者自己的地圖網址
-            } else {
-                onFormInputChange(createEvent("map_url", payload.map_url));
+            onFormInputChange(createEvent("map_url", payload.map_url));
+        }
+
+        // 3. 景點名稱：若原本未填寫名稱則套用，若有外文名稱則填入 native_name
+        if (payload.name) {
+            if (!formData.name || formData.name.trim() === "") {
+                onFormInputChange(createEvent("name", payload.name));
+            } else if (payload.native_name && payload.native_name !== formData.name) {
+                onFormInputChange(createEvent("info.native_name", payload.native_name));
             }
         }
-        if (payload.image_url && (!preserve || !formData.image_url)) {
+        if (payload.eng_name && !formData.eng_name) {
+            onFormInputChange(createEvent("eng_name", payload.eng_name));
+        }
+        if (payload.loc && (!formData.info?.loc || formData.info.loc.trim() === "")) {
+            onFormInputChange(createEvent("info.loc", payload.loc));
+        }
+        if (payload.phone && (!formData.info?.phone || formData.info.phone.trim() === "")) {
+            onFormInputChange(createEvent("info.phone", payload.phone));
+        }
+        if (payload.image_url && (!formData.image_url || formData.image_url.trim() === "")) {
             onFormInputChange(createEvent("image_url", payload.image_url));
         }
-        if (payload.description && (!preserve || !formData.description)) {
+        if (payload.description && (!formData.description || formData.description.trim() === "")) {
             onFormInputChange(createEvent("description", payload.description));
         }
 
-        const displayName = payload.name || formData.name || "自訂圖釘位置";
+        const displayName = payload.name || formData.name || "自訂地標位置";
         setGeocodeMsg({
             type: "success",
-            text: `已成功套用地圖座標：${displayName} (GPS: ${payload.lat ? payload.lat.toFixed(4) : ""}, ${payload.lng ? payload.lng.toFixed(4) : ""})`,
+            text: `已成功套用 GPS 座標：${displayName} (${payload.lat ? payload.lat.toFixed(4) : ""}, ${payload.lng ? payload.lng.toFixed(4) : ""})`,
         });
     };
 

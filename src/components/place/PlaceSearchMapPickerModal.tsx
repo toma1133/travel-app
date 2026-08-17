@@ -116,10 +116,7 @@ interface PlaceSearchMapPickerModalProps {
     onClose: () => void;
     initialQuery?: string;
     initialCoords?: { lat?: number | null; lng?: number | null } | null;
-    onSelectPlace: (
-        data: ImportedPlacePayload,
-        options: { preserveExisting: boolean }
-    ) => void;
+    onSelectPlace: (data: ImportedPlacePayload) => void;
 }
 
 export const PlaceSearchMapPickerModal: React.FC<PlaceSearchMapPickerModalProps> = ({
@@ -139,17 +136,6 @@ export const PlaceSearchMapPickerModal: React.FC<PlaceSearchMapPickerModalProps>
 
     // Fine-tune custom marker
     const [customPin, setCustomPin] = useState<{ lat: number; lng: number } | null>(null);
-
-    // Selected field options to import
-    const [importOptions, setImportOptions] = useState({
-        name: true,
-        loc: true,
-        latLng: true,
-        phone: true,
-        mapUrl: true,
-        image: true,
-    });
-    const [preserveExisting, setPreserveExisting] = useState(true);
 
     const isKakaoActive = KakaoLocalService.isConfigured();
 
@@ -280,39 +266,50 @@ export const PlaceSearchMapPickerModal: React.FC<PlaceSearchMapPickerModalProps>
         }
     }, [isOpen]);
 
-    // Marker Generator with iOS clean aesthetic
+    // Marker Generator with exact pixel anchoring (zero offset / drift)
     const createMarkerIcon = (
         index: number,
         isSelected: boolean,
         isCustom: boolean = false
     ) => {
         if (isCustom) {
+            const svg = `
+                <div style="width: 38px; height: 46px; position: relative; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.35));">
+                    <svg viewBox="0 0 38 46" width="38" height="46" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M19 0C8.506 0 0 8.506 0 19c0 13.5 19 27 19 27s19-13.5 19-27C38 8.506 29.494 0 19 0z" fill="#f43f5e"/>
+                        <circle cx="19" cy="18" r="13" fill="#ffffff" fill-opacity="0.2"/>
+                        <circle cx="19" cy="18" r="10" fill="#ffffff"/>
+                        <circle cx="19" cy="18" r="4.5" fill="#f43f5e"/>
+                    </svg>
+                </div>
+            `;
             return L.divIcon({
-                className: "custom-map-picker-pin",
-                html: `
-                    <div class="relative flex items-center justify-center -translate-x-1/2 -translate-y-full">
-                        <div class="w-9 h-9 rounded-full bg-rose-500 text-white shadow-xl flex items-center justify-center border-2 border-white ring-4 ring-rose-500/30 animate-bounce">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-                        </div>
-                    </div>
-                `,
-                iconSize: [36, 36],
-                iconAnchor: [18, 36],
+                className: "custom-map-picker-pin !bg-transparent !border-0",
+                html: svg,
+                iconSize: [38, 46],
+                iconAnchor: [19, 46],
+                popupAnchor: [0, -44],
             });
         }
 
-        const bgColor = isSelected ? "bg-blue-600 ring-4 ring-blue-500/30 scale-110" : "bg-zinc-800 hover:bg-zinc-700";
-        return L.divIcon({
-            className: "custom-map-picker-pin",
-            html: `
-                <div class="relative flex items-center justify-center -translate-x-1/2 -translate-y-full transition-all duration-200">
-                    <div class="w-8 h-8 rounded-full ${bgColor} text-white shadow-lg flex items-center justify-center border-2 border-white text-xs font-black">
-                        ${index + 1}
-                    </div>
+        const color = isSelected ? "#2563eb" : "#27272a";
+        const svg = `
+            <div style="width: 34px; height: 42px; position: relative; filter: drop-shadow(0 3px 5px rgba(0,0,0,0.3)); transition: transform 0.2s ease;">
+                <svg viewBox="0 0 34 42" width="34" height="42" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M17 0C7.611 0 0 7.611 0 17c0 12 17 25 17 25s17-13 17-25C34 7.611 26.389 0 17 0z" fill="${color}"/>
+                    <circle cx="17" cy="16" r="10" fill="#ffffff"/>
+                </svg>
+                <div style="position: absolute; top: 5px; left: 0; width: 34px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; color: ${color}; font-family: ui-sans-serif, system-ui, sans-serif;">
+                    ${index + 1}
                 </div>
-            `,
-            iconSize: [32, 32],
-            iconAnchor: [16, 32],
+            </div>
+        `;
+        return L.divIcon({
+            className: "custom-map-picker-pin !bg-transparent !border-0",
+            html: svg,
+            iconSize: [34, 42],
+            iconAnchor: [17, 42],
+            popupAnchor: [0, -40],
         });
     };
 
@@ -320,42 +317,30 @@ export const PlaceSearchMapPickerModal: React.FC<PlaceSearchMapPickerModalProps>
     const handleConfirmImport = () => {
         if (!selectedPlace && !customPin) return;
 
+        const finalLat = customPin ? customPin.lat : selectedPlace ? selectedPlace.lat : 0;
+        const finalLng = customPin ? customPin.lng : selectedPlace ? selectedPlace.lng : 0;
         const base = selectedPlace;
-        const finalLat = customPin ? customPin.lat : base ? base.lat : 0;
-        const finalLng = customPin ? customPin.lng : base ? base.lng : 0;
+        const placeName = base?.name || (query?.trim() ? query.trim() : "");
 
         const payload: ImportedPlacePayload = {
-            name:
-                importOptions.name && base?.name
-                    ? base.name
-                    : importOptions.name && query?.trim()
-                    ? query.trim()
-                    : "",
+            name: placeName,
             eng_name: base?.eng_name,
             native_name: base?.native_name,
-            loc: importOptions.loc && base?.address ? base.address : undefined,
-            phone: importOptions.phone && base?.phone ? base.phone : undefined,
-            lat: importOptions.latLng ? finalLat : 0,
-            lng: importOptions.latLng ? finalLng : 0,
+            loc: base?.address,
+            phone: base?.phone,
+            lat: finalLat,
+            lng: finalLng,
             map_url:
-                importOptions.mapUrl && base?.placeUrl
+                !customPin && base?.placeUrl
                     ? base.placeUrl
-                    : importOptions.mapUrl && importOptions.latLng && finalLat && finalLng
-                    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                          base?.name || query?.trim() || `${finalLat},${finalLng}`
-                      )}&center=${finalLat},${finalLng}`
+                    : finalLat && finalLng
+                    ? `https://www.google.com/maps/search/?api=1&query=${finalLat},${finalLng}`
                     : undefined,
-            image_url:
-                importOptions.image && base?.wikiData?.thumbnailUrl
-                    ? base.wikiData.thumbnailUrl
-                    : undefined,
-            description:
-                importOptions.image && base?.wikiData?.extract
-                    ? base.wikiData.extract
-                    : undefined,
+            image_url: base?.wikiData?.thumbnailUrl,
+            description: base?.wikiData?.extract,
         };
 
-        onSelectPlace(payload, { preserveExisting });
+        onSelectPlace(payload);
         onClose();
     };
 
@@ -659,8 +644,8 @@ export const PlaceSearchMapPickerModal: React.FC<PlaceSearchMapPickerModalProps>
                             )}
                         </MapContainer>
 
-                        {/* 地圖操作浮水印指示 */}
-                        <div className="absolute top-3 left-3 z-20 pointer-events-none">
+                        {/* 地圖操作浮水印指示 (置於右上角，不遮擋左上角 Leaflet 縮放控制鈕) */}
+                        <div className="absolute top-3 right-3 z-20 pointer-events-none">
                             <div className="px-3 py-1.5 rounded-full bg-background/85 backdrop-blur-md border border-border/80 shadow-md text-[11px] font-semibold text-muted-foreground flex items-center gap-1.5">
                                 <Move size={12} className="text-blue-500" />
                                 <span>點擊地圖任意處或拖曳圖釘可微調 GPS</span>
@@ -701,106 +686,12 @@ export const PlaceSearchMapPickerModal: React.FC<PlaceSearchMapPickerModalProps>
                                         <button
                                             type="button"
                                             onClick={handleConfirmImport}
-                                            className="w-full sm:w-auto px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-md active:scale-95"
+                                            className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-md active:scale-95"
                                         >
-                                            <Sparkles size={13} />
+                                            <Sparkles size={14} />
                                             <span>確認套用此地點</span>
                                         </button>
                                     </div>
-                                </div>
-
-                                {/* 欄位自選勾選開關與既有欄位保護 */}
-                                <div className="pt-2 border-t border-border/50 flex flex-wrap items-center justify-between gap-2 text-[11px]">
-                                    <div className="flex items-center gap-1.5 flex-wrap">
-                                        <span className="text-muted-foreground font-semibold">
-                                            套用欄位:
-                                        </span>
-                                        <label className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-muted/60 hover:bg-muted text-foreground cursor-pointer select-none">
-                                            <input
-                                                type="checkbox"
-                                                checked={importOptions.name}
-                                                onChange={(e) =>
-                                                    setImportOptions((prev) => ({
-                                                        ...prev,
-                                                        name: e.target.checked,
-                                                    }))
-                                                }
-                                                className="rounded text-blue-600 focus:ring-0 cursor-pointer"
-                                            />
-                                            <span>名稱</span>
-                                        </label>
-                                        <label className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-muted/60 hover:bg-muted text-foreground cursor-pointer select-none">
-                                            <input
-                                                type="checkbox"
-                                                checked={importOptions.latLng}
-                                                onChange={(e) =>
-                                                    setImportOptions((prev) => ({
-                                                        ...prev,
-                                                        latLng: e.target.checked,
-                                                    }))
-                                                }
-                                                className="rounded text-blue-600 focus:ring-0 cursor-pointer"
-                                            />
-                                            <span>GPS 座標</span>
-                                        </label>
-                                        <label className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-muted/60 hover:bg-muted text-foreground cursor-pointer select-none">
-                                            <input
-                                                type="checkbox"
-                                                checked={importOptions.loc}
-                                                onChange={(e) =>
-                                                    setImportOptions((prev) => ({
-                                                        ...prev,
-                                                        loc: e.target.checked,
-                                                    }))
-                                                }
-                                                className="rounded text-blue-600 focus:ring-0 cursor-pointer"
-                                            />
-                                            <span>地址</span>
-                                        </label>
-                                        {selectedPlace?.phone && (
-                                            <label className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-muted/60 hover:bg-muted text-foreground cursor-pointer select-none">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={importOptions.phone}
-                                                    onChange={(e) =>
-                                                        setImportOptions((prev) => ({
-                                                            ...prev,
-                                                            phone: e.target.checked,
-                                                        }))
-                                                    }
-                                                    className="rounded text-blue-600 focus:ring-0 cursor-pointer"
-                                                />
-                                                <span>電話</span>
-                                            </label>
-                                        )}
-                                        <label className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-muted/60 hover:bg-muted text-foreground cursor-pointer select-none">
-                                            <input
-                                                type="checkbox"
-                                                checked={importOptions.mapUrl}
-                                                onChange={(e) =>
-                                                    setImportOptions((prev) => ({
-                                                        ...prev,
-                                                        mapUrl: e.target.checked,
-                                                    }))
-                                                }
-                                                className="rounded text-blue-600 focus:ring-0 cursor-pointer"
-                                            />
-                                            <span>地圖網址</span>
-                                        </label>
-                                    </div>
-
-                                    {/* 既有中文名與網址防覆蓋保護開關 */}
-                                    <label className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 font-bold cursor-pointer select-none border border-blue-500/20">
-                                        <input
-                                            type="checkbox"
-                                            checked={preserveExisting}
-                                            onChange={(e) =>
-                                                setPreserveExisting(e.target.checked)
-                                            }
-                                            className="rounded text-blue-600 focus:ring-0 cursor-pointer"
-                                        />
-                                        <span>🔒 保護已填寫的中文名與網址</span>
-                                    </label>
                                 </div>
                             </div>
                         )}
