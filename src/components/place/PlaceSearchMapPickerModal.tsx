@@ -137,6 +137,15 @@ export const PlaceSearchMapPickerModal: React.FC<PlaceSearchMapPickerModalProps>
     // Fine-tune custom marker
     const [customPin, setCustomPin] = useState<{ lat: number; lng: number } | null>(null);
 
+    // 選擇要套用覆蓋的項目 (GPS, 地圖網址, 名稱, 地址, 電話)
+    const [applyFields, setApplyFields] = useState({
+        gps: true,
+        map_url: false,
+        name: false,
+        address: false,
+        phone: false,
+    });
+
     const isKakaoActive = KakaoLocalService.isConfigured();
 
     // Perform Unified Search (Kakao + OSM)
@@ -240,11 +249,26 @@ export const PlaceSearchMapPickerModal: React.FC<PlaceSearchMapPickerModalProps>
 
             setResults(unifiedResults);
             if (unifiedResults.length > 0) {
-                setSelectedPlace(unifiedResults[0]);
+                const first = unifiedResults[0];
+                setSelectedPlace(first);
                 setCustomPin(null);
+                setApplyFields({
+                    gps: true,
+                    map_url: !!first.placeUrl,
+                    name: true,
+                    address: !!first.address,
+                    phone: !!first.phone,
+                });
             } else if (initialCoords?.lat && initialCoords?.lng) {
                 // 找不到相符地點時，若原本有傳入 GPS 座標，自動恢復並保留自訂圖釘
                 setCustomPin({ lat: initialCoords.lat, lng: initialCoords.lng });
+                setApplyFields({
+                    gps: true,
+                    map_url: false,
+                    name: false,
+                    address: false,
+                    phone: false,
+                });
             }
         } finally {
             setIsSearching(false);
@@ -262,6 +286,13 @@ export const PlaceSearchMapPickerModal: React.FC<PlaceSearchMapPickerModalProps>
                 setResults([]);
                 setSelectedPlace(null);
                 setCustomPin({ lat: initialCoords.lat, lng: initialCoords.lng });
+                setApplyFields({
+                    gps: true,
+                    map_url: false,
+                    name: false,
+                    address: false,
+                    phone: false,
+                });
             }
         }
     }, [isOpen]);
@@ -313,6 +344,27 @@ export const PlaceSearchMapPickerModal: React.FC<PlaceSearchMapPickerModalProps>
         });
     };
 
+    // Quick selection helpers
+    const handleSelectOnlyGps = () => {
+        setApplyFields({
+            gps: true,
+            map_url: false,
+            name: false,
+            address: false,
+            phone: false,
+        });
+    };
+
+    const handleSelectAllFields = () => {
+        setApplyFields({
+            gps: true,
+            map_url: true,
+            name: !!(selectedPlace?.name || query.trim()),
+            address: !!selectedPlace?.address,
+            phone: !!selectedPlace?.phone,
+        });
+    };
+
     // Confirm and import
     const handleConfirmImport = () => {
         if (!selectedPlace && !customPin) return;
@@ -323,21 +375,22 @@ export const PlaceSearchMapPickerModal: React.FC<PlaceSearchMapPickerModalProps>
         const placeName = base?.name || (query?.trim() ? query.trim() : "");
 
         const payload: ImportedPlacePayload = {
-            name: placeName,
-            eng_name: base?.eng_name,
-            native_name: base?.native_name,
-            loc: base?.address,
-            phone: base?.phone,
-            lat: finalLat,
-            lng: finalLng,
-            map_url:
-                !customPin && base?.placeUrl
+            name: applyFields.name ? placeName : undefined,
+            eng_name: applyFields.name ? base?.eng_name : undefined,
+            native_name: applyFields.name ? base?.native_name : undefined,
+            loc: applyFields.address ? (base?.roadAddress || base?.address) : undefined,
+            phone: applyFields.phone ? base?.phone : undefined,
+            lat: applyFields.gps ? finalLat : 0,
+            lng: applyFields.gps ? finalLng : 0,
+            map_url: applyFields.map_url
+                ? (!customPin && base?.placeUrl
                     ? base.placeUrl
                     : finalLat && finalLng
                     ? `https://www.google.com/maps/search/?api=1&query=${finalLat},${finalLng}`
-                    : undefined,
-            image_url: base?.wikiData?.thumbnailUrl,
-            description: base?.wikiData?.extract,
+                    : undefined)
+                : undefined,
+            image_url: applyFields.name ? base?.wikiData?.thumbnailUrl : undefined,
+            description: applyFields.name ? base?.wikiData?.extract : undefined,
         };
 
         onSelectPlace(payload);
@@ -448,13 +501,20 @@ export const PlaceSearchMapPickerModal: React.FC<PlaceSearchMapPickerModalProps>
                                 </div>
                             ) : (
                                 results.map((item, idx) => {
-                                    const isSelected = selectedPlace?.id === item.id;
+                                    const isSelected = selectedPlace?.id === item.id && !customPin;
                                     return (
                                         <div
                                             key={item.id}
                                             onClick={() => {
                                                 setSelectedPlace(item);
                                                 setCustomPin(null);
+                                                setApplyFields({
+                                                    gps: true,
+                                                    map_url: !!item.placeUrl,
+                                                    name: true,
+                                                    address: !!item.address,
+                                                    phone: !!item.phone,
+                                                });
                                             }}
                                             className={`p-3 rounded-2xl cursor-pointer transition-all border text-left flex items-start gap-2.5 ${
                                                 isSelected
@@ -530,6 +590,19 @@ export const PlaceSearchMapPickerModal: React.FC<PlaceSearchMapPickerModalProps>
                                     setCustomPin({ lat, lng });
                                     if (results.length === 0) {
                                         setSelectedPlace(null);
+                                        setApplyFields({
+                                            gps: true,
+                                            map_url: false,
+                                            name: false,
+                                            address: false,
+                                            phone: false,
+                                        });
+                                    } else {
+                                        setApplyFields((prev) => ({
+                                            ...prev,
+                                            gps: true,
+                                            map_url: false, // 自訂圖釘微調時預設不覆蓋地圖網址
+                                        }));
                                     }
                                 }}
                             />
@@ -547,6 +620,13 @@ export const PlaceSearchMapPickerModal: React.FC<PlaceSearchMapPickerModalProps>
                                         click: () => {
                                             setSelectedPlace(item);
                                             setCustomPin(null);
+                                            setApplyFields({
+                                                gps: true,
+                                                map_url: !!item.placeUrl,
+                                                name: true,
+                                                address: !!item.address,
+                                                phone: !!item.phone,
+                                            });
                                         },
                                     }}
                                 >
@@ -596,6 +676,13 @@ export const PlaceSearchMapPickerModal: React.FC<PlaceSearchMapPickerModalProps>
                                                     e.stopPropagation();
                                                     setSelectedPlace(item);
                                                     setCustomPin(null);
+                                                    setApplyFields({
+                                                        gps: true,
+                                                        map_url: !!item.placeUrl,
+                                                        name: true,
+                                                        address: !!item.address,
+                                                        phone: !!item.phone,
+                                                    });
                                                 }}
                                                 className="w-full mt-1 py-1.5 px-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold flex items-center justify-center gap-1 transition-all cursor-pointer shadow-xs active:scale-95"
                                             >
@@ -665,7 +752,7 @@ export const PlaceSearchMapPickerModal: React.FC<PlaceSearchMapPickerModalProps>
                                                         : selectedPlace.name
                                                     : query?.trim()
                                                     ? `${query.trim()} (自訂位置)`
-                                                    : "自訂地標位置"}
+                                                    : "自訂圖釘座標"}
                                             </h3>
                                             <span className="px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold font-mono">
                                                 📍 GPS (
@@ -674,10 +761,15 @@ export const PlaceSearchMapPickerModal: React.FC<PlaceSearchMapPickerModalProps>
                                             </span>
                                         </div>
 
-                                        {selectedPlace?.address && (
+                                        {selectedPlace?.address ? (
                                             <p className="text-xs text-muted-foreground truncate flex items-center gap-1">
                                                 <MapPin size={12} className="text-rose-500 shrink-0" />
                                                 <span>{selectedPlace.address}</span>
+                                            </p>
+                                        ) : (
+                                            <p className="text-[11px] text-muted-foreground/80 flex items-center gap-1">
+                                                <Move size={11} className="text-blue-500 shrink-0" />
+                                                <span>已選定自訂座標，可在下方勾選要套用覆蓋的項目</span>
                                             </p>
                                         )}
                                     </div>
@@ -686,10 +778,120 @@ export const PlaceSearchMapPickerModal: React.FC<PlaceSearchMapPickerModalProps>
                                         <button
                                             type="button"
                                             onClick={handleConfirmImport}
-                                            className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-md active:scale-95"
+                                            disabled={!applyFields.gps && !applyFields.map_url && !applyFields.name && !applyFields.address && !applyFields.phone}
+                                            className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-md active:scale-95"
                                         >
                                             <Sparkles size={14} />
-                                            <span>確認套用此地點</span>
+                                            <span>確認套用選取項目</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* 覆蓋項目勾選列 (包含快捷按鈕與項目勾選盒) */}
+                                <div className="pt-2 border-t border-border/60 flex flex-wrap items-center justify-between gap-2 text-xs">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <span className="text-[11px] font-bold text-muted-foreground flex items-center gap-1">
+                                            <Layers size={12} />
+                                            <span>套用項目：</span>
+                                        </span>
+
+                                        {/* GPS 座標 */}
+                                        <label className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-lg border text-xs font-medium cursor-pointer transition-all ${
+                                            applyFields.gps 
+                                                ? "bg-blue-500/15 border-blue-500/40 text-blue-600 dark:text-blue-400 font-bold" 
+                                                : "bg-muted/40 border-border/60 text-muted-foreground hover:bg-muted/70"
+                                        }`}>
+                                            <input
+                                                type="checkbox"
+                                                checked={applyFields.gps}
+                                                onChange={(e) => setApplyFields(prev => ({ ...prev, gps: e.target.checked }))}
+                                                className="rounded text-blue-600 focus:ring-0 cursor-pointer w-3.5 h-3.5"
+                                            />
+                                            <span>📍 GPS 座標</span>
+                                        </label>
+
+                                        {/* 地圖網址 */}
+                                        <label className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-lg border text-xs font-medium cursor-pointer transition-all ${
+                                            applyFields.map_url 
+                                                ? "bg-blue-500/15 border-blue-500/40 text-blue-600 dark:text-blue-400 font-bold" 
+                                                : "bg-muted/40 border-border/60 text-muted-foreground hover:bg-muted/70"
+                                        }`} title="勾選將以新地圖連結覆蓋；未勾選則保留原本填寫的地圖網址">
+                                            <input
+                                                type="checkbox"
+                                                checked={applyFields.map_url}
+                                                onChange={(e) => setApplyFields(prev => ({ ...prev, map_url: e.target.checked }))}
+                                                className="rounded text-blue-600 focus:ring-0 cursor-pointer w-3.5 h-3.5"
+                                            />
+                                            <span>🗺️ 地圖網址</span>
+                                        </label>
+
+                                        {/* 景點名稱 (若有可套用名稱) */}
+                                        {(selectedPlace?.name || query.trim()) && (
+                                            <label className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-lg border text-xs font-medium cursor-pointer transition-all ${
+                                                applyFields.name 
+                                                    ? "bg-blue-500/15 border-blue-500/40 text-blue-600 dark:text-blue-400 font-bold" 
+                                                    : "bg-muted/40 border-border/60 text-muted-foreground hover:bg-muted/70"
+                                            }`}>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={applyFields.name}
+                                                    onChange={(e) => setApplyFields(prev => ({ ...prev, name: e.target.checked }))}
+                                                    className="rounded text-blue-600 focus:ring-0 cursor-pointer w-3.5 h-3.5"
+                                                />
+                                                <span>🏷️ 景點名稱</span>
+                                            </label>
+                                        )}
+
+                                        {/* 詳細地址 (若有地址) */}
+                                        {selectedPlace?.address && (
+                                            <label className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-lg border text-xs font-medium cursor-pointer transition-all ${
+                                                applyFields.address 
+                                                    ? "bg-blue-500/15 border-blue-500/40 text-blue-600 dark:text-blue-400 font-bold" 
+                                                    : "bg-muted/40 border-border/60 text-muted-foreground hover:bg-muted/70"
+                                            }`}>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={applyFields.address}
+                                                    onChange={(e) => setApplyFields(prev => ({ ...prev, address: e.target.checked }))}
+                                                    className="rounded text-blue-600 focus:ring-0 cursor-pointer w-3.5 h-3.5"
+                                                />
+                                                <span>🏠 詳細地址</span>
+                                            </label>
+                                        )}
+
+                                        {/* 電話 (若有電話) */}
+                                        {selectedPlace?.phone && (
+                                            <label className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-lg border text-xs font-medium cursor-pointer transition-all ${
+                                                applyFields.phone 
+                                                    ? "bg-blue-500/15 border-blue-500/40 text-blue-600 dark:text-blue-400 font-bold" 
+                                                    : "bg-muted/40 border-border/60 text-muted-foreground hover:bg-muted/70"
+                                            }`}>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={applyFields.phone}
+                                                    onChange={(e) => setApplyFields(prev => ({ ...prev, phone: e.target.checked }))}
+                                                    className="rounded text-blue-600 focus:ring-0 cursor-pointer w-3.5 h-3.5"
+                                                />
+                                                <span>📞 電話</span>
+                                            </label>
+                                        )}
+                                    </div>
+
+                                    {/* 快捷切換按鈕 */}
+                                    <div className="flex items-center gap-1.5 shrink-0 text-[11px]">
+                                        <button
+                                            type="button"
+                                            onClick={handleSelectOnlyGps}
+                                            className="px-2 py-0.5 rounded-md bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                                        >
+                                            僅套用 GPS
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={handleSelectAllFields}
+                                            className="px-2 py-0.5 rounded-md bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                                        >
+                                            全選
                                         </button>
                                     </div>
                                 </div>
@@ -701,3 +903,4 @@ export const PlaceSearchMapPickerModal: React.FC<PlaceSearchMapPickerModalProps>
         </div>
     );
 };
+

@@ -1058,6 +1058,9 @@ const PlaceModal = ({
             text: `已成功帶入地點資料：${placeName}`,
         });
 
+        // 清空上方景點搜尋輸入框與候選提示
+        setSearchTerm("");
+        setShowSuggestions(false);
         setSelectedPlace(null);
     };
 
@@ -1115,7 +1118,7 @@ const PlaceModal = ({
                 currentTarget: { name, value: String(value) },
             }) as unknown as ChangeEvent<HTMLInputElement>;
 
-        // 1. 強制寫入 GPS 經緯度
+        // 1. GPS 經緯度 (若使用者勾選套用)
         if (
             typeof payload.lat === "number" &&
             typeof payload.lng === "number" &&
@@ -1126,12 +1129,12 @@ const PlaceModal = ({
             onFormInputChange(createEvent("lng", payload.lng));
         }
 
-        // 2. 更新地圖網址 (讓地圖連結直接對應選定的座標)
+        // 2. 更新地圖網址 (僅在使用者有勾選並傳入 map_url 時更新)
         if (payload.map_url) {
             onFormInputChange(createEvent("map_url", payload.map_url));
         }
 
-        // 3. 景點名稱：若原本未填寫名稱則套用，若有外文名稱則填入 native_name
+        // 3. 景點名稱：若使用者有勾選帶入名稱才更新
         if (payload.name) {
             if (!formData.name || formData.name.trim() === "") {
                 onFormInputChange(createEvent("name", payload.name));
@@ -1142,10 +1145,10 @@ const PlaceModal = ({
         if (payload.eng_name && !formData.eng_name) {
             onFormInputChange(createEvent("eng_name", payload.eng_name));
         }
-        if (payload.loc && (!formData.info?.loc || formData.info.loc.trim() === "")) {
+        if (payload.loc) {
             onFormInputChange(createEvent("info.loc", payload.loc));
         }
-        if (payload.phone && (!formData.info?.phone || formData.info.phone.trim() === "")) {
+        if (payload.phone) {
             onFormInputChange(createEvent("info.phone", payload.phone));
         }
         if (payload.image_url && (!formData.image_url || formData.image_url.trim() === "")) {
@@ -1155,10 +1158,16 @@ const PlaceModal = ({
             onFormInputChange(createEvent("description", payload.description));
         }
 
+        // 清空上方景點搜尋輸入框與候選提示
+        setSearchTerm("");
+        setShowSuggestions(false);
+        setSelectedPlace(null);
+
         const displayName = payload.name || formData.name || "自訂地標位置";
+        const gpsInfo = payload.lat && payload.lng ? ` (${payload.lat.toFixed(4)}, ${payload.lng.toFixed(4)})` : "";
         setGeocodeMsg({
             type: "success",
-            text: `已成功套用 GPS 座標：${displayName} (${payload.lat ? payload.lat.toFixed(4) : ""}, ${payload.lng ? payload.lng.toFixed(4) : ""})`,
+            text: `已成功套用${payload.lat && payload.lng ? " GPS 座標" : ""}${payload.name ? `與地點資料：${displayName}` : ""} ${gpsInfo}`.trim(),
         });
     };
 
@@ -1300,12 +1309,24 @@ const PlaceModal = ({
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className="w-full bg-card border border-border/80 rounded-xl pl-9 pr-9 py-2 text-xs text-foreground placeholder:text-muted-foreground/60 outline-none focus:border-blue-500 transition-all shadow-2xs"
                             />
-                            {isSearching && (
+                            {isSearching ? (
                                 <Loader2
                                     className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground animate-spin"
                                     size={14}
                                 />
-                            )}
+                            ) : searchTerm ? (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setSearchTerm("");
+                                        setShowSuggestions(false);
+                                        setSelectedPlace(null);
+                                    }}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer p-0.5 rounded-full hover:bg-muted"
+                                >
+                                    <X size={13} />
+                                </button>
+                            ) : null}
                         </div>
 
                         <button
