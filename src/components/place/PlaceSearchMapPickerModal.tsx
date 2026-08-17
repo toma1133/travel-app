@@ -63,12 +63,14 @@ export interface UnifiedSearchResult {
     wikiData?: WikiData | null;
 }
 
-// Controller to smoothly pan/zoom map to selected coordinate or fit bounds
+// Controller to smoothly pan/zoom map to selected coordinate, custom pin, or fit bounds
 function MapViewController({
     selectedPlace,
+    customPin,
     allPlaces,
 }: {
     selectedPlace: UnifiedSearchResult | null;
+    customPin: { lat: number; lng: number } | null;
     allPlaces: UnifiedSearchResult[];
 }) {
     const map = useMap();
@@ -76,6 +78,10 @@ function MapViewController({
     useEffect(() => {
         if (selectedPlace) {
             map.flyTo([selectedPlace.lat, selectedPlace.lng], 16, {
+                duration: 1.0,
+            });
+        } else if (customPin && allPlaces.length === 0) {
+            map.flyTo([customPin.lat, customPin.lng], 16, {
                 duration: 1.0,
             });
         } else if (allPlaces.length > 0) {
@@ -86,7 +92,7 @@ function MapViewController({
                 map.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 });
             }
         }
-    }, [selectedPlace, allPlaces, map]);
+    }, [selectedPlace, customPin, allPlaces, map]);
 
     return null;
 }
@@ -249,6 +255,10 @@ export const PlaceSearchMapPickerModal: React.FC<PlaceSearchMapPickerModalProps>
             setResults(unifiedResults);
             if (unifiedResults.length > 0) {
                 setSelectedPlace(unifiedResults[0]);
+                setCustomPin(null);
+            } else if (initialCoords?.lat && initialCoords?.lng) {
+                // 找不到相符地點時，若原本有傳入 GPS 座標，自動恢復並保留自訂圖釘
+                setCustomPin({ lat: initialCoords.lat, lng: initialCoords.lng });
             }
         } finally {
             setIsSearching(false);
@@ -262,6 +272,9 @@ export const PlaceSearchMapPickerModal: React.FC<PlaceSearchMapPickerModalProps>
                 setQuery(initialQuery);
                 handleSearch(initialQuery);
             } else if (initialCoords?.lat && initialCoords?.lng) {
+                setQuery("");
+                setResults([]);
+                setSelectedPlace(null);
                 setCustomPin({ lat: initialCoords.lat, lng: initialCoords.lng });
             }
         }
@@ -312,7 +325,12 @@ export const PlaceSearchMapPickerModal: React.FC<PlaceSearchMapPickerModalProps>
         const finalLng = customPin ? customPin.lng : base ? base.lng : 0;
 
         const payload: ImportedPlacePayload = {
-            name: importOptions.name && base?.name ? base.name : "",
+            name:
+                importOptions.name && base?.name
+                    ? base.name
+                    : importOptions.name && query?.trim()
+                    ? query.trim()
+                    : "",
             eng_name: base?.eng_name,
             native_name: base?.native_name,
             loc: importOptions.loc && base?.address ? base.address : undefined,
@@ -322,9 +340,9 @@ export const PlaceSearchMapPickerModal: React.FC<PlaceSearchMapPickerModalProps>
             map_url:
                 importOptions.mapUrl && base?.placeUrl
                     ? base.placeUrl
-                    : importOptions.mapUrl && importOptions.latLng
+                    : importOptions.mapUrl && importOptions.latLng && finalLat && finalLng
                     ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                          base?.name || "Location"
+                          base?.name || query?.trim() || `${finalLat},${finalLng}`
                       )}&center=${finalLat},${finalLng}`
                     : undefined,
             image_url:
@@ -518,13 +536,16 @@ export const PlaceSearchMapPickerModal: React.FC<PlaceSearchMapPickerModalProps>
 
                             <MapViewController
                                 selectedPlace={selectedPlace}
+                                customPin={customPin}
                                 allPlaces={results}
                             />
 
                             <MapClickListener
                                 onMapClick={(lat, lng) => {
                                     setCustomPin({ lat, lng });
-                                    setSelectedPlace(null);
+                                    if (results.length === 0) {
+                                        setSelectedPlace(null);
+                                    }
                                 }}
                             />
 
@@ -535,7 +556,7 @@ export const PlaceSearchMapPickerModal: React.FC<PlaceSearchMapPickerModalProps>
                                     position={[item.lat, item.lng]}
                                     icon={createMarkerIcon(
                                         idx,
-                                        selectedPlace?.id === item.id
+                                        selectedPlace?.id === item.id && !customPin
                                     )}
                                     eventHandlers={{
                                         click: () => {
@@ -601,11 +622,19 @@ export const PlaceSearchMapPickerModal: React.FC<PlaceSearchMapPickerModalProps>
                                 </Marker>
                             ))}
 
-                            {/* 使用者點擊自訂釘選圖釘 */}
+                            {/* 使用者點擊自訂釘選圖釘 (支援拖曳微調) */}
                             {customPin && (
                                 <Marker
                                     position={[customPin.lat, customPin.lng]}
                                     icon={createMarkerIcon(0, true, true)}
+                                    draggable={true}
+                                    eventHandlers={{
+                                        dragend: (e) => {
+                                            const marker = e.target;
+                                            const position = marker.getLatLng();
+                                            setCustomPin({ lat: position.lat, lng: position.lng });
+                                        },
+                                    }}
                                 >
                                     <Popup
                                         minWidth={220}
@@ -621,6 +650,9 @@ export const PlaceSearchMapPickerModal: React.FC<PlaceSearchMapPickerModalProps>
                                             <p className="text-[11px] text-muted-foreground font-mono">
                                                 GPS: {customPin.lat.toFixed(5)}, {customPin.lng.toFixed(5)}
                                             </p>
+                                            <p className="text-[10px] text-muted-foreground/70">
+                                                可按住圖釘拖曳微調位置
+                                            </p>
                                         </div>
                                     </Popup>
                                 </Marker>
@@ -631,7 +663,7 @@ export const PlaceSearchMapPickerModal: React.FC<PlaceSearchMapPickerModalProps>
                         <div className="absolute top-3 left-3 z-20 pointer-events-none">
                             <div className="px-3 py-1.5 rounded-full bg-background/85 backdrop-blur-md border border-border/80 shadow-md text-[11px] font-semibold text-muted-foreground flex items-center gap-1.5">
                                 <Move size={12} className="text-blue-500" />
-                                <span>點擊地圖任意處可微調 GPS 圖釘</span>
+                                <span>點擊地圖任意處或拖曳圖釘可微調 GPS</span>
                             </div>
                         </div>
 
@@ -642,7 +674,13 @@ export const PlaceSearchMapPickerModal: React.FC<PlaceSearchMapPickerModalProps>
                                     <div className="min-w-0 flex-1 space-y-0.5">
                                         <div className="flex items-center gap-2 flex-wrap">
                                             <h3 className="font-black text-sm sm:text-base text-foreground truncate">
-                                                {selectedPlace ? selectedPlace.name : "自訂地標位置"}
+                                                {selectedPlace
+                                                    ? customPin
+                                                        ? `${selectedPlace.name} (自訂微調位置)`
+                                                        : selectedPlace.name
+                                                    : query?.trim()
+                                                    ? `${query.trim()} (自訂位置)`
+                                                    : "自訂地標位置"}
                                             </h3>
                                             <span className="px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold font-mono">
                                                 📍 GPS (

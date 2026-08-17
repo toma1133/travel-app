@@ -1141,7 +1141,12 @@ const PlaceModal = ({
         if (payload.phone) {
             onFormInputChange(createEvent("info.phone", payload.phone));
         }
-        if (payload.lat && payload.lng) {
+        if (
+            typeof payload.lat === "number" &&
+            typeof payload.lng === "number" &&
+            payload.lat !== 0 &&
+            payload.lng !== 0
+        ) {
             onFormInputChange(createEvent("lat", payload.lat));
             onFormInputChange(createEvent("lng", payload.lng));
         }
@@ -1160,9 +1165,10 @@ const PlaceModal = ({
             onFormInputChange(createEvent("description", payload.description));
         }
 
+        const displayName = payload.name || formData.name || "自訂圖釘位置";
         setGeocodeMsg({
             type: "success",
-            text: `已成功套用地圖地標：${payload.name} (GPS: ${payload.lat ? payload.lat.toFixed(4) : ""}, ${payload.lng ? payload.lng.toFixed(4) : ""})`,
+            text: `已成功套用地圖座標：${displayName} (GPS: ${payload.lat ? payload.lat.toFixed(4) : ""}, ${payload.lng ? payload.lng.toFixed(4) : ""})`,
         });
     };
 
