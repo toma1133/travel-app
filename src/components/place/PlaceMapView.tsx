@@ -31,6 +31,7 @@ import type { PlaceVM } from "../../models/types/PlaceTypes";
 import PlaceMapController from "./PlaceMapController";
 import { useTheme } from "../../contexts/ThemeContext";
 import { detectLanguage, playPronunciation } from "../../utils/SpeechLanguageUtil";
+import { isValidPrice } from "../../utils/numberFormat";
 import {
     RoutingService,
     RouteMode,
@@ -382,7 +383,7 @@ const PlaceMarkerPopupContent = ({ place, index }: { place: PlaceVM; index: numb
                                             </span>
                                         )}
                                     </div>
-                                    {item.price && (
+                                    {isValidPrice(item.price) && (
                                         <span className="font-mono text-[10px] font-bold text-emerald-600 dark:text-emerald-400 shrink-0 ml-1">
                                             {item.price}
                                         </span>

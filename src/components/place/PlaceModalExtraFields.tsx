@@ -400,7 +400,8 @@ export const RecommendedItemsSection = ({
                                                     value={itemCurrency}
                                                     onChange={(e) => {
                                                         const newCurr = e.target.value;
-                                                        const updatedPrice = itemAmount ? `${newCurr} ${itemAmount}` : newCurr;
+                                                        const cleanItemAmount = itemAmount.trim();
+                                                        const updatedPrice = cleanItemAmount ? `${newCurr} ${cleanItemAmount}` : "";
                                                         handleUpdateItem(idx, "price", updatedPrice);
                                                     }}
                                                     className="bg-muted/40 text-foreground text-xs font-mono font-bold px-2 py-1 rounded-xl outline-none cursor-pointer border border-border/60"
@@ -418,7 +419,8 @@ export const RecommendedItemsSection = ({
                                                         handleThousandsInputChange(
                                                             e,
                                                             (formatted) => {
-                                                                const updatedPrice = formatted ? `${itemCurrency} ${formatted}` : itemCurrency;
+                                                                const cleanFormatted = formatted.trim();
+                                                                const updatedPrice = cleanFormatted ? `${itemCurrency} ${cleanFormatted}` : "";
                                                                 handleUpdateItem(idx, "price", updatedPrice);
                                                             },
                                                             { allowDecimal: true }
@@ -555,8 +557,9 @@ export const BudgetAndDetailsSection = ({
                                         value={currency}
                                         onChange={(e) => {
                                             const newCurr = e.target.value;
+                                            const cleanAmount = amount.trim();
                                             const event = {
-                                                target: { name: "info.price", value: `${newCurr} ${amount}` },
+                                                target: { name: "info.price", value: cleanAmount ? `${newCurr} ${cleanAmount}` : "" },
                                             } as any;
                                             onFormInputChange(event);
                                         }}
@@ -574,8 +577,9 @@ export const BudgetAndDetailsSection = ({
                                             handleThousandsInputChange(
                                                 e,
                                                 (formatted) => {
+                                                    const cleanFormatted = formatted.trim();
                                                     const event = {
-                                                        target: { name: "info.price", value: `${currency} ${formatted}` },
+                                                        target: { name: "info.price", value: cleanFormatted ? `${currency} ${cleanFormatted}` : "" },
                                                     } as any;
                                                     onFormInputChange(event);
                                                 },

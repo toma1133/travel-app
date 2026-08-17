@@ -34,6 +34,7 @@ import {
     getBusinessStatus,
 } from "../../utils/OpeningHoursUtil";
 import { detectLanguage, playPronunciation } from "../../utils/SpeechLanguageUtil";
+import { isValidPrice } from "../../utils/numberFormat";
 
 type PlaceCardProps = {
     theme: TripThemeConf | null;
@@ -261,7 +262,7 @@ const PlaceCard = ({
                             </div>
                         )}
 
-                        {place.info?.price && (
+                        {isValidPrice(place.info?.price) && (
                             <div className="flex items-center gap-1.5">
                                 <DollarSign size={12} className="text-gray-600 shrink-0" />
                                 <span>預算：{place.info.price}</span>
@@ -345,7 +346,7 @@ const PlaceCard = ({
                                                 )}
                                                 <span>{item.name}</span>
                                             </div>
-                                            {item.price && (
+                                            {isValidPrice(item.price) && (
                                                 <span className="font-mono font-bold text-gray-900 shrink-0 ml-1">
                                                     {item.price}
                                                 </span>
@@ -477,11 +478,11 @@ const PlaceCard = ({
                             <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-rose-500 dark:text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded-lg border border-rose-500/20 truncate max-w-full">
                                 <span>{place.type === "shopping" ? "🎁" : "🍽️"}</span>
                                 <span className="truncate">{firstRecItem.name}</span>
-                                {firstRecItem.price && (
+                                {isValidPrice(firstRecItem.price) && (
                                     <span className="font-mono opacity-80">{firstRecItem.price}</span>
                                 )}
                             </span>
-                        ) : place.info?.price ? (
+                        ) : isValidPrice(place.info?.price) ? (
                             <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-lg border border-emerald-500/20">
                                 <span>預算: {place.info.price}</span>
                             </span>
@@ -822,7 +823,7 @@ const PlaceCard = ({
                                                 )}
                                                 <span>{item.name}</span>
                                             </div>
-                                            {item.price && (
+                                            {isValidPrice(item.price) && (
                                                 <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 shrink-0">
                                                     {item.price}
                                                 </span>

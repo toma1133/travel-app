@@ -31,6 +31,7 @@ import {
 } from "../../utils/OpeningHoursUtil";
 import { Volume2 } from "lucide-react";
 import { detectLanguage, playPronunciation } from "../../utils/SpeechLanguageUtil";
+import { isValidPrice } from "../../utils/numberFormat";
 
 type PreviewPlaceModalProps = {
     onCloseBtnClick: MouseEventHandler<HTMLButtonElement>;
@@ -173,7 +174,7 @@ const PreviewPlaceModal = ({
                             )}
                         </div>
 
-                        {place.info?.price && (
+                        {isValidPrice(place.info?.price) && (
                             <div className="bg-emerald-500/90 text-white backdrop-blur-md px-3 py-1 rounded-xl text-xs font-mono font-bold border border-emerald-400/30 shadow-xs">
                                 預算: {place.info.price}
                             </div>
@@ -519,7 +520,7 @@ const PreviewPlaceModal = ({
                                                     {item.name}
                                                 </span>
                                             </div>
-                                            {item.price && (
+                                            {isValidPrice(item.price) && (
                                                 <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 shrink-0">
                                                     {item.price}
                                                 </span>

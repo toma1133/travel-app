@@ -137,3 +137,26 @@ export function handleThousandsInputChange(
         }
     });
 }
+
+/**
+ * Checks if a price string contains a valid price/amount (and is not just empty or a standalone currency code like "KRW", "JPY", "USD", etc.)
+ * E.g.:
+ * - "KRW 10,000" -> true
+ * - "2,000 - 3,000" -> true
+ * - "免費" -> true
+ * - "KRW " -> false
+ * - "JPY" -> false
+ * - "" / null / undefined -> false
+ */
+export function isValidPrice(price?: string | null): boolean {
+    if (!price || typeof price !== 'string') return false;
+    const trimmed = price.trim();
+    if (!trimmed) return false;
+    // Remove leading 3-letter currency code (e.g. KRW, JPY, TWD, USD, EUR...) or currency symbols (¥, $, €, ₩, NT$, etc.)
+    const amountOnly = trimmed
+        .replace(/^[A-Z]{3}\s*/i, '')
+        .replace(/^[¥$€₩NT£฿krfr]+\s*/i, '')
+        .trim();
+    return amountOnly.length > 0;
+}
+
