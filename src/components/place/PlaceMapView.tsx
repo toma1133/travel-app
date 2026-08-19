@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { MapContainer, TileLayer, Marker, Popup, Polyline } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, Polyline, Tooltip } from "react-leaflet";
 import L from "leaflet";
 import {
     Car,
@@ -55,6 +55,7 @@ type PlaceMapViewProps = {
     places: PlaceVM[] | null;
     showRouteLine?: boolean;
     highlightedPlaceId?: string | null;
+    highlightedIndex?: number | null;
 };
 
 // Map Style Options
@@ -121,7 +122,15 @@ const MAP_STYLES: {
 ];
 
 // Rich Interactive Landmark Popup Component (iOS Style Map Card)
-const PlaceMarkerPopupContent = ({ place, index }: { place: PlaceVM; index: number }) => {
+const PlaceMarkerPopupContent = ({
+    place,
+    index,
+    allVisitIndices,
+}: {
+    place: PlaceVM;
+    index: number;
+    allVisitIndices?: number[];
+}) => {
     const [isCopied, setIsCopied] = useState(false);
     const [speaking, setSpeaking] = useState(false);
 
@@ -178,6 +187,11 @@ const PlaceMarkerPopupContent = ({ place, index }: { place: PlaceVM; index: numb
 
     const businessStatus = getBusinessStatus(place.info?.open, place.info?.closed_days);
 
+    const visitBadgeText =
+        allVisitIndices && allVisitIndices.length > 1
+            ? `第 ${allVisitIndices.map((v) => v + 1).join("、")} 站`
+            : `${index + 1}`;
+
     return (
         <div className="w-[280px] sm:w-[310px] max-w-[calc(100vw-36px)] overflow-hidden text-card-foreground font-sans box-border">
             {/* Header Image with Floating Badges */}
@@ -191,9 +205,9 @@ const PlaceMarkerPopupContent = ({ place, index }: { place: PlaceVM; index: numb
                     <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
                     
                     {/* Top Left Badges */}
-                    <div className="absolute top-2 left-2 flex items-center gap-1.5 z-10">
-                        <span className="w-5 h-5 rounded-full bg-white text-zinc-900 font-extrabold text-[11px] flex items-center justify-center shadow-md">
-                            {index + 1}
+                    <div className="absolute top-2 left-2 flex items-center gap-1.5 z-10 flex-wrap">
+                        <span className="min-w-5 h-5 px-1.5 rounded-full bg-white text-zinc-900 font-extrabold text-[11px] flex items-center justify-center shadow-md">
+                            {visitBadgeText}
                         </span>
                         <span
                             className="px-2 py-0.5 rounded-full text-[10px] font-bold text-white shadow-sm flex items-center gap-1 backdrop-blur-md"
@@ -202,12 +216,17 @@ const PlaceMarkerPopupContent = ({ place, index }: { place: PlaceVM; index: numb
                             <CategoryIcon size={10} />
                             {categoryLabel}
                         </span>
+                        {allVisitIndices && allVisitIndices.length > 1 && (
+                            <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-amber-500 text-white shadow-sm backdrop-blur-md">
+                                造訪 {allVisitIndices.length} 次
+                            </span>
+                        )}
                     </div>
                 </div>
             ) : (
-                <div className="p-3 border-b border-border bg-muted/40 flex items-center gap-1.5">
-                    <span className="w-5 h-5 rounded-full bg-primary text-primary-foreground font-extrabold text-[11px] flex items-center justify-center shrink-0 shadow-xs">
-                        {index + 1}
+                <div className="p-3 border-b border-border bg-muted/40 flex items-center gap-1.5 flex-wrap">
+                    <span className="min-w-5 h-5 px-1.5 rounded-full bg-primary text-primary-foreground font-extrabold text-[11px] flex items-center justify-center shrink-0 shadow-xs">
+                        {visitBadgeText}
                     </span>
                     <span
                         className="px-2 py-0.5 rounded-full text-[10px] font-bold text-white shrink-0 flex items-center gap-1"
@@ -216,6 +235,11 @@ const PlaceMarkerPopupContent = ({ place, index }: { place: PlaceVM; index: numb
                         <CategoryIcon size={10} />
                         {categoryLabel}
                     </span>
+                    {allVisitIndices && allVisitIndices.length > 1 && (
+                        <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-amber-500 text-white shrink-0 shadow-xs">
+                            造訪 {allVisitIndices.length} 次
+                        </span>
+                    )}
                 </div>
             )}
 
@@ -426,6 +450,7 @@ const PlaceMapView = ({
     places,
     showRouteLine = true,
     highlightedPlaceId,
+    highlightedIndex,
 }: PlaceMapViewProps) => {
     const { theme } = useTheme();
     const isDark = theme === "dark";
@@ -442,6 +467,18 @@ const PlaceMapView = ({
                 typeof p.lat === "number" && typeof p.lng === "number"
         );
     }, [places]);
+
+    // Map each place or coordinate to all visit step indices
+    const visitIndicesMap = useMemo(() => {
+        const map = new Map<string, number[]>();
+        validPlaces.forEach((p, idx) => {
+            const key = p.id || `${p.lat.toFixed(6)},${p.lng.toFixed(6)}`;
+            const arr = map.get(key) || [];
+            arr.push(idx);
+            map.set(key, arr);
+        });
+        return map;
+    }, [validPlaces]);
 
     const defaultCenter = useMemo(() => {
         if (validPlaces.length > 0) {
@@ -642,21 +679,46 @@ const PlaceMapView = ({
                     </>
                 )}
 
-                {validPlaces.map((place, idx) => (
-                    <Marker
-                        key={`${place.id || "place"}-${idx}`}
-                        position={{ lat: place.lat, lng: place.lng }}
-                        icon={createNumberedIcon(
-                            place.type,
-                            idx,
-                            !!highlightedPlaceId && place.id === highlightedPlaceId
-                        )}
-                    >
-                        <Popup className="custom-place-popup">
-                            <PlaceMarkerPopupContent place={place} index={idx} />
-                        </Popup>
-                    </Marker>
-                ))}
+                {validPlaces.map((place, idx) => {
+                    const isHighlighted =
+                        typeof highlightedIndex === "number"
+                            ? highlightedIndex === idx
+                            : !!highlightedPlaceId && place.id === highlightedPlaceId;
+
+                    const coordKey = place.id || `${place.lat.toFixed(6)},${place.lng.toFixed(6)}`;
+                    const allVisits = visitIndicesMap.get(coordKey) || [idx];
+
+                    return (
+                        <Marker
+                            key={`${place.id || "place"}-${idx}`}
+                            position={{ lat: place.lat, lng: place.lng }}
+                            zIndexOffset={isHighlighted ? 10000 : idx * 10}
+                            icon={createNumberedIcon(
+                                place.type,
+                                idx,
+                                isHighlighted
+                            )}
+                        >
+                            <Tooltip direction="top" offset={[0, -36]} opacity={0.95}>
+                                <div className="text-xs font-semibold px-0.5 py-0.5 max-w-[200px] truncate">
+                                    <span className="text-blue-600 dark:text-blue-400 font-bold mr-1.5">
+                                        {allVisits.length > 1
+                                            ? `第 ${allVisits.map((v) => v + 1).join("、")} 站`
+                                            : `第 ${idx + 1} 站`}
+                                    </span>
+                                    <span>{place.name}</span>
+                                </div>
+                            </Tooltip>
+                            <Popup className="custom-place-popup">
+                                <PlaceMarkerPopupContent
+                                    place={place}
+                                    index={idx}
+                                    allVisitIndices={allVisits}
+                                />
+                            </Popup>
+                        </Marker>
+                    );
+                })}
                 <PlaceMapController
                     places={places}
                     defaultCenter={defaultCenter}

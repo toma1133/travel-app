@@ -196,17 +196,26 @@ const ItineraryActivityModal = ({
                 .slice()
                 .sort((a, b) => a.time.localeCompare(b.time));
 
-            const currentIndex = activities.findIndex(
-                (a) =>
-                    (formData.activityIndex !== undefined &&
-                        a.activityIndex === formData.activityIndex) ||
-                    (a.title === formData.title && a.time === formData.time) ||
-                    a.linkId === formData.linkId
-            );
+            let currentIndex = -1;
+            if (typeof formData.activityIndex === "number") {
+                currentIndex = activities.findIndex(
+                    (a, i) => (a.activityIndex !== undefined ? a.activityIndex === formData.activityIndex : i === formData.activityIndex)
+                );
+            }
+            if (currentIndex === -1) {
+                currentIndex = activities.findIndex(
+                    (a) => a.title === formData.title && a.time === formData.time
+                );
+            }
 
             let nextActivity: ItineraryActivitiy | null = null;
-            if (currentIndex >= 0 && currentIndex < activities.length - 1) {
-                nextActivity = activities[currentIndex + 1];
+            if (currentIndex >= 0) {
+                for (let i = currentIndex + 1; i < activities.length; i++) {
+                    if (activities[i].linkId) {
+                        nextActivity = activities[i];
+                        break;
+                    }
+                }
             } else if (activities.length > 0) {
                 nextActivity =
                     activities.find((a) => a.time > formData.time && a.linkId) || null;
@@ -235,7 +244,8 @@ const ItineraryActivityModal = ({
                 return;
             }
 
-            const profile = RoutingService.mapTransitModeToProfile(formData.transitMode);
+            const activeMode = (!formData.transitMode || formData.transitMode === "none") ? "walk" : formData.transitMode;
+            const profile = RoutingService.mapTransitModeToProfile(activeMode);
             const routeResult = await RoutingService.getRoute(
                 { lat: originPlace.lat, lng: originPlace.lng },
                 { lat: destPlace.lat, lng: destPlace.lng },
@@ -256,10 +266,9 @@ const ItineraryActivityModal = ({
                 onFormInputChange(durationEvent);
 
                 if (!formData.transitMode || formData.transitMode === "none") {
-                    const suggestedMode = routeResult.distanceKm <= 1.5 ? "walk" : "car";
                     const modeEvent = {
-                        target: { name: "transitMode", value: suggestedMode },
-                        currentTarget: { name: "transitMode", value: suggestedMode },
+                        target: { name: "transitMode", value: "walk" },
+                        currentTarget: { name: "transitMode", value: "walk" },
                     } as unknown as ChangeEvent<HTMLInputElement>;
                     onFormInputChange(modeEvent);
                 }
@@ -601,7 +610,7 @@ const ItineraryActivityModal = ({
                             </span>
 
                             {/* 自動路線估算按鈕 */}
-                            {formData.linkId && (
+                            {mode === "edit" && formData.linkId && (
                                 <button
                                     type="button"
                                     onClick={handleAutoCalculateRoute}

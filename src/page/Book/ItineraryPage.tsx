@@ -154,7 +154,10 @@ const ItineraryPage = ({
         };
     }, [itinerarys]);
 
-    const [hoveredPlaceId, setHoveredPlaceId] = useState<string | null>(null);
+    const [hoveredPlace, setHoveredPlace] = useState<{
+        id: string | null;
+        index: number | null;
+    }>({ id: null, index: null });
 
     const activeMapPlaces = useMemo(() => {
         return itineraryPlacesMap[selectedDayFilter] || [];
@@ -643,7 +646,12 @@ const ItineraryPage = ({
                             onEditDayBtnClick={handleOpenEditDayModal}
                             onOptimizeRouteBtnClick={handleOpenOptimizeModal}
                             onViewBtnClick={handleOpenPreviewModal}
-                            onPlaceHover={setHoveredPlaceId}
+                            onPlaceHover={(id, index) =>
+                                setHoveredPlace({
+                                    id,
+                                    index: typeof index === "number" ? index : null,
+                                })
+                            }
                         />
                     </div>
                     </div>
@@ -663,7 +671,12 @@ const ItineraryPage = ({
                                 </span>
                             </div>
                             <div className="flex-1 w-full relative">
-                                <PlaceMapView places={activeMapPlaces} showRouteLine={true} highlightedPlaceId={hoveredPlaceId} />
+                                <PlaceMapView
+                                    places={activeMapPlaces}
+                                    showRouteLine={true}
+                                    highlightedPlaceId={hoveredPlace.id}
+                                    highlightedIndex={hoveredPlace.index}
+                                />
                             </div>
                         </div>
                     )}

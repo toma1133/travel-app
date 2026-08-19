@@ -27,7 +27,7 @@ type ItineraryListProps = {
     onEditDayBtnClick: (itinerary: ItineraryVM) => void;
     onOptimizeRouteBtnClick?: (itineraryDay: ItineraryVM) => void;
     onViewBtnClick: (linkId: string) => void;
-    onPlaceHover?: (linkId: string | null) => void;
+    onPlaceHover?: (linkId: string | null, placeIndex?: number | null) => void;
 };
 
 const ItineraryList = ({

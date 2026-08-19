@@ -54,7 +54,7 @@ type ItineraryItemProps = {
     onExpandedBtnToggle: (itinerary: ItineraryVM) => void;
     onOptimizeRouteBtnClick?: (itineraryDay: ItineraryVM) => void;
     onViewBtnClick: (linkId: string) => void;
-    onPlaceHover?: (linkId: string | null) => void;
+    onPlaceHover?: (linkId: string | null, placeIndex?: number | null) => void;
 };
 
 const ItineraryItem = ({
@@ -414,6 +414,10 @@ const ItineraryItem = ({
                                       })
                                     : null;
 
+                                const currentPlaceIndex = activity.linkId
+                                    ? (itinerary.activities?.slice(0, idx).filter((a) => !!a.linkId).length ?? 0)
+                                    : null;
+
                                 return (
                                     <div
                                         key={idx}
@@ -423,19 +427,19 @@ const ItineraryItem = ({
                                         onMouseEnter={() => {
                                             setActiveActivityIdx(idx);
                                             if (activity.linkId && onPlaceHover) {
-                                                onPlaceHover(activity.linkId);
+                                                onPlaceHover(activity.linkId, currentPlaceIndex);
                                             }
                                         }}
                                         onMouseLeave={() => {
                                             setActiveActivityIdx(null);
                                             if (onPlaceHover) {
-                                                onPlaceHover(null);
+                                                onPlaceHover(null, null);
                                             }
                                         }}
                                         onTouchStart={() => {
                                             setActiveActivityIdx(idx);
                                             if (activity.linkId && onPlaceHover) {
-                                                onPlaceHover(activity.linkId);
+                                                onPlaceHover(activity.linkId, currentPlaceIndex);
                                             }
                                         }}
                                     >
@@ -487,7 +491,7 @@ const ItineraryItem = ({
                                                     <div className="flex items-center gap-1 p-0.5 bg-card/95 backdrop-blur-md rounded-full shadow-xs border border-border/80 shrink-0 transition-all">
                                                         <button
                                                             type="button"
-                                                            onClick={() => onEditActivityBtnClick(itinerary, activity)}
+                                                            onClick={() => onEditActivityBtnClick(itinerary, { ...activity, activityIndex: activity.activityIndex ?? idx })}
                                                             className="p-1 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
                                                             title="編輯活動"
                                                         >
@@ -495,7 +499,7 @@ const ItineraryItem = ({
                                                         </button>
                                                         <button
                                                             type="button"
-                                                            onClick={() => onDeleteActivityBtnClick(itinerary, activity)}
+                                                            onClick={() => onDeleteActivityBtnClick(itinerary, { ...activity, activityIndex: activity.activityIndex ?? idx })}
                                                             className="p-1 rounded-full text-muted-foreground hover:text-rose-600 hover:bg-rose-500/10 transition-colors cursor-pointer"
                                                             title="刪除活動"
                                                         >
@@ -680,13 +684,24 @@ const ItineraryItem = ({
                                                         </div>
 
                                                         {/* 詳細備註膠囊 */}
-                                                        {activity.transitDetails?.companyAndLine && (
-                                                            <span className={`text-[10px] px-2 py-0.2 rounded font-mono font-semibold ${
-                                                                isPrinting ? "bg-gray-200 text-black border border-gray-400" : "bg-muted text-muted-foreground"
-                                                            }`}>
-                                                                {activity.transitDetails.companyAndLine}
-                                                            </span>
-                                                        )}
+                                                        {(() => {
+                                                            const transitNote =
+                                                                activity.transitDetails?.flightNumber ||
+                                                                activity.transitDetails?.companyAndLine ||
+                                                                activity.transitDetails?.carRentalCompany;
+                                                            if (!transitNote) return null;
+                                                            return (
+                                                                <span
+                                                                    className={`text-[10px] px-2 py-0.5 rounded font-mono font-semibold ${
+                                                                        isPrinting
+                                                                            ? "bg-gray-200 text-black border border-gray-400"
+                                                                            : "bg-muted text-muted-foreground border border-border/60"
+                                                                    }`}
+                                                                >
+                                                                    {transitNote}
+                                                                </span>
+                                                            );
+                                                        })()}
                                                     </div>
                                                 </div>
                                             )}
