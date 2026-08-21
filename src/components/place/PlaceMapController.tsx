@@ -23,7 +23,10 @@ const PlaceMapController = ({
             const validCoords = places
                 .filter(
                     (p): p is typeof p & { lat: number; lng: number } =>
-                        typeof p.lat === "number" && typeof p.lng === "number"
+                        typeof p.lat === "number" &&
+                        typeof p.lng === "number" &&
+                        !isNaN(p.lat) &&
+                        !isNaN(p.lng)
                 )
                 .map((p) => [p.lat, p.lng] as [number, number]);
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import {
     Pencil,
     Plus,
@@ -11,11 +11,14 @@ import {
     Volume2,
     Navigation,
     CalendarX,
+    AlertTriangle,
+    AlertCircle,
 } from "lucide-react";
 import type {
     ItineraryActivitiy,
     ItineraryVM,
 } from "../../models/types/ItineraryTypes";
+import { computeDayTimelineSchedule } from "../../utils/ItineraryTimeUtil";
 import type { TripThemeConf } from "../../models/types/TripTypes";
 import type { PlaceVM } from "../../models/types/PlaceTypes";
 import {
@@ -31,7 +34,7 @@ import {
 } from "../../services/WeatherService";
 import { placeRepo } from "../../services/repositories/PlaceRepo";
 import { toPlaceVM } from "../../services/mappers/PlaceMapper";
-import { getBusinessStatus } from "../../utils/OpeningHoursUtil";
+import { getBusinessStatus, getScheduledMoment } from "../../utils/OpeningHoursUtil";
 import { detectLanguage, playPronunciation } from "../../utils/SpeechLanguageUtil";
 
 type ItineraryItemProps = {
@@ -39,6 +42,8 @@ type ItineraryItemProps = {
     isEditing: boolean;
     isExpanded: boolean;
     isPrinting?: boolean;
+    dayPlaceIndexOffset?: number;
+    placeMap?: Record<string, PlaceVM>;
     theme: TripThemeConf | null;
     onAddActivityBtnClick: (itineraryDay: ItineraryVM) => void;
     onDeleteActivityBtnClick: (
@@ -62,6 +67,8 @@ const ItineraryItem = ({
     isEditing,
     isExpanded,
     isPrinting,
+    dayPlaceIndexOffset = 0,
+    placeMap: externalPlaceMap,
     theme,
     onAddActivityBtnClick,
     onDeleteActivityBtnClick,
@@ -80,17 +87,24 @@ const ItineraryItem = ({
     const [activeActivityIdx, setActiveActivityIdx] = useState<number | null>(null);
     const [weatherData, setWeatherData] = useState<WeatherForecastData | null>(null);
     const [isWeatherLoading, setIsWeatherLoading] = useState(false);
-    const [placeMap, setPlaceMap] = useState<Record<string, PlaceVM>>({});
+    const [localPlaceMap, setLocalPlaceMap] = useState<Record<string, PlaceVM>>({});
     const [speakingId, setSpeakingId] = useState<string | null>(null);
 
-    // 載入當天活動所有已連結的地點資料
+    const placeMap =
+        externalPlaceMap && Object.keys(externalPlaceMap).length > 0
+            ? externalPlaceMap
+            : localPlaceMap;
+
+    // 載入當天活動所有已連結的地點資料 (當父層未傳入時作為 fallback)
     useEffect(() => {
+        if (externalPlaceMap && Object.keys(externalPlaceMap).length > 0) return;
+
         const linkIds = (itinerary.activities || [])
             .map((a) => a.linkId)
             .filter(Boolean) as string[];
 
         if (linkIds.length === 0) {
-            setPlaceMap({});
+            setLocalPlaceMap({});
             return;
         }
 
@@ -103,7 +117,7 @@ const ItineraryItem = ({
                         (places || []).forEach((p) => {
                             if (p) map[p.id] = toPlaceVM(p);
                         });
-                        setPlaceMap(map);
+                        setLocalPlaceMap(map);
                     }
                 })
                 .catch(console.error);
@@ -112,7 +126,7 @@ const ItineraryItem = ({
         return () => {
             isMounted = false;
         };
-    }, [itinerary.activities]);
+    }, [itinerary.activities, externalPlaceMap]);
 
     // 載入天氣預報
     useEffect(() => {
@@ -401,314 +415,421 @@ const ItineraryItem = ({
 
                     <div className={isPrinting ? "space-y-2.5" : "space-y-4"}>
                         {Array.isArray(itinerary.activities) && itinerary.activities.length > 0 ? (
-                            itinerary.activities.map((activity, idx) => {
-                                const linkedPlace = activity.linkId ? placeMap[activity.linkId] : null;
-                                const businessStatus = linkedPlace
-                                    ? getBusinessStatus(linkedPlace.info?.open, linkedPlace.info?.closed_days)
-                                    : null;
-                                const firstRec = linkedPlace?.info?.recommended_items?.[0];
-                                const detectedLang = linkedPlace
-                                    ? detectLanguage(linkedPlace.info?.native_name, {
-                                          address: linkedPlace.info?.loc,
-                                          currency: linkedPlace.info?.price,
-                                      })
-                                    : null;
+                            (() => {
+                                const scheduleList = computeDayTimelineSchedule(itinerary.activities);
+                                return scheduleList.map((scheduleItem) => {
+                                    const { activity, index: idx, startTime, hasStayDuration, durationFormatted, transit } = scheduleItem;
+                                    const linkedPlace = activity.linkId ? placeMap[activity.linkId] : null;
 
-                                const currentPlaceIndex = activity.linkId
-                                    ? (itinerary.activities?.slice(0, idx).filter((a) => !!a.linkId).length ?? 0)
-                                    : null;
+                                    // 計算排程時間是否在營業時間內 (若非營業時段或當日公休則標示紅色警告)
+                                    const scheduledMoment = getScheduledMoment(itinerary.date, activity.time);
+                                    const businessStatus = linkedPlace?.info?.open
+                                        ? getBusinessStatus(linkedPlace.info.open, linkedPlace.info?.closed_days, scheduledMoment)
+                                        : null;
 
-                                return (
-                                    <div
-                                        key={idx}
-                                        className={`flex group/item items-start ${
-                                            isPrinting ? "min-h-0 break-inside-avoid" : "min-h-[40px]"
-                                        }`}
-                                        onMouseEnter={() => {
-                                            setActiveActivityIdx(idx);
-                                            if (activity.linkId && onPlaceHover) {
-                                                onPlaceHover(activity.linkId, currentPlaceIndex);
-                                            }
-                                        }}
-                                        onMouseLeave={() => {
-                                            setActiveActivityIdx(null);
-                                            if (onPlaceHover) {
-                                                onPlaceHover(null, null);
-                                            }
-                                        }}
-                                        onTouchStart={() => {
-                                            setActiveActivityIdx(idx);
-                                            if (activity.linkId && onPlaceHover) {
-                                                onPlaceHover(activity.linkId, currentPlaceIndex);
-                                            }
-                                        }}
-                                    >
-                                        {/* 1. 左側軌道節點 (Timeline Node Icon) */}
-                                        <div className="w-12 sm:w-14 shrink-0 flex justify-center items-start z-10 pt-1">
-                                            {(() => {
-                                                const IconComp = getCategoryIcon(activity.type);
-                                                const bgColor =
-                                                    theme?.categoryColor?.[activity.type] ||
-                                                    DEFAULT_CATEGORY_COLORS[activity.type] ||
-                                                    "#3b82f6";
+                                    const isScheduleConflict = !!(
+                                        linkedPlace &&
+                                        linkedPlace.type !== "hotel" &&
+                                        linkedPlace.type !== "stay" &&
+                                        businessStatus &&
+                                        (businessStatus.status === "closed" || businessStatus.status === "closed_today")
+                                    );
 
-                                                return (
-                                                    <div
-                                                        className={`flex items-center justify-center rounded-full shadow-xs text-white shrink-0 ${
-                                                            !isPrinting
-                                                                ? "w-6 h-6 sm:w-7 sm:h-7 ring-2 ring-background"
-                                                                : "w-5 h-5 bg-black text-white"
-                                                        }`}
-                                                        style={{ backgroundColor: bgColor }}
-                                                    >
-                                                        <IconComp
-                                                            size={isPrinting ? 10 : 13}
-                                                            className="text-white drop-shadow-2xs"
-                                                        />
-                                                    </div>
-                                                );
-                                            })()}
-                                        </div>
+                                    const firstRec = linkedPlace?.info?.recommended_items?.[0];
+                                    const detectedLang = linkedPlace
+                                        ? detectLanguage(linkedPlace.info?.native_name, {
+                                              address: linkedPlace.info?.loc,
+                                              currency: linkedPlace.info?.price,
+                                          })
+                                        : null;
 
-                                        {/* 2. 右側活動卡片主體 (Activity Body) */}
-                                        <div className="flex-1 min-w-0 pr-3 sm:pr-4 space-y-2">
-                                            {/* 時間與停留標籤列 */}
-                                            <div className="flex items-center justify-between gap-2">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="font-mono font-bold text-xs sm:text-sm text-muted-foreground group-hover/item:text-foreground">
-                                                        {activity.time}
+                                    const hasGps = !!(
+                                        linkedPlace &&
+                                        typeof linkedPlace.lat === "number" &&
+                                        typeof linkedPlace.lng === "number" &&
+                                        !isNaN(linkedPlace.lat) &&
+                                        !isNaN(linkedPlace.lng)
+                                    );
+
+                                    const placeIndexInDay = hasGps
+                                        ? (itinerary.activities?.slice(0, idx).filter((a) => {
+                                              const p = a.linkId ? placeMap[a.linkId] : null;
+                                              return (
+                                                  p &&
+                                                  typeof p.lat === "number" &&
+                                                  typeof p.lng === "number" &&
+                                                  !isNaN(p.lat) &&
+                                                  !isNaN(p.lng)
+                                              );
+                                          }).length ?? 0)
+                                        : null;
+
+                                    const currentPlaceIndex =
+                                        placeIndexInDay !== null
+                                            ? dayPlaceIndexOffset + placeIndexInDay
+                                            : null;
+
+                                    const TransitIconComp = getTransitIcon(transit.mode);
+                                    const transitNote =
+                                        activity.transitDetails?.flightNumber ||
+                                        activity.transitDetails?.companyAndLine ||
+                                        activity.transitDetails?.carRentalCompany ||
+                                        activity.transitDetails?.passName ||
+                                        activity.transitDetails?.startLocation;
+
+                                    return (
+                                        <div key={idx} className="space-y-2 sm:space-y-2.5">
+                                            {/* 🎯 1. 景點/活動主體節點 (Activity Node) */}
+                                            <div
+                                                className={`flex group/item items-start ${
+                                                    isPrinting ? "min-h-0 break-inside-avoid" : "min-h-[40px]"
+                                                }`}
+                                                onMouseEnter={() => {
+                                                    setActiveActivityIdx(idx);
+                                                    if (onPlaceHover) {
+                                                        if (hasGps && linkedPlace && typeof currentPlaceIndex === "number") {
+                                                            onPlaceHover(linkedPlace.id, currentPlaceIndex);
+                                                        } else {
+                                                            onPlaceHover(null, null);
+                                                        }
+                                                    }
+                                                }}
+                                                onMouseLeave={() => {
+                                                    setActiveActivityIdx(null);
+                                                    if (onPlaceHover) {
+                                                        onPlaceHover(null, null);
+                                                    }
+                                                }}
+                                                onTouchStart={() => {
+                                                    setActiveActivityIdx(idx);
+                                                    if (onPlaceHover) {
+                                                        if (hasGps && linkedPlace && typeof currentPlaceIndex === "number") {
+                                                            onPlaceHover(linkedPlace.id, currentPlaceIndex);
+                                                        } else {
+                                                            onPlaceHover(null, null);
+                                                        }
+                                                    }
+                                                }}
+                                            >
+                                                {/* 1.1 左側時間軸節點 (純淨時間點，如 07:00) */}
+                                                <div className="w-12 sm:w-14 shrink-0 flex flex-col items-center justify-start z-10 pt-1">
+                                                    {(() => {
+                                                        const IconComp = getCategoryIcon(activity.type);
+                                                        const bgColor =
+                                                            theme?.categoryColor?.[activity.type] ||
+                                                            DEFAULT_CATEGORY_COLORS[activity.type] ||
+                                                            "#3b82f6";
+
+                                                        return (
+                                                            <div
+                                                                className={`flex items-center justify-center rounded-full shadow-xs text-white shrink-0 ${
+                                                                    !isPrinting
+                                                                        ? "w-6 h-6 sm:w-7 sm:h-7 ring-2 ring-background"
+                                                                        : "w-5 h-5 bg-black text-white"
+                                                                }`}
+                                                                style={{ backgroundColor: bgColor }}
+                                                            >
+                                                                <IconComp
+                                                                    size={isPrinting ? 10 : 13}
+                                                                    className="text-white drop-shadow-2xs"
+                                                                />
+                                                            </div>
+                                                        );
+                                                    })()}
+                                                    <span className={`font-mono font-bold text-[10px] sm:text-xs mt-1 text-center ${
+                                                        isPrinting
+                                                            ? "text-black"
+                                                            : isScheduleConflict
+                                                            ? "text-rose-600 dark:text-rose-400 font-extrabold"
+                                                            : "text-muted-foreground group-hover/item:text-foreground"
+                                                    }`}>
+                                                        {startTime}
                                                     </span>
-                                                    {activity.duration && (
-                                                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold rounded-full text-blue-600 dark:text-blue-400 bg-blue-500/10 px-2 py-0.5 border border-blue-500/20">
-                                                            <Hourglass size={9} />
-                                                            <span>停留 {activity.duration}</span>
-                                                        </span>
-                                                    )}
                                                 </div>
 
-                                                {/* 編輯 / 刪除工具按鈕 (在編輯模式下清晰可點擊，不需依賴 Hover) */}
-                                                {!isPrinting && isEditing && (
-                                                    <div className="flex items-center gap-1 p-0.5 bg-card/95 backdrop-blur-md rounded-full shadow-xs border border-border/80 shrink-0 transition-all">
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => onEditActivityBtnClick(itinerary, { ...activity, activityIndex: activity.activityIndex ?? idx })}
-                                                            className="p-1 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
-                                                            title="編輯活動"
-                                                        >
-                                                            <Pencil size={11} />
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => onDeleteActivityBtnClick(itinerary, { ...activity, activityIndex: activity.activityIndex ?? idx })}
-                                                            className="p-1 rounded-full text-muted-foreground hover:text-rose-600 hover:bg-rose-500/10 transition-colors cursor-pointer"
-                                                            title="刪除活動"
-                                                        >
-                                                            <Trash2 size={11} />
-                                                        </button>
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            {/* 🌟 核心：有連結地點時，呈現 iOS 原生風格卡片 (點擊直接開啟地點預覽) */}
-                                            {linkedPlace ? (
-                                                <div
-                                                    onClick={() => !isPrinting && onViewBtnClick(linkedPlace.id)}
-                                                    className={`p-3 sm:p-3.5 rounded-2xl border transition-all ${
-                                                        !isPrinting
-                                                            ? "bg-card border-border/80 hover:border-blue-500/50 hover:shadow-md cursor-pointer active:scale-[0.99] group/card shadow-2xs text-card-foreground"
-                                                            : "bg-white border-gray-400 text-black font-[Noto_Sans_TC]"
-                                                    }`}
-                                                    title={!isPrinting ? "點擊查看地點詳細卡片" : undefined}
-                                                >
-                                                    <div className="flex items-start gap-3">
-                                                        {/* 左側縮圖 */}
-                                                        <div className="relative w-18 h-18 sm:w-20 sm:h-20 rounded-xl overflow-hidden shrink-0 bg-muted border border-border/60 shadow-2xs">
-                                                            {linkedPlace.image_url ? (
-                                                                <img
-                                                                    src={linkedPlace.image_url}
-                                                                    alt={linkedPlace.name}
-                                                                    className="w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-500"
-                                                                />
+                                                {/* 1.2 右側活動卡片主體 */}
+                                                <div className="flex-1 min-w-0 pr-3 sm:pr-4 space-y-2">
+                                                    {/* 停留標籤與操作工具列 (若無停留時間且非編輯模式，完全不佔位，消除多餘空白) */}
+                                                    {((hasStayDuration || activity.duration) || (!isPrinting && isEditing)) && (
+                                                        <div className="flex items-center justify-between gap-2">
+                                                            {(hasStayDuration || activity.duration) ? (
+                                                                <span className="inline-flex items-center gap-1 text-[10px] font-semibold rounded-full text-blue-600 dark:text-blue-400 bg-blue-500/10 px-2 py-0.5 border border-blue-500/20">
+                                                                    <Hourglass size={9} />
+                                                                    <span>停留 {durationFormatted || activity.duration}</span>
+                                                                </span>
                                                             ) : (
-                                                                <div className="w-full h-full flex items-center justify-center text-muted-foreground/40">
-                                                                    <MapPin size={18} />
-                                                                </div>
+                                                                <div />
                                                             )}
-                                                            <span className="absolute bottom-1 left-1 px-1.5 py-0.2 rounded bg-black/60 backdrop-blur-md text-[9px] text-white font-bold tracking-wider">
-                                                                {getCategoryTypeName(linkedPlace.type)}
-                                                            </span>
-                                                        </div>
 
-                                                        {/* 右側資訊 */}
-                                                        <div className="flex-1 min-w-0 space-y-1">
-                                                            {/* 標題與語音按鈕 */}
-                                                            <div className="flex items-start justify-between gap-1">
-                                                                <div className="min-w-0 flex-1">
-                                                                    <h4 className={`text-xs sm:text-sm font-bold truncate leading-tight ${
-                                                                        isPrinting ? "text-black text-sm" : "text-foreground group-hover/card:text-blue-500 transition-colors"
-                                                                    }`}>
-                                                                        {linkedPlace.name}
-                                                                    </h4>
-                                                                    {(linkedPlace.eng_name || linkedPlace.info?.native_name) && (
-                                                                        <p className={`text-[11px] font-mono truncate mt-0.5 ${
-                                                                            isPrinting ? "text-gray-700" : "text-muted-foreground"
-                                                                        }`}>
-                                                                            {linkedPlace.eng_name}
-                                                                            {linkedPlace.eng_name && linkedPlace.info?.native_name && " · "}
-                                                                            {linkedPlace.info?.native_name}
-                                                                        </p>
-                                                                    )}
-                                                                </div>
-
-                                                                {!isPrinting && linkedPlace.info?.native_name && (
+                                                            {/* 編輯 / 刪除工具按鈕 */}
+                                                            {!isPrinting && isEditing && (
+                                                                <div className="flex items-center gap-1 p-0.5 bg-card/95 backdrop-blur-md rounded-full shadow-xs border border-border/80 shrink-0 transition-all ml-auto">
                                                                     <button
                                                                         type="button"
-                                                                        onClick={(e) => handleSpeakPlace(linkedPlace, e)}
-                                                                        className={`p-1 rounded-full hover:bg-muted text-blue-500 transition-colors shrink-0 cursor-pointer ${
-                                                                            speakingId === linkedPlace.id ? "animate-pulse scale-110 text-amber-500" : ""
-                                                                        }`}
-                                                                        title={`發音 (${detectedLang?.name || ""})`}
+                                                                        onClick={() => onEditActivityBtnClick(itinerary, { ...activity, activityIndex: activity.activityIndex ?? idx })}
+                                                                        className="p-1 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+                                                                        title="編輯活動"
                                                                     >
-                                                                        <Volume2 size={13} />
+                                                                        <Pencil size={11} />
                                                                     </button>
-                                                                )}
-                                                            </div>
-
-                                                            {/* 營業狀態 / 住宿時間 + 評分 */}
-                                                            {linkedPlace && (
-                                                                <div className={`flex items-center gap-2 flex-wrap text-[11px] ${
-                                                                    isPrinting ? "text-black" : ""
-                                                                }`}>
-                                                                    {linkedPlace.type === "hotel" || linkedPlace.type === "stay" ? (
-                                                                        !isPrinting ? (
-                                                                            <span className="text-[10px] text-blue-600 dark:text-blue-400 font-medium">
-                                                                                🏨 入住 {linkedPlace.info?.check_in || "15:00"} · 退房 {linkedPlace.info?.check_out || "11:00"}
-                                                                            </span>
-                                                                        ) : (
-                                                                            <span className="text-[10px] text-gray-800 font-bold">
-                                                                                入住：{linkedPlace.info?.check_in || "15:00"} / 退房：{linkedPlace.info?.check_out || "11:00"}
-                                                                            </span>
-                                                                        )
-                                                                    ) : businessStatus ? (
-                                                                        <>
-                                                                            {linkedPlace.info?.open && !isPrinting && (
-                                                                                <span className={`px-1.5 py-0.2 rounded font-extrabold text-[10px] ${businessStatus.badgeColor}`}>
-                                                                                    {businessStatus.badgeText}
-                                                                                </span>
-                                                                            )}
-
-                                                                            {linkedPlace.info?.open && isPrinting && (
-                                                                                <span className="text-[10px] text-gray-800 font-bold">
-                                                                                    營業時間：{businessStatus.allHoursSummary}
-                                                                                </span>
-                                                                            )}
-                                                                        </>
-                                                                    ) : null}
-
-                                                                    {linkedPlace.info?.rating && (
-                                                                        <span className={`flex items-center gap-0.5 text-[10px] font-bold ${
-                                                                            isPrinting ? "text-black" : "text-amber-500"
-                                                                        }`}>
-                                                                            <Star size={10} className={isPrinting ? "text-black fill-black" : "fill-amber-400 text-amber-400"} />
-                                                                            <span>{linkedPlace.info.rating}</span>
-                                                                        </span>
-                                                                    )}
-
-                                                                    {firstRec && (
-                                                                        <span className={`text-[10px] truncate max-w-[140px] font-medium hidden sm:inline-block ${
-                                                                            isPrinting ? "text-black" : "text-rose-600 dark:text-rose-400"
-                                                                        }`}>
-                                                                            🍽️ {firstRec.name}
-                                                                        </span>
-                                                                    )}
-                                                                </div>
-                                                            )}
-
-                                                            {/* 地址 */}
-                                                            {linkedPlace.info?.loc && (
-                                                                <div className={`flex items-center gap-1 text-[10px] truncate pt-0.5 ${
-                                                                    isPrinting ? "text-black" : "text-muted-foreground"
-                                                                }`}>
-                                                                    <MapPin size={10} className={isPrinting ? "text-black shrink-0" : "text-rose-500 shrink-0"} />
-                                                                    <span className="truncate">{linkedPlace.info.loc}</span>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => onDeleteActivityBtnClick(itinerary, { ...activity, activityIndex: activity.activityIndex ?? idx })}
+                                                                        className="p-1 rounded-full text-muted-foreground hover:text-rose-600 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                                                                        title="刪除活動"
+                                                                    >
+                                                                        <Trash2 size={11} />
+                                                                    </button>
                                                                 </div>
                                                             )}
                                                         </div>
-                                                    </div>
-                                                </div>
-                                            ) : (
-                                                /* 無連結地點時的自訂手動活動卡片 */
-                                                <div className={`p-3 rounded-2xl border text-xs space-y-1 ${
-                                                    isPrinting ? "bg-white border-gray-400 text-black" : "bg-card border-border/70 text-card-foreground shadow-2xs"
-                                                }`}>
-                                                    <h4 className={`font-bold text-sm ${
-                                                        isPrinting ? "text-black" : "text-foreground"
-                                                    }`}>
-                                                        {activity.title}
-                                                    </h4>
-                                                    {activity.desc && (
-                                                        <p className={`leading-relaxed text-xs ${
-                                                            isPrinting ? "text-gray-800" : "text-muted-foreground"
+                                                    )}
+
+                                                    {/* 🌟 核心：有連結地點時，呈現 iOS 原生風格卡片 (點擊直接開啟地點預覽) */}
+                                                    {linkedPlace ? (
+                                                        <div
+                                                            onClick={() => !isPrinting && onViewBtnClick(linkedPlace.id)}
+                                                            className={`p-3 sm:p-3.5 rounded-2xl border transition-all ${
+                                                                !isPrinting
+                                                                    ? isScheduleConflict
+                                                                        ? "bg-rose-500/5 dark:bg-rose-950/20 border-rose-500/60 shadow-xs ring-1 ring-rose-500/30 hover:border-rose-500 cursor-pointer active:scale-[0.99] group/card text-card-foreground"
+                                                                        : "bg-card border-border/80 hover:border-blue-500/50 hover:shadow-md cursor-pointer active:scale-[0.99] group/card shadow-2xs text-card-foreground"
+                                                                    : "bg-white border-gray-400 text-black font-[Noto_Sans_TC]"
+                                                            }`}
+                                                            title={!isPrinting ? "點擊查看地點詳細卡片" : undefined}
+                                                        >
+                                                            <div className="flex items-start gap-3">
+                                                                {/* 左側縮圖 */}
+                                                                <div className="relative w-18 h-18 sm:w-20 sm:h-20 rounded-xl overflow-hidden shrink-0 bg-muted border border-border/60 shadow-2xs">
+                                                                    {linkedPlace.image_url ? (
+                                                                        <img
+                                                                            src={linkedPlace.image_url}
+                                                                            alt={linkedPlace.name}
+                                                                            className="w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-500"
+                                                                        />
+                                                                    ) : (
+                                                                        <div className="w-full h-full flex items-center justify-center text-muted-foreground/40">
+                                                                            <MapPin size={18} />
+                                                                        </div>
+                                                                    )}
+                                                                    <span className="absolute bottom-1 left-1 px-1.5 py-0.2 rounded bg-black/60 backdrop-blur-md text-[9px] text-white font-bold tracking-wider">
+                                                                        {getCategoryTypeName(linkedPlace.type)}
+                                                                    </span>
+                                                                </div>
+
+                                                                {/* 右側資訊 */}
+                                                                <div className="flex-1 min-w-0 space-y-1">
+                                                                    {/* 標題與語音按鈕 */}
+                                                                    <div className="flex items-start justify-between gap-1">
+                                                                        <div className="min-w-0 flex-1">
+                                                                            <h4 className={`text-xs sm:text-sm font-bold truncate leading-tight ${
+                                                                                isPrinting ? "text-black text-sm" : isScheduleConflict ? "text-rose-600 dark:text-rose-400 group-hover/card:text-rose-500" : "text-foreground group-hover/card:text-blue-500 transition-colors"
+                                                                            }`}>
+                                                                                {linkedPlace.name}
+                                                                            </h4>
+                                                                            {(linkedPlace.eng_name || linkedPlace.info?.native_name) && (
+                                                                                <p className={`text-[11px] font-mono truncate mt-0.5 ${
+                                                                                    isPrinting ? "text-gray-700" : "text-muted-foreground"
+                                                                                }`}>
+                                                                                    {linkedPlace.eng_name}
+                                                                                    {linkedPlace.eng_name && linkedPlace.info?.native_name && " · "}
+                                                                                    {linkedPlace.info?.native_name}
+                                                                                </p>
+                                                                            )}
+                                                                        </div>
+
+                                                                        {!isPrinting && linkedPlace.info?.native_name && (
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={(e) => handleSpeakPlace(linkedPlace, e)}
+                                                                                className={`p-1 rounded-full hover:bg-muted text-blue-500 transition-colors shrink-0 cursor-pointer ${
+                                                                                    speakingId === linkedPlace.id ? "animate-pulse scale-110 text-amber-500" : ""
+                                                                                }`}
+                                                                                title={`發音 (${detectedLang?.name || ""})`}
+                                                                            >
+                                                                                <Volume2 size={13} />
+                                                                            </button>
+                                                                        )}
+                                                                    </div>
+
+                                                                    {/* 營業狀態 / 住宿時間 + 評分 */}
+                                                                    {linkedPlace && (
+                                                                        <div className={`flex items-center gap-2 flex-wrap text-[11px] ${
+                                                                            isPrinting ? "text-black" : ""
+                                                                        }`}>
+                                                                            {linkedPlace.type === "hotel" || linkedPlace.type === "stay" ? (
+                                                                                !isPrinting ? (
+                                                                                    <span className="text-[10px] text-blue-600 dark:text-blue-400 font-medium">
+                                                                                        🏨 入住 {linkedPlace.info?.check_in || "15:00"} · 退房 {linkedPlace.info?.check_out || "11:00"}
+                                                                                    </span>
+                                                                                ) : (
+                                                                                    <span className="text-[10px] text-gray-800 font-bold">
+                                                                                        入住：{linkedPlace.info?.check_in || "15:00"} / 退房：{linkedPlace.info?.check_out || "11:00"}
+                                                                                    </span>
+                                                                                )
+                                                                            ) : businessStatus ? (
+                                                                                <>
+                                                                                    {/* 💡 非營業時段或當日公休時：紅底亮眼標示錯誤 */}
+                                                                                    {isScheduleConflict && !isPrinting && (
+                                                                                        <span className="px-1.5 py-0.5 rounded font-extrabold text-[10px] bg-rose-500 text-white shadow-2xs flex items-center gap-0.5 animate-pulse">
+                                                                                            <AlertTriangle size={10} className="shrink-0" />
+                                                                                            <span>
+                                                                                                {businessStatus.status === "closed_today"
+                                                                                                    ? "⚠️ 排定日公休"
+                                                                                                    : `⚠️ 非營業時間 (${businessStatus.detailText})`}
+                                                                                            </span>
+                                                                                        </span>
+                                                                                    )}
+
+                                                                                    {isScheduleConflict && isPrinting && (
+                                                                                        <span className="text-[10px] text-rose-700 font-bold">
+                                                                                            ⚠️ 注意：排定時間{businessStatus.status === "closed_today" ? "公休" : "非營業"} ({businessStatus.detailText})
+                                                                                        </span>
+                                                                                    )}
+
+                                                                                    {!isScheduleConflict && linkedPlace.info?.open && !isPrinting && (
+                                                                                        <span className={`px-1.5 py-0.2 rounded font-extrabold text-[10px] ${
+                                                                                            businessStatus.badgeColor === "emerald"
+                                                                                                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                                                                                                : businessStatus.badgeColor === "amber"
+                                                                                                ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
+                                                                                                : "bg-muted text-muted-foreground"
+                                                                                        }`}>
+                                                                                            {businessStatus.badgeText}
+                                                                                        </span>
+                                                                                    )}
+
+                                                                                    {!isScheduleConflict && linkedPlace.info?.open && isPrinting && (
+                                                                                        <span className="text-[10px] text-gray-800 font-bold">
+                                                                                            營業時間：{businessStatus.allHoursSummary}
+                                                                                        </span>
+                                                                                    )}
+                                                                                </>
+                                                                            ) : null}
+
+                                                                            {linkedPlace.info?.rating && (
+                                                                                <span className={`flex items-center gap-0.5 text-[10px] font-bold ${
+                                                                                    isPrinting ? "text-black" : "text-amber-500"
+                                                                                }`}>
+                                                                                    <Star size={10} className={isPrinting ? "text-black fill-black" : "fill-amber-400 text-amber-400"} />
+                                                                                    <span>{linkedPlace.info.rating}</span>
+                                                                                </span>
+                                                                            )}
+
+                                                                            {firstRec && (
+                                                                                <span className={`text-[10px] truncate max-w-[140px] font-medium hidden sm:inline-block ${
+                                                                                    isPrinting ? "text-black" : "text-rose-600 dark:text-rose-400"
+                                                                                }`}>
+                                                                                    🍽️ {firstRec.name}
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                    )}
+
+                                                                    {/* 地址 */}
+                                                                    {linkedPlace.info?.loc && (
+                                                                        <div className={`flex items-center gap-1 text-[10px] truncate pt-0.5 ${
+                                                                            isPrinting ? "text-black" : "text-muted-foreground"
+                                                                        }`}>
+                                                                            <MapPin size={10} className={isPrinting ? "text-black shrink-0" : "text-rose-500 shrink-0"} />
+                                                                            <span className="truncate">{linkedPlace.info.loc}</span>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        /* 無連結地點時的自訂手動活動卡片 */
+                                                        <div className={`p-3 rounded-2xl border text-xs space-y-1 ${
+                                                            isPrinting ? "bg-white border-gray-400 text-black" : "bg-card border-border/70 text-card-foreground shadow-2xs"
                                                         }`}>
-                                                            {activity.desc}
-                                                        </p>
+                                                            <h4 className={`font-bold text-sm ${
+                                                                isPrinting ? "text-black" : "text-foreground"
+                                                            }`}>
+                                                                {activity.title}
+                                                            </h4>
+                                                            {activity.desc && (
+                                                                <p className={`leading-relaxed text-xs ${
+                                                                    isPrinting ? "text-gray-800" : "text-muted-foreground"
+                                                                }`}>
+                                                                    {activity.desc}
+                                                                </p>
+                                                            )}
+                                                        </div>
                                                     )}
                                                 </div>
-                                            )}
+                                            </div>
 
-                                            {/* 🚆 前往下一站的交通時間節點 (Transit Connector Card) */}
-                                            {((activity.transitMode && activity.transitMode !== "none") || activity.transitDuration) && (
-                                                <div
-                                                    className={`mt-2 rounded-xl text-xs font-medium p-2.5 ${
-                                                        isPrinting
-                                                            ? "bg-gray-100 border border-gray-400 text-black text-[9px] font-bold"
-                                                            : "bg-muted/30 border border-border/60 text-foreground"
-                                                    }`}
-                                                >
-                                                    <div className="flex items-center justify-between gap-2 flex-wrap">
-                                                        <div className="flex items-center gap-1.5 font-bold">
-                                                            {(() => {
-                                                                const TransitIconComp = getTransitIcon(activity.transitMode);
-                                                                return (
-                                                                    <TransitIconComp
-                                                                        size={13}
-                                                                        className={isPrinting ? "text-black shrink-0" : "text-blue-500 shrink-0"}
-                                                                    />
-                                                                );
-                                                            })()}
-                                                            <span>
-                                                                {activity.transitDuration
-                                                                    ? `路程約 ${activity.transitDuration}`
-                                                                    : "前往下一站"}
-                                                            </span>
+                                            {/* 🚆 2. 前往下一站的交通移動節點 (出發時刻 09:30 ➔ 車程 30分鐘) */}
+                                            {transit.hasTransit && (
+                                                <div className="flex items-center min-h-[36px]">
+                                                    {/* 2.1 左側交通節點圖標 + 出發時間點 (若與活動開始時間相同則不重複顯示時間) */}
+                                                    <div className="w-12 sm:w-14 shrink-0 flex flex-col items-center justify-center z-10">
+                                                        <div className={`flex items-center justify-center rounded-full shadow-2xs ${
+                                                            isPrinting
+                                                                ? "w-4 h-4 bg-gray-200 border border-gray-400 text-black"
+                                                                : "w-5 h-5 sm:w-6 sm:h-6 bg-blue-500/10 border border-blue-500/30 text-blue-600 dark:text-blue-400"
+                                                        }`}>
+                                                            <TransitIconComp size={isPrinting ? 9 : 11} />
                                                         </div>
+                                                        {transit.departureTime !== startTime && (
+                                                            <span className={`font-mono font-bold text-[10px] sm:text-xs mt-1 text-center ${
+                                                                isPrinting ? "text-black" : "text-blue-600 dark:text-blue-400"
+                                                            }`}>
+                                                                {transit.departureTime}
+                                                            </span>
+                                                        )}
+                                                    </div>
 
-                                                        {/* 詳細備註膠囊 */}
-                                                        {(() => {
-                                                            const transitNote =
-                                                                activity.transitDetails?.flightNumber ||
-                                                                activity.transitDetails?.companyAndLine ||
-                                                                activity.transitDetails?.carRentalCompany;
-                                                            if (!transitNote) return null;
-                                                            return (
-                                                                <span
-                                                                    className={`text-[10px] px-2 py-0.5 rounded font-mono font-semibold ${
-                                                                        isPrinting
-                                                                            ? "bg-gray-200 text-black border border-gray-400"
-                                                                            : "bg-muted text-muted-foreground border border-border/60"
-                                                                    }`}
-                                                                >
-                                                                    {transitNote}
-                                                                </span>
-                                                            );
-                                                        })()}
+                                                    {/* 2.2 右側交通時段卡片 (列印模式清晰黑字高對比度) */}
+                                                    <div className="flex-1 min-w-0 pr-3 sm:pr-4">
+                                                        <div
+                                                            className={`rounded-xl text-xs font-medium p-2.5 transition-all ${
+                                                                isPrinting
+                                                                    ? "bg-gray-100 border border-gray-400 text-black text-[10px]"
+                                                                    : "bg-muted/40 hover:bg-muted/60 border border-border/70 text-foreground shadow-2xs"
+                                                            }`}
+                                                        >
+                                                            <div className="flex items-center justify-between gap-2 flex-wrap">
+                                                                <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                                                                    {/* 交通方式與移動時長 */}
+                                                                    <span className={`font-bold flex items-center gap-1 ${
+                                                                        isPrinting ? "text-black" : "text-foreground"
+                                                                    }`}>
+                                                                        <TransitIconComp
+                                                                            size={12}
+                                                                            className={isPrinting ? "text-black shrink-0" : "text-blue-500 shrink-0"}
+                                                                        />
+                                                                        <span>
+                                                                            {transit.durationFormatted
+                                                                                ? `移動約 ${transit.durationFormatted}`
+                                                                                : "前往下一站"}
+                                                                        </span>
+                                                                    </span>
+                                                                </div>
+
+                                                                {/* 詳細備註膠囊 */}
+                                                                {transitNote && (
+                                                                    <span
+                                                                        className={`text-[10px] px-2 py-0.5 rounded font-mono font-semibold truncate max-w-[200px] ${
+                                                                            isPrinting
+                                                                                ? "bg-white text-black border border-gray-500"
+                                                                                : "bg-card text-muted-foreground border border-border/70 shadow-2xs"
+                                                                        }`}
+                                                                        title={transitNote}
+                                                                    >
+                                                                        {transitNote}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             )}
                                         </div>
-                                    </div>
-                                );
-                            })
+                                    );
+                                });
+                            })()
                         ) : (
                             <div className="flex py-3">
                                 <div className="w-12 sm:w-14 shrink-0" />

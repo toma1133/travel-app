@@ -61,7 +61,8 @@ const ItineraryPage = ({
     const [itineraryCategory] = useState(ITINERARY_CATEGORIES);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const [selectedDayFilter, setSelectedDayFilter] = useState<string>("all"); // 'all' | day.id
-    const [itineraryPlacesMap, setItineraryPlacesMap] = useState<Record<string, PlaceVM[]>>({}); // dayId -> PlaceVM[]
+    const [itineraryPlacesMap, setItineraryPlacesMap] = useState<Record<string, PlaceVM[]>>({}); // dayId -> PlaceVM[] (valid GPS places only)
+    const [allPlacesMap, setAllPlacesMap] = useState<Record<string, PlaceVM>>({}); // placeId -> PlaceVM (all fetched places)
     const hasInitializedDayFilterRef = useRef(false);
 
     // 維護 selectedDayFilter 狀態：初始載入時預設當天或第一天，之後儲存/更新時保持當前選取的日程
@@ -105,7 +106,10 @@ const ItineraryPage = ({
             });
 
             if (allPlaceIds.size === 0) {
-                if (isMounted) setItineraryPlacesMap({ all: [] });
+                if (isMounted) {
+                    setItineraryPlacesMap({ all: [] });
+                    setAllPlacesMap({});
+                }
                 return;
             }
 
@@ -117,11 +121,16 @@ const ItineraryPage = ({
                 const rows = await placeRepo.getByIds(placeIdList);
                 
                 const placeMapById = new Map<string, PlaceVM>();
+                const placeRecord: Record<string, PlaceVM> = {};
                 rows.forEach((r: any) => {
-                    if (r) placeMapById.set(r.id, toPlaceVM(r));
+                    if (r) {
+                        const vm = toPlaceVM(r);
+                        placeMapById.set(r.id, vm);
+                        placeRecord[r.id] = vm;
+                    }
                 });
 
-                // 3. 組合每日的 Place 陣列與全部天數陣列
+                // 3. 組合每日的 Place 陣列與全部天數陣列 (嚴格僅納入具備有效 GPS 經緯度的地點)
                 const dayMap: Record<string, PlaceVM[]> = {};
                 const allVMs: PlaceVM[] = [];
 
@@ -129,17 +138,26 @@ const ItineraryPage = ({
                     const dayVMs: PlaceVM[] = [];
                     day.activities?.forEach((act) => {
                         if (act.linkId && placeMapById.has(act.linkId)) {
-                            dayVMs.push(placeMapById.get(act.linkId)!);
+                            const vm = placeMapById.get(act.linkId)!;
+                            if (
+                                typeof vm.lat === "number" &&
+                                typeof vm.lng === "number" &&
+                                !isNaN(vm.lat) &&
+                                !isNaN(vm.lng)
+                            ) {
+                                dayVMs.push(vm);
+                                allVMs.push(vm);
+                            }
                         }
                     });
                     dayMap[day.id] = dayVMs;
                 });
 
-                placeMapById.forEach((vm) => allVMs.push(vm));
                 dayMap["all"] = allVMs;
 
                 if (isMounted) {
                     setItineraryPlacesMap(dayMap);
+                    setAllPlacesMap(placeRecord);
                 }
             } finally {
                 if (isMounted) {
@@ -189,11 +207,9 @@ const ItineraryPage = ({
 
     const placesMapById = useMemo(() => {
         const map = new Map<string, PlaceVM>();
-        if (itineraryPlacesMap["all"]) {
-            itineraryPlacesMap["all"].forEach((p) => map.set(p.id, p));
-        }
+        Object.values(allPlacesMap).forEach((p) => map.set(p.id, p));
         return map;
-    }, [itineraryPlacesMap]);
+    }, [allPlacesMap]);
 
     const handleOpenOptimizeModal = (itineraryDay: ItineraryVM) => {
         setDayToOptimize(itineraryDay);
@@ -635,6 +651,8 @@ const ItineraryPage = ({
                         <ItineraryList
                             itinerarys={itinerarys}
                             pcSelectedDayId={selectedDayFilter}
+                            itineraryPlacesMap={itineraryPlacesMap}
+                            placeMap={allPlacesMap}
                             isEditing={isEditing}
                             isPrinting={isPrinting}
                             theme={tripData?.theme_config!}

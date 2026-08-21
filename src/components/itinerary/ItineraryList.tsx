@@ -7,11 +7,15 @@ import type {
 } from "../../models/types/ItineraryTypes";
 import type { TripThemeConf } from "../../models/types/TripTypes";
 
+import type { PlaceVM } from "../../models/types/PlaceTypes";
+
 type ItineraryListProps = {
     isEditing: boolean;
     isPrinting?: boolean;
     itinerarys?: ItineraryVM[];
     pcSelectedDayId?: string;
+    itineraryPlacesMap?: Record<string, PlaceVM[]>;
+    placeMap?: Record<string, PlaceVM>;
     scrollContainerRef?: React.RefObject<HTMLDivElement | null>;
     theme: TripThemeConf | null;
     onAddActivityBtnClick: (itineraryDay: ItineraryVM) => void;
@@ -35,6 +39,8 @@ const ItineraryList = ({
     isPrinting = false,
     itinerarys,
     pcSelectedDayId,
+    itineraryPlacesMap,
+    placeMap,
     scrollContainerRef,
     theme,
     onAddActivityBtnClick,
@@ -121,6 +127,20 @@ const ItineraryList = ({
         );
     }, [itinerarys, expandedDayNum]);
 
+    const dayOffsets = useMemo(() => {
+        const offsets: Record<string, number> = {};
+        if (pcSelectedDayId !== "all") {
+            return offsets;
+        }
+        let currentOffset = 0;
+        itinerarys?.forEach((day) => {
+            offsets[day.id] = currentOffset;
+            const validCount = itineraryPlacesMap?.[day.id]?.length || 0;
+            currentOffset += validCount;
+        });
+        return offsets;
+    }, [itinerarys, pcSelectedDayId, itineraryPlacesMap]);
+
     return (
         <div className={`space-y-4 ${isPrinting ? "space-y-6 overflow-visible block" : ""}`}>
             {Array.isArray(itinerarys) && itinerarys.length > 0 ? (
@@ -146,6 +166,8 @@ const ItineraryList = ({
                             isEditing={isEditing}
                             isExpanded={isDesktop || expandedDayNum === itinerary.day_number || isPrinting}
                             isPrinting={isPrinting}
+                            dayPlaceIndexOffset={dayOffsets[itinerary.id] || 0}
+                            placeMap={placeMap}
                             onExpandedBtnToggle={() => handleExpandedBtnClick(itinerary, i)}
                             onAddActivityBtnClick={onAddActivityBtnClick}
                             onDeleteActivityBtnClick={onDeleteActivityBtnClick}

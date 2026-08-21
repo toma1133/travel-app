@@ -498,3 +498,26 @@ export function getBusinessStatus(
         parsed,
     };
 }
+
+/**
+ * Create a Moment object for a scheduled activity date and time string.
+ * Example: dateStr: "2026-08-25", timeStr: "14:30"
+ */
+export function getScheduledMoment(dateStr?: string | null, timeStr?: string | null): moment.Moment {
+    let m = moment();
+    if (dateStr && moment(dateStr, "YYYY-MM-DD", true).isValid()) {
+        m = moment(dateStr, "YYYY-MM-DD");
+    } else if (dateStr && moment(dateStr).isValid()) {
+        m = moment(dateStr);
+    }
+    if (timeStr) {
+        const timeMatch = timeStr.match(/(\d{1,2}):(\d{2})/);
+        if (timeMatch) {
+            m.hours(parseInt(timeMatch[1], 10));
+            m.minutes(parseInt(timeMatch[2], 10));
+            m.seconds(0);
+        }
+    }
+    return m;
+}
+

@@ -108,7 +108,22 @@ export function detectLanguage(
         return { code: "pt-PT", name: "葡萄牙語", flag: "🇵🇹" };
     }
 
-    // 14. 🇨🇳 / 🇹🇼 Chinese (漢字: U+4E00 - U+9FFF)
+    // 14. 🇳🇴 Norwegian (挪威文: æ, ø, å 及常用關鍵字/幣別)
+    if (context?.currency === "NOK" || (/[æøå]/i.test(t) && context?.currency === "NOK")) {
+        return { code: "nb-NO", name: "挪威語", flag: "🇳🇴" };
+    }
+
+    // 15. 🇸🇪 Swedish (瑞典文: å, ä, ö 及常用關鍵字/幣別)
+    if (context?.currency === "SEK" || (/[åäö]/i.test(t) && context?.currency === "SEK")) {
+        return { code: "sv-SE", name: "瑞典語", flag: "🇸🇪" };
+    }
+
+    // 16. 🇩🇰 Danish (丹麥文: æ, ø, å 及常用關鍵字/幣別)
+    if (context?.currency === "DKK" || (/[æøå]/i.test(t) && context?.currency === "DKK")) {
+        return { code: "da-DK", name: "丹麥語", flag: "🇩🇰" };
+    }
+
+    // 17. 🇨🇳 / 🇹🇼 Chinese (漢字: U+4E00 - U+9FFF)
     if (/[\u4E00-\u9FFF]/.test(t)) {
         // Check if context points to Japan or Korea
         if (context?.currency === "JPY" || (context?.address && /日本|京都|東京|大阪|北海道|福岡|沖繩/i.test(context.address))) {
@@ -120,11 +135,18 @@ export function detectLanguage(
         return { code: "zh-TW", name: "中文", flag: "🇹🇼" };
     }
 
-    // 15. Context fallback based on currency or address
+    // 18. Context fallback based on currency or address
     if (context?.currency === "JPY") return { code: "ja-JP", name: "日語 (羅馬拼音)", flag: "🇯🇵" };
     if (context?.currency === "KRW") return { code: "ko-KR", name: "韓語 (羅馬拼音)", flag: "🇰🇷" };
     if (context?.currency === "THB") return { code: "th-TH", name: "泰語 (拼音)", flag: "🇹🇭" };
+    if (context?.currency === "VND") return { code: "vi-VN", name: "越南語", flag: "🇻🇳" };
     if (context?.currency === "ISK") return { code: "is-IS", name: "冰島語", flag: "🇮🇸" };
+    if (context?.currency === "NOK") return { code: "nb-NO", name: "挪威語", flag: "🇳🇴" };
+    if (context?.currency === "SEK") return { code: "sv-SE", name: "瑞典語", flag: "🇸🇪" };
+    if (context?.currency === "DKK") return { code: "da-DK", name: "丹麥語", flag: "🇩🇰" };
+    if (context?.currency === "CZK") return { code: "cs-CZ", name: "捷克語", flag: "🇨🇿" };
+    if (context?.currency === "PLN") return { code: "pl-PL", name: "波蘭語", flag: "🇵🇱" };
+    if (context?.currency === "TRY") return { code: "tr-TR", name: "土耳其語", flag: "🇹🇷" };
 
     // Default to English
     return { code: "en-US", name: "英語", flag: "🌐" };

@@ -50,6 +50,8 @@ import { CategoryCustomSelect } from "../common/CategoryCustomSelect";
 import { placeRepo } from "../../services/repositories/PlaceRepo";
 import { toPlacesVM } from "../../services/mappers/PlaceMapper";
 import { RoutingService } from "../../services/api/RoutingService";
+import { parseDurationToMinutes, addMinutesToTime } from "../../utils/ItineraryTimeUtil";
+import { getBusinessStatus, getScheduledMoment } from "../../utils/OpeningHoursUtil";
 
 type ItineraryActivityModalProps = {
     formData: ItineraryActivitiy;
@@ -294,6 +296,41 @@ const ItineraryActivityModal = ({
         }
     };
 
+    const liveTimelinePreview = useMemo(() => {
+        if (!formData.time) return null;
+        const stayMinutes = parseDurationToMinutes(formData.duration);
+        const hasStay = typeof stayMinutes === "number" && stayMinutes > 0;
+        const leaveTime = hasStay ? addMinutesToTime(formData.time, stayMinutes) : formData.time;
+
+        const transitMinutes = parseDurationToMinutes(formData.transitDuration);
+        const hasTransit = typeof transitMinutes === "number" && transitMinutes > 0;
+        const nextArrivalTime = hasTransit ? addMinutesToTime(leaveTime, transitMinutes) : null;
+
+        return {
+            hasStay,
+            stayMinutes,
+            leaveTime,
+            hasTransit,
+            transitMinutes,
+            nextArrivalTime,
+        };
+    }, [formData.time, formData.duration, formData.transitDuration]);
+
+    const scheduledOpeningCheck = useMemo(() => {
+        if (!selectedPlace || selectedPlace.type === "hotel" || selectedPlace.type === "stay" || !selectedPlace.info?.open || !formData.time) {
+            return null;
+        }
+        const scheduledMoment = getScheduledMoment(itinerary?.date, formData.time);
+        const status = getBusinessStatus(selectedPlace.info.open, selectedPlace.info.closed_days, scheduledMoment);
+        const isConflict = status.status === "closed" || status.status === "closed_today";
+        return {
+            ...status,
+            isConflict,
+        };
+    }, [selectedPlace, itinerary?.date, formData.time]);
+
+    const QUICK_DURATIONS = ["30分鐘", "1小時", "1.5小時", "2小時", "3小時", "半天"];
+
     return (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-200">
             <div
@@ -535,36 +572,93 @@ const ItineraryActivityModal = ({
 
                         <div className="bg-card border border-border/80 rounded-2xl overflow-hidden divide-y divide-border/60 text-xs shadow-2xs">
                             {/* 1. 時間 */}
-                            <div className="p-3 sm:p-3.5 flex items-center justify-between gap-3 bg-card hover:bg-muted/10 transition-colors">
-                                <span className="text-muted-foreground w-24 sm:w-28 shrink-0 font-medium flex items-center gap-1">
-                                    <Clock size={13} className="text-blue-500" />
-                                    <span>開始時間</span>
-                                    <span className="text-rose-500 font-bold">*</span>
-                                </span>
-                                <input
-                                    required
-                                    type="time"
-                                    name="time"
-                                    value={formData.time}
-                                    onChange={onFormInputChange}
-                                    className="min-w-0 flex-1 text-left font-mono font-bold text-foreground bg-transparent outline-none cursor-pointer dark:[color-scheme:dark]"
-                                />
+                            <div className="bg-card hover:bg-muted/10 transition-colors">
+                                <div className="p-3 sm:p-3.5 flex items-center justify-between gap-3">
+                                    <span className="text-muted-foreground w-24 sm:w-28 shrink-0 font-medium flex items-center gap-1">
+                                        <Clock size={13} className="text-blue-500" />
+                                        <span>開始時間</span>
+                                        <span className="text-rose-500 font-bold">*</span>
+                                    </span>
+                                    <input
+                                        required
+                                        type="time"
+                                        name="time"
+                                        value={formData.time}
+                                        onChange={onFormInputChange}
+                                        className={`min-w-0 flex-1 text-left font-mono font-bold bg-transparent outline-none cursor-pointer dark:[color-scheme:dark] ${
+                                            scheduledOpeningCheck?.isConflict ? "text-rose-600 dark:text-rose-400" : "text-foreground"
+                                        }`}
+                                    />
+                                    {scheduledOpeningCheck?.isConflict && (
+                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500 text-white shrink-0 shadow-2xs">
+                                            {scheduledOpeningCheck.status === "closed_today" ? "⚠️ 當日公休" : "⚠️ 非營業時段"}
+                                        </span>
+                                    )}
+                                </div>
+
+                                {/* ⚠️ 營業時間衝突詳細提示 */}
+                                {scheduledOpeningCheck?.isConflict && (
+                                    <div className="px-3 pb-2.5 pt-0 text-[11px] text-rose-600 dark:text-rose-400 font-medium flex items-start gap-1.5">
+                                        <AlertCircle size={13} className="text-rose-500 shrink-0 mt-0.5" />
+                                        <div>
+                                            <span>
+                                                排定時間（{formData.time}）為{scheduledOpeningCheck.status === "closed_today" ? "公休日" : "休息時間"}
+                                                {scheduledOpeningCheck.detailText && ` (${scheduledOpeningCheck.detailText})`}
+                                            </span>
+                                            <p className="text-[10px] opacity-80 mt-0.5">
+                                                營業時間：{scheduledOpeningCheck.todayHoursText || scheduledOpeningCheck.allHoursSummary}
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             {/* 2. 停留時間 */}
-                            <div className="p-3 sm:p-3.5 flex items-center justify-between gap-3 bg-card hover:bg-muted/10 transition-colors">
-                                <span className="text-muted-foreground w-24 sm:w-28 shrink-0 font-medium flex items-center gap-1">
-                                    <Hourglass size={13} className="text-amber-500" />
-                                    <span>預計停留</span>
-                                </span>
-                                <input
-                                    type="text"
-                                    name="duration"
-                                    value={formData.duration || ""}
-                                    onChange={onFormInputChange}
-                                    placeholder="例: 1.5小時, 45分鐘"
-                                    className="min-w-0 flex-1 text-left font-medium text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40"
-                                />
+                            <div className="p-3 sm:p-3.5 space-y-2 bg-card hover:bg-muted/10 transition-colors">
+                                <div className="flex items-center justify-between gap-3">
+                                    <span className="text-muted-foreground w-24 sm:w-28 shrink-0 font-medium flex items-center gap-1">
+                                        <Hourglass size={13} className="text-amber-500" />
+                                        <span>預計停留</span>
+                                    </span>
+                                    <input
+                                        type="text"
+                                        name="duration"
+                                        value={formData.duration || ""}
+                                        onChange={onFormInputChange}
+                                        placeholder="例: 1.5小時, 45分鐘"
+                                        className="min-w-0 flex-1 text-left font-medium text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40"
+                                    />
+                                    {liveTimelinePreview?.hasStay && (
+                                        <span className="text-[10px] font-mono font-bold text-blue-600 dark:text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-full border border-blue-500/20 shrink-0">
+                                            ⚡ 預計 {liveTimelinePreview.leaveTime} 離開
+                                        </span>
+                                    )}
+                                </div>
+
+                                {/* 快速停留時長標籤 */}
+                                <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+                                    <span className="text-[10px] text-muted-foreground/70 font-semibold px-0.5">常用：</span>
+                                    {QUICK_DURATIONS.map((dur) => (
+                                        <button
+                                            key={dur}
+                                            type="button"
+                                            onClick={() => {
+                                                const event = {
+                                                    target: { name: "duration", value: dur },
+                                                    currentTarget: { name: "duration", value: dur },
+                                                } as unknown as ChangeEvent<HTMLInputElement>;
+                                                onFormInputChange(event);
+                                            }}
+                                            className={`text-[10px] px-2 py-0.5 rounded-lg border font-medium transition-all cursor-pointer ${
+                                                formData.duration === dur
+                                                    ? "bg-blue-500 text-white border-blue-500 shadow-2xs font-bold"
+                                                    : "bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground border-border/60"
+                                            }`}
+                                        >
+                                            {dur}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
 
                             {/* 3. 活動標題 */}
@@ -686,6 +780,11 @@ const ItineraryActivityModal = ({
                                     placeholder="例: 15分鐘, 30分鐘 (3.2 km)"
                                     className="min-w-0 flex-1 text-left font-medium text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40"
                                 />
+                                {liveTimelinePreview?.hasTransit && liveTimelinePreview.nextArrivalTime && (
+                                    <span className="text-[10px] font-mono font-bold text-blue-600 dark:text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-full border border-blue-500/20 shrink-0">
+                                        ⚡ 預計 {liveTimelinePreview.nextArrivalTime} 抵達
+                                    </span>
+                                )}
                             </div>
 
                             {/* 交通細節 (自駕、鐵路路線等) */}

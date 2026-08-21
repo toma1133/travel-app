@@ -152,10 +152,10 @@ export function isValidPrice(price?: string | null): boolean {
     if (!price || typeof price !== 'string') return false;
     const trimmed = price.trim();
     if (!trimmed) return false;
-    // Remove leading 3-letter currency code (e.g. KRW, JPY, TWD, USD, EUR...) or currency symbols (¥, $, €, ₩, NT$, etc.)
+    // Remove leading 3-letter currency code (e.g. KRW, JPY, TWD, USD, EUR, NOK, CAD...) or currency symbols (¥, $, €, ₩, NT$, kr, fr, ₫, ₱, zł, ₺, Kč, Ft, RM, DH, etc.)
     const amountOnly = trimmed
         .replace(/^[A-Z]{3}\s*/i, '')
-        .replace(/^[¥$€₩NT£฿krfr]+\s*/i, '')
+        .replace(/^(¥|\$|€|₩|NT\$|NT|£|฿|kr|fr|₫|₱|zł|₺|Kč|Ft|RM|DH)\s*/i, '')
         .trim();
     return amountOnly.length > 0;
 }

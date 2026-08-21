@@ -464,7 +464,10 @@ const PlaceMapView = ({
         if (!places) return [];
         return places.filter(
             (p): p is PlaceVM & { lat: number; lng: number } =>
-                typeof p.lat === "number" && typeof p.lng === "number"
+                typeof p.lat === "number" &&
+                typeof p.lng === "number" &&
+                !isNaN(p.lat) &&
+                !isNaN(p.lng)
         );
     }, [places]);
 
