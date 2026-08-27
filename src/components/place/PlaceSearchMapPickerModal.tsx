@@ -7,6 +7,7 @@ import {
     useMap,
     useMapEvents,
 } from "react-leaflet";
+import { MapVectorLayer } from "./MapVectorLayer";
 import L from "leaflet";
 import {
     Search,
@@ -32,8 +33,11 @@ import { OSMService, OSMPlace, WikiData } from "../../services/api/OSMService";
 import { KakaoLocalService, KakaoPlace, KakaoAddressDoc } from "../../services/api/KakaoLocalService";
 import { useTheme } from "../../contexts/ThemeContext";
 
+const CARTO_API_KEY = import.meta.env.VITE_CARTO_API_KEY?.trim() || "";
+const CARTO_KEY_PARAM = CARTO_API_KEY ? `?key=${CARTO_API_KEY}` : "";
+
 export interface ImportedPlacePayload {
-    name: string;
+    name?: string;
     eng_name?: string;
     native_name?: string;
     loc?: string;
@@ -570,13 +574,13 @@ export const PlaceSearchMapPickerModal: React.FC<PlaceSearchMapPickerModalProps>
                             className="w-full h-full z-10"
                             style={{ background: isDark ? "#18181b" : "#f4f4f5" }}
                         >
-                            <TileLayer
-                                url={
+                            <MapVectorLayer
+                                key={`picker-vector-${isDark ? "dark" : "light"}`}
+                                styleUrl={
                                     isDark
-                                        ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-                                        : "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+                                        ? `https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json${CARTO_KEY_PARAM}`
+                                        : `https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json${CARTO_KEY_PARAM}`
                                 }
-                                attribution='&copy; <a href="https://carto.com/">CARTO</a>'
                             />
 
                             <MapViewController

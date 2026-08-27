@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { MapContainer, TileLayer, Marker, Popup, Polyline, Tooltip } from "react-leaflet";
+import { MapVectorLayer } from "./MapVectorLayer";
 import L from "leaflet";
 import {
     Car,
@@ -61,9 +62,13 @@ type PlaceMapViewProps = {
 // Map Style Options
 type MapStyleKey = "auto" | "voyager" | "positron" | "dark" | "satellite";
 
+const CARTO_API_KEY = import.meta.env.VITE_CARTO_API_KEY?.trim() || "";
+const CARTO_KEY_PARAM = CARTO_API_KEY ? `?key=${CARTO_API_KEY}` : "";
+
 const MAP_STYLES: {
     key: MapStyleKey;
     label: string;
+    type: "vector" | "raster";
     lightUrl: string;
     darkUrl: string;
     attribution: string;
@@ -73,46 +78,43 @@ const MAP_STYLES: {
     {
         key: "auto",
         label: "自動主題",
-        lightUrl: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
-        darkUrl: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+        type: "vector",
+        lightUrl: `https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json${CARTO_KEY_PARAM}`,
+        darkUrl: `https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json${CARTO_KEY_PARAM}`,
         attribution:
             '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-        subdomains: "abcd",
-        maxZoom: 20,
     },
     {
         key: "voyager",
         label: "旅遊精緻",
-        lightUrl: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
-        darkUrl: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
+        type: "vector",
+        lightUrl: `https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json${CARTO_KEY_PARAM}`,
+        darkUrl: `https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json${CARTO_KEY_PARAM}`,
         attribution:
             '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-        subdomains: "abcd",
-        maxZoom: 20,
     },
     {
         key: "positron",
         label: "極簡純白",
-        lightUrl: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
-        darkUrl: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+        type: "vector",
+        lightUrl: `https://basemaps.cartocdn.com/gl/positron-gl-style/style.json${CARTO_KEY_PARAM}`,
+        darkUrl: `https://basemaps.cartocdn.com/gl/positron-gl-style/style.json${CARTO_KEY_PARAM}`,
         attribution:
             '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-        subdomains: "abcd",
-        maxZoom: 20,
     },
     {
         key: "dark",
         label: "黑曜夜間",
-        lightUrl: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
-        darkUrl: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+        type: "vector",
+        lightUrl: `https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json${CARTO_KEY_PARAM}`,
+        darkUrl: `https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json${CARTO_KEY_PARAM}`,
         attribution:
             '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-        subdomains: "abcd",
-        maxZoom: 20,
     },
     {
         key: "satellite",
         label: "衛星空拍",
+        type: "raster",
         lightUrl: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
         darkUrl: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
         attribution:
@@ -638,12 +640,19 @@ const PlaceMapView = ({
                 center={defaultCenter}
                 zoom={defaultZoom}
             >
-                <TileLayer
-                    url={activeTileUrl}
-                    attribution={activeStyleConfig.attribution}
-                    subdomains={activeStyleConfig.subdomains || "abc"}
-                    maxZoom={activeStyleConfig.maxZoom || 19}
-                />
+                {activeStyleConfig.type === "vector" ? (
+                    <MapVectorLayer
+                        key={`vector-${selectedMapStyle}-${isDark ? "dark" : "light"}`}
+                        styleUrl={activeTileUrl}
+                    />
+                ) : (
+                    <TileLayer
+                        url={activeTileUrl}
+                        attribution={activeStyleConfig.attribution}
+                        subdomains={activeStyleConfig.subdomains || "abc"}
+                        maxZoom={activeStyleConfig.maxZoom || 19}
+                    />
+                )}
 
                 {/* Real Road Polyline Route or Fallback Line */}
                 {showRouteLine && validPlaces.length > 1 && (
