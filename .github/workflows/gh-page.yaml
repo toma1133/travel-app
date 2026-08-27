@@ -27,18 +27,12 @@ jobs:
             - name: Set up Node
               uses: actions/setup-node@v4
               with:
-                  node-version: 20
+                  node-version: 22
                   cache: "npm"
             - name: Run install
-              uses: borales/actions-yarn@v4
-              with:
-                  cmd: install # will run `yarn install` command
-              env:
-                  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }} # if needed
+              run: npm ci
             - name: Build production bundle
-              uses: borales/actions-yarn@v4
-              with:
-                  cmd: build # will run `yarn build` command
+              run: npm run build
               env:
                   SUPABASE_API_KEY: ${{ secrets.SUPABASE_API_KEY }}
                   SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
