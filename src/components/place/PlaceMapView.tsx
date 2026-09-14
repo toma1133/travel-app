@@ -464,13 +464,22 @@ const PlaceMapView = ({
 
     const validPlaces = useMemo(() => {
         if (!places) return [];
-        return places.filter(
-            (p): p is PlaceVM & { lat: number; lng: number } =>
-                typeof p.lat === "number" &&
-                typeof p.lng === "number" &&
-                !isNaN(p.lat) &&
-                !isNaN(p.lng)
-        );
+        return places
+            .filter(
+                (p): p is PlaceVM & { lat: number; lng: number } =>
+                    p != null &&
+                    p.lat != null &&
+                    p.lng != null &&
+                    !isNaN(Number(p.lat)) &&
+                    !isNaN(Number(p.lng)) &&
+                    isFinite(Number(p.lat)) &&
+                    isFinite(Number(p.lng))
+            )
+            .map((p) => ({
+                ...p,
+                lat: Number(p.lat),
+                lng: Number(p.lng),
+            }));
     }, [places]);
 
     // Map each place or coordinate to all visit step indices
@@ -491,7 +500,16 @@ const PlaceMapView = ({
                 validPlaces.reduce((sum, p) => sum + p.lat, 0) / validPlaces.length;
             const avgLng =
                 validPlaces.reduce((sum, p) => sum + p.lng, 0) / validPlaces.length;
-            return { lat: avgLat, lng: avgLng };
+            if (
+                typeof avgLat === "number" &&
+                typeof avgLng === "number" &&
+                !isNaN(avgLat) &&
+                !isNaN(avgLng) &&
+                isFinite(avgLat) &&
+                isFinite(avgLng)
+            ) {
+                return { lat: avgLat, lng: avgLng };
+            }
         }
         return { lat: 25.033, lng: 121.565 };
     }, [validPlaces]);
@@ -732,7 +750,7 @@ const PlaceMapView = ({
                     );
                 })}
                 <PlaceMapController
-                    places={places}
+                    places={validPlaces}
                     defaultCenter={defaultCenter}
                     defaultZoom={defaultZoom}
                     isDark={isDark}

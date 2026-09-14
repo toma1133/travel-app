@@ -19,21 +19,70 @@ const PlaceMapController = ({
     const map = useMap();
 
     const handleFitBounds = () => {
-        if (places && places.length > 0) {
-            const validCoords = places
-                .filter(
-                    (p): p is typeof p & { lat: number; lng: number } =>
-                        typeof p.lat === "number" &&
-                        typeof p.lng === "number" &&
-                        !isNaN(p.lat) &&
-                        !isNaN(p.lng)
-                )
-                .map((p) => [p.lat, p.lng] as [number, number]);
+        if (!map) return;
 
-            if (validCoords.length > 0) {
-                const bounds = L.latLngBounds(validCoords);
-                map.fitBounds(bounds, { padding: [50, 50] });
+        const validCoords: [number, number][] = [];
+        if (places && places.length > 0) {
+            for (const p of places) {
+                const lat = Number(p?.lat);
+                const lng = Number(p?.lng);
+                if (
+                    typeof lat === "number" &&
+                    typeof lng === "number" &&
+                    !isNaN(lat) &&
+                    !isNaN(lng) &&
+                    isFinite(lat) &&
+                    isFinite(lng)
+                ) {
+                    validCoords.push([lat, lng]);
+                }
             }
+        }
+
+        try {
+            if (validCoords.length === 1) {
+                // 當只有一個地標時，直接 setView 到該地標並使用合理的縮放等級，避免 fitBounds 因範圍為 0 計算出 zoom=Infinity 導致 (NaN, NaN) 錯誤
+                map.setView(validCoords[0], Math.max(defaultZoom, 15), {
+                    animate: true,
+                });
+            } else if (validCoords.length > 1) {
+                // 檢查是否所有座標完全相同，避免相同經緯度時 fitBounds 出現零跨距異常
+                const first = validCoords[0];
+                const allSame = validCoords.every(
+                    (c) =>
+                        Math.abs(c[0] - first[0]) < 1e-7 &&
+                        Math.abs(c[1] - first[1]) < 1e-7
+                );
+
+                if (allSame) {
+                    map.setView(first, Math.max(defaultZoom, 15), {
+                        animate: true,
+                    });
+                } else {
+                    const bounds = L.latLngBounds(validCoords);
+                    if (bounds.isValid()) {
+                        map.fitBounds(bounds, {
+                            padding: [50, 50],
+                            maxZoom: 16,
+                            animate: true,
+                        });
+                    }
+                }
+            } else if (
+                defaultCenter &&
+                typeof defaultCenter.lat === "number" &&
+                typeof defaultCenter.lng === "number" &&
+                !isNaN(defaultCenter.lat) &&
+                !isNaN(defaultCenter.lng) &&
+                isFinite(defaultCenter.lat) &&
+                isFinite(defaultCenter.lng)
+            ) {
+                map.setView([defaultCenter.lat, defaultCenter.lng], defaultZoom, {
+                    animate: true,
+                });
+            }
+        } catch (err) {
+            console.warn("PlaceMapController error updating map view:", err);
         }
     };
 

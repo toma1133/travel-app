@@ -88,7 +88,11 @@ function MapViewController({
             map.flyTo([customPin.lat, customPin.lng], 16, {
                 duration: 1.0,
             });
-        } else if (allPlaces.length > 0) {
+        } else if (allPlaces.length === 1) {
+            map.flyTo([allPlaces[0].lat, allPlaces[0].lng], 16, {
+                duration: 1.0,
+            });
+        } else if (allPlaces.length > 1) {
             const bounds = L.latLngBounds(
                 allPlaces.map((p) => [p.lat, p.lng] as [number, number])
             );
