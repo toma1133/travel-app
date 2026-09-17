@@ -10,6 +10,7 @@ import {
     AlertTriangle,
     ChevronDown,
     MapPin,
+    Pin,
 } from "lucide-react";
 import type {
     ItineraryActivitiy,
@@ -663,6 +664,21 @@ const ItineraryItem = ({
                                                                                         <span>{linkedPlace.info.rating}</span>
                                                                                     </span>
                                                                                 )}
+
+                                                                                {/* 📌 動線固定站點標籤 */}
+                                                                                {activity.isFixed && (
+                                                                                    <span
+                                                                                        className={`inline-flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.2 rounded-md ${
+                                                                                            isPrinting
+                                                                                                ? "text-black border border-black/30"
+                                                                                                : "text-amber-700 dark:text-amber-300 bg-amber-500/15 border border-amber-500/30"
+                                                                                        }`}
+                                                                                        title="動線固定站點（自動規劃時保持在此順序）"
+                                                                                    >
+                                                                                        <Pin size={9} className={isPrinting ? "text-black" : "fill-amber-500 text-amber-600"} />
+                                                                                        <span>固定站</span>
+                                                                                    </span>
+                                                                                )}
                                                                             </div>
 
                                                                             {/* 外文原名 / 英文名副標 */}
@@ -857,6 +873,19 @@ const ItineraryItem = ({
                                                                     <h4 className={`font-bold text-xs sm:text-sm truncate ${isPrinting ? "text-black" : "text-foreground"}`}>
                                                                         {activity.title}
                                                                     </h4>
+                                                                    {activity.isFixed && (
+                                                                        <span
+                                                                            className={`inline-flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.2 rounded-md ${
+                                                                                isPrinting
+                                                                                    ? "text-black border border-black/30"
+                                                                                    : "text-amber-700 dark:text-amber-300 bg-amber-500/15 border border-amber-500/30"
+                                                                            }`}
+                                                                            title="動線固定站點（自動規劃時保持在此順序）"
+                                                                        >
+                                                                            <Pin size={9} className={isPrinting ? "text-black" : "fill-amber-500 text-amber-600"} />
+                                                                            <span>固定站</span>
+                                                                        </span>
+                                                                    )}
                                                                     {(hasStayDuration || activity.duration) && (
                                                                         <span
                                                                             className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${

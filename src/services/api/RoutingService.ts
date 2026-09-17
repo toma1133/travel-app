@@ -51,7 +51,48 @@ export type TripOptimizeOptions = {
     fixStart?: boolean; // Default true (source=first in OSRM)
     fixEnd?: boolean;   // Default false (destination=any vs destination=last)
     roundtrip?: boolean;// Default false (one-way day tour vs circular tour)
+    fixedIndices?: number[]; // Array of indices in stops that must stay fixed in order
 };
+
+// Stadia Maps API Key (Optional, uses Valhalla routing engine with motorcycle/pedestrian costing)
+const STADIA_API_KEY = import.meta.env.VITE_STADIA_MAPS_API_KEY?.trim() || "";
+
+/**
+ * Decodes a Valhalla 6-decimal precision encoded polyline string into Leaflet coordinates [[lat, lng], ...]
+ */
+export function decodeValhallaPolyline(encoded: string, precision = 6): [number, number][] {
+    let index = 0;
+    let lat = 0;
+    let lng = 0;
+    const coordinates: [number, number][] = [];
+    const factor = Math.pow(10, precision);
+
+    while (index < encoded.length) {
+        let b;
+        let shift = 0;
+        let result = 0;
+        do {
+            b = encoded.charCodeAt(index++) - 63;
+            result |= (b & 0x1f) << shift;
+            shift += 5;
+        } while (b >= 0x20);
+        const dlat = (result & 1) ? ~(result >> 1) : (result >> 1);
+        lat += dlat;
+
+        shift = 0;
+        result = 0;
+        do {
+            b = encoded.charCodeAt(index++) - 63;
+            result |= (b & 0x1f) << shift;
+            shift += 5;
+        } while (b >= 0x20);
+        const dlng = (result & 1) ? ~(result >> 1) : (result >> 1);
+        lng += dlng;
+
+        coordinates.push([lat / factor, lng / factor]);
+    }
+    return coordinates;
+}
 
 // In-memory cache for route requests to prevent redundant API calls
 const routeCache = new Map<string, RouteResult>();
@@ -318,6 +359,27 @@ export class RoutingService {
     }
 
     /**
+     * Map RouteMode to Stadia Maps (Valhalla) costing model:
+     * - "walking" -> "pedestrian"
+     * - "cycling" -> "bicycle"
+     * - "motorcycle" -> "motorcycle"
+     * - "driving" -> "auto"
+     */
+    static getValhallaCosting(mode: RouteMode): string {
+        switch (mode) {
+            case "walking":
+                return "pedestrian";
+            case "cycling":
+                return "bicycle";
+            case "motorcycle":
+                return "motorcycle";
+            case "driving":
+            default:
+                return "auto";
+        }
+    }
+
+    /**
      * Fallback multi-stop generator using straight-line geodesic distances
      */
     static generateFallbackMultiStop(
@@ -392,8 +454,59 @@ export class RoutingService {
             return result;
         }
 
+        // 1. Try Stadia Maps Valhalla routing engine if API Key configured
+        if (STADIA_API_KEY) {
+            try {
+                const costing = this.getValhallaCosting(mode);
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 6000);
+                const response = await fetch(`https://api.stadiamaps.com/route/v1?api_key=${STADIA_API_KEY}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        locations: [
+                            { lat: start.lat, lon: start.lng },
+                            { lat: end.lat, lon: end.lng },
+                        ],
+                        costing,
+                        directions_options: { units: "kilometers" },
+                    }),
+                    signal: controller.signal,
+                });
+                clearTimeout(timeoutId);
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.trip && data.trip.summary) {
+                        const distanceKm = data.trip.summary.length || 0;
+                        const distanceMeters = Math.round(distanceKm * 1000);
+                        const durationSeconds = Math.round(data.trip.summary.time || 0);
+                        const durationMinutes = Math.max(1, Math.round(durationSeconds / 60));
+                        const coordinates: [number, number][] = (data.trip.legs || []).flatMap((leg: any) =>
+                            leg.shape ? decodeValhallaPolyline(leg.shape) : []
+                        );
+
+                        const result: RouteResult = {
+                            distanceMeters,
+                            distanceKm: parseFloat(distanceKm.toFixed(2)),
+                            distanceFormatted: formatDistance(distanceMeters),
+                            durationSeconds,
+                            durationMinutes,
+                            durationFormatted: formatDuration(durationMinutes),
+                            coordinates: coordinates.length > 0 ? coordinates : [[start.lat, start.lng], [end.lat, end.lng]],
+                            isEstimated: false,
+                        };
+                        routeCache.set(cacheKey, result);
+                        return result;
+                    }
+                }
+            } catch (err) {
+                console.warn("Stadia Valhalla route query failed, falling back to OSRM:", err);
+            }
+        }
+
+        // 2. Fallback to OSRM public server
         try {
-            // OSRM public server: uses "foot" for walking, "bicycle" for cycling, "driving" for car
             const profile = this.getOsrmProfile(mode);
             const coords = `${start.lng},${start.lat};${end.lng},${end.lat}`;
             const url = `https://router.project-osrm.org/route/v1/${profile}/${coords}?overview=full&geometries=geojson&steps=false`;
@@ -412,6 +525,10 @@ export class RoutingService {
             if (data.code !== "Ok" || !data.routes || data.routes.length === 0) {
                 return this.getFallbackRoute(start, end, mode, cacheKey);
             }
+
+            const route = data.routes[0];
+            const distanceMeters = route.distance || 0;
+            const osrmDurationSeconds = route.duration || 0;
 
             const haversineDist = calculateHaversineDistance(start.lat, start.lng, end.lat, end.lng);
             let effectiveDistance = distanceMeters;
@@ -490,6 +607,69 @@ export class RoutingService {
             return directResult;
         }
 
+        // 1. Try Stadia Maps Valhalla routing engine if API Key configured
+        if (STADIA_API_KEY) {
+            try {
+                const costing = this.getValhallaCosting(mode);
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 7000);
+                const response = await fetch(`https://api.stadiamaps.com/route/v1?api_key=${STADIA_API_KEY}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        locations: stops.map((s) => ({ lat: s.lat, lon: s.lng })),
+                        costing,
+                        directions_options: { units: "kilometers" },
+                    }),
+                    signal: controller.signal,
+                });
+                clearTimeout(timeoutId);
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.trip && data.trip.summary) {
+                        const totalDistanceKm = data.trip.summary.length || 0;
+                        const totalDistanceMeters = Math.round(totalDistanceKm * 1000);
+                        const totalSeconds = Math.round(data.trip.summary.time || 0);
+                        const totalMinutes = Math.max(1, Math.round(totalSeconds / 60));
+
+                        const legs = (data.trip.legs || []).map((leg: any) => {
+                            const legKm = leg.summary?.length || 0;
+                            const legMeters = Math.round(legKm * 1000);
+                            const legSecs = Math.round(leg.summary?.time || 0);
+                            const legMins = Math.max(1, Math.round(legSecs / 60));
+                            return {
+                                distanceKm: parseFloat(legKm.toFixed(2)),
+                                durationMinutes: legMins,
+                                durationFormatted: formatDuration(legMins),
+                                distanceFormatted: formatDistance(legMeters),
+                            };
+                        });
+
+                        const coordinates: [number, number][] = (data.trip.legs || []).flatMap((leg: any) =>
+                            leg.shape ? decodeValhallaPolyline(leg.shape) : []
+                        );
+
+                        const result: MultiStopRouteResult = {
+                            totalDistanceKm: parseFloat(totalDistanceKm.toFixed(2)),
+                            totalDistanceFormatted: formatDistance(totalDistanceMeters),
+                            totalDurationMinutes: totalMinutes,
+                            totalDurationFormatted: formatDuration(totalMinutes),
+                            legs,
+                            coordinates: coordinates.length > 0 ? coordinates : stops.map((s) => [s.lat, s.lng]),
+                            isEstimated: false,
+                            mode,
+                        };
+                        multiStopCache.set(cacheKey, result);
+                        return result;
+                    }
+                }
+            } catch (err) {
+                console.warn("Stadia Valhalla multi-stop routing query failed, falling back to OSRM:", err);
+            }
+        }
+
+        // 2. Fallback to OSRM multi-stop road network
         try {
             // Use OSRM road network for specific profile (foot / bicycle / driving)
             const profile = this.getOsrmProfile(mode);
@@ -573,7 +753,93 @@ export class RoutingService {
     }
 
     /**
-     * Optimize Day Itinerary Route using OSRM Trip Service API (/trip/v1/) with 2-Opt fallback
+     * Solve TSP on a single continuous segment of stops (using Stadia Valhalla, OSRM Trip, or 2-Opt)
+     */
+    private static async solveSingleSubsegment(
+        stops: { lat: number; lng: number }[],
+        options: { mode: RouteMode; fixStart: boolean; fixEnd: boolean; roundtrip?: boolean }
+    ): Promise<number[]> {
+        const n = stops.length;
+        if (n <= 2) return stops.map((_, i) => i);
+
+        const { mode, fixStart, fixEnd, roundtrip } = options;
+
+        // 1. Try Stadia Maps Valhalla optimized_route API
+        if (STADIA_API_KEY && mode !== "direct") {
+            try {
+                const costing = this.getValhallaCosting(mode);
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 6500);
+
+                const res = await fetch(`https://api.stadiamaps.com/optimized_route/v1?api_key=${STADIA_API_KEY}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        locations: stops.map((s) => ({ lat: s.lat, lon: s.lng })),
+                        costing,
+                        directions_options: { units: "kilometers" },
+                    }),
+                    signal: controller.signal,
+                });
+                clearTimeout(timeoutId);
+
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.trip && Array.isArray(data.trip.locations)) {
+                        const order: number[] = data.trip.locations.map((loc: any) => loc.original_index);
+                        const isValid = order.length === n && new Set(order).size === n;
+                        if (isValid) {
+                            if ((!fixStart || order[0] === 0) && (!fixEnd || order[order.length - 1] === n - 1)) {
+                                return order;
+                            }
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn("Stadia Valhalla optimized_route failed, falling back to OSRM Trip:", e);
+            }
+        }
+
+        // 2. Try OSRM Trip API
+        try {
+            const sourceParam = fixStart ? "source=first" : "source=any";
+            const destParam = fixEnd ? "destination=last" : "destination=any";
+            const roundParam = roundtrip ? "roundtrip=true" : "roundtrip=false";
+            const profile = this.getOsrmProfile(mode);
+            const coords = stops.map((s) => `${s.lng},${s.lat}`).join(";");
+            const url = `https://router.project-osrm.org/trip/v1/${profile}/${coords}?${sourceParam}&${destParam}&${roundParam}&overview=full&geometries=geojson&steps=false`;
+
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 6500);
+            const response = await fetch(url, { signal: controller.signal });
+            clearTimeout(timeoutId);
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.code === "Ok" && data.waypoints && data.waypoints.length === n) {
+                    const optimizedOrder: number[] = new Array(n);
+                    data.waypoints.forEach((wp: any, origIdx: number) => {
+                        if (typeof wp.waypoint_index === "number") {
+                            optimizedOrder[wp.waypoint_index] = origIdx;
+                        }
+                    });
+                    const isValidOrder = optimizedOrder.every((idx) => typeof idx === "number" && idx >= 0);
+                    if (isValidOrder) {
+                        return optimizedOrder;
+                    }
+                }
+            }
+        } catch (error) {
+            console.warn("OSRM Trip Service API call failed, falling back to 2-Opt TSP:", error);
+        }
+
+        // 3. Fallback: Pure TypeScript 2-Opt TSP Algorithm
+        return solve2OptTSP(stops, fixStart, fixEnd);
+    }
+
+    /**
+     * Optimize Day Itinerary Route with Segmented Anchor Support
+     * Supports pinned/fixed stops (e.g. hotel check-in/drop luggage, fixed reservations)
      * Returns optimized activity ordering, before-after distance/duration comparison, and coordinates.
      */
     static async optimizeDayItinerary(
@@ -586,108 +852,135 @@ export class RoutingService {
         const fixStart = options.fixStart !== false; // default true
         const fixEnd = !!options.fixEnd;             // default false
         const roundtrip = !!options.roundtrip;       // default false
+        const fixedIndices = options.fixedIndices || [];
 
         // 1. Calculate original route baseline
         const origResult = await this.getMultiStopRoute(stops, mode);
         const originalDistanceKm = origResult?.totalDistanceKm || 0;
         const originalDurationMinutes = origResult?.totalDurationMinutes || 0;
 
-        // 2. Query OSRM Trip Service API
-        try {
-            const sourceParam = fixStart ? "source=first" : "source=any";
-            const destParam = fixEnd ? "destination=last" : "destination=any";
-            const roundParam = roundtrip ? "roundtrip=true" : "roundtrip=false";
+        const n = stops.length;
 
-            // OSRM Trip endpoint supports profile (foot / bicycle / driving)
-            const profile = this.getOsrmProfile(mode);
-            const coords = stops.map((s) => `${s.lng},${s.lat}`).join(";");
-            const url = `https://router.project-osrm.org/trip/v1/${profile}/${coords}?${sourceParam}&${destParam}&${roundParam}&overview=full&geometries=geojson&steps=false`;
+        // Build list of fixed anchor indices
+        const anchorSet = new Set<number>();
+        if (fixStart) anchorSet.add(0);
+        if (fixEnd) anchorSet.add(n - 1);
+        fixedIndices.forEach((idx) => {
+            if (idx >= 0 && idx < n) anchorSet.add(idx);
+        });
 
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 6500); // 6.5s timeout
+        let finalOptimizedOrder: number[] = [];
 
-            const response = await fetch(url, { signal: controller.signal });
-            clearTimeout(timeoutId);
+        // If no intermediate anchors (only start/end or none), solve globally in 1 segment
+        const intermediateAnchors = Array.from(anchorSet).filter((idx) => idx !== 0 && idx !== n - 1);
 
-            if (response.ok) {
-                const data = await response.json();
-                if (data.code === "Ok" && data.waypoints && data.trips && data.trips.length > 0) {
-                    const optimizedOrder: number[] = new Array(stops.length);
-                    data.waypoints.forEach((wp: any, origIdx: number) => {
-                        if (typeof wp.waypoint_index === "number") {
-                            optimizedOrder[wp.waypoint_index] = origIdx;
-                        }
+        if (intermediateAnchors.length === 0) {
+            finalOptimizedOrder = await this.solveSingleSubsegment(stops, {
+                mode,
+                fixStart,
+                fixEnd,
+                roundtrip,
+            });
+        } else {
+            // Segmented optimization: Sort all anchors in ascending order
+            const sortedAnchors = Array.from(anchorSet).sort((a, b) => a - b);
+
+            const segments: { startIdx: number; endIdx: number; fixStart: boolean; fixEnd: boolean }[] = [];
+
+            // Case: If 0 is not an anchor, there's a segment before first anchor
+            if (sortedAnchors[0] > 0) {
+                segments.push({
+                    startIdx: 0,
+                    endIdx: sortedAnchors[0],
+                    fixStart: false,
+                    fixEnd: true,
+                });
+            }
+
+            // Between each pair of anchors
+            for (let i = 0; i < sortedAnchors.length - 1; i++) {
+                segments.push({
+                    startIdx: sortedAnchors[i],
+                    endIdx: sortedAnchors[i + 1],
+                    fixStart: true,
+                    fixEnd: true,
+                });
+            }
+
+            // Case: After last anchor to n - 1
+            const lastAnchor = sortedAnchors[sortedAnchors.length - 1];
+            if (lastAnchor < n - 1) {
+                segments.push({
+                    startIdx: lastAnchor,
+                    endIdx: n - 1,
+                    fixStart: true,
+                    fixEnd: fixEnd,
+                });
+            }
+
+            // Solve each segment and stitch
+            for (let sIdx = 0; sIdx < segments.length; sIdx++) {
+                const seg = segments[sIdx];
+                const subStops = stops.slice(seg.startIdx, seg.endIdx + 1);
+
+                if (subStops.length <= 2) {
+                    const subOrder = subStops.map((_, i) => seg.startIdx + i);
+                    if (sIdx === 0) {
+                        finalOptimizedOrder.push(...subOrder);
+                    } else {
+                        finalOptimizedOrder.push(...subOrder.slice(1));
+                    }
+                } else {
+                    const subOrder = await this.solveSingleSubsegment(subStops, {
+                        mode,
+                        fixStart: seg.fixStart,
+                        fixEnd: seg.fixEnd,
                     });
-
-                    // Ensure all indices are populated
-                    const isValidOrder = optimizedOrder.every((idx) => typeof idx === "number" && idx >= 0);
-                    if (isValidOrder) {
-                        const trip = data.trips[0];
-                        const optimizedDistanceMeters = trip.distance || 0;
-                        const optimizedDistanceKm = parseFloat((optimizedDistanceMeters / 1000).toFixed(2));
-                        const osrmTripSeconds = trip.duration || 0;
-
-                        // Calculate realistic duration based on selected transportation mode (walking 4.5km/h, cycling 15km/h, etc.)
-                        const optimizedDurationMinutes = calculateDurationByMode(optimizedDistanceMeters, osrmTripSeconds, mode);
-
-                        const rawCoords: [number, number][] = trip.geometry?.coordinates || [];
-                        const leafletCoords: [number, number][] = rawCoords.map(([lng, lat]) => [lat, lng]);
-
-                        const savedDistanceKm = Math.max(0, parseFloat((originalDistanceKm - optimizedDistanceKm).toFixed(2)));
-                        const savedDurationMinutes = Math.max(0, originalDurationMinutes - optimizedDurationMinutes);
-
-                        return {
-                            optimizedOrder,
-                            originalDistanceKm,
-                            originalDistanceFormatted: origResult?.totalDistanceFormatted || `${originalDistanceKm} 公里`,
-                            originalDurationMinutes,
-                            originalDurationFormatted: origResult?.totalDurationFormatted || formatDuration(originalDurationMinutes),
-                            optimizedDistanceKm,
-                            optimizedDistanceFormatted: formatDistance(optimizedDistanceMeters),
-                            optimizedDurationMinutes,
-                            optimizedDurationFormatted: formatDuration(optimizedDurationMinutes),
-                            savedDistanceKm,
-                            savedDistanceFormatted: formatDistance(savedDistanceKm * 1000),
-                            savedDurationMinutes,
-                            savedDurationFormatted: formatDuration(savedDurationMinutes),
-                            coordinates: leafletCoords,
-                            isEstimated: false,
-                            mode,
-                        };
+                    const mappedOrder = subOrder.map((localIdx) => seg.startIdx + localIdx);
+                    if (sIdx === 0) {
+                        finalOptimizedOrder.push(...mappedOrder);
+                    } else {
+                        finalOptimizedOrder.push(...mappedOrder.slice(1));
                     }
                 }
             }
-        } catch (error) {
-            console.warn("OSRM Trip Service API call failed, falling back to 2-Opt local TSP algorithm:", error);
         }
 
-        // 3. Fallback: 2-Opt TSP Algorithm
-        const fallbackOrder = solve2OptTSP(stops, fixStart, fixEnd);
-        const reorderedStops = fallbackOrder.map((idx) => stops[idx]);
-        const fallbackRoute = this.generateFallbackMultiStop(reorderedStops, mode);
+        // Safety check: ensure finalOptimizedOrder is a valid permutation of [0 .. n-1]
+        if (
+            finalOptimizedOrder.length !== n ||
+            new Set(finalOptimizedOrder).size !== n ||
+            !finalOptimizedOrder.every((idx) => typeof idx === "number" && idx >= 0 && idx < n)
+        ) {
+            finalOptimizedOrder = solve2OptTSP(stops, fixStart, fixEnd);
+        }
 
-        const optimizedDistanceKm = fallbackRoute.totalDistanceKm;
-        const optimizedDurationMinutes = fallbackRoute.totalDurationMinutes;
+        // Calculate final route geometry and metrics using the optimized order
+        const reorderedStops = finalOptimizedOrder.map((idx) => stops[idx]);
+        const optimizedRoute = await this.getMultiStopRoute(reorderedStops, mode);
+
+        const optimizedDistanceKm = optimizedRoute?.totalDistanceKm || 0;
+        const optimizedDurationMinutes = optimizedRoute?.totalDurationMinutes || 0;
 
         const savedDistanceKm = Math.max(0, parseFloat((originalDistanceKm - optimizedDistanceKm).toFixed(2)));
         const savedDurationMinutes = Math.max(0, originalDurationMinutes - optimizedDurationMinutes);
 
         return {
-            optimizedOrder: fallbackOrder,
+            optimizedOrder: finalOptimizedOrder,
             originalDistanceKm,
             originalDistanceFormatted: origResult?.totalDistanceFormatted || `${originalDistanceKm} 公里`,
             originalDurationMinutes,
             originalDurationFormatted: origResult?.totalDurationFormatted || formatDuration(originalDurationMinutes),
             optimizedDistanceKm,
-            optimizedDistanceFormatted: fallbackRoute.totalDistanceFormatted,
+            optimizedDistanceFormatted: optimizedRoute?.totalDistanceFormatted || `${optimizedDistanceKm} 公里`,
             optimizedDurationMinutes,
-            optimizedDurationFormatted: fallbackRoute.totalDurationFormatted,
+            optimizedDurationFormatted: optimizedRoute?.totalDurationFormatted || formatDuration(optimizedDurationMinutes),
             savedDistanceKm,
             savedDistanceFormatted: formatDistance(savedDistanceKm * 1000),
             savedDurationMinutes,
             savedDurationFormatted: formatDuration(savedDurationMinutes),
-            coordinates: fallbackRoute.coordinates,
-            isEstimated: true,
+            coordinates: optimizedRoute?.coordinates || [],
+            isEstimated: optimizedRoute?.isEstimated,
             mode,
         };
     }

@@ -38,6 +38,7 @@ jobs:
                   SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
                   VITE_KAKAO_REST_API_KEY: ${{ secrets.VITE_KAKAO_REST_API_KEY }}
                   VITE_CARTO_API_KEY: ${{ secrets.VITE_CARTO_API_KEY }}
+                  VITE_STADIA_MAPS_API_KEY: ${{ secrets.VITE_STADIA_MAPS_API_KEY }}
             - name: Run Copy 404.html for SPA fallback
               run: cp dist/index.html dist/404.html
             - name: Setup Pages

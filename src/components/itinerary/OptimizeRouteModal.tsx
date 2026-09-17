@@ -13,6 +13,10 @@ import {
     MapPin,
     AlertCircle,
     Info,
+    Pin,
+    PinOff,
+    Lock,
+    Bed,
 } from "lucide-react";
 import {
     RoutingService,
@@ -45,6 +49,23 @@ type OptimizeRouteModalProps = {
         itineraryDay: ItineraryVM,
         reorderedActivities: ItineraryActivitiy[]
     ) => void;
+};
+
+const isActivityHotelOrReservation = (act: ItineraryActivitiy, p?: PlaceVM) => {
+    if (act.isFixed) return true;
+    const cat = (p?.type || act.type || "").toLowerCase();
+    const title = (p?.name || act.title || "").toLowerCase();
+    const isHotel =
+        cat === "hotel" ||
+        cat === "lodging" ||
+        cat === "stay" ||
+        title.includes("飯店") ||
+        title.includes("酒店") ||
+        title.includes("民宿") ||
+        title.includes("check-in") ||
+        title.includes("checkin") ||
+        title.includes("旅館");
+    return isHotel || act.fixedReason === "reservation" || act.fixedReason === "hotel";
 };
 
 const OptimizeRouteModal = ({
@@ -94,7 +115,30 @@ const OptimizeRouteModal = ({
         return list;
     }, [itineraryDay.activities, placesMap]);
 
-    // Run optimization whenever mode or constraints change
+    // Track user-pinned fixed stops (indices in locActivities)
+    const [fixedIndices, setFixedIndices] = useState<Set<number>>(() => {
+        const set = new Set<number>();
+        locActivities.forEach((item, idx) => {
+            if (item.activity.isFixed || isActivityHotelOrReservation(item.activity, item.place)) {
+                set.add(idx);
+            }
+        });
+        return set;
+    });
+
+    const toggleFixedIndex = (idx: number) => {
+        setFixedIndices((prev) => {
+            const next = new Set(prev);
+            if (next.has(idx)) {
+                next.delete(idx);
+            } else {
+                next.add(idx);
+            }
+            return next;
+        });
+    };
+
+    // Run optimization whenever mode, constraints, or fixed pins change
     useEffect(() => {
         if (locActivities.length < 2) {
             setResult(null);
@@ -115,6 +159,7 @@ const OptimizeRouteModal = ({
                 fixStart,
                 fixEnd,
                 roundtrip,
+                fixedIndices: Array.from(fixedIndices),
             });
 
             if (isMounted) {
@@ -128,7 +173,7 @@ const OptimizeRouteModal = ({
         return () => {
             isMounted = false;
         };
-    }, [locActivities, mode, fixStart, fixEnd, roundtrip]);
+    }, [locActivities, mode, fixStart, fixEnd, roundtrip, fixedIndices]);
 
     // Map new optimized activities array
     const reorderedActivities = useMemo(() => {
@@ -137,10 +182,14 @@ const OptimizeRouteModal = ({
             return itineraryDay.activities;
         }
 
-        // Map locActivities into new order
-        const optimizedLocActivities = result.optimizedOrder.map(
-            (optIdx) => locActivities[optIdx].activity
-        );
+        // Map locActivities into new order with updated isFixed property
+        const optimizedLocActivities = result.optimizedOrder.map((optIdx) => {
+            const act = locActivities[optIdx].activity;
+            return {
+                ...act,
+                isFixed: fixedIndices.has(optIdx),
+            };
+        });
 
         // For activities without coordinates, append them or maintain relative positions
         const nonLocActivities = itineraryDay.activities.filter(
@@ -155,7 +204,7 @@ const OptimizeRouteModal = ({
         );
 
         return finalOrder;
-    }, [itineraryDay.activities, locActivities, result]);
+    }, [itineraryDay.activities, locActivities, result, fixedIndices]);
 
     const handleApply = () => {
         onApplyOptimizedOrder(itineraryDay, reorderedActivities);
@@ -380,23 +429,39 @@ const OptimizeRouteModal = ({
                     {/* 順序變更預覽清單 */}
                     {result && locActivities.length >= 2 && (
                         <div className="space-y-2.5">
-                            <h4 className="text-xs font-bold text-muted-foreground uppercase flex items-center justify-between flex-wrap gap-1">
-                                <span>動線排序對比 (共 {locActivities.length} 個地點)</span>
+                            <div className="flex items-center justify-between flex-wrap gap-1">
+                                <h4 className="text-xs font-bold text-muted-foreground uppercase">
+                                    動線排序對比 (共 {locActivities.length} 個地點)
+                                </h4>
                                 <span className="text-[10px] sm:text-[11px] font-normal text-muted-foreground">
-                                    綠色標示順序已最佳化
+                                    點擊 📌 可鎖定或解除固定點
                                 </span>
-                            </h4>
+                            </div>
+
+                            {/* 錨點分段提示卡片 */}
+                            {fixedIndices.size > 0 && (
+                                <div className="flex items-center gap-2 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-800 dark:text-amber-200 text-xs">
+                                    <Pin size={14} className="shrink-0 text-amber-500 fill-amber-500" />
+                                    <span className="font-medium leading-relaxed">
+                                        已釘選 <strong>{fixedIndices.size}</strong> 個固定站點（如飯店放行李、特定預約），系統自動以分段演算法保留其關鍵順序，僅最佳化各區間景點。
+                                    </span>
+                                </div>
+                            )}
 
                             <div className="space-y-2">
                                 {result.optimizedOrder.map((origIdx, newIndex) => {
                                     const item = locActivities[origIdx];
                                     const isMoved = origIdx !== newIndex;
+                                    const isFixed = fixedIndices.has(origIdx);
+                                    const isHotel = isActivityHotelOrReservation(item.activity, item.place);
 
                                     return (
                                         <div
                                             key={newIndex}
                                             className={`p-2.5 sm:p-3 rounded-2xl border transition-all flex items-center justify-between gap-2.5 sm:gap-3 ${
-                                                isMoved
+                                                isFixed
+                                                    ? "bg-amber-500/5 border-amber-500/35 shadow-2xs"
+                                                    : isMoved
                                                     ? "bg-emerald-500/5 border-emerald-500/40 shadow-2xs"
                                                     : "bg-card border-border/80"
                                             }`}
@@ -404,7 +469,11 @@ const OptimizeRouteModal = ({
                                             <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
                                                 {/* 順序徽章 */}
                                                 <div className="flex items-center gap-1 shrink-0">
-                                                    <span className="w-6 h-6 rounded-full bg-primary/10 text-primary font-mono font-bold text-xs flex items-center justify-center">
+                                                    <span className={`w-6 h-6 rounded-full font-mono font-bold text-xs flex items-center justify-center ${
+                                                        isFixed
+                                                            ? "bg-amber-500/20 text-amber-700 dark:text-amber-300"
+                                                            : "bg-primary/10 text-primary"
+                                                    }`}>
                                                         {newIndex + 1}
                                                     </span>
                                                     {isMoved && (
@@ -416,9 +485,16 @@ const OptimizeRouteModal = ({
 
                                                 {/* 景點名稱與時間 */}
                                                 <div className="min-w-0 flex-1">
-                                                    <h5 className="text-xs sm:text-sm font-bold text-foreground truncate">
-                                                        {item.activity.title}
-                                                    </h5>
+                                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                                        <h5 className="text-xs sm:text-sm font-bold text-foreground truncate">
+                                                            {item.activity.title}
+                                                        </h5>
+                                                        {isHotel && (
+                                                            <span className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.2 rounded bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-medium">
+                                                                <Bed size={9} /> 飯店/住宿
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                     <div className="flex items-center gap-1.5 text-[11px] sm:text-xs text-muted-foreground font-mono">
                                                         <span className="shrink-0">{item.activity.time}</span>
                                                         {item.place?.info?.loc && (
@@ -433,16 +509,39 @@ const OptimizeRouteModal = ({
                                                 </div>
                                             </div>
 
-                                            {/* 狀態標籤 */}
-                                            {isMoved ? (
-                                                <span className="text-[10px] sm:text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-lg shrink-0 border border-emerald-500/20 whitespace-nowrap">
-                                                    順序已優化
-                                                </span>
-                                            ) : (
-                                                <span className="text-[10px] sm:text-[11px] text-muted-foreground/70 shrink-0 whitespace-nowrap">
-                                                    順序不變
-                                                </span>
-                                            )}
+                                            {/* 操作區：釘選按鈕與狀態標籤 */}
+                                            <div className="flex items-center gap-1.5 shrink-0">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => toggleFixedIndex(origIdx)}
+                                                    className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                                                        isFixed
+                                                            ? "bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/40 hover:bg-amber-500/30"
+                                                            : "text-muted-foreground hover:text-foreground hover:bg-muted/70 border border-transparent"
+                                                    }`}
+                                                    title={isFixed ? "點擊解除固定" : "點擊鎖定此站（不參與順序重排）"}
+                                                >
+                                                    <Pin size={11} className={isFixed ? "fill-amber-500 text-amber-600" : ""} />
+                                                    <span className="text-[10px] sm:text-[11px]">
+                                                        {isFixed ? "已固定" : "固定"}
+                                                    </span>
+                                                </button>
+
+                                                {/* 狀態標籤 */}
+                                                {isFixed ? (
+                                                    <span className="text-[10px] sm:text-[11px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-lg border border-amber-500/20 whitespace-nowrap">
+                                                        鎖定站點
+                                                    </span>
+                                                ) : isMoved ? (
+                                                    <span className="text-[10px] sm:text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-lg border border-emerald-500/20 whitespace-nowrap">
+                                                        順序已優化
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-[10px] sm:text-[11px] text-muted-foreground/70 whitespace-nowrap">
+                                                        順序不變
+                                                    </span>
+                                                )}
+                                            </div>
                                         </div>
                                     );
                                 })}

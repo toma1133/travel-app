@@ -39,6 +39,8 @@ export type ItineraryActivitiy = {
     transitMode?: string; // 移動交通方式 (例如 "walk", "car", "train", "flight", "bus")
     transitDuration?: string; // 移動路程時間 (例如 "30分鐘")
     transitDetails?: TransitDetails; // 交通詳細備註
+    isFixed?: boolean; // 是否釘選固定此景點動線位置 (不參與自動排程移動)
+    fixedReason?: "hotel" | "reservation" | "manual"; // 固定原因 (飯店放行李/特定預約/手動鎖定)
 };
 
 export type ItineraryVM = Omit<ItineraryRow, "activities"> & {

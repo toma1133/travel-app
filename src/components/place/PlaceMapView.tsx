@@ -60,10 +60,19 @@ type PlaceMapViewProps = {
 };
 
 // Map Style Options
-type MapStyleKey = "auto" | "voyager" | "positron" | "dark" | "satellite";
+type MapStyleKey = "auto" | "stadia_smooth" | "stadia_outdoors" | "voyager" | "positron" | "dark" | "satellite";
 
 const CARTO_API_KEY = import.meta.env.VITE_CARTO_API_KEY?.trim() || "";
 const CARTO_KEY_PARAM = CARTO_API_KEY ? `?key=${CARTO_API_KEY}` : "";
+
+const STADIA_API_KEY = import.meta.env.VITE_STADIA_MAPS_API_KEY?.trim() || "";
+const STADIA_KEY_PARAM = STADIA_API_KEY ? `?api_key=${STADIA_API_KEY}` : "";
+
+const STADIA_ATTRIBUTION =
+    '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a> &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+
+const CARTO_ATTRIBUTION =
+    '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
 
 const MAP_STYLES: {
     key: MapStyleKey;
@@ -79,19 +88,41 @@ const MAP_STYLES: {
         key: "auto",
         label: "自動主題",
         type: "vector",
-        lightUrl: `https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json${CARTO_KEY_PARAM}`,
-        darkUrl: `https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json${CARTO_KEY_PARAM}`,
-        attribution:
-            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        lightUrl: STADIA_API_KEY
+            ? `https://tiles.stadiamaps.com/styles/alidade_smooth.json${STADIA_KEY_PARAM}`
+            : `https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json${CARTO_KEY_PARAM}`,
+        darkUrl: STADIA_API_KEY
+            ? `https://tiles.stadiamaps.com/styles/alidade_smooth_dark.json${STADIA_KEY_PARAM}`
+            : `https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json${CARTO_KEY_PARAM}`,
+        attribution: STADIA_API_KEY ? STADIA_ATTRIBUTION : CARTO_ATTRIBUTION,
     },
+    ...(STADIA_API_KEY
+        ? [
+              {
+                  key: "stadia_smooth" as MapStyleKey,
+                  label: "Stadia 極簡",
+                  type: "vector" as const,
+                  lightUrl: `https://tiles.stadiamaps.com/styles/alidade_smooth.json${STADIA_KEY_PARAM}`,
+                  darkUrl: `https://tiles.stadiamaps.com/styles/alidade_smooth_dark.json${STADIA_KEY_PARAM}`,
+                  attribution: STADIA_ATTRIBUTION,
+              },
+              {
+                  key: "stadia_outdoors" as MapStyleKey,
+                  label: "Stadia 戶外",
+                  type: "vector" as const,
+                  lightUrl: `https://tiles.stadiamaps.com/styles/outdoors.json${STADIA_KEY_PARAM}`,
+                  darkUrl: `https://tiles.stadiamaps.com/styles/alidade_smooth_dark.json${STADIA_KEY_PARAM}`,
+                  attribution: STADIA_ATTRIBUTION,
+              },
+          ]
+        : []),
     {
         key: "voyager",
         label: "旅遊精緻",
         type: "vector",
         lightUrl: `https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json${CARTO_KEY_PARAM}`,
         darkUrl: `https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json${CARTO_KEY_PARAM}`,
-        attribution:
-            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        attribution: CARTO_ATTRIBUTION,
     },
     {
         key: "positron",
@@ -99,8 +130,7 @@ const MAP_STYLES: {
         type: "vector",
         lightUrl: `https://basemaps.cartocdn.com/gl/positron-gl-style/style.json${CARTO_KEY_PARAM}`,
         darkUrl: `https://basemaps.cartocdn.com/gl/positron-gl-style/style.json${CARTO_KEY_PARAM}`,
-        attribution:
-            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        attribution: CARTO_ATTRIBUTION,
     },
     {
         key: "dark",
@@ -108,8 +138,7 @@ const MAP_STYLES: {
         type: "vector",
         lightUrl: `https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json${CARTO_KEY_PARAM}`,
         darkUrl: `https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json${CARTO_KEY_PARAM}`,
-        attribution:
-            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        attribution: CARTO_ATTRIBUTION,
     },
     {
         key: "satellite",
