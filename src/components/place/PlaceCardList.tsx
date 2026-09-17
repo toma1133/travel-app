@@ -10,6 +10,7 @@ type PlaceCardListProps = {
     onDeleteBtnClick: (place: PlaceVM) => void;
     onEditBtnClick: (place: PlaceVM) => void;
     onTagBtnClick: (tag: string) => void;
+    onViewBtnClick?: (place: PlaceVM) => void;
 };
 
 const PlaceCardList = ({
@@ -20,11 +21,16 @@ const PlaceCardList = ({
     onDeleteBtnClick,
     onEditBtnClick,
     onTagBtnClick,
+    onViewBtnClick,
 }: PlaceCardListProps) => (
     <div
         className={`
             w-full 
-            ${isPrinting ? "space-y-0 divide-y divide-black" : "space-y-6 w-full"}
+            ${
+                isPrinting
+                    ? "space-y-0 divide-y divide-black"
+                    : "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-5"
+            }
         `}
     >
         {Array.isArray(places) && places.length > 0
@@ -39,6 +45,7 @@ const PlaceCardList = ({
                       onDelete={onDeleteBtnClick}
                       onEdit={onEditBtnClick}
                       onTagBtnClick={onTagBtnClick}
+                      onView={onViewBtnClick}
                   />
               ))
             : !isPrinting && (

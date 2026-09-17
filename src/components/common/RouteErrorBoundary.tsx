@@ -18,43 +18,62 @@ import {
     Check,
 } from "lucide-react";
 
-export const RouteErrorBoundary: React.FC = () => {
+export type RouteErrorBoundaryProps = {
+    title?: string;
+    message?: string;
+    statusCode?: number | string;
+    errorDetails?: string;
+};
+
+export const RouteErrorBoundary: React.FC<RouteErrorBoundaryProps> = ({
+    title: propTitle,
+    message: propMessage,
+    statusCode: propStatusCode,
+    errorDetails: propErrorDetails,
+}) => {
     const error = useRouteError();
     const navigate = useNavigate();
     const location = useLocation();
     const [showDetails, setShowDetails] = useState(false);
     const [isCopied, setIsCopied] = useState(false);
 
-    let title = "發生未預期的錯誤";
-    let message = "系統在處理此頁面時遇到了問題，請嘗試重新整理或返回上一頁。";
-    let statusCode: number | string = "Error";
-    let errorDetails = "";
+    let title = propTitle || "找不到此頁面";
+    let message = propMessage || "您所造訪的頁面不存在或已被移除。";
+    let statusCode: number | string = propStatusCode ?? 404;
+    let errorDetails = propErrorDetails || `未找到符合路徑: ${location.pathname}`;
 
-    if (isRouteErrorResponse(error)) {
-        statusCode = error.status;
-        if (error.status === 404) {
-            title = "找不到此頁面";
-            message = "您所造訪的頁面不存在或已被移除。";
-        } else if (error.status === 401) {
-            title = "尚未登入或授權已過期";
-            message = "請重新登入後再試。";
-        } else if (error.status === 503) {
-            title = "伺服器暫時無法使用";
-            message = "後端服務正在維護或暫時無法連線，請稍後再試。";
+    if (error) {
+        if (isRouteErrorResponse(error)) {
+            statusCode = error.status;
+            if (error.status === 404) {
+                title = "找不到此頁面";
+                message = "您所造訪的頁面不存在或已被移除。";
+            } else if (error.status === 401) {
+                title = "尚未登入或授權已過期";
+                message = "請重新登入後再試。";
+            } else if (error.status === 503) {
+                title = "伺服器暫時無法使用";
+                message = "後端服務正在維護或暫時無法連線，請稍後再試。";
+            } else {
+                title = `連線異常 (${error.status})`;
+                message = error.statusText || message;
+            }
+            errorDetails = typeof error.data === "string" ? error.data : JSON.stringify(error.data, null, 2);
+        } else if (error instanceof Error) {
+            title = "頁面執行發生錯誤";
+            message = error.message || message;
+            statusCode = "Error";
+            errorDetails = `${error.name}: ${error.message}\n\nStack:\n${error.stack || "(無堆疊資訊)"}`;
+        } else if (typeof error === "string") {
+            title = "發生未預期的錯誤";
+            message = error;
+            statusCode = "Error";
+            errorDetails = error;
         } else {
-            title = `連線異常 (${error.status})`;
-            message = error.statusText || message;
+            title = "發生未預期的錯誤";
+            statusCode = "Error";
+            errorDetails = JSON.stringify(error, null, 2);
         }
-        errorDetails = typeof error.data === "string" ? error.data : JSON.stringify(error.data, null, 2);
-    } else if (error instanceof Error) {
-        title = "頁面執行發生錯誤";
-        message = error.message || message;
-        errorDetails = `${error.name}: ${error.message}\n\nStack:\n${error.stack || "(無堆疊資訊)"}`;
-    } else if (typeof error === "string") {
-        message = error;
-        errorDetails = error;
-    } else {
-        errorDetails = JSON.stringify(error, null, 2);
     }
 
     const handleCopyDetails = () => {

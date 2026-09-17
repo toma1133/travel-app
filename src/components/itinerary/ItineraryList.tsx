@@ -30,6 +30,8 @@ type ItineraryListProps = {
     ) => void;
     onEditDayBtnClick: (itinerary: ItineraryVM) => void;
     onOptimizeRouteBtnClick?: (itineraryDay: ItineraryVM) => void;
+    onOpenMapBtnClick?: (itineraryDay: ItineraryVM) => void;
+    onSelectDay?: (dayId: string) => void;
     onViewBtnClick: (linkId: string) => void;
     onPlaceHover?: (linkId: string | null, placeIndex?: number | null) => void;
 };
@@ -49,6 +51,8 @@ const ItineraryList = ({
     onEditActivityBtnClick,
     onEditDayBtnClick,
     onOptimizeRouteBtnClick,
+    onOpenMapBtnClick,
+    onSelectDay,
     onViewBtnClick,
     onPlaceHover,
 }: ItineraryListProps) => {
@@ -100,6 +104,10 @@ const ItineraryList = ({
                 : itinerary.day_number;
         
         setExpandedDayNum(newDayNum);
+
+        if (newDayNum !== null) {
+            onSelectDay?.(itinerary.id);
+        }
 
         // 手機版點選日程展開時，平滑滾動到該日程頂部
         if (newDayNum !== null) {
@@ -175,6 +183,7 @@ const ItineraryList = ({
                             onEditActivityBtnClick={onEditActivityBtnClick}
                             onEditDayBtnClick={onEditDayBtnClick}
                             onOptimizeRouteBtnClick={onOptimizeRouteBtnClick}
+                            onOpenMapBtnClick={onOpenMapBtnClick}
                             onViewBtnClick={onViewBtnClick}
                             onPlaceHover={onPlaceHover}
                         />

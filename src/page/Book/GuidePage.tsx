@@ -10,6 +10,7 @@ import DeleteModal from "../../components/common/DeleteModal";
 import PlaceModal from "../../components/place/PlaceModal";
 import PlaceFilter from "../../components/place/PlaceFilter";
 import PlaceCardList from "../../components/place/PlaceCardList";
+import PreviewPlaceModal from "../../components/itinerary/PreviewPlaceModal";
 import BookLayoutContextType from "../../models/types/BookLayoutContextTypes";
 import LayoutContextType from "../../models/types/LayoutContextTypes";
 import type { PlaceCategory, PlaceVM } from "../../models/types/PlaceTypes";
@@ -77,6 +78,9 @@ const GuidePage = ({
     // Delete
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [placeToDelete, setPlaceToDelete] = useState<PlaceVM | null>(null);
+
+    // Preview Modal
+    const [previewPlace, setPreviewPlace] = useState<PlaceVM | null>(null);
 
     useEffect(() => {
         if (!Array.isArray(places)) {
@@ -333,6 +337,7 @@ const GuidePage = ({
                     onDeleteBtnClick={handleOpenDeleteModal}
                     onEditBtnClick={handleOpenEditModal}
                     onTagBtnClick={handleTagClick}
+                    onViewBtnClick={(place) => setPreviewPlace(place)}
                 />
             </div>
             {isModalOpen && (
@@ -354,6 +359,13 @@ const GuidePage = ({
                     deleteKey={placeToDelete?.name}
                     onCloseClick={handleCloseDeleteModal}
                     onConfirmClick={handleConfirmDelete}
+                />
+            )}
+            {previewPlace && (
+                <PreviewPlaceModal
+                    place={previewPlace}
+                    theme={tripData?.theme_config!}
+                    onCloseBtnClick={() => setPreviewPlace(null)}
                 />
             )}
         </div>

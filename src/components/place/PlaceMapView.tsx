@@ -57,6 +57,7 @@ type PlaceMapViewProps = {
     showRouteLine?: boolean;
     highlightedPlaceId?: string | null;
     highlightedIndex?: number | null;
+    enabled?: boolean;
 };
 
 // Map Style Options
@@ -482,6 +483,7 @@ const PlaceMapView = ({
     showRouteLine = true,
     highlightedPlaceId,
     highlightedIndex,
+    enabled = true,
 }: PlaceMapViewProps) => {
     const { theme } = useTheme();
     const isDark = theme === "dark";
@@ -545,7 +547,7 @@ const PlaceMapView = ({
 
     // Fetch road route geometry or fallback estimate whenever validPlaces or routeMode changes
     useEffect(() => {
-        if (!showRouteLine || validPlaces.length < 2) {
+        if (!enabled || !showRouteLine || validPlaces.length < 2) {
             setRouteData(null);
             setIsRouteLoading(false);
             return;
@@ -678,6 +680,10 @@ const PlaceMapView = ({
     };
 
     const routeStyle = getRouteStyle();
+
+    if (!enabled) {
+        return null;
+    }
 
     return (
         <div className="w-full h-full relative max-w-full overflow-hidden">

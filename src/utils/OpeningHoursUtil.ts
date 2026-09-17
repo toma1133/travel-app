@@ -50,7 +50,7 @@ export function getCurrentDayIndex(now: moment.Moment = moment()): number {
 /**
  * Parse raw opening hours string (plain text or JSON per_day)
  */
-export function parseOpeningHours(rawOpen?: string | null): ParsedOpeningHours {
+export function parseOpeningHours(rawOpen?: string | null, now: moment.Moment = moment()): ParsedOpeningHours {
     if (!rawOpen || typeof rawOpen !== "string") {
         return {
             isPerDay: false,
@@ -62,7 +62,7 @@ export function parseOpeningHours(rawOpen?: string | null): ParsedOpeningHours {
     }
 
     const trimmed = rawOpen.trim();
-    const currentDay = getCurrentDayIndex();
+    const currentDay = getCurrentDayIndex(now);
 
     // Check if JSON format
     if (trimmed.startsWith("{") && (trimmed.includes('"type":"per_day"') || trimmed.includes('"schedule"'))) {
@@ -223,8 +223,8 @@ export function formatOpeningHours(rawOpen?: string | null): string {
 /**
  * Format today's opening hours
  */
-export function formatTodayOpeningHours(rawOpen?: string | null): string {
-    const parsed = parseOpeningHours(rawOpen);
+export function formatTodayOpeningHours(rawOpen?: string | null, now: moment.Moment = moment()): string {
+    const parsed = parseOpeningHours(rawOpen, now);
     if (!parsed.isPerDay) {
         return parsed.summaryText;
     }
@@ -309,7 +309,7 @@ export function getBusinessStatus(
     closedDays?: string | null,
     now: moment.Moment = moment()
 ): BusinessStatus {
-    const parsed = parseOpeningHours(rawOpen);
+    const parsed = parseOpeningHours(rawOpen, now);
 
     if (!rawOpen || !rawOpen.trim()) {
         return {
@@ -365,8 +365,12 @@ export function getBusinessStatus(
 
     // 2. Extract today's intervals
     let todayPeriods: string[] = [];
+    const targetDaySchedule = parsed.isPerDay
+        ? parsed.days.find((d) => d.dayIndex === currentDay) || parsed.todaySchedule
+        : undefined;
+
     if (parsed.isPerDay) {
-        if (parsed.todaySchedule?.isClosed) {
+        if (targetDaySchedule?.isClosed) {
             return {
                 isOpen: false,
                 status: "closed_today",
@@ -378,10 +382,17 @@ export function getBusinessStatus(
                 parsed,
             };
         }
-        todayPeriods = parsed.todaySchedule?.periods || [];
+        todayPeriods = targetDaySchedule?.periods || [];
     } else {
         todayPeriods = [parsed.rawText];
     }
+
+    // Formatted current day's hours text
+    const currentDayHoursText = targetDaySchedule
+        ? targetDaySchedule.periodsText
+        : todayPeriods.length > 0
+        ? todayPeriods.join(", ")
+        : parsed.summaryText;
 
     // Combine intervals
     let intervals: TimeInterval[] = [];
@@ -452,7 +463,7 @@ export function getBusinessStatus(
                     badgeText: "即將打烊",
                     badgeColor: "amber",
                     detailText: `結束營業 ${interval.endStr}`,
-                    todayHoursText: todayPeriods.join(", "),
+                    todayHoursText: currentDayHoursText,
                     allHoursSummary: parsed.summaryText,
                     parsed,
                 };
@@ -464,7 +475,7 @@ export function getBusinessStatus(
                 badgeText: "營業中",
                 badgeColor: "emerald",
                 detailText: `結束營業 ${interval.endStr}`,
-                todayHoursText: todayPeriods.join(", "),
+                todayHoursText: currentDayHoursText,
                 allHoursSummary: parsed.summaryText,
                 parsed,
             };
@@ -480,7 +491,7 @@ export function getBusinessStatus(
             badgeText: "休息中",
             badgeColor: "rose",
             detailText: `開始營業 ${nextInterval.startStr}`,
-            todayHoursText: todayPeriods.join(", "),
+            todayHoursText: currentDayHoursText,
             allHoursSummary: parsed.summaryText,
             parsed,
         };
@@ -493,7 +504,7 @@ export function getBusinessStatus(
         badgeText: "休息中",
         badgeColor: "rose",
         detailText: "明日開始營業",
-        todayHoursText: todayPeriods.join(", "),
+        todayHoursText: currentDayHoursText,
         allHoursSummary: parsed.summaryText,
         parsed,
     };

@@ -75,9 +75,7 @@ const AppContent = ({ isOffline }: { isOffline: boolean }) => {
                             },
                             {
                                 path: "*",
-                                Component: () => (
-                                    <div className="px-4 py-16">頁面不存在</div>
-                                ),
+                                Component: () => <RouteErrorBoundary />,
                             },
                         ],
                     },
@@ -86,7 +84,7 @@ const AppContent = ({ isOffline }: { isOffline: boolean }) => {
             {
                 path: "*",
                 errorElement: <RouteErrorBoundary />,
-                Component: () => <div>頁面不存在</div>,
+                Component: () => <RouteErrorBoundary />,
             },
         ],
         {

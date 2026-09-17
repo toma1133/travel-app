@@ -2,8 +2,9 @@ import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "re
 import { useOutletContext, useParams } from "react-router-dom";
 import { useIsMutating } from "@tanstack/react-query";
 import moment from "moment";
-import { Lock, MapIcon, Plus, Settings } from "lucide-react";
+import { Lock, MapIcon, Plus, Settings, X } from "lucide-react";
 import useAuth from "../../hooks/UseAuth";
+import useMediaQuery from "../../hooks/UseMediaQuery";
 import useItinerarys from "../../hooks/itinerary/UseItinerarys";
 import useItineraryMutations from "../../hooks/itinerary/UseItineraryMutations";
 import { placeRepo } from "../../services/repositories/PlaceRepo";
@@ -65,6 +66,10 @@ const ItineraryPage = ({
     const [itineraryPlacesMap, setItineraryPlacesMap] = useState<Record<string, PlaceVM[]>>({}); // dayId -> PlaceVM[] (valid GPS places only)
     const [allPlacesMap, setAllPlacesMap] = useState<Record<string, PlaceVM>>({}); // placeId -> PlaceVM (all fetched places)
     const hasInitializedDayFilterRef = useRef(false);
+
+    // 📱 響應式螢幕寬度檢測與手機地圖彈窗控制 (確保手機未開地圖時完全不載入地圖 API)
+    const isDesktop = useMediaQuery("(min-width: 1024px)");
+    const [showMobileMap, setShowMobileMap] = useState(false);
 
     // 維護 selectedDayFilter 狀態：初始載入時預設當天或第一天，之後儲存/更新時保持當前選取的日程
     useEffect(() => {
@@ -181,6 +186,12 @@ const ItineraryPage = ({
     const activeMapPlaces = useMemo(() => {
         return itineraryPlacesMap[selectedDayFilter] || [];
     }, [itineraryPlacesMap, selectedDayFilter]);
+
+    const activeDayLabel = useMemo(() => {
+        if (selectedDayFilter === "all") return "全部天數";
+        const day = itinerarys?.find((d) => d.id === selectedDayFilter);
+        return day ? `DAY ${day.day_number}` : "";
+    }, [itinerarys, selectedDayFilter]);
 
     // --- Preview Modal Handlers ---
     const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
@@ -685,6 +696,11 @@ const ItineraryPage = ({
                             onEditActivityBtnClick={handleOpenEditActivityModal}
                             onEditDayBtnClick={handleOpenEditDayModal}
                             onOptimizeRouteBtnClick={handleOpenOptimizeModal}
+                            onOpenMapBtnClick={(day) => {
+                                setSelectedDayFilter(day.id);
+                                setShowMobileMap(true);
+                            }}
+                            onSelectDay={(dayId) => setSelectedDayFilter(dayId)}
                             onViewBtnClick={handleOpenPreviewModal}
                             onPlaceHover={(id, index) =>
                                 setHoveredPlace({
@@ -696,14 +712,14 @@ const ItineraryPage = ({
                     </div>
                     </div>
 
-                    {/* 右欄：電腦版常駐大地圖 */}
-                    {!isPrinting && (
-                        <div className="hidden lg:flex flex-1 flex-col h-full rounded-3xl overflow-hidden shadow-lg border border-border/80 min-h-[450px]">
+                    {/* 右欄：電腦版常駐大地圖 (僅在螢幕 >= 1024px 且非列印時掛載，手機版完全不載入) */}
+                    {!isPrinting && isDesktop && (
+                        <div className="flex flex-1 flex-col h-full rounded-3xl overflow-hidden shadow-lg border border-border/80 min-h-[450px]">
                             <div className="px-4 py-3 bg-muted/30 border-b border-border/50 flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                     <MapIcon size={16} className="text-primary shrink-0" />
                                     <span className="text-xs font-bold text-foreground">
-                                        地圖與動態路線
+                                        地圖與動態路線 {activeDayLabel ? `· ${activeDayLabel}` : ""}
                                     </span>
                                 </div>
                                 <span className="text-[11px] text-muted-foreground font-mono bg-accent/50 px-2 py-0.5 rounded-full">
@@ -716,12 +732,93 @@ const ItineraryPage = ({
                                     showRouteLine={true}
                                     highlightedPlaceId={hoveredPlace.id}
                                     highlightedIndex={hoveredPlace.index}
+                                    enabled={true}
                                 />
                             </div>
                         </div>
                     )}
                 </div>
             </div>
+
+            {/* 📱 手機版浮動「路線地圖」按鈕 (置中懸浮於底部導航列上方，與右下角 BackToTop 按鈕完全錯開) */}
+            {!isPrinting && !isDesktop && (itineraryPlacesMap["all"]?.length || 0) > 0 && (
+                <button
+                    type="button"
+                    onClick={() => setShowMobileMap(true)}
+                    className="fixed bottom-[84px] left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 px-5 py-2.5 rounded-full shadow-2xl bg-primary text-primary-foreground font-bold text-xs hover:scale-105 active:scale-95 transition-all border border-white/20 backdrop-blur-md cursor-pointer whitespace-nowrap"
+                    title="開啟手機路線地圖"
+                >
+                    <MapIcon size={15} />
+                    <span>路線地圖 {activeDayLabel ? `· ${activeDayLabel}` : ""} ({activeMapPlaces.length})</span>
+                </button>
+            )}
+
+            {/* 📱 手機版彈窗全螢幕地圖 (唯有使用者主動點開時才掛載並請求圖資與路網 API，關閉時即時卸載釋放) */}
+            {!isPrinting && !isDesktop && showMobileMap && (
+                <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-md flex flex-col animate-in fade-in duration-200">
+                    <div className="px-4 py-3 border-b border-border flex items-center justify-between bg-card/90">
+                        <div className="flex items-center gap-2">
+                            <MapIcon size={16} className="text-primary shrink-0" />
+                            <span className="text-xs sm:text-sm font-bold text-foreground">
+                                路線地圖 {activeDayLabel ? `· ${activeDayLabel}` : ""} ({activeMapPlaces.length} 個地標)
+                            </span>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setShowMobileMap(false)}
+                            className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-muted hover:bg-muted/80 text-foreground transition-colors cursor-pointer"
+                        >
+                            <X size={14} />
+                            <span>關閉</span>
+                        </button>
+                    </div>
+
+                    {/* 📱 手機版地圖天數切換橫列 (讓使用者可在全螢幕地圖內自由切換各天路線或全部天數) */}
+                    <div className="flex items-center gap-1.5 px-3 py-2 overflow-x-auto no-scrollbar border-b border-border/60 bg-muted/40 shrink-0">
+                        <button
+                            type="button"
+                            onClick={() => setSelectedDayFilter("all")}
+                            className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all shrink-0 cursor-pointer ${
+                                selectedDayFilter === "all"
+                                    ? "bg-primary text-primary-foreground shadow-xs"
+                                    : "bg-background/90 text-muted-foreground hover:text-foreground border border-border/60"
+                            }`}
+                        >
+                            全部天數 ({itineraryPlacesMap["all"]?.length || 0})
+                        </button>
+                        {Array.isArray(itinerarys) &&
+                            itinerarys.map((d) => {
+                                const count = itineraryPlacesMap[d.id]?.length || 0;
+                                const isSelected = selectedDayFilter === d.id;
+                                return (
+                                    <button
+                                        key={d.id}
+                                        type="button"
+                                        onClick={() => setSelectedDayFilter(d.id)}
+                                        className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all shrink-0 cursor-pointer ${
+                                            isSelected
+                                                ? "bg-primary text-primary-foreground shadow-xs"
+                                                : "bg-background/90 text-muted-foreground hover:text-foreground border border-border/60"
+                                        }`}
+                                    >
+                                        <span>DAY {d.day_number}</span>
+                                        <span className="text-[10px] opacity-75 font-mono">({count})</span>
+                                    </button>
+                                );
+                            })}
+                    </div>
+
+                    <div className="flex-1 w-full relative">
+                        <PlaceMapView
+                            places={activeMapPlaces}
+                            showRouteLine={true}
+                            highlightedPlaceId={hoveredPlace.id}
+                            highlightedIndex={hoveredPlace.index}
+                            enabled={true}
+                        />
+                    </div>
+                </div>
+            )}
             {isDayModalOpen && (
                 <ItineraryDayModal
                     formData={formDay}

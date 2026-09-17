@@ -11,6 +11,7 @@ import {
     ChevronDown,
     MapPin,
     Pin,
+    Map as MapIcon,
 } from "lucide-react";
 import type {
     ItineraryActivitiy,
@@ -56,6 +57,7 @@ type ItineraryItemProps = {
     onEditDayBtnClick: (itinerary: ItineraryVM) => void;
     onExpandedBtnToggle: (itinerary: ItineraryVM) => void;
     onOptimizeRouteBtnClick?: (itineraryDay: ItineraryVM) => void;
+    onOpenMapBtnClick?: (itineraryDay: ItineraryVM) => void;
     onViewBtnClick: (linkId: string) => void;
     onPlaceHover?: (linkId: string | null, placeIndex?: number | null) => void;
 };
@@ -75,6 +77,7 @@ const ItineraryItem = ({
     onEditDayBtnClick,
     onExpandedBtnToggle,
     onOptimizeRouteBtnClick,
+    onOpenMapBtnClick,
     onViewBtnClick,
     onPlaceHover,
 }: ItineraryItemProps) => {
@@ -336,6 +339,22 @@ const ItineraryItem = ({
                         </button>
                     )}
 
+                    {/* 📱 手機版：快速查看此日地圖路線按鈕 */}
+                    {!isPrinting && onOpenMapBtnClick && Array.isArray(itinerary.activities) && itinerary.activities.some((a) => a.linkId) && (
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onOpenMapBtnClick(itinerary);
+                            }}
+                            className="lg:hidden inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold transition-all cursor-pointer shadow-2xs active:scale-95 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20"
+                            title="在地圖中查看此日路線"
+                        >
+                            <MapIcon size={12} />
+                            <span>地圖</span>
+                        </button>
+                    )}
+
                     {/* 手機版折疊/展開指示箭頭 */}
                     {!isPrinting && !isEditing && (
                         <div
@@ -461,9 +480,14 @@ const ItineraryItem = ({
                                             ? nextStartMins - arrivalMins
                                             : 0;
 
-                                    // 計算排程時間是否在營業時間內
-                                    const scheduledMoment = getScheduledMoment(itinerary.date, activity.time);
-                                    const businessStatus = linkedPlace?.info?.open
+                                    // 1. 即時營業狀態 (與詳細地點卡 PreviewPlaceModal、PlaceCard 完全一致，顯示當前真實營業狀態)
+                                    const currentBusinessStatus = linkedPlace?.info?.open
+                                        ? getBusinessStatus(linkedPlace.info.open, linkedPlace.info?.closed_days)
+                                        : null;
+
+                                    // 2. 排程時間檢核 (若有指定時間，檢查排程是否落在非營業時段或即將打烊)
+                                    const scheduledMoment = activity.time ? getScheduledMoment(itinerary.date, activity.time) : null;
+                                    const scheduledStatus = (linkedPlace?.info?.open && scheduledMoment)
                                         ? getBusinessStatus(linkedPlace.info.open, linkedPlace.info?.closed_days, scheduledMoment)
                                         : null;
 
@@ -471,8 +495,18 @@ const ItineraryItem = ({
                                         linkedPlace &&
                                         linkedPlace.type !== "hotel" &&
                                         linkedPlace.type !== "stay" &&
-                                        businessStatus &&
-                                        (businessStatus.status === "closed" || businessStatus.status === "closed_today")
+                                        activity.time &&
+                                        scheduledStatus &&
+                                        (scheduledStatus.status === "closed" || scheduledStatus.status === "closed_today")
+                                    );
+
+                                    const isScheduleClosingSoon = !!(
+                                        linkedPlace &&
+                                        linkedPlace.type !== "hotel" &&
+                                        linkedPlace.type !== "stay" &&
+                                        activity.time &&
+                                        scheduledStatus &&
+                                        scheduledStatus.status === "closing_soon"
                                     );
 
                                     const firstRec = linkedPlace?.info?.recommended_items?.[0];
@@ -773,19 +807,28 @@ const ItineraryItem = ({
                                                                                 <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md font-bold bg-rose-500/15 text-rose-600 dark:text-rose-400 animate-pulse truncate">
                                                                                     <AlertTriangle size={10} className="shrink-0" />
                                                                                     <span>
-                                                                                        {businessStatus?.status === "closed_today"
+                                                                                        {scheduledStatus?.status === "closed_today"
                                                                                             ? "排定日公休"
-                                                                                            : `非營業時段 (${businessStatus?.detailText || ""})`}
+                                                                                            : `非營業時段 (${scheduledStatus?.detailText || ""})`}
                                                                                     </span>
                                                                                 </span>
-                                                                            ) : businessStatus?.badgeText ? (
+                                                                            ) : isScheduleClosingSoon ? (
+                                                                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 truncate">
+                                                                                    <AlertTriangle size={10} className="shrink-0 text-amber-500" />
+                                                                                    <span>
+                                                                                        排定時間快打烊 ({scheduledStatus?.detailText || ""})
+                                                                                    </span>
+                                                                                </span>
+                                                                            ) : currentBusinessStatus?.badgeText ? (
                                                                                 <div className="inline-flex items-center gap-1.5 truncate">
                                                                                     <span
                                                                                         className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                                                                                            businessStatus.badgeColor === "emerald"
+                                                                                            currentBusinessStatus.badgeColor === "emerald"
                                                                                                 ? "bg-emerald-500 ring-2 ring-emerald-500/20"
-                                                                                                : businessStatus.badgeColor === "amber"
+                                                                                                : currentBusinessStatus.badgeColor === "amber"
                                                                                                 ? "bg-amber-500 ring-2 ring-amber-500/20"
+                                                                                                : currentBusinessStatus.badgeColor === "rose"
+                                                                                                ? "bg-rose-500 ring-2 ring-rose-500/20"
                                                                                                 : "bg-muted-foreground"
                                                                                         }`}
                                                                                     />
@@ -793,20 +836,22 @@ const ItineraryItem = ({
                                                                                         className={`font-semibold ${
                                                                                             isPrinting
                                                                                                 ? "text-black"
-                                                                                                : businessStatus.badgeColor === "emerald"
+                                                                                                : currentBusinessStatus.badgeColor === "emerald"
                                                                                                 ? "text-emerald-600 dark:text-emerald-400"
-                                                                                                : businessStatus.badgeColor === "amber"
+                                                                                                : currentBusinessStatus.badgeColor === "amber"
                                                                                                 ? "text-amber-600 dark:text-amber-400"
+                                                                                                : currentBusinessStatus.badgeColor === "rose"
+                                                                                                ? "text-rose-600 dark:text-rose-400"
                                                                                                 : "text-muted-foreground"
                                                                                         }`}
                                                                                     >
-                                                                                        {businessStatus.badgeText}
+                                                                                        {currentBusinessStatus.badgeText}
                                                                                     </span>
-                                                                                    {businessStatus.todayHoursText && businessStatus.todayHoursText !== "未設定" && (
+                                                                                    {currentBusinessStatus.todayHoursText && currentBusinessStatus.todayHoursText !== "未設定" && (
                                                                                         <>
                                                                                             <span className={isPrinting ? "text-black" : "opacity-30"}>·</span>
                                                                                             <span className={`font-mono truncate ${isPrinting ? "text-black font-medium" : "text-muted-foreground"}`}>
-                                                                                                {businessStatus.todayHoursText}
+                                                                                                {currentBusinessStatus.todayHoursText}
                                                                                             </span>
                                                                                         </>
                                                                                     )}
