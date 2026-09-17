@@ -182,7 +182,7 @@ const ItineraryList = ({
                 ))
             ) : (
                 !isPrinting && (
-                    <div className="text-center py-10 bg-card rounded-xl border border-dashed border-border/50 shadow-sm">
+                    <div className="text-center py-12 glass-panel rounded-3xl border border-dashed border-black/10 dark:border-white/10 shadow-2xs">
                         <p className="text-muted-foreground text-sm font-medium">
                             目前沒有任何日程，請點擊上方 + 新增按鈕開始規劃！
                         </p>

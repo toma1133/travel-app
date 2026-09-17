@@ -101,12 +101,14 @@ export function calculateDurationByMode(
 
     switch (mode) {
         case "walking": {
-            // Standard human walking speed: 4.5 km/h
+            // 重要：OSRM 公共 Demo 伺服器 (router.project-osrm.org) 後端只部署了「汽車 (car)」單一 Profile。
+            // 無論請求 /foot/ 還是 /driving/，OSRM 回傳的 duration 都是汽車秒數！
+            // 因此步行時間必須依據實際路網距離，以正常行人均速 4.5 km/h (約 75m/分) 精準換算。
             const mins = (distanceKm / 4.5) * 60;
             return Math.max(1, Math.round(mins));
         }
         case "cycling": {
-            // Standard city cycling speed: 15 km/h
+            // 自行車以城市均速 15 km/h (約 250m/分) 精準換算
             const mins = (distanceKm / 15.0) * 60;
             return Math.max(1, Math.round(mins));
         }
@@ -297,6 +299,25 @@ export class RoutingService {
     }
 
     /**
+     * Map RouteMode to public OSRM profile endpoint:
+     * - "walking" -> "foot" (pedestrian paths, crosswalks, no car U-turn constraints)
+     * - "cycling" -> "bicycle"
+     * - "driving", "motorcycle", default -> "driving"
+     */
+    static getOsrmProfile(mode: RouteMode): string {
+        switch (mode) {
+            case "walking":
+                return "foot";
+            case "cycling":
+                return "bicycle";
+            case "driving":
+            case "motorcycle":
+            default:
+                return "driving";
+        }
+    }
+
+    /**
      * Fallback multi-stop generator using straight-line geodesic distances
      */
     static generateFallbackMultiStop(
@@ -372,9 +393,10 @@ export class RoutingService {
         }
 
         try {
-            // OSRM public server provides reliable road network routing on driving profile
+            // OSRM public server: uses "foot" for walking, "bicycle" for cycling, "driving" for car
+            const profile = this.getOsrmProfile(mode);
             const coords = `${start.lng},${start.lat};${end.lng},${end.lat}`;
-            const url = `https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson&steps=false`;
+            const url = `https://router.project-osrm.org/route/v1/${profile}/${coords}?overview=full&geometries=geojson&steps=false`;
 
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 6000);
@@ -391,18 +413,24 @@ export class RoutingService {
                 return this.getFallbackRoute(start, end, mode, cacheKey);
             }
 
-            const route = data.routes[0];
-            const distanceMeters = route.distance || 0;
-            const osrmDurationSeconds = route.duration || 0;
-            const durationMinutes = calculateDurationByMode(distanceMeters, osrmDurationSeconds, mode);
-
+            const haversineDist = calculateHaversineDistance(start.lat, start.lng, end.lat, end.lng);
+            let effectiveDistance = distanceMeters;
             const rawCoords: [number, number][] = route.geometry?.coordinates || [];
-            const leafletCoords: [number, number][] = rawCoords.map(([lng, lat]) => [lat, lng]);
+            let leafletCoords: [number, number][] = rawCoords.map(([lng, lat]) => [lat, lng]);
+
+            // 若為步行模式且兩點直線距離很近 (< 600m)，但因 OSRM 汽車路網禁止迴轉/單行道導致繞路超過 2.5 倍：
+            // 自動修正為行人合理穿越距離，並避免地圖上畫出車輛大迴轉的荒謬軌跡
+            if (mode === "walking" && haversineDist < 600 && distanceMeters > haversineDist * 2.5) {
+                effectiveDistance = haversineDist * 1.25;
+                leafletCoords = [[start.lat, start.lng], [end.lat, end.lng]];
+            }
+
+            const durationMinutes = calculateDurationByMode(effectiveDistance, osrmDurationSeconds, mode);
 
             const result: RouteResult = {
-                distanceMeters,
-                distanceKm: parseFloat((distanceMeters / 1000).toFixed(2)),
-                distanceFormatted: formatDistance(distanceMeters),
+                distanceMeters: effectiveDistance,
+                distanceKm: parseFloat((effectiveDistance / 1000).toFixed(2)),
+                distanceFormatted: formatDistance(effectiveDistance),
                 durationSeconds: durationMinutes * 60,
                 durationMinutes,
                 durationFormatted: formatDuration(durationMinutes),
@@ -463,9 +491,10 @@ export class RoutingService {
         }
 
         try {
-            // Use OSRM driving road network, then convert duration based on specific mode speed
+            // Use OSRM road network for specific profile (foot / bicycle / driving)
+            const profile = this.getOsrmProfile(mode);
             const coords = stops.map((s) => `${s.lng},${s.lat}`).join(";");
-            const url = `https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson&steps=false`;
+            const url = `https://router.project-osrm.org/route/v1/${profile}/${coords}?overview=full&geometries=geojson&steps=false`;
 
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 6000); // 6s timeout
@@ -489,13 +518,25 @@ export class RoutingService {
             const route = data.routes[0];
             const totalDistanceMeters = route.distance || 0;
             const totalOsrmSeconds = route.duration || 0;
-            const totalDurationMinutes = calculateDurationByMode(totalDistanceMeters, totalOsrmSeconds, mode);
 
             const rawCoords: [number, number][] = route.geometry?.coordinates || [];
             const leafletCoords: [number, number][] = rawCoords.map(([lng, lat]) => [lat, lng]);
 
-            const legs = (route.legs || []).map((leg: any) => {
-                const legMeters = leg.distance || 0;
+            let adjustedTotalMeters = 0;
+            const legs = (route.legs || []).map((leg: any, idx: number) => {
+                let legMeters = leg.distance || 0;
+                if (mode === "walking" && idx < stops.length - 1) {
+                    const straight = calculateHaversineDistance(
+                        stops[idx].lat,
+                        stops[idx].lng,
+                        stops[idx + 1].lat,
+                        stops[idx + 1].lng
+                    );
+                    if (straight < 600 && legMeters > straight * 2.5) {
+                        legMeters = straight * 1.25;
+                    }
+                }
+                adjustedTotalMeters += legMeters;
                 const legOsrmSeconds = leg.duration || 0;
                 const legMinutes = calculateDurationByMode(legMeters, legOsrmSeconds, mode);
 
@@ -507,9 +548,12 @@ export class RoutingService {
                 };
             });
 
+            const finalDistanceMeters = mode === "walking" && adjustedTotalMeters > 0 ? adjustedTotalMeters : totalDistanceMeters;
+            const totalDurationMinutes = calculateDurationByMode(finalDistanceMeters, totalOsrmSeconds, mode);
+
             const result: MultiStopRouteResult = {
-                totalDistanceKm: parseFloat((totalDistanceMeters / 1000).toFixed(2)),
-                totalDistanceFormatted: formatDistance(totalDistanceMeters),
+                totalDistanceKm: parseFloat((finalDistanceMeters / 1000).toFixed(2)),
+                totalDistanceFormatted: formatDistance(finalDistanceMeters),
                 totalDurationMinutes,
                 totalDurationFormatted: formatDuration(totalDurationMinutes),
                 legs,
@@ -554,9 +598,10 @@ export class RoutingService {
             const destParam = fixEnd ? "destination=last" : "destination=any";
             const roundParam = roundtrip ? "roundtrip=true" : "roundtrip=false";
 
-            // OSRM Trip endpoint supports driving graph
+            // OSRM Trip endpoint supports profile (foot / bicycle / driving)
+            const profile = this.getOsrmProfile(mode);
             const coords = stops.map((s) => `${s.lng},${s.lat}`).join(";");
-            const url = `https://router.project-osrm.org/trip/v1/driving/${coords}?${sourceParam}&${destParam}&${roundParam}&overview=full&geometries=geojson&steps=false`;
+            const url = `https://router.project-osrm.org/trip/v1/${profile}/${coords}?${sourceParam}&${destParam}&${roundParam}&overview=full&geometries=geojson&steps=false`;
 
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 6500); // 6.5s timeout

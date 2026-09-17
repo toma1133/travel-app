@@ -17,7 +17,7 @@ export default defineConfig(({ mode }) => {
             },
         },
         optimizeDeps: {
-            exclude: ["maplibre-gl"],
+            include: ["maplibre-gl", "@maplibre/maplibre-gl-leaflet"],
         },
         plugins: [
             react(),

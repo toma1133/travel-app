@@ -27,6 +27,7 @@ import type { PlaceVM } from "../../models/types/PlaceTypes";
 import type { TripVM } from "../../models/types/TripTypes";
 
 import { ITINERARY_CATEGORIES } from "../../constants/Categories";
+import { computeDayTimelineSchedule } from "../../utils/ItineraryTimeUtil";
 
 type ItineraryPageProps = {
     isPrinting?: boolean;
@@ -376,7 +377,28 @@ const ItineraryPage = ({
     const handleOpenCreateActivityModal = (itineraryDay: ItineraryVM) => {
         setActivityModalMode("create");
         setDayItemForActivity(itineraryDay);
-        setFormActivity({ ...initialActivityState });
+
+        // 智慧推算：若當天已有活動，預設新活動的開始時間為上一站的「預計抵達時間」或「結束時間」
+        let defaultTime = "09:00";
+        if (Array.isArray(itineraryDay.activities) && itineraryDay.activities.length > 0) {
+            const schedule = computeDayTimelineSchedule(itineraryDay.activities);
+            if (schedule.length > 0) {
+                const last = schedule[schedule.length - 1];
+                if (last.transit.hasTransit && last.transit.arrivalTime) {
+                    defaultTime = last.transit.arrivalTime;
+                } else if (last.endTime) {
+                    defaultTime = last.endTime;
+                } else if (last.startTime) {
+                    defaultTime = last.startTime;
+                }
+            }
+        }
+
+        setFormActivity({
+            ...initialActivityState,
+            time: defaultTime,
+            activityIndex: itineraryDay.activities?.length || 0,
+        });
         setIsActivityModalOpen(true);
     };
 
@@ -620,7 +642,7 @@ const ItineraryPage = ({
                                     className={`px-4 py-3 rounded-2xl text-sm font-bold text-left transition-all ${
                                         selectedDayFilter === "all"
                                             ? "bg-primary text-primary-foreground shadow-sm"
-                                            : "bg-card border border-border text-muted-foreground hover:text-foreground hover:border-primary/50"
+                                            : "bg-white dark:bg-card border border-border text-muted-foreground hover:text-foreground hover:border-primary/50 shadow-2xs"
                                     }`}
                                 >
                                     全部天數
@@ -634,7 +656,7 @@ const ItineraryPage = ({
                                             className={`px-4 py-3 rounded-2xl text-left transition-all flex flex-col gap-0.5 ${
                                                 selectedDayFilter === day.id
                                                     ? "bg-primary text-primary-foreground shadow-sm"
-                                                    : "bg-card border border-border text-muted-foreground hover:text-foreground hover:border-primary/50"
+                                                    : "bg-white dark:bg-card border border-border text-muted-foreground hover:text-foreground hover:border-primary/50 shadow-2xs"
                                             }`}
                                         >
                                             <span className="text-sm font-bold">DAY {day.day_number}</span>
