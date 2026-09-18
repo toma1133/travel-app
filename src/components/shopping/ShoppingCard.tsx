@@ -327,29 +327,32 @@ const ShoppingCard = ({
             </div>
 
             {/* Bottom Actions Bar */}
-            <div className="px-4 py-2.5 bg-muted/20 border-t border-border/60 flex items-center justify-between gap-2 text-xs">
-                {/* Left Action: Show to Clerk & Price Compare & Stepper */}
+            <div className="px-3.5 sm:px-4 py-2.5 bg-muted/20 border-t border-border/60 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs">
+                {/* Row 1 on mobile: Store Clerk & Price Compare */}
                 <div className="flex items-center gap-1.5 sm:gap-2">
                     <button
                         type="button"
                         onClick={() => onShowToClerk(item)}
-                        className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                        className="flex-1 sm:flex-initial px-3 py-1.5 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer shrink-0 whitespace-nowrap"
                         title="全螢幕展示大圖與原文品名給店員看"
                     >
-                        <Sparkles size={13} />
+                        <Sparkles size={13} className="shrink-0" />
                         <span>問店員</span>
                     </button>
 
                     <button
                         type="button"
                         onClick={() => onOpenPriceCompare(item)}
-                        className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-card border border-border hover:bg-muted text-muted-foreground hover:text-foreground font-semibold text-xs flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+                        className="flex-1 sm:flex-initial px-3 py-1.5 rounded-xl bg-card border border-border hover:bg-muted text-muted-foreground hover:text-foreground font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-2xs shrink-0 whitespace-nowrap"
                         title="門市報價與比價明細"
                     >
-                        <Calculator size={13} />
+                        <Calculator size={13} className="shrink-0" />
                         <span>比價 ({records.length})</span>
                     </button>
+                </div>
 
+                {/* Row 2 on mobile: Stepper & Management Action Buttons */}
+                <div className="flex items-center justify-between sm:justify-end gap-2 border-t border-border/40 sm:border-t-0 pt-2 sm:pt-0">
                     {/* Flexible In-Store Bought Stepper (Allows both +1 and -1 revert) */}
                     {onUpdateBoughtQty && (
                         <div className="flex items-center rounded-xl bg-emerald-500/10 border border-emerald-500/25 p-0.5 text-emerald-700 dark:text-emerald-300">
@@ -363,7 +366,7 @@ const ShoppingCard = ({
                                 <Minus size={12} />
                             </button>
                             <span
-                                className="px-1.5 text-xs font-bold font-mono min-w-[32px] text-center"
+                                className="px-2 text-xs font-bold font-mono min-w-[34px] text-center"
                                 title={`已購 ${displayBought} 件 / 目標 ${targetQty} 件`}
                             >
                                 {displayBought}件
@@ -378,38 +381,38 @@ const ShoppingCard = ({
                             </button>
                         </div>
                     )}
-                </div>
 
-                {/* Right Action: Edit & Delete & Export to Budget */}
-                <div className="flex items-center gap-1">
-                    {onExportToBudget && (
+                    {/* Right Action: Edit & Delete & Export to Budget */}
+                    <div className="flex items-center gap-0.5 sm:gap-1">
+                        {onExportToBudget && (
+                            <button
+                                type="button"
+                                onClick={() => onExportToBudget(item)}
+                                className="p-1.5 sm:p-2 rounded-xl text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 transition-colors cursor-pointer"
+                                title="轉入記帳本"
+                            >
+                                <Wallet size={16} />
+                            </button>
+                        )}
+
                         <button
                             type="button"
-                            onClick={() => onExportToBudget(item)}
-                            className="p-2 rounded-xl text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 transition-colors cursor-pointer"
-                            title="轉入記帳本"
+                            onClick={() => onEdit(item)}
+                            className="p-1.5 sm:p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+                            title="編輯商品"
                         >
-                            <Wallet size={16} />
+                            <Edit3 size={15} />
                         </button>
-                    )}
 
-                    <button
-                        type="button"
-                        onClick={() => onEdit(item)}
-                        className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
-                        title="編輯商品"
-                    >
-                        <Edit3 size={15} />
-                    </button>
-
-                    <button
-                        type="button"
-                        onClick={() => onDelete(item)}
-                        className="p-2 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
-                        title="刪除"
-                    >
-                        <Trash2 size={15} />
-                    </button>
+                        <button
+                            type="button"
+                            onClick={() => onDelete(item)}
+                            className="p-1.5 sm:p-2 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
+                            title="刪除"
+                        >
+                            <Trash2 size={15} />
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

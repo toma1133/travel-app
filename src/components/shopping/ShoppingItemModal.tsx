@@ -375,12 +375,14 @@ const ShoppingItemModal = ({
             const p = parseFloat(initialPriceInput);
             if (!isNaN(p) && p >= 0) {
                 if (finalRecords.length === 0) {
+                    const initialBoughtQty =
+                        mode === "edit" && initialData?.is_completed ? targetQuantity : 0;
                     finalRecords = [
                         {
                             id: crypto.randomUUID(),
                             store: store.trim() || "預計門市",
                             price: p,
-                            quantity: targetQuantity,
+                            quantity: initialBoughtQty,
                             date: new Date().toISOString().split("T")[0],
                         },
                     ];
@@ -397,7 +399,12 @@ const ShoppingItemModal = ({
         }
 
         const totalBought = finalRecords.reduce((s, r) => s + (r.quantity || 0), 0);
-        const isCompletedNow = targetQuantity > 0 ? totalBought >= targetQuantity : false;
+        const isCompletedNow =
+            mode === "create"
+                ? false
+                : targetQuantity > 0
+                ? totalBought >= targetQuantity
+                : Boolean(initialData?.is_completed);
 
         onSubmit({
             id: initialData?.id,

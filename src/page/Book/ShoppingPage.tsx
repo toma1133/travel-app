@@ -303,7 +303,7 @@ const ShoppingPage = ({
                 name: payload.name || "未命名商品",
                 trip_id: tripId || "",
                 user_id: session?.user.id || "",
-                is_completed: isCompletedNow,
+                is_completed: false,
             });
         } else if (payload.id) {
             update.mutate({
