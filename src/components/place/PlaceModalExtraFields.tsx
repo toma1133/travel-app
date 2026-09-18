@@ -126,6 +126,7 @@ export const RecommendedItemsSection = ({
                 price: "",
                 category: defaultCat,
                 note: "",
+                image_url: "",
             },
         ];
         onFormInputChange({
@@ -259,9 +260,22 @@ export const RecommendedItemsSection = ({
                                     className="p-3 sm:p-3.5 flex items-center justify-between gap-3 bg-card hover:bg-muted/15 cursor-pointer select-none transition-colors"
                                 >
                                     <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                                        <span className="w-5 h-5 rounded-full bg-blue-500/15 text-blue-600 dark:text-blue-400 font-mono text-[11px] flex items-center justify-center font-bold shrink-0">
-                                            {idx + 1}
-                                        </span>
+                                        {item.image_url ? (
+                                            <div className="w-6 h-6 rounded-md overflow-hidden bg-muted border border-border/60 shrink-0">
+                                                <img
+                                                    src={item.image_url}
+                                                    alt={item.name || "item"}
+                                                    className="w-full h-full object-cover"
+                                                    onError={(e) => {
+                                                        (e.target as HTMLElement).style.display = "none";
+                                                    }}
+                                                />
+                                            </div>
+                                        ) : (
+                                            <span className="w-5 h-5 rounded-full bg-blue-500/15 text-blue-600 dark:text-blue-400 font-mono text-[11px] flex items-center justify-center font-bold shrink-0">
+                                                {idx + 1}
+                                            </span>
+                                        )}
 
                                         <div className="min-w-0 flex-1 flex items-center gap-2 flex-wrap">
                                             <span className="font-bold text-xs text-foreground truncate max-w-[140px] sm:max-w-[200px]">
@@ -466,6 +480,35 @@ export const RecommendedItemsSection = ({
                                                 placeholder="例: 招牌必點、每日限量 30 份"
                                                 className="min-w-0 flex-1 text-left font-medium text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40"
                                             />
+                                        </div>
+
+                                        {/* 7. 品項圖片網址 */}
+                                        <div className="p-3 sm:p-3.5 flex items-center justify-between gap-3 bg-card hover:bg-muted/10 transition-colors">
+                                            <span className="text-muted-foreground w-24 sm:w-28 shrink-0 font-medium flex items-center gap-1">
+                                                <ImageIcon size={13} className="text-blue-500" />
+                                                <span>品項圖片</span>
+                                            </span>
+                                            <div className="min-w-0 flex-1 flex items-center gap-2">
+                                                <input
+                                                    type="url"
+                                                    value={item.image_url || ""}
+                                                    onChange={(e) => handleUpdateItem(idx, "image_url", e.target.value)}
+                                                    placeholder="貼上圖片網址 (https://...)"
+                                                    className="min-w-0 flex-1 text-left font-mono text-xs text-foreground bg-transparent outline-none placeholder:text-muted-foreground/40"
+                                                />
+                                                {item.image_url && (
+                                                    <div className="w-7 h-7 rounded-lg overflow-hidden border border-border/60 shrink-0 bg-muted">
+                                                        <img
+                                                            src={item.image_url}
+                                                            alt="preview"
+                                                            className="w-full h-full object-cover"
+                                                            onError={(e) => {
+                                                                (e.target as HTMLElement).style.display = "none";
+                                                            }}
+                                                        />
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 )}

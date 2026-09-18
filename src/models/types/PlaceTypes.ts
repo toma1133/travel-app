@@ -16,6 +16,7 @@ export type RecommendedItem = {
     price?: string | null;
     category?: string | null;
     note?: string | null;
+    image_url?: string | null;
 };
 
 export type PlaceInfo = {

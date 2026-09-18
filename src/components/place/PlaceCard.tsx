@@ -13,7 +13,6 @@ import {
     Wifi,
     Utensils,
     Navigation,
-    Sparkles,
     Volume2,
     Info,
     ChevronRight,
@@ -107,7 +106,6 @@ const PlaceCard = ({
         : [];
 
     const recommendedItems = place.info?.recommended_items || [];
-    const firstRecItem = recommendedItems[0];
 
     const isHotel = place.type === "hotel" || place.type === "stay";
 
@@ -269,7 +267,7 @@ const PlaceCard = ({
                         {isValidPrice(place.info?.price) && (
                             <div className="flex items-center gap-1.5">
                                 <DollarSign size={12} className="text-gray-600 shrink-0" />
-                                <span>預算：{place.info.price}</span>
+                                <span>預算：{place.info?.price}</span>
                             </div>
                         )}
 
@@ -278,11 +276,11 @@ const PlaceCard = ({
                                 <Ticket size={12} className="text-gray-600 shrink-0" />
                                 <span>
                                     預約：
-                                    {place.info.booking_status === "required" && "需提前預約"}
-                                    {place.info.booking_status === "recommended" && "建議預約"}
-                                    {place.info.booking_status === "walk_in" && "現場排隊"}
-                                    {place.info.booking_status === "none" && "免預約"}
-                                    {!["required", "recommended", "walk_in", "none"].includes(place.info.booking_status) && place.info.booking_status}
+                                    {place.info?.booking_status === "required" && "需提前預約"}
+                                    {place.info?.booking_status === "recommended" && "建議預約"}
+                                    {place.info?.booking_status === "walk_in" && "現場排隊"}
+                                    {place.info?.booking_status === "none" && "免預約"}
+                                    {!["required", "recommended", "walk_in", "none"].includes(place.info?.booking_status) && place.info?.booking_status}
                                 </span>
                             </div>
                         )}
@@ -501,18 +499,10 @@ const PlaceCard = ({
                         </div>
                     )}
 
-                    {/* 實用功能資訊 2：首選招牌推薦 / 伴手禮 */}
-                    {firstRecItem ? (
-                        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-800 dark:text-amber-300 text-xs font-semibold">
-                            <Sparkles size={11} className="text-amber-500 shrink-0" />
-                            <span className="truncate">招牌：{firstRecItem.name}</span>
-                            {isValidPrice(firstRecItem.price) && (
-                                <span className="ml-auto font-mono text-[11px] opacity-80">{firstRecItem.price}</span>
-                            )}
-                        </div>
-                    ) : (place.info?.tips || place.description) ? (
+                    {/* 簡短備註 / 提示 */}
+                    {(place.tips || place.description) ? (
                         <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-                            {place.info?.tips || place.description}
+                            {place.tips || place.description}
                         </p>
                     ) : null}
 
