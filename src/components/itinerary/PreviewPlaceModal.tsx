@@ -1,4 +1,5 @@
 import React, { JSX, MouseEventHandler, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
     X,
     Navigation,
@@ -18,6 +19,7 @@ import {
     Check,
     ChevronDown,
     ChevronUp,
+    ShoppingBag,
 } from "lucide-react";
 import type { PlaceVM } from "../../models/types/PlaceTypes";
 import type { TripThemeConf } from "../../models/types/TripTypes";
@@ -48,6 +50,7 @@ const PreviewPlaceModal = ({
     theme,
     children,
 }: PreviewPlaceModalProps) => {
+    const navigate = useNavigate();
     const [copied, setCopied] = useState(false);
     const [speaking, setSpeaking] = useState(false);
     const [showAllHours, setShowAllHours] = useState(false);
@@ -179,7 +182,7 @@ const PreviewPlaceModal = ({
 
                         {isValidPrice(place.info?.price) && (
                             <div className="bg-emerald-500/90 text-white backdrop-blur-md px-3 py-1 rounded-xl text-xs font-mono font-bold border border-emerald-400/30 shadow-xs">
-                                預算: {place.info.price}
+                                預算: {place.info?.price}
                             </div>
                         )}
                     </div>
@@ -311,6 +314,19 @@ const PreviewPlaceModal = ({
                                 <span>{place.info.phone}</span>
                             </a>
                         )}
+
+                        {/* 前往此地點之購物願望清單 */}
+                        <button
+                            type="button"
+                            onClick={() => {
+                                navigate(`/trip/${place.trip_id}/shopping`);
+                            }}
+                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 transition-colors border border-rose-500/30 cursor-pointer"
+                            title="查看或新增此地點之購物願望清單"
+                        >
+                            <ShoppingBag size={14} />
+                            <span>購物願望清單</span>
+                        </button>
                     </div>
 
                     {/* 景點描述 */}

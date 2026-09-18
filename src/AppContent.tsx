@@ -14,6 +14,7 @@ import ItineraryPage from "./page/Book/ItineraryPage";
 import InfoPage from "./page/Book/InfoPage";
 import "./App.css";
 import BudgetPage from "./page/Book/BudgetPage";
+import ShoppingPage from "./page/Book/ShoppingPage";
 import RouteErrorBoundary from "./components/common/RouteErrorBoundary";
 
 const qc = new QueryClient();
@@ -68,6 +69,10 @@ const AppContent = ({ isOffline }: { isOffline: boolean }) => {
                             {
                                 path: "budget",
                                 Component: () => <BudgetPage />,
+                            },
+                            {
+                                path: "shopping",
+                                Component: () => <ShoppingPage />,
                             },
                             {
                                 path: "info",

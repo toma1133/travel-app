@@ -392,6 +392,87 @@ export type Database = {
                     }
                 ];
             };
+            shopping_items: {
+                Row: {
+                    category: string | null;
+                    created_at: string | null;
+                    currency: string | null;
+                    id: string;
+                    image_url: string | null;
+                    is_completed: boolean;
+                    local_name: string | null;
+                    name: string;
+                    note: string | null;
+                    place_id: string | null;
+                    priority: number | null;
+                    recipients: string[] | null;
+                    records: Json | null;
+                    store: string | null;
+                    target_specs: string | null;
+                    tax_free_threshold: number | null;
+                    trip_id: string;
+                    updated_at: string | null;
+                    user_id: string;
+                };
+                Insert: {
+                    category?: string | null;
+                    created_at?: string | null;
+                    currency?: string | null;
+                    id?: string;
+                    image_url?: string | null;
+                    is_completed?: boolean;
+                    local_name?: string | null;
+                    name: string;
+                    note?: string | null;
+                    place_id?: string | null;
+                    priority?: number | null;
+                    recipients?: string[] | null;
+                    records?: Json | null;
+                    store?: string | null;
+                    target_specs?: string | null;
+                    tax_free_threshold?: number | null;
+                    trip_id: string;
+                    updated_at?: string | null;
+                    user_id: string;
+                };
+                Update: {
+                    category?: string | null;
+                    created_at?: string | null;
+                    currency?: string | null;
+                    id?: string;
+                    image_url?: string | null;
+                    is_completed?: boolean;
+                    local_name?: string | null;
+                    name?: string;
+                    note?: string | null;
+                    place_id?: string | null;
+                    priority?: number | null;
+                    recipients?: string[] | null;
+                    records?: Json | null;
+                    store?: string | null;
+                    target_specs?: string | null;
+                    tax_free_threshold?: number | null;
+                    trip_id?: string;
+                    updated_at?: string | null;
+                    user_id?: string;
+                };
+                Relationships: [
+                    {
+                        foreignKeyName: "shopping_items_trip_id_fkey";
+                        columns: ["trip_id"];
+                        isOneToOne: false;
+                        referencedRelation: "trips";
+                        referencedColumns: ["id"];
+                    },
+                    {
+                        foreignKeyName: "shopping_items_place_id_fkey";
+                        columns: ["place_id"];
+                        isOneToOne: false;
+                        referencedRelation: "places";
+                        referencedColumns: ["id"];
+                    }
+                ];
+            };
             profiles: {
                 Row: {
                     created_at: string | null;

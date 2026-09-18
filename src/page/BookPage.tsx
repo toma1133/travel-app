@@ -5,7 +5,7 @@ import {
     useOutletContext,
     useParams,
 } from "react-router-dom";
-import { BookOpen, Info, Map, PieChart, Printer, Sun, X } from "lucide-react";
+import { BookOpen, Info, Map, PieChart, Printer, ShoppingBag, Sun, X } from "lucide-react";
 import useTrip from "../hooks/trip/UseTrip";
 import LayoutContextType from "../models/types/LayoutContextTypes";
 import TabButton from "../components/common/TabButton";
@@ -65,6 +65,13 @@ const BookPage = () => {
                             isSidebar
                         />
                         <TabButton
+                            to={`/trip/${tripId}/shopping`}
+                            icon={ShoppingBag}
+                            label="購物"
+                            theme={tripData.theme_config}
+                            isSidebar
+                        />
+                        <TabButton
                             to={`/trip/${tripId}/budget`}
                             icon={PieChart}
                             label="帳本"
@@ -95,9 +102,9 @@ const BookPage = () => {
                     </div>
                     {/* Styled Bottom Navigation */}
                     <div
-                        className={`md:hidden border-t border-border ${tripData.theme_config?.nav || "bg-card"} px-6 pb-safe pt-1 shrink-0 z-40 h-[70px]`}
+                        className={`md:hidden border-t border-border ${tripData.theme_config?.nav || "bg-card"} px-3 pb-safe pt-1 shrink-0 z-40 h-[70px]`}
                     >
-                        <div className="flex justify-between items-center max-w-sm mx-auto">
+                        <div className="flex justify-between items-center max-w-md mx-auto">
                             <TabButton
                                 to={`/trip/${tripId}/cover`}
                                 icon={Sun}
@@ -115,6 +122,12 @@ const BookPage = () => {
                                 to={`/trip/${tripId}/itinerary`}
                                 icon={Map}
                                 label="行程"
+                                theme={tripData.theme_config}
+                            />
+                            <TabButton
+                                to={`/trip/${tripId}/shopping`}
+                                icon={ShoppingBag}
+                                label="購物"
                                 theme={tripData.theme_config}
                             />
                             <TabButton
