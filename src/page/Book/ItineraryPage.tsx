@@ -196,21 +196,32 @@ const ItineraryPage = ({
     // --- Preview Modal Handlers ---
     const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
     const [place, setPlace] = useState<PlaceVM | undefined>(undefined);
+    const [previewActivity, setPreviewActivity] = useState<ItineraryActivitiy | undefined>(undefined);
 
-    const handleOpenPreviewModal = async (linkId: string) => {
-        setIsPageLoading(true);
-
-        const row = await placeRepo.getById(linkId);
-
-        setIsPageLoading(false);
-        const placeVm = toPlaceVM(row!);
-        setPlace(placeVm);
+    const handleOpenPreviewModal = async (linkId?: string, activity?: ItineraryActivitiy) => {
+        if (linkId) {
+            setIsPageLoading(true);
+            try {
+                const row = await placeRepo.getById(linkId);
+                const placeVm = row ? toPlaceVM(row) : undefined;
+                setPlace(placeVm);
+            } catch (err) {
+                console.error("Failed to fetch place:", err);
+                setPlace(undefined);
+            } finally {
+                setIsPageLoading(false);
+            }
+        } else {
+            setPlace(undefined);
+        }
+        setPreviewActivity(activity);
         setIsPreviewModalOpen(true);
     };
 
     const handleClosePreviewModal = () => {
         setIsPreviewModalOpen(false);
         setPlace(undefined);
+        setPreviewActivity(undefined);
     };
 
     // --- Optimize Route Modal Handlers ---
@@ -848,10 +859,11 @@ const ItineraryPage = ({
                     onConfirmClick={handleConfirmDelete}
                 />
             )}
-            {isPreviewModalOpen && place && (
+            {isPreviewModalOpen && (place || previewActivity) && (
                 <PreviewPlaceModal
                     onCloseBtnClick={handleClosePreviewModal}
                     place={place}
+                    activity={previewActivity}
                     theme={tripData?.theme_config!}
                 />
             )}

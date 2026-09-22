@@ -32,7 +32,7 @@ type ItineraryListProps = {
     onOptimizeRouteBtnClick?: (itineraryDay: ItineraryVM) => void;
     onOpenMapBtnClick?: (itineraryDay: ItineraryVM) => void;
     onSelectDay?: (dayId: string) => void;
-    onViewBtnClick: (linkId: string) => void;
+    onViewBtnClick: (linkId: string, activity?: ItineraryActivitiy) => void;
     onPlaceHover?: (linkId: string | null, placeIndex?: number | null) => void;
 };
 

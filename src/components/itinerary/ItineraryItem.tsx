@@ -58,7 +58,7 @@ type ItineraryItemProps = {
     onExpandedBtnToggle: (itinerary: ItineraryVM) => void;
     onOptimizeRouteBtnClick?: (itineraryDay: ItineraryVM) => void;
     onOpenMapBtnClick?: (itineraryDay: ItineraryVM) => void;
-    onViewBtnClick: (linkId: string) => void;
+    onViewBtnClick: (linkId: string, activity?: ItineraryActivitiy) => void;
     onPlaceHover?: (linkId: string | null, placeIndex?: number | null) => void;
 };
 
@@ -626,7 +626,7 @@ const ItineraryItem = ({
                                                 <div className="flex-1 min-w-0 pr-1 sm:pr-2">
                                                     {linkedPlace ? (
                                                         <div
-                                                            onClick={() => !isPrinting && onViewBtnClick(linkedPlace.id)}
+                                                            onClick={() => !isPrinting && onViewBtnClick(linkedPlace.id, activity)}
                                                             className={`
                                                                 group/card relative transition-all duration-200
                                                                 ${
@@ -907,15 +907,30 @@ const ItineraryItem = ({
                                                     ) : (
                                                         /* 無連結地點時的自訂手動活動卡片 (極簡毛玻璃) */
                                                         <div
-                                                            className={`p-2.5 sm:p-3 rounded-2xl transition-all ${
-                                                                isPrinting
-                                                                    ? "bg-white border border-gray-300 text-black"
-                                                                    : "glass-panel text-card-foreground shadow-2xs"
-                                                            }`}
+                                                            onClick={() => !isPrinting && onViewBtnClick(activity.linkId || "", activity)}
+                                                            className={`
+                                                                group/card relative transition-all duration-200
+                                                                ${
+                                                                    !isPrinting
+                                                                        ? `glass-panel text-card-foreground shadow-2xs rounded-2xl p-2.5 sm:p-3 cursor-pointer active:scale-[0.99] hover:shadow-md ${
+                                                                              isScheduleConflict
+                                                                                  ? "ring-1 ring-rose-500/40 bg-rose-500/5 dark:bg-rose-950/20"
+                                                                                  : "hover:border-primary/30"
+                                                                          }`
+                                                                        : "bg-white border border-gray-300 text-black p-2.5 sm:p-3 rounded-2xl break-inside-avoid shadow-none"
+                                                                }
+                                                            `}
+                                                            title={!isPrinting ? "點擊查看活動詳細內容" : undefined}
                                                         >
                                                             <div className="flex items-center justify-between gap-2">
                                                                 <div className="flex items-center gap-2 min-w-0 flex-1">
-                                                                    <h4 className={`font-bold text-xs sm:text-sm truncate ${isPrinting ? "text-black" : "text-foreground"}`}>
+                                                                    <h4 className={`font-bold text-xs sm:text-sm truncate transition-colors ${
+                                                                        isPrinting
+                                                                            ? "text-black"
+                                                                            : isScheduleConflict
+                                                                            ? "text-rose-600 dark:text-rose-400 group-hover/card:text-rose-500"
+                                                                            : "text-foreground group-hover/card:text-primary"
+                                                                    }`}>
                                                                         {activity.title}
                                                                     </h4>
                                                                     {activity.isFixed && (
@@ -961,12 +976,13 @@ const ItineraryItem = ({
                                                                     <div className="flex items-center gap-0.5 p-0.5 glass-pill rounded-full shrink-0">
                                                                         <button
                                                                             type="button"
-                                                                            onClick={() =>
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
                                                                                 onEditActivityBtnClick(itinerary, {
                                                                                     ...activity,
                                                                                     activityIndex: activity.activityIndex ?? idx,
-                                                                                })
-                                                                            }
+                                                                                });
+                                                                            }}
                                                                             className="p-1 rounded-full text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                                                                             title="編輯活動"
                                                                         >
@@ -974,12 +990,13 @@ const ItineraryItem = ({
                                                                         </button>
                                                                         <button
                                                                             type="button"
-                                                                            onClick={() =>
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
                                                                                 onDeleteActivityBtnClick(itinerary, {
                                                                                     ...activity,
                                                                                     activityIndex: activity.activityIndex ?? idx,
-                                                                                })
-                                                                            }
+                                                                                });
+                                                                            }}
                                                                             className="p-1 rounded-full text-muted-foreground hover:text-rose-600 transition-colors cursor-pointer"
                                                                             title="刪除活動"
                                                                         >
