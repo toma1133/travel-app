@@ -49,6 +49,10 @@ export const QUERY_KEYS = {
         all: ["weather"] as const,
         daily: (lat: number, lng: number, dateStr: string) =>
             ["weather", Number(lat.toFixed(4)), Number(lng.toFixed(4)), dateStr] as const,
+        tripRange: (lat: number, lng: number, startDate: string, endDate: string) =>
+            ["weather_range", Number(lat.toFixed(4)), Number(lng.toFixed(4)), startDate, endDate] as const,
+        current: (lat: number, lng: number) =>
+            ["weather_current", Number(lat.toFixed(4)), Number(lng.toFixed(4))] as const,
     },
 
     // Members & Invitations

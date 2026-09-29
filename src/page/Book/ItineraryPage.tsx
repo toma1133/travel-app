@@ -25,6 +25,8 @@ import type { PlaceVM } from "../../models/types/PlaceTypes";
 import type { TripVM } from "../../models/types/TripTypes";
 import { ITINERARY_CATEGORIES } from "../../constants/Categories";
 import { computeDayTimelineSchedule } from "../../utils/ItineraryTimeUtil";
+import useTripWeather from "../../hooks/weather/useTripWeather";
+import LiveTravelFocusCard from "../../components/itinerary/LiveTravelFocusCard";
 
 type ItineraryPageProps = {
     isPrinting?: boolean;
@@ -98,6 +100,20 @@ const ItineraryPage = ({ isPrinting, tripDataOverride, tripIdOverride }: Itinera
         return d ? `DAY ${d.day_number}` : "";
     }, [itinerarys, selectedDayFilter]);
 
+    // Phase 4: 即時旅程天氣批次預報與降雨警示
+    const {
+        weatherMap,
+        isLoading: isWeatherLoading,
+        locationName,
+    } = useTripWeather({
+        tripId,
+        itineraries: itinerarys,
+        placesMap: linkedPlacesMap,
+        startDate: tripData?.start_date,
+        endDate: tripData?.end_date,
+        options: { enabled: !isPrinting && Array.isArray(itinerarys) && itinerarys.length > 0 },
+    });
+
     // Modals state
     const [preview, setPreview] = useState<{ open: boolean; place?: PlaceVM; activity?: ItineraryActivitiy }>({ open: false });
     const [optimizeDay, setOptimizeDay] = useState<ItineraryVM | null>(null);
@@ -169,7 +185,28 @@ const ItineraryPage = ({ isPrinting, tripDataOverride, tripIdOverride }: Itinera
                 ) : (
                     <>
                         {!isPrinting && Array.isArray(itinerarys) && itinerarys.length > 0 && (
-                            <ItineraryDayTabBar days={itinerarys} selectedDayId={selectedDayFilter} onSelectDay={setSelectedDayFilter} dayPlaceCounts={dayPlaceCounts} totalPlacesCount={dayPlacesMap.all?.length} theme={tripData?.theme_config} />
+                            <div className="space-y-2.5 shrink-0">
+                                <LiveTravelFocusCard
+                                    trip={tripData}
+                                    itineraries={itinerarys}
+                                    placesMap={linkedPlacesMap}
+                                    weatherMap={weatherMap}
+                                    selectedDayId={selectedDayFilter}
+                                    onSelectDay={setSelectedDayFilter}
+                                    theme={tripData?.theme_config}
+                                />
+                                <ItineraryDayTabBar
+                                    days={itinerarys}
+                                    selectedDayId={selectedDayFilter}
+                                    onSelectDay={setSelectedDayFilter}
+                                    dayPlaceCounts={dayPlaceCounts}
+                                    totalPlacesCount={dayPlacesMap.all?.length}
+                                    theme={tripData?.theme_config}
+                                    weatherMap={weatherMap}
+                                    isLoadingWeather={isWeatherLoading}
+                                    locationName={locationName}
+                                />
+                            </div>
                         )}
 
                         <div className={isPrinting ? "block space-y-6" : "flex flex-col lg:flex-row gap-4 sm:gap-5 lg:flex-1 lg:min-h-0"}>

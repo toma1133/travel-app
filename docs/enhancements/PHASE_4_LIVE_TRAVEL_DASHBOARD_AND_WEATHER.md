@@ -1,6 +1,6 @@
 # ☀️ Phase 4: 行程 Live 焦點卡與即時天氣預報 (Live Travel Dashboard & Weather)
 
-> **狀態**：規劃中 (Ready for Implementation)  
+> **狀態**：已完成 (Completed)  
 > **核心目標**：解決旅人在路上「不知道當下該去哪」與「無法預知降雨準備雨具備案」的困擾。
 
 ---
@@ -46,6 +46,7 @@
 
 ## 4. 驗收標準 (Acceptance Criteria)
 
-1. [ ] 在旅程進行當日，打開行程頁時頂部醒目展示目前正在進行與下一項活動，並具備倒數進度。
-2. [ ] 點擊「開始導航」能無縫在 iOS 開啟 Apple Maps / Google Maps，在 Android 或電腦端開啟 Google Maps 路線。
-3. [ ] 天氣模組在輸入具備經緯度的行程時，能成功呈現 7 日天氣圖示、氣溫與降雨機率，無須任何付費 API Key。
+1. [x] 在旅程進行當日，打開行程頁時頂部醒目展示目前正在進行與下一項活動，並具備倒數進度。
+2. [x] 點擊「開始導航」能無縫在 iOS 開啟 Apple Maps / Google Maps，在 Android 或電腦端開啟 Google Maps 路線。
+3. [x] 天氣模組在輸入具備經緯度的行程時，能成功呈現 7 日天氣圖示、氣溫與降雨機率，無須任何付費 API Key。
+
