@@ -1,5 +1,5 @@
-import React from "react";
-import { Utensils, Train, Ticket, ShoppingBag, Coffee, Sparkles, Plus } from "lucide-react";
+import React, { useRef } from "react";
+import { Utensils, Train, Ticket, ShoppingBag, Coffee, Sparkles, Plus, Camera } from "lucide-react";
 import { GlassCard } from "../ui";
 
 export interface QuickExpenseCategory {
@@ -20,14 +20,33 @@ const DEFAULT_QUICK_CATEGORIES: QuickExpenseCategory[] = [
 export interface QuickExpenseBarProps {
     onQuickAdd: (categoryId: string) => void;
     onOpenGeneralAdd: () => void;
+    onReceiptFileSelected?: (file: File) => void;
     className?: string;
 }
 
 export const QuickExpenseBar: React.FC<QuickExpenseBarProps> = ({
     onQuickAdd,
     onOpenGeneralAdd,
+    onReceiptFileSelected,
     className = "",
 }) => {
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const handleCameraClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file && onReceiptFileSelected) {
+            onReceiptFileSelected(file);
+        }
+        // Reset input value so same file can be re-selected if needed
+        if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+        }
+    };
+
     return (
         <GlassCard
             variant="elevated"
@@ -35,12 +54,34 @@ export const QuickExpenseBar: React.FC<QuickExpenseBarProps> = ({
             padding="sm"
             className={`flex items-center gap-2 overflow-x-auto no-scrollbar border-white/30 dark:border-white/10 shadow-md ${className}`}
         >
+            <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                className="hidden"
+                onChange={handleFileChange}
+            />
+
             <div className="flex items-center gap-1.5 px-2 text-[11px] font-bold text-neutral-500 dark:text-neutral-400 shrink-0">
                 <Sparkles size={13} className="text-primary animate-pulse" />
                 <span className="hidden sm:inline">極速記帳</span>
             </div>
 
             <div className="flex items-center gap-2 overflow-x-auto no-scrollbar flex-1 py-0.5">
+                {/* 拍收據入口按鈕 */}
+                {onReceiptFileSelected && (
+                    <button
+                        type="button"
+                        onClick={handleCameraClick}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 cursor-pointer transition-all active:scale-95 bg-purple-500/10 text-purple-600 dark:text-purple-300 border border-purple-500/20 hover:bg-purple-500/20"
+                        title="拍攝或上傳收據自動辨識分帳"
+                    >
+                        <Camera size={14} className="shrink-0" />
+                        <span>拍收據</span>
+                    </button>
+                )}
+
                 {DEFAULT_QUICK_CATEGORIES.map((cat) => {
                     const Icon = cat.icon;
                     return (

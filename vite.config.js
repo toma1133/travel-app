@@ -8,7 +8,7 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig(() => {
     return {
         base: process.env.NODE_ENV === "production" ? "/travel-app/" : "/",
-        envPrefix: ["VITE_", "SUPABASE_"],
+        envPrefix: ["VITE_", "SUPABASE_", "GEMINI_"],
         resolve: {
             alias: {
                 "@": path.resolve(__dirname, "src"),

@@ -75,7 +75,7 @@ flowchart LR
 | **Phase 2** | **電子票券與 QR 碼保險箱** | Info 頁新增票夾（Voucher Wallet）、支援截圖/純文字向量 QR、全螢幕白色高亮刷碼 | ✅ **已完成** | [`docs/enhancements/PHASE_2_VOUCHER_PASS_WALLET.md`](file:///d:/Projects/travel-app/docs/enhancements/PHASE_2_VOUCHER_PASS_WALLET.md) |
 | **Phase 3** | **購物體驗升級與店員對話小卡** | 懸浮即時換匯計算機、店員結帳日韓英對話小抄、免稅門檻達成動效與震動 | ✅ **已完成** | [`docs/enhancements/PHASE_3_SHOPPING_DELIGHT_AND_CLERK_CARDS.md`](file:///d:/Projects/travel-app/docs/enhancements/PHASE_3_SHOPPING_DELIGHT_AND_CLERK_CARDS.md) |
 | **Phase 4** | **行程 Live 焦點卡與即時天氣** | 首頁/行程頁頂部「現在該去哪」Live 卡片、串接 Open-Meteo 免費天氣、一鍵開啟地圖 App 導航 | ✅ **已完成** | [`docs/enhancements/PHASE_4_LIVE_TRAVEL_DASHBOARD_AND_WEATHER.md`](file:///d:/Projects/travel-app/docs/enhancements/PHASE_4_LIVE_TRAVEL_DASHBOARD_AND_WEATHER.md) |
-| **Phase 5** | **智慧平帳演算法與收據拍照記帳** | 最少轉帳次數演算法（Debt Simplification）、快速記帳整合收據存證與燈箱預覽 | ⏳ 待進行 | [`docs/enhancements/PHASE_5_BUDGET_SPLIT_AND_RECEIPT_ATTACHMENT.md`](file:///d:/Projects/travel-app/docs/enhancements/PHASE_5_BUDGET_SPLIT_AND_RECEIPT_ATTACHMENT.md) |
+| **Phase 5** | **智慧平帳演算法與收據拍照記帳** | 最少轉帳次數演算法（Debt Simplification）、快速記帳整合收據存證與燈箱預覽 | ✅ **已完成** | [`docs/enhancements/PHASE_5_BUDGET_SPLIT_AND_RECEIPT_ATTACHMENT.md`](file:///d:/Projects/travel-app/docs/enhancements/PHASE_5_BUDGET_SPLIT_AND_RECEIPT_ATTACHMENT.md) |
 | **Phase 6** | **手勢操作、抽屜彈窗與離線韌性** | 移動端 iOS Bottom Sheet 彈窗、購物/行程清單滑動手勢、觸覺震動 (Haptics) 與 PWA 離線檢視 | ⏳ 待進行 | [`docs/enhancements/PHASE_6_OFFLINE_RESILIENCY_AND_GESTURES.md`](file:///d:/Projects/travel-app/docs/enhancements/PHASE_6_OFFLINE_RESILIENCY_AND_GESTURES.md) |
 
 ---

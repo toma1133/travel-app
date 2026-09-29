@@ -1,5 +1,5 @@
 import { JSX } from "react";
-import { Users } from "lucide-react";
+import { Users, Receipt } from "lucide-react";
 import { Session } from "@supabase/supabase-js";
 import moment from "moment";
 import type { BudgetRow } from "../../models/types/BudgetTypes";
@@ -8,6 +8,7 @@ import type {
     TripThemeConf,
 } from "../../models/types/TripTypes";
 import type { TripMemberVM } from "../../models/types/TripMemberTypes";
+import type { StoredImageRecord } from "../../services/storage/ImageVaultDB";
 
 type TransactionListItemProps = {
     budgetItem: BudgetRow;
@@ -17,6 +18,7 @@ type TransactionListItemProps = {
     setting: TripSettingConf | null;
     theme: TripThemeConf | null;
     tripMembers?: TripMemberVM[];
+    receiptRecord?: StoredImageRecord;
     convertToHome: (
         amount: number,
         currency: string,
@@ -26,6 +28,7 @@ type TransactionListItemProps = {
     getCategoryIcon: (cat: string) => JSX.Element;
     getCategoryName: (cat: string) => string;
     onEditBtnClick: (transactionItem: BudgetRow) => void;
+    onOpenReceiptModal?: (record: StoredImageRecord, item: BudgetRow) => void;
 };
 
 const TransactionListItem = ({
@@ -36,10 +39,12 @@ const TransactionListItem = ({
     setting,
     theme,
     tripMembers,
+    receiptRecord,
     convertToHome,
     getCategoryIcon,
     getCategoryName,
     onEditBtnClick,
+    onOpenReceiptModal,
 }: TransactionListItemProps) => {
     const isCreator = budgetItem.user_id === session?.user.id;
     const payerName = tripMembers?.filter((tm) => tm.user_id === budgetItem.user_id)[0]?.profiles?.username ?? budgetItem.user_id;
@@ -204,6 +209,21 @@ const TransactionListItem = ({
                                 ? paymentMethodName
                                 : `由 ${payerName} 代付`}
                         </span>
+                        {/* 收據圖檔標籤 */}
+                        {receiptRecord && !isPrinting && (
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onOpenReceiptModal?.(receiptRecord, budgetItem);
+                                }}
+                                className="inline-flex items-center gap-1 text-[10px] font-bold text-purple-600 dark:text-purple-300 bg-purple-100 hover:bg-purple-200 dark:bg-purple-950/50 px-1.5 py-0.5 rounded ml-2 transition-all cursor-pointer shadow-xs active:scale-95"
+                                title="查看收據照片"
+                            >
+                                <Receipt size={11} />
+                                <span>收據</span>
+                            </button>
+                        )}
                     </div>
                     {/* 分帳成員 (列印時可視需求決定是否顯示詳細名單，太長會佔空間) */}
                     {(members.length > 1 || budgetItem.is_payer_included === false) && (

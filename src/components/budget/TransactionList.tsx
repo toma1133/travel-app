@@ -9,6 +9,7 @@ import type {
     TripThemeConf,
 } from "../../models/types/TripTypes";
 import type { TripMemberVM } from "../../models/types/TripMemberTypes";
+import type { StoredImageRecord } from "../../services/storage/ImageVaultDB";
 
 type TransactionListProps = {
     budgetItems?: BudgetRow[];
@@ -23,6 +24,7 @@ type TransactionListProps = {
     setting: TripSettingConf | null;
     theme: TripThemeConf | null;
     tripMembers?: TripMemberVM[];
+    receiptMap?: Record<string, StoredImageRecord>;
     convertToHome: (
         amount: number,
         currency: string,
@@ -32,6 +34,7 @@ type TransactionListProps = {
     getCategoryIcon: (cat: string) => JSX.Element;
     getCategoryName: (cat: string) => string;
     onEditBtnClick: (transactionItem: BudgetRow) => void;
+    onOpenReceiptModal?: (record: StoredImageRecord, item: BudgetRow) => void;
 };
 
 const TransactionList = ({
@@ -42,10 +45,12 @@ const TransactionList = ({
     setting,
     theme,
     tripMembers,
+    receiptMap,
     convertToHome,
     getCategoryIcon,
     getCategoryName,
     onEditBtnClick,
+    onOpenReceiptModal,
 }: TransactionListProps) => {
     return (
         <div
@@ -101,10 +106,12 @@ const TransactionList = ({
                                 setting={setting}
                                 theme={theme}
                                 tripMembers={tripMembers}
+                                receiptRecord={receiptMap?.[budgetItem.id]}
                                 convertToHome={convertToHome}
                                 getCategoryIcon={getCategoryIcon}
                                 getCategoryName={getCategoryName}
                                 onEditBtnClick={onEditBtnClick}
+                                onOpenReceiptModal={onOpenReceiptModal}
                             />
                         );
                     })}
