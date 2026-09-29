@@ -23,7 +23,7 @@ const AccommodationRecord = ({
 }: AccommodationRecordProps) => {
     const [showActions, setShowActions] = useState(false);
 
-    // --- 列印模式：飯店預約單風格 ---
+    // --- 列印模式：飯店預約單風格 (保持 100% 原樣不變) ---
     if (isPrinting) {
         return (
             <div className="border-2 border-gray-100 rounded-sm p-4 break-inside-avoid flex flex-col gap-3">
@@ -63,62 +63,74 @@ const AccommodationRecord = ({
         );
     }
 
-    // --- 螢幕模式 (保持原樣) ---
+    // --- 螢幕模式：Liquid Glass 卡片風格 ---
     return (
         <div
-            className={`flex justify-between items-start pt-4 mb-4 last:mb-0 relative group ${
-                index !== 0 ? "border-t border-border" : ""
-            }`}
+            className="liquid-glass-interactive rounded-2xl p-4 border border-white/35 dark:border-white/10 bg-white/40 dark:bg-white/[0.03] shadow-xs hover:shadow-md transition-all relative group flex flex-col sm:flex-row sm:items-center justify-between gap-3"
             onMouseEnter={() => setShowActions(true)}
             onMouseLeave={() => setShowActions(false)}
             onTouchStart={() => setShowActions(true)}
         >
-            <div className="flex-1 pr-16">
-                <div className="font-bold text-foreground text-sm mb-1">
-                    {accommodation.name}
+            <div className="flex-1 min-w-0 space-y-1.5">
+                <div className="font-bold text-foreground text-sm sm:text-base flex items-center gap-2">
+                    <span className="truncate">{accommodation.name}</span>
+                    {accommodation.link_id && (
+                        <button
+                            type="button"
+                            onClick={() => onViewBtnClick(accommodation.link_id!)}
+                            className="inline-flex items-center gap-1 text-[11px] font-medium text-primary bg-primary/10 hover:bg-primary/20 px-2 py-0.5 rounded-full transition-colors shrink-0"
+                            title="查看關聯景點資訊"
+                        >
+                            <BookOpen size={11} />
+                            <span>景點詳情</span>
+                        </button>
+                    )}
                 </div>
-                <div className="flex items-center text-xs text-muted-foreground">
-                    <Calendar size={12} className="mr-1.5 shrink-0" />
-                    {accommodation.check_in_date}
-                    <span className="mx-1 text-muted-foreground">-</span>
-                    {accommodation.check_out_date}
+
+                <div className="flex items-center text-xs text-muted-foreground gap-1.5 font-mono">
+                    <Calendar size={12} className="shrink-0 text-indigo-500/70" />
+                    <span>{accommodation.check_in_date}</span>
+                    <span className="text-muted-foreground/60">➝</span>
+                    <span>{accommodation.check_out_date}</span>
                 </div>
-                <div className="flex items-start text-xs text-muted-foreground mt-1">
-                    <MapPin size={12} className="mr-1.5 mt-0.5 shrink-0" />
-                    <span className="break-words leading-relaxed">
-                        {accommodation.address}
-                    </span>
-                </div>
+
+                {accommodation.address && (
+                    <div className="flex items-start text-xs text-muted-foreground/80 leading-relaxed">
+                        <MapPin size={12} className="mr-1.5 mt-0.5 shrink-0 text-muted-foreground/60" />
+                        <span className="break-words line-clamp-1">
+                            {accommodation.address}
+                        </span>
+                    </div>
+                )}
             </div>
-            <div className={`absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-1 p-1 bg-background/60 backdrop-blur-md rounded-full shadow-md border border-border/50 transition-all duration-300 z-10 ${showActions ? "opacity-100" : "lg:opacity-0 lg:group-hover:opacity-100"}`}>
-                {!isEditing && accommodation.link_id && (
+
+            {/* 右側操作按鈕 */}
+            {isEditing && (
+                <div
+                    className={`flex items-center gap-1 p-1 liquid-glass-pill shadow-sm transition-all duration-200 shrink-0 self-end sm:self-center ${
+                        showActions
+                            ? "opacity-100"
+                            : "lg:opacity-0 lg:group-hover:opacity-100"
+                    }`}
+                >
                     <button
-                        onClick={() => onViewBtnClick(accommodation.link_id!)}
-                        className="p-1.5 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
-                        title="查看"
+                        type="button"
+                        onClick={() => onEditBtnClick(accommodation)}
+                        className="p-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+                        title="編輯"
                     >
-                        <BookOpen size={14} />
+                        <Pencil size={13} />
                     </button>
-                )}
-                {isEditing && (
-                    <>
-                        <button
-                            onClick={() => onEditBtnClick(accommodation)}
-                            className="p-1.5 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
-                            title="編輯"
-                        >
-                            <Pencil size={14} />
-                        </button>
-                        <button
-                            onClick={() => onDeleteBtnClick(accommodation)}
-                            className="p-1.5 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                            title="刪除"
-                        >
-                            <Trash2 size={14} />
-                        </button>
-                    </>
-                )}
-            </div>
+                    <button
+                        type="button"
+                        onClick={() => onDeleteBtnClick(accommodation)}
+                        className="p-1.5 rounded-full text-rose-500 hover:text-rose-700 hover:bg-rose-500/10 transition-colors"
+                        title="刪除"
+                    >
+                        <Trash2 size={13} />
+                    </button>
+                </div>
+            )}
         </div>
     );
 };

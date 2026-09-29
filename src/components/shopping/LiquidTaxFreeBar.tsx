@@ -171,17 +171,25 @@ export const LiquidTaxFreeBar: React.FC<LiquidTaxFreeBarProps> = ({
                         </div>
 
                         {/* 免稅達標狀態統計 */}
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 shrink-0 flex-wrap sm:flex-nowrap">
                             {qualifiedStores.length > 0 && (
-                                <GlassBadge variant="success" size="sm">
-                                    <CheckCircle2 size={12} />
-                                    <span>{qualifiedStores.length} 家已達免稅</span>
+                                <GlassBadge
+                                    color="emerald"
+                                    size="sm"
+                                    icon={<CheckCircle2 size={13} className="shrink-0 text-emerald-600 dark:text-emerald-400" />}
+                                    className="whitespace-nowrap shrink-0 px-2.5 py-1"
+                                >
+                                    {qualifiedStores.length} 家已達免稅
                                 </GlassBadge>
                             )}
                             {unqualifiedStores.length > 0 && (
-                                <GlassBadge variant="neutral" size="sm">
-                                    <AlertCircle size={12} />
-                                    <span>{unqualifiedStores.length} 家尚待湊單</span>
+                                <GlassBadge
+                                    color="amber"
+                                    size="sm"
+                                    icon={<AlertCircle size={13} className="shrink-0 text-amber-600 dark:text-amber-400" />}
+                                    className="whitespace-nowrap shrink-0 px-2.5 py-1"
+                                >
+                                    {unqualifiedStores.length} 家尚待湊單
                                 </GlassBadge>
                             )}
                         </div>
@@ -190,21 +198,29 @@ export const LiquidTaxFreeBar: React.FC<LiquidTaxFreeBarProps> = ({
                     /* 檢視「特定店家」時的流體免稅動態進度條 */
                     <div className="space-y-2">
                         <div className="flex items-center justify-between flex-wrap gap-2 text-xs">
-                            <div className="flex items-center gap-2">
-                                <span className="font-bold text-neutral-900 dark:text-neutral-100 flex items-center gap-1">
-                                    <Store size={14} className="text-primary" />
+                            <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap min-w-0">
+                                <span className="font-bold text-neutral-900 dark:text-neutral-100 flex items-center gap-1 whitespace-nowrap shrink-0">
+                                    <Store size={14} className="text-primary shrink-0" />
                                     <span>{activeStore.name}</span>
                                 </span>
 
                                 {isQualified ? (
-                                    <GlassBadge variant="success" size="sm" className="font-bold">
-                                        <Sparkles size={11} className="text-amber-400 animate-spin" style={{ animationDuration: "3s" }} />
-                                        <span>🎉 已達免稅門檻！省約 10%</span>
+                                    <GlassBadge
+                                        color="emerald"
+                                        size="sm"
+                                        icon={<Sparkles size={11} className="text-amber-400 shrink-0 animate-spin" style={{ animationDuration: "3s" }} />}
+                                        className="font-bold whitespace-nowrap shrink-0 px-2.5 py-1"
+                                    >
+                                        🎉 已達免稅門檻！省約 10%
                                     </GlassBadge>
                                 ) : (
-                                    <GlassBadge variant="warning" size="sm" className="font-semibold">
-                                        <Coins size={11} />
-                                        <span>尚差 {currencySymbol} {activeDiff.toLocaleString()} 免稅</span>
+                                    <GlassBadge
+                                        color="amber"
+                                        size="sm"
+                                        icon={<Coins size={12} className="shrink-0 text-amber-600 dark:text-amber-400" />}
+                                        className="font-semibold whitespace-nowrap shrink-0 px-2.5 py-1"
+                                    >
+                                        尚差 {currencySymbol} {activeDiff.toLocaleString()} 免稅
                                     </GlassBadge>
                                 )}
                             </div>

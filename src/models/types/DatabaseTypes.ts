@@ -190,6 +190,7 @@ export type Database = {
                     departure_time: string | null;
                     flight_date: string | null;
                     id: string;
+                    passengers: string[] | null;
                     trip_id: string;
                     type: string | null;
                     updated_at: string | null;
@@ -204,6 +205,7 @@ export type Database = {
                     departure_time?: string | null;
                     flight_date?: string | null;
                     id?: string;
+                    passengers?: string[] | null;
                     trip_id: string;
                     type?: string | null;
                     updated_at?: string | null;
@@ -218,6 +220,7 @@ export type Database = {
                     departure_time?: string | null;
                     flight_date?: string | null;
                     id?: string;
+                    passengers?: string[] | null;
                     trip_id?: string;
                     type?: string | null;
                     updated_at?: string | null;

@@ -10,6 +10,7 @@ import useCarRentals from "../../hooks/info/UseCarRentals";
 import useCarRentalMutations from "../../hooks/info/UseCarRentalMutations";
 import useFlights from "../../hooks/info/UseFlights";
 import useFlightMutations from "../../hooks/info/UseFlightMutations";
+import useTripMembers from "../../hooks/tripMember/UseTripMembers";
 import SectionHeader from "../../components/common/SectionHeader";
 import DeleteModal from "../../components/common/DeleteModal";
 import FlightList from "../../components/info/FlightList";
@@ -78,9 +79,25 @@ const InfoPage = ({
         remove: removeCarRental,
         anyPending: isCarRentalPending,
     } = useCarRentalMutations();
+    const { data: tripMembers = [] } = useTripMembers(tripId, true);
     const contextData = useOutletContext<BookLayoutContextType | null>();
     const tripData = tripDataOverride || contextData?.tripData;
     const { setIsPageLoading } = useOutletContext<LayoutContextType>();
+
+    const companionNames = useMemo(() => {
+        return Array.from(
+            new Set(
+                tripMembers
+                    .map(
+                        (m) =>
+                            m.profiles?.username ||
+                            m.profiles?.email?.split("@")[0] ||
+                            ""
+                    )
+                    .filter(Boolean)
+            )
+        );
+    }, [tripMembers]);
 
     const [isEditing, setIsEditing] = useState(false);
 
@@ -160,6 +177,7 @@ const InfoPage = ({
             departure_time: moment().format("HH:mm"),
             flight_date: moment().format("YYYY-MM-DD"),
             id: crypto.randomUUID(),
+            passengers: null,
             trip_id: tripId ?? "",
             type: "",
             updated_at: null,
@@ -200,6 +218,10 @@ const InfoPage = ({
     const handleFlightFormInputChange = (e: ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setFormFlight((prev) => ({ ...prev, [name]: value }));
+    };
+
+    const handleFlightPassengersChange = (passengers: string[] | null) => {
+        setFormFlight((prev) => ({ ...prev, passengers }));
     };
 
     const handleFlightFormSubmit = async (e: FormEvent) => {
@@ -456,21 +478,27 @@ const InfoPage = ({
                     theme={tripData?.theme_config!}
                     hasBackBtn={true}
                     rightAction={
-                        <div className="flex justify-center items-center gap-4">
+                        <div className="flex items-center gap-2">
                             <button
                                 type="button"
                                 onClick={() => setIsEditing(!isEditing)}
-                                className={`flex items-center text-sm font-medium px-3 py-1.5 rounded-lg shadow-md transition-all ${
+                                className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full shadow-sm transition-all active:scale-95 cursor-pointer ${
                                     isEditing
-                                        ? "bg-destructive text-destructive-foreground hover:bg-destructive/90 border-transparent"
-                                        : "bg-card text-foreground border border-border hover:bg-card/90"
+                                        ? "bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-destructive/20"
+                                        : "liquid-glass-pill hover:bg-black/5 dark:hover:bg-white/10 text-foreground border border-border/60"
                                 }`}
-                                title={isEditing ? "退出" : "編輯"}
+                                title={isEditing ? "完成編輯" : "編輯資訊"}
                             >
                                 {isEditing ? (
-                                    <Lock size={16} />
+                                    <>
+                                        <Lock size={13} />
+                                        <span>完成</span>
+                                    </>
                                 ) : (
-                                    <Settings size={16} />
+                                    <>
+                                        <Settings size={13} />
+                                        <span>編輯</span>
+                                    </>
                                 )}
                             </button>
                         </div>
@@ -484,6 +512,7 @@ const InfoPage = ({
             >
                 <FlightList
                     flights={flights}
+                    companionNames={companionNames}
                     isEditing={isEditing}
                     isPrinting={isPrinting}
                     onAddBtnClick={handleOpenCreateFlightModal}
@@ -516,8 +545,10 @@ const InfoPage = ({
                     formData={formFlight}
                     mode={flightModalMode}
                     theme={tripData?.theme_config!}
+                    companionNames={companionNames}
                     onCloseBtnClick={handleCloseFlightModal}
                     onFormInputChange={handleFlightFormInputChange}
+                    onPassengersChange={handleFlightPassengersChange}
                     onFormSubmit={handleFlightFormSubmit}
                 />
             )}

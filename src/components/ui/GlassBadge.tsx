@@ -83,7 +83,7 @@ export const GlassBadge: React.FC<GlassBadgeProps> = ({
   return (
     <span
       className={`
-        inline-flex items-center justify-center
+        inline-flex items-center justify-center whitespace-nowrap shrink-0 select-none
         backdrop-blur-md -webkit-backdrop-blur-md
         border transition-all duration-150
         shadow-[inset_0_1px_1px_rgba(255,255,255,0.4)]
@@ -94,8 +94,14 @@ export const GlassBadge: React.FC<GlassBadgeProps> = ({
       `}
       {...rest}
     >
-      {icon && <span className="shrink-0 leading-none">{icon}</span>}
-      <span className="leading-none">{children}</span>
+      {icon && <span className="shrink-0 flex items-center leading-none">{icon}</span>}
+      {typeof children === 'string' || typeof children === 'number' ? (
+        <span className="leading-none whitespace-nowrap">{children}</span>
+      ) : (
+        <span className="inline-flex items-center gap-1.5 leading-none whitespace-nowrap shrink-0">
+          {children}
+        </span>
+      )}
     </span>
   );
 };

@@ -780,6 +780,7 @@ const ShoppingPage = ({
                 <PriceCompareModal
                     item={priceCompareItem}
                     tripData={tripData}
+                    places={places}
                     onSaveRecords={(records) =>
                         handleSaveRecords(priceCompareItem, records)
                     }

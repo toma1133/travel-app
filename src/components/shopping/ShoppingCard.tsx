@@ -55,18 +55,6 @@ const ShoppingCard: React.FC<ShoppingCardProps> = ({
 }) => {
     const [imgFailed, setImgFailed] = useState(false);
 
-    // Quantity calculations
-    const targetQty = item.target_quantity || 1;
-    const records = item.records || [];
-    const boughtQty = records.reduce((s, r) => s + (r.quantity || 0), 0);
-    const totalAmount = records.reduce(
-        (s, r) => s + (r.price || 0) * (r.quantity || 0),
-        0
-    );
-    const averagePrice = boughtQty > 0 ? Math.round(totalAmount / boughtQty) : 0;
-    const lowestPrice =
-        records.length > 0 ? Math.min(...records.map((r) => r.price)) : null;
-
     // Currency and conversion calculations
     const itemCurrency =
         item.currency || tripData?.settings_config?.localCurrency || "JPY";
@@ -74,6 +62,33 @@ const ShoppingCard: React.FC<ShoppingCardProps> = ({
     const homeCurrency = tripData?.settings_config?.homeCurrency || "TWD";
     const homeSymbol = getCurrencySymbol(homeCurrency);
     const exchangeRate = tripData?.settings_config?.exchangeRate || 0;
+    const tripLocalCurrency = tripData?.settings_config?.localCurrency || "JPY";
+
+    const convertRecordPrice = (price: number, recordCurrency?: string | null) => {
+        const fromCur = recordCurrency || itemCurrency;
+        if (!price || fromCur === itemCurrency || !exchangeRate || exchangeRate <= 0) return price;
+        if (fromCur === tripLocalCurrency && itemCurrency === homeCurrency) {
+            return Math.round(price * exchangeRate);
+        }
+        if (fromCur === homeCurrency && itemCurrency === tripLocalCurrency) {
+            return Math.round(price / exchangeRate);
+        }
+        return price;
+    };
+
+    // Quantity calculations
+    const targetQty = item.target_quantity || 1;
+    const records = item.records || [];
+    const boughtQty = records.reduce((s, r) => s + (r.quantity || 0), 0);
+    const totalAmount = records.reduce(
+        (s, r) => s + convertRecordPrice(r.price || 0, r.currency) * (r.quantity || 0),
+        0
+    );
+    const averagePrice = boughtQty > 0 ? Math.round(totalAmount / boughtQty) : 0;
+    const lowestPrice =
+        records.length > 0
+            ? Math.min(...records.map((r) => convertRecordPrice(r.price, r.currency)))
+            : null;
 
     // Display bought quantity and completion status
     const displayBought =

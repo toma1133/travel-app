@@ -29,56 +29,66 @@ const AccommodationList = ({
             className={
                 isPrinting
                     ? "bg-transparent mb-8 break-inside-avoid overflow-visible block"
-                    : "bg-card p-5 rounded-xl shadow-sm relative transition-all"
+                    : "liquid-glass-elevated rounded-3xl p-5 md:p-6 border border-white/40 dark:border-white/10 shadow-lg relative transition-all"
             }
         >
+            {/* Header */}
             <div
                 className={`flex items-center justify-between select-none ${
                     isPrinting
                         ? "mb-6 border-b border-black pb-2"
-                        : `${isOpen ? "mb-4" : "mb-0"} text-[#8E354A] cursor-pointer`
+                        : `${isOpen ? "mb-4" : "mb-0"} cursor-pointer group`
                 }`}
                 onClick={() => !isPrinting && setIsOpen(!isOpen)}
             >
-                <div className="flex items-baseline gap-3">
-                    {isPrinting && (
-                        <span className="text-3xl font-black text-gray-400 leading-none">
+                <div className="flex items-center gap-2.5">
+                    {/* 列印時的章節編號 */}
+                    {isPrinting ? (
+                        <span className="text-3xl font-black text-gray-400 leading-none mr-2">
                             02
                         </span>
+                    ) : (
+                        <div className="w-8 h-8 rounded-xl bg-indigo-500/15 text-indigo-600 dark:text-indigo-300 flex items-center justify-center shrink-0 shadow-xs group-hover:scale-105 transition-transform">
+                            <Bed size={17} />
+                        </div>
                     )}
-                    <div className="flex items-center">
-                        {!isPrinting && <Bed size={18} className="mr-2" />}
+                    <div>
                         <h3
                             className={`font-bold tracking-wider uppercase ${
-                                isPrinting ? "text-xl text-black" : "text-sm"
+                                isPrinting
+                                    ? "text-xl text-black"
+                                    : "text-sm text-foreground flex items-center gap-2"
                             }`}
                         >
-                            Hotels
+                            <span>住宿清單</span>
+                            <span className="text-[10px] text-muted-foreground font-mono font-normal">
+                                HOTELS
+                            </span>
                         </h3>
                     </div>
                 </div>
 
                 <div className="flex items-center gap-2">
                     {!isPrinting && isEditing && (
-                        <div 
-                            className="flex space-x-2 bg-background/60 backdrop-blur-md p-1 rounded-full border border-border/50 transition-all duration-300 z-10"
-                            onClick={(e) => e.stopPropagation()}
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onAddBtnClick(e);
+                            }}
+                            className="flex items-center gap-1 px-3 py-1.5 rounded-full liquid-glass-pill text-xs font-semibold text-primary hover:bg-primary/10 transition-all active:scale-95 cursor-pointer shadow-xs"
+                            title="新增住宿"
                         >
-                            <button
-                                onClick={onAddBtnClick}
-                                className="p-1.5 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
-                                title="新增住宿"
-                            >
-                                <Plus size={14} />
-                            </button>
-                        </div>
+                            <Plus size={13} />
+                            <span>新增</span>
+                        </button>
                     )}
                     {!isPrinting && (
                         <button
                             type="button"
-                            className="text-muted-foreground hover:text-foreground p-1 transition-transform duration-200"
+                            className="text-muted-foreground hover:text-foreground p-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/5 transition-transform duration-200"
                         >
-                            {isOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                            {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                         </button>
                     )}
                 </div>
@@ -86,7 +96,7 @@ const AccommodationList = ({
 
             {/* Collapsible Content */}
             {(isOpen || isPrinting) && (
-                <div className="space-y-4">
+                <div className={isPrinting ? "space-y-4" : "space-y-3 pt-1"}>
                     {Array.isArray(accommodations) && accommodations.length > 0 ? (
                         accommodations.map((acc, i) => (
                             <AccommodationRecord
@@ -101,9 +111,9 @@ const AccommodationList = ({
                             />
                         ))
                     ) : (
-                        <p className="text-xs text-muted-foreground italic py-2">
-                            尚無住宿記錄
-                        </p>
+                        <div className="p-6 rounded-2xl border border-dashed border-border/60 text-center text-xs text-muted-foreground bg-muted/20">
+                            尚未安排住宿，點擊右上角新增以記錄飯店與民宿。
+                        </div>
                     )}
                 </div>
             )}

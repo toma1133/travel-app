@@ -30,7 +30,19 @@ export const flightRepo: IRepo<FlightRow, FlightRowInsert, FlightRowUpdate, stri
             .insert(payload)
             .select("*")
             .single();
-        if (error) throw error;
+        if (error) {
+            if (error.message?.includes("passengers") || (error as any).code === "42703") {
+                const { passengers, ...rest } = payload as any;
+                const retry = await supabaseClient
+                    .from("flights")
+                    .insert(rest)
+                    .select("*")
+                    .single();
+                if (retry.error) throw retry.error;
+                return { ...retry.data!, passengers: passengers || null };
+            }
+            throw error;
+        }
         return data!;
     },
     async update(patch: Partial<FlightRowUpdate>): Promise<FlightRow | null> {
@@ -41,7 +53,20 @@ export const flightRepo: IRepo<FlightRow, FlightRowInsert, FlightRowUpdate, stri
             .eq("id", patch.id)
             .select("*")
             .single();
-        if (error) throw error;
+        if (error) {
+            if (error.message?.includes("passengers") || (error as any).code === "42703") {
+                const { passengers, ...rest } = patch as any;
+                const retry = await supabaseClient
+                    .from("flights")
+                    .update(rest)
+                    .eq("id", patch.id)
+                    .select("*")
+                    .single();
+                if (retry.error) throw retry.error;
+                return { ...retry.data!, passengers: passengers || null };
+            }
+            throw error;
+        }
         return data;
     },
     async upsert(payload: FlightRowInsert): Promise<FlightRow | null> {
@@ -50,7 +75,19 @@ export const flightRepo: IRepo<FlightRow, FlightRowInsert, FlightRowUpdate, stri
             .upsert(payload)
             .select("*")
             .single();
-        if (error) throw error;
+        if (error) {
+            if (error.message?.includes("passengers") || (error as any).code === "42703") {
+                const { passengers, ...rest } = payload as any;
+                const retry = await supabaseClient
+                    .from("flights")
+                    .upsert(rest)
+                    .select("*")
+                    .single();
+                if (retry.error) throw retry.error;
+                return { ...retry.data!, passengers: passengers || null };
+            }
+            throw error;
+        }
         return data!;
     },
     async delete(id: string): Promise<void> {

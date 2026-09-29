@@ -1,6 +1,6 @@
 import { useState } from "react";
 import moment from "moment";
-import { Clock, Pencil, Trash2, MoveRight } from "lucide-react";
+import { Clock, Pencil, Trash2, MoveRight, ArrowRight, Users, User } from "lucide-react";
 import type { FlightRow } from "../../models/types/FlightTypes";
 
 type FlightRecordProps = {
@@ -33,7 +33,7 @@ const FlightRecord = ({
         return `${hours}h ${minutes}m`;
     };
 
-    // --- 列印模式：登機證風格 (Boarding Pass Style) ---
+    // --- 列印模式：登機證風格 (Boarding Pass Style) 保持原樣不變 ---
     if (isPrinting) {
         return (
             <div className="flex border border-black rounded-sm overflow-hidden break-inside-avoid">
@@ -91,65 +91,107 @@ const FlightRecord = ({
                             </span>
                         </div>
                     </div>
+
+                    {/* 登機證旅客標註 */}
+                    <div className="mt-2 flex items-center justify-between text-[10px] border-t border-gray-200 pt-1">
+                        <span className="font-mono text-gray-500 font-bold uppercase">
+                            PASSENGER(S):
+                        </span>
+                        <span className="font-bold text-black uppercase">
+                            {flight.passengers && flight.passengers.length > 0
+                                ? flight.passengers.join(", ")
+                                : "ALL TRAVELERS (全體搭乘)"}
+                        </span>
+                    </div>
                 </div>
             </div>
         );
     }
 
-    // --- 螢幕模式 (保持原樣) ---
+    // --- 螢幕模式：Liquid Glass 卡片風格 ---
     return (
         <div
-            className={`flex justify-between items-start pt-4 mb-4 last:mb-0 relative group ${
-                index !== 0 ? "border-t border-border" : ""
-            }`}
+            className="liquid-glass-interactive rounded-2xl p-4 border border-white/35 dark:border-white/10 bg-white/40 dark:bg-white/[0.03] shadow-xs hover:shadow-md transition-all relative group flex flex-col sm:flex-row sm:items-center justify-between gap-3"
             onMouseEnter={() => setShowActions(true)}
             onMouseLeave={() => setShowActions(false)}
             onTouchStart={() => setShowActions(true)}
         >
-            <div className="flex-1 pr-16">
+            <div className="flex-1 min-w-0 space-y-2">
                 <div className="font-bold text-foreground text-base flex items-center gap-2">
-                    <span>{flight.departure_loc}</span>
-                    <span className="text-muted-foreground font-light text-sm">➝</span>
-                    <span>{flight.arrival_loc}</span>
+                    <span className="truncate">{flight.departure_loc}</span>
+                    <ArrowRight size={15} className="text-primary/70 shrink-0" />
+                    <span className="truncate">{flight.arrival_loc}</span>
                 </div>
-                <div className="text-xs text-muted-foreground mt-1 flex gap-3">
-                    <span className="font-mono bg-muted px-1 rounded text-foreground">
+                <div className="text-xs text-muted-foreground flex items-center gap-2 flex-wrap">
+                    <span className="font-mono bg-sky-500/15 text-sky-700 dark:text-sky-300 px-2 py-0.5 rounded-md font-semibold text-[11px]">
                         {flight.code}
                     </span>
-                    <span>|</span>
-                    <span>{flight.flight_date}</span>
-                </div>
-            </div>
-            <div className="text-right flex flex-col items-end">
-                <div className="font-mono text-foreground font-bold">
-                    {moment(flight.departure_time, "HH:mm:ss").format("HH:mm")}
-                    <span className="mx-1 text-muted-foreground">-</span>
-                    {moment(flight.arrival_time, "HH:mm:ss").format("HH:mm")}
-                </div>
-                <div className="flex items-center gap-1 text-[10px] text-muted-foreground mt-1">
-                    <Clock size={10} />
-                    <span>{getDuration()}</span>
+                    <span>•</span>
+                    <span className="font-mono">{flight.flight_date}</span>
+                    <span>•</span>
+                    {flight.passengers && flight.passengers.length > 0 ? (
+                        <div className="inline-flex items-center gap-1 flex-wrap">
+                            <User size={11} className="text-primary shrink-0" />
+                            {flight.passengers.map((p) => (
+                                <span
+                                    key={p}
+                                    className="inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/25"
+                                >
+                                    {p}
+                                </span>
+                            ))}
+                        </div>
+                    ) : (
+                        <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground bg-muted/40 px-2 py-0.5 rounded-full border border-border/40">
+                            <Users size={10} />
+                            <span>全員搭乘</span>
+                        </span>
+                    )}
                 </div>
             </div>
 
-            {isEditing && (
-                <div className={`absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-1 p-1 bg-background/60 backdrop-blur-md rounded-full shadow-md border border-border/50 transition-all duration-300 z-10 ${showActions ? "opacity-100" : "lg:opacity-0 lg:group-hover:opacity-100"}`}>
-                    <button
-                        onClick={() => onEditBtnClick(flight)}
-                        className="p-1.5 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
-                        title="編輯"
-                    >
-                        <Pencil size={14} />
-                    </button>
-                    <button
-                        onClick={() => onDeleteBtnClick(flight)}
-                        className="p-1.5 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                        title="刪除"
-                    >
-                        <Trash2 size={14} />
-                    </button>
+            <div className="flex items-center justify-between sm:justify-end sm:text-right gap-4 shrink-0 border-t sm:border-t-0 pt-2 sm:pt-0 border-border/30">
+                <div>
+                    <div className="font-mono text-foreground font-bold text-sm tracking-tight">
+                        {moment(flight.departure_time, "HH:mm:ss").format("HH:mm")}
+                        <span className="mx-1 text-muted-foreground font-light">➝</span>
+                        {moment(flight.arrival_time, "HH:mm:ss").format("HH:mm")}
+                    </div>
+                    {getDuration() && (
+                        <div className="flex items-center sm:justify-end gap-1 text-[11px] text-muted-foreground mt-0.5">
+                            <Clock size={11} className="text-muted-foreground/70" />
+                            <span>{getDuration()}</span>
+                        </div>
+                    )}
                 </div>
-            )}
+
+                {isEditing && (
+                    <div
+                        className={`flex items-center gap-1 p-1 liquid-glass-pill shadow-sm transition-all duration-200 ${
+                            showActions
+                                ? "opacity-100"
+                                : "lg:opacity-0 lg:group-hover:opacity-100"
+                        }`}
+                    >
+                        <button
+                            type="button"
+                            onClick={() => onEditBtnClick(flight)}
+                            className="p-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+                            title="編輯"
+                        >
+                            <Pencil size={13} />
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => onDeleteBtnClick(flight)}
+                            className="p-1.5 rounded-full text-rose-500 hover:text-rose-700 hover:bg-rose-500/10 transition-colors"
+                            title="刪除"
+                        >
+                            <Trash2 size={13} />
+                        </button>
+                    </div>
+                )}
+            </div>
         </div>
     );
 };

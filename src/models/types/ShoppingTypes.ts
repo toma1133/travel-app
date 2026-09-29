@@ -5,6 +5,7 @@ export type ShoppingRecord = {
     quantity: number;
     date?: string;
     note?: string;
+    currency?: string | null;
 };
 
 export type ShoppingItemRow = {

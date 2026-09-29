@@ -1,6 +1,6 @@
 import { useState } from "react";
 import moment from "moment";
-import { Pencil, Trash2 } from "lucide-react";
+import { Car, Clock, MapPin, Pencil, Shield, Trash2 } from "lucide-react";
 import type { CarRentalRow } from "../../models/types/CarRentalTypes";
 
 type CarRentalRecordProps = {
@@ -22,7 +22,7 @@ const CarRentalRecord = ({
 }: CarRentalRecordProps) => {
     const [showActions, setShowActions] = useState(false);
 
-    // --- 列印模式：規格表風格 ---
+    // --- 列印模式：規格表風格 (保持 100% 原樣不變) ---
     if (isPrinting) {
         return (
             <div className="border border-black break-inside-avoid text-sm">
@@ -81,93 +81,94 @@ const CarRentalRecord = ({
         );
     }
 
-    // --- 螢幕模式 (保持原樣) ---
+    // --- 螢幕模式：Liquid Glass 卡片風格 ---
     return (
         <div
-            className={`flex justify-between items-start pt-4 mb-4 last:mb-0 relative group ${
-                index !== 0 ? "border-t border-border" : ""
-            }`}
+            className="liquid-glass-interactive rounded-2xl p-4 border border-white/35 dark:border-white/10 bg-white/40 dark:bg-white/[0.03] shadow-xs hover:shadow-md transition-all relative group flex flex-col gap-3"
             onMouseEnter={() => setShowActions(true)}
             onMouseLeave={() => setShowActions(false)}
             onTouchStart={() => setShowActions(true)}
         >
-            <div className="w-full text-sm px-2">
-                {/* ... (螢幕模式內容保持不變) ... */}
-                <div className="grid grid-cols-3 gap-4 mb-2">
-                    <div className="flex flex-col">
-                        <span className="text-muted-foreground text-xs uppercase">
-                            租車公司
-                        </span>
-                        <span className="font-bold text-foreground">
-                            {carRental.company}
-                        </span>
+            {/* 頂部：公司、車型、保險 */}
+            <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-2">
+                    <div className="font-bold text-foreground text-sm sm:text-base flex items-center gap-1.5">
+                        <Car size={15} className="text-amber-500 shrink-0" />
+                        <span>{carRental.company}</span>
                     </div>
-                    <div className="flex flex-col">
-                        <span className="text-muted-foreground text-xs uppercase">
-                            車型
-                        </span>
-                        <span className="font-bold text-foreground">
+                    {carRental.model && (
+                        <span className="text-xs px-2 py-0.5 rounded-md font-mono bg-muted/70 text-foreground font-medium">
                             {carRental.model}
                         </span>
-                    </div>
-                    <div className="flex flex-col">
-                        <span className="text-muted-foreground text-xs uppercase">
-                            保險
-                        </span>
-                        <span className="font-bold text-foreground">
-                            {carRental.insurance_plan || "-"}
-                        </span>
-                    </div>
+                    )}
                 </div>
-                {/* ... */}
-                <div className="p-4 bg-muted rounded text-xs space-y-2">
-                    <div className="flex justify-between items-center">
-                        <span className="text-muted-foreground">取車</span>
-                        <span className="text-foreground">
-                            <span className="font-bold mr-2">
-                                {carRental.pickup_loc}
-                            </span>
-                            <span className="font-mono">
-                                {moment(carRental.pickup_datetime).format(
-                                    "YYYY-MM-DD HH:mm"
-                                )}
-                            </span>
+
+                {/* 保險與編輯按鈕 */}
+                <div className="flex items-center gap-2">
+                    {carRental.insurance_plan && (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700 dark:text-emerald-300 bg-emerald-500/15 border border-emerald-500/25 px-2 py-0.5 rounded-full">
+                            <Shield size={11} />
+                            <span>{carRental.insurance_plan}</span>
                         </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                        <span className="text-muted-foreground">還車</span>
-                        <span className="text-foreground">
-                            <span className="font-bold mr-2">
-                                {carRental.dropoff_loc}
-                            </span>
-                            <span className="font-mono">
-                                {moment(carRental.dropoff_datetime).format(
-                                    "YYYY-MM-DD HH:mm"
-                                )}
-                            </span>
-                        </span>
-                    </div>
+                    )}
+
+                    {isEditing && (
+                        <div
+                            className={`flex items-center gap-1 p-1 liquid-glass-pill shadow-sm transition-all duration-200 ${
+                                showActions
+                                    ? "opacity-100"
+                                    : "lg:opacity-0 lg:group-hover:opacity-100"
+                            }`}
+                        >
+                            <button
+                                type="button"
+                                onClick={() => onEditBtnClick(carRental)}
+                                className="p-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+                                title="編輯"
+                            >
+                                <Pencil size={13} />
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => onDeleteBtnClick(carRental)}
+                                className="p-1.5 rounded-full text-rose-500 hover:text-rose-700 hover:bg-rose-500/10 transition-colors"
+                                title="刪除"
+                            >
+                                <Trash2 size={13} />
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
 
-            {isEditing && (
-                <div className={`absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-1 p-1 bg-background/60 backdrop-blur-md rounded-full shadow-md border border-border/50 transition-all duration-300 z-10 ${showActions ? "opacity-100" : "lg:opacity-0 lg:group-hover:opacity-100"}`}>
-                    <button
-                        onClick={() => onEditBtnClick(carRental)}
-                        className="p-1.5 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
-                        title="編輯"
-                    >
-                        <Pencil size={14} />
-                    </button>
-                    <button
-                        onClick={() => onDeleteBtnClick(carRental)}
-                        className="p-1.5 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                        title="刪除"
-                    >
-                        <Trash2 size={14} />
-                    </button>
+            {/* 中間：取車與還車行程雙欄排版 */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                <div className="p-3 rounded-xl bg-white/50 dark:bg-black/20 border border-white/20 dark:border-white/5 space-y-1">
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                        <MapPin size={11} className="text-primary/70" />
+                        <span>取車地點 (Pick-up)</span>
+                    </div>
+                    <div className="font-semibold text-foreground text-xs line-clamp-1">
+                        {carRental.pickup_loc}
+                    </div>
+                    <div className="font-mono text-[11px] text-muted-foreground">
+                        {moment(carRental.pickup_datetime).format("YYYY-MM-DD HH:mm")}
+                    </div>
                 </div>
-            )}
+
+                <div className="p-3 rounded-xl bg-white/50 dark:bg-black/20 border border-white/20 dark:border-white/5 space-y-1">
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                        <MapPin size={11} className="text-amber-500/70" />
+                        <span>還車地點 (Drop-off)</span>
+                    </div>
+                    <div className="font-semibold text-foreground text-xs line-clamp-1">
+                        {carRental.dropoff_loc}
+                    </div>
+                    <div className="font-mono text-[11px] text-muted-foreground">
+                        {moment(carRental.dropoff_datetime).format("YYYY-MM-DD HH:mm")}
+                    </div>
+                </div>
+            </div>
         </div>
     );
 };

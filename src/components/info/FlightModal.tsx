@@ -1,5 +1,5 @@
-import { ChangeEventHandler, FormEventHandler, MouseEventHandler } from "react";
-import { Plane, Calendar, Clock, MapPin, ArrowRight } from "lucide-react";
+import { ChangeEventHandler, FormEventHandler, MouseEventHandler, useState } from "react";
+import { Plane, Calendar, Clock, Users, User, Plus, X, Check } from "lucide-react";
 import type { FlightRow } from "../../models/types/FlightTypes";
 import type { TripThemeConf } from "../../models/types/TripTypes";
 import FormModal from "../common/FormModal";
@@ -8,8 +8,10 @@ type FlightModalProps = {
     formData: FlightRow;
     mode: string;
     theme: TripThemeConf | null;
+    companionNames?: string[];
     onCloseBtnClick: MouseEventHandler<HTMLButtonElement>;
     onFormInputChange: ChangeEventHandler<HTMLInputElement>;
+    onPassengersChange?: (passengers: string[] | null) => void;
     onFormSubmit: FormEventHandler<HTMLFormElement>;
 };
 
@@ -17,10 +19,45 @@ const FlightModal = ({
     formData,
     mode,
     theme,
+    companionNames = [],
     onCloseBtnClick,
     onFormInputChange,
+    onPassengersChange,
     onFormSubmit,
 }: FlightModalProps) => {
+    const [customPassenger, setCustomPassenger] = useState("");
+    const isSpecific = Boolean(formData.passengers && formData.passengers.length > 0);
+    const selectedPassengers = formData.passengers || [];
+
+    const handleTogglePassenger = (name: string) => {
+        if (!onPassengersChange) return;
+        const exists = selectedPassengers.includes(name);
+        const updated = exists
+            ? selectedPassengers.filter((p) => p !== name)
+            : [...selectedPassengers, name];
+        onPassengersChange(updated.length > 0 ? updated : null);
+    };
+
+    const handleAddCustomPassenger = () => {
+        const trimmed = customPassenger.trim();
+        if (!trimmed || !onPassengersChange) return;
+        if (!selectedPassengers.includes(trimmed)) {
+            onPassengersChange([...selectedPassengers, trimmed]);
+        }
+        setCustomPassenger("");
+    };
+
+    const handleSetAll = () => {
+        if (onPassengersChange) {
+            onPassengersChange(null);
+        }
+    };
+
+    const handleSetSpecific = () => {
+        if (onPassengersChange && (!formData.passengers || formData.passengers.length === 0)) {
+            onPassengersChange(companionNames.length > 0 ? [companionNames[0]] : []);
+        }
+    };
     return (
         <FormModal
             formId="flight-form"
@@ -154,6 +191,129 @@ const FlightModal = ({
                                 className="bg-muted/40 border border-border/80 rounded-xl px-2.5 py-1 text-xs font-mono font-bold text-foreground outline-none cursor-pointer dark:[color-scheme:dark]"
                             />
                         </div>
+                    </div>
+                </div>
+
+                {/* 👥 Group 3: 搭乘旅客 / 旅伴 */}
+                <div className="space-y-1.5">
+                    <div className="flex items-center justify-between px-1">
+                        <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                            <Users size={12} className="text-primary" />
+                            <span>搭乘旅客</span>
+                        </span>
+                        <span className="text-[10px] text-muted-foreground">
+                            {isSpecific
+                                ? `已指定 ${selectedPassengers.length} 位旅客`
+                                : "全體成員共同搭乘"}
+                        </span>
+                    </div>
+
+                    <div className="bg-muted/30 border border-border/70 rounded-2xl p-3.5 space-y-3 shadow-2xs">
+                        {/* 模式切換：全體 vs 指定 */}
+                        <div className="flex items-center p-1 rounded-xl bg-card/90 border border-border/60 text-xs">
+                            <button
+                                type="button"
+                                onClick={handleSetAll}
+                                className={`flex-1 py-1.5 rounded-lg font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                                    !isSpecific
+                                        ? "bg-primary text-primary-foreground shadow-xs"
+                                        : "text-muted-foreground hover:text-foreground"
+                                }`}
+                            >
+                                <Users size={13} />
+                                <span>全體旅伴搭乘</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleSetSpecific}
+                                className={`flex-1 py-1.5 rounded-lg font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                                    isSpecific
+                                        ? "bg-primary text-primary-foreground shadow-xs"
+                                        : "text-muted-foreground hover:text-foreground"
+                                }`}
+                            >
+                                <User size={13} />
+                                <span>指定特定旅伴</span>
+                            </button>
+                        </div>
+
+                        {/* 指定搭乘旅客細節 */}
+                        {isSpecific && (
+                            <div className="space-y-2.5 pt-1 animate-in fade-in-50 duration-200">
+                                {/* 行程現有旅伴快速點選 */}
+                                {companionNames.length > 0 && (
+                                    <div className="space-y-1">
+                                        <div className="text-[11px] font-medium text-muted-foreground">
+                                            點擊旅伴加入搭乘名單：
+                                        </div>
+                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                            {companionNames.map((name) => {
+                                                const selected = selectedPassengers.includes(name);
+                                                return (
+                                                    <button
+                                                        key={name}
+                                                        type="button"
+                                                        onClick={() => handleTogglePassenger(name)}
+                                                        className={`px-2.5 py-1 rounded-full text-xs font-medium border flex items-center gap-1 transition-all cursor-pointer ${
+                                                            selected
+                                                                ? "bg-primary text-primary-foreground border-primary shadow-2xs"
+                                                                : "bg-card/70 border-border/70 text-foreground hover:bg-card"
+                                                        }`}
+                                                    >
+                                                        {selected && <Check size={11} className="stroke-[3]" />}
+                                                        <span>{name}</span>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* 自訂旅客姓名輸入 */}
+                                <div className="flex items-center gap-1.5">
+                                    <input
+                                        type="text"
+                                        value={customPassenger}
+                                        onChange={(e) => setCustomPassenger(e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === "Enter") {
+                                                e.preventDefault();
+                                                handleAddCustomPassenger();
+                                            }
+                                        }}
+                                        placeholder="輸入旅客姓名（若不在旅伴名單中）"
+                                        className="flex-1 bg-card/80 border border-border/80 rounded-xl px-3 py-1.5 text-xs text-foreground placeholder:text-muted-foreground/50 outline-none"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={handleAddCustomPassenger}
+                                        className="px-3 py-1.5 rounded-xl bg-card border border-border hover:bg-muted/80 text-foreground font-bold text-xs flex items-center gap-1 cursor-pointer transition-colors"
+                                    >
+                                        <Plus size={12} />
+                                        <span>加入</span>
+                                    </button>
+                                </div>
+
+                                {/* 目前選取的旅客 Chips */}
+                                <div className="flex items-center gap-1.5 flex-wrap pt-1">
+                                    {selectedPassengers.map((name) => (
+                                        <span
+                                            key={name}
+                                            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-primary/10 text-primary border border-primary/30"
+                                        >
+                                            <span>{name}</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleTogglePassenger(name)}
+                                                className="hover:text-rose-500 transition-colors cursor-pointer"
+                                            >
+                                                <X size={11} />
+                                            </button>
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
