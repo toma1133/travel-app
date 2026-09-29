@@ -1,7 +1,9 @@
-import { MouseEventHandler } from "react";
+import React, { MouseEventHandler } from "react";
 import { Trash2 } from "lucide-react";
+import { GlassModal } from "../ui/GlassModal";
+import { GlassButton } from "../ui/GlassButton";
 
-type DeleteModalProps = {
+export type DeleteModalProps = {
     deleteKey?: string;
     title?: string;
     description?: string;
@@ -10,60 +12,73 @@ type DeleteModalProps = {
     onConfirmClick: MouseEventHandler<HTMLButtonElement>;
 };
 
-const DeleteModal = ({
+const DeleteModal: React.FC<DeleteModalProps> = ({
     deleteKey,
     title = "確定要刪除？",
     description,
     confirmText = "確認刪除",
     onCloseClick,
     onConfirmClick,
-}: DeleteModalProps) => {
+}) => {
+    const handleClose = () => {
+        const fakeEvent = {
+            stopPropagation: () => {},
+            preventDefault: () => {},
+        } as unknown as React.MouseEvent<HTMLButtonElement>;
+        onCloseClick(fakeEvent);
+    };
+
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-            <div
-                className="bg-card/95 backdrop-blur-xl text-card-foreground rounded-3xl shadow-2xl border border-border/80 w-full max-w-xs sm:max-w-sm p-6 text-center animate-in zoom-in-95 duration-200"
-                onClick={(e) => e.stopPropagation()}
-            >
-                {/* 🗑️ Apple HIG Alert Icon */}
-                <div className="w-12 h-12 rounded-full bg-rose-500/10 text-rose-500 flex items-center justify-center mx-auto mb-3.5 shadow-2xs border border-rose-500/20">
-                    <Trash2 size={22} />
-                </div>
-
-                <h3 className="text-base font-black text-foreground tracking-tight mb-1.5">
-                    {title}
-                </h3>
-
-                <p className="text-xs text-muted-foreground leading-relaxed mb-6">
-                    {description ? (
-                        description
-                    ) : (
-                        <>
-                            您即將刪除{" "}
-                            <span className="font-bold text-foreground">{deleteKey}</span>
-                            。此動作將無法復原。
-                        </>
-                    )}
-                </p>
-
-                {/* 📱 iOS 對話框按鈕列 */}
-                <div className="grid grid-cols-2 gap-2.5">
-                    <button
-                        type="button"
-                        onClick={onCloseClick}
-                        className="py-2 px-3 text-xs font-bold text-foreground bg-muted/60 hover:bg-muted rounded-full transition-all cursor-pointer active:scale-95 border border-border/60"
-                    >
-                        取消
-                    </button>
-                    <button
-                        type="button"
-                        onClick={onConfirmClick}
-                        className="py-2 px-3 text-xs font-bold text-white bg-rose-500 hover:bg-rose-600 rounded-full shadow-xs transition-all cursor-pointer active:scale-95"
-                    >
-                        {confirmText}
-                    </button>
-                </div>
+        <GlassModal
+            isOpen={true}
+            onClose={handleClose}
+            maxWidth="sm"
+            className="p-6 text-center overflow-hidden bg-card/95 border border-white/20 dark:border-white/10 shadow-2xl"
+        >
+            {/* 🗑️ Liquid Glass Alert Icon */}
+            <div className="w-14 h-14 rounded-2xl bg-rose-500/15 text-rose-500 flex items-center justify-center mx-auto mb-4 shadow-sm border border-rose-500/25">
+                <Trash2 size={24} className="animate-pulse" />
             </div>
-        </div>
+
+            <h3 className="text-lg font-bold text-foreground tracking-tight mb-2">
+                {title}
+            </h3>
+
+            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed mb-6 px-1">
+                {description ? (
+                    description
+                ) : (
+                    <>
+                        您即將刪除{" "}
+                        <span className="font-bold text-foreground">{deleteKey}</span>
+                        。此動作將無法復原。
+                    </>
+                )}
+            </p>
+
+            {/* 按鈕列 */}
+            <div className="grid grid-cols-2 gap-3">
+                <GlassButton
+                    type="button"
+                    variant="secondary"
+                    size="md"
+                    onClick={onCloseClick}
+                    className="w-full font-bold"
+                >
+                    取消
+                </GlassButton>
+                <GlassButton
+                    type="button"
+                    variant="danger"
+                    size="md"
+                    onClick={onConfirmClick}
+                    icon={<Trash2 size={15} />}
+                    className="w-full font-bold"
+                >
+                    {confirmText}
+                </GlassButton>
+            </div>
+        </GlassModal>
     );
 };
 

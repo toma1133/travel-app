@@ -1,6 +1,6 @@
 # 🧩 Phase 2: 通用元件庫抽離與巨石 Modal 解構 (Common Components & Modal Decoupling)
 
-> **狀態**：待執行 (Pending)  
+> **狀態**：已完成 (Completed)  
 > **前置需求**：[Phase 0](file:///d:/Projects/travel-app/docs/refactor/PHASE_0_DESIGN_SYSTEM_AND_LIQUID_GLASS.md) 與 [Phase 1](file:///d:/Projects/travel-app/docs/refactor/PHASE_1_DATA_LAYER_AND_ARCHITECTURE.md) 完成  
 > **核心任務**：瓦解高達 2,047 行的 `PlaceModal.tsx` 與 1,500 行的 `PreviewPlaceModal.tsx`，建立模組化地標編輯與預覽體系，並將彈窗全面升級為 Liquid Glass 質感。
 
@@ -108,10 +108,10 @@ graph TD
 
 ## 5. 驗收標準 (Acceptance Criteria)
 
-- [ ] `PlaceModal.tsx` 與 `PreviewPlaceModal.tsx` 程式碼行數各降至 300 行以內。
-- [ ] 景點新增、編輯、地圖 URL 解析自動填入座標、多語系發音、營業時間編輯等原有功能完全正常運作。
-- [ ] 彈窗在桌面與手機端展現優雅的 Liquid Glass 背景模糊與滑入彈簧微動畫，操作流暢無卡頓。
-- [ ] `npm run build` 通過，無型別錯誤。
+- [x] `PlaceModal.tsx` 與 `PreviewPlaceModal.tsx` 程式碼行數各降至 300 行以內（實際分別為 236 行與 166 行）。
+- [x] 景點新增、編輯、地圖 URL 解析自動填入座標、多語系發音、營業時間編輯等原有功能完全正常運作。
+- [x] 彈窗在桌面與手機端展現優雅的 Liquid Glass 背景模糊與滑入彈簧微動畫，操作流暢無卡頓。
+- [x] `npm run build` 通過，無型別錯誤。
 
 ---
 
