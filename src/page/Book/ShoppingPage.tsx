@@ -12,6 +12,7 @@ import {
     Gift,
     Users,
     User,
+    MessageSquare,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import useShoppingItems from "../../hooks/shopping/UseShoppingItems";
@@ -35,6 +36,9 @@ import RecipientSummaryModal from "../../components/shopping/RecipientSummaryMod
 import ShareShoppingModal from "../../components/shopping/ShareShoppingModal";
 import ExportToBudgetModal from "../../components/shopping/ExportToBudgetModal";
 import PreviewPlaceModal from "../../components/itinerary/PreviewPlaceModal";
+import ClerkPhraseModal from "../../components/shopping/ClerkPhraseModal";
+import FloatingCurrencyConverter from "../../components/shopping/FloatingCurrencyConverter";
+import TaxFreeCelebration from "../../components/shopping/TaxFreeCelebration";
 import { decodeShoppingListFromUrl } from "../../utils/ShoppingShareUtil";
 import type BookLayoutContextType from "../../models/types/BookLayoutContextTypes";
 import type LayoutContextType from "../../models/types/LayoutContextTypes";
@@ -148,6 +152,7 @@ const ShoppingPage = ({
     const [isShareModalOpen, setIsShareModalOpen] = useState(false);
     const [budgetExportItem, setBudgetExportItem] = useState<ShoppingItemVM | null>(null);
     const [previewPlace, setPreviewPlace] = useState<PlaceVM | null>(null);
+    const [isClerkPhraseModalOpen, setIsClerkPhraseModalOpen] = useState(false);
 
     const [itemToDelete, setItemToDelete] = useState<ShoppingItemVM | null>(null);
     const [budgetSuccessNotice, setBudgetSuccessNotice] = useState("");
@@ -279,9 +284,13 @@ const ShoppingPage = ({
     };
 
     // Handlers
-    const handleOpenCreateModal = () => {
+    const handleOpenCreateModal = (prefillData?: Partial<ShoppingItemVM>) => {
         setItemModalMode("create");
-        setEditingItem(null);
+        if (prefillData) {
+            setEditingItem(prefillData as ShoppingItemVM);
+        } else {
+            setEditingItem(null);
+        }
         setIsItemModalOpen(true);
     };
 
@@ -514,6 +523,16 @@ const ShoppingPage = ({
                         <div className="flex items-center gap-2">
                             <button
                                 type="button"
+                                onClick={() => setIsClerkPhraseModalOpen(true)}
+                                className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 transition-all cursor-pointer shadow-2xs"
+                                title="出國結帳對話速查庫 (大字展示與語音發音)"
+                            >
+                                <MessageSquare size={14} />
+                                <span className="hidden sm:inline">結帳小卡</span>
+                            </button>
+
+                            <button
+                                type="button"
                                 onClick={() => setIsShareModalOpen(true)}
                                 className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl border border-border bg-card hover:bg-muted text-foreground transition-all cursor-pointer shadow-2xs"
                                 title="分享或匯入購物清單"
@@ -524,7 +543,7 @@ const ShoppingPage = ({
 
                             <button
                                 type="button"
-                                onClick={handleOpenCreateModal}
+                                onClick={() => handleOpenCreateModal()}
                                 className="flex items-center gap-1.5 text-xs font-bold px-3.5 py-1.5 rounded-xl bg-primary text-primary-foreground hover:opacity-90 transition-all cursor-pointer shadow-xs"
                             >
                                 <Plus size={15} />
@@ -856,6 +875,41 @@ const ShoppingPage = ({
                     onCloseBtnClick={() => setPreviewPlace(null)}
                 />
             )}
+
+            {/* Tax Free Celebration Animation & Confetti */}
+            <TaxFreeCelebration
+                allStores={allStores}
+                currency={tripData?.settings_config?.localCurrency || "JPY"}
+                onOpenClerkPhrases={() => setIsClerkPhraseModalOpen(true)}
+            />
+
+            {/* Floating Instant Currency Converter */}
+            <FloatingCurrencyConverter
+                tripData={tripData}
+                onAddToList={(amount, currency) => {
+                    const targetStore = selectedStore !== "all" ? selectedStore : "";
+                    handleOpenCreateModal({
+                        currency,
+                        store: targetStore,
+                        records: [
+                            {
+                                id: crypto.randomUUID(),
+                                store: targetStore || "門市",
+                                price: amount,
+                                quantity: 1,
+                                date: new Date().toISOString().split("T")[0],
+                            },
+                        ],
+                    });
+                }}
+            />
+
+            {/* Standalone Clerk Phrase Pocketbook Modal */}
+            <ClerkPhraseModal
+                isOpen={isClerkPhraseModalOpen}
+                tripData={tripData}
+                onClose={() => setIsClerkPhraseModalOpen(false)}
+            />
         </div>
     );
 };
