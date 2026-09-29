@@ -39,6 +39,22 @@ export const tripMemberRepo: IRepo<
         if (error) throw error;
         return (data as unknown as TripMemberVM[]) ?? [];
     },
+    async listByTripIds(tripIds: string[]): Promise<TripMemberVM[]> {
+        if (!tripIds || tripIds.length === 0) return [];
+        const { data, error } = await supabaseClient
+            .from("trip_members")
+            .select(`
+                *,
+                profiles (
+                    username,
+                    email
+                )
+            `)
+            .in("trip_id", tripIds)
+            .order("joined_at", { ascending: true });
+        if (error) throw error;
+        return (data as unknown as TripMemberVM[]) ?? [];
+    },
     async insert(payload: TripMemberRowInsert): Promise<TripMemberRow | null> {
         const { data, error } = await supabaseClient
             .from("trip_members")

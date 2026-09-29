@@ -18,6 +18,8 @@ import TripModal from "../components/bookshelf/TripModal";
 import PrintableFullPage from "./PrintableFullPage";
 import useTripMemberMutations from "../hooks/tripMember/UseTripMemberMutations";
 import LoadingMask from "../components/common/LoadingMask";
+import BookshelfSkeleton from "../components/common/skeletons/BookshelfSkeleton";
+import useTripsMembersBatch from "../hooks/tripMember/UseTripsMembersBatch";
 
 const BookshelfPage = () => {
     const { session } = useAuth();
@@ -27,6 +29,9 @@ const BookshelfPage = () => {
         isLoading: isTripsLoading,
         error: tripsError,
     } = useTrips(userId);
+
+    const tripIds = useMemo(() => (trips || []).map((t) => t.id), [trips]);
+    const { data: membersByTrip = {} } = useTripsMembersBatch(tripIds);
     const {
         insert: insertTrip,
         update: updateTrip,
@@ -63,7 +68,6 @@ const BookshelfPage = () => {
     useEffect(() => {
         let timer: number | undefined;
         const shouldShow =
-            isTripsLoading ||
             isTripMembersLoading ||
             anyTripPending ||
             anyTripMemberPending ||
@@ -82,7 +86,6 @@ const BookshelfPage = () => {
             setIsPageLoading(false);
         };
     }, [
-        isTripsLoading,
         isTripMembersLoading,
         anyTripPending,
         anyTripMemberPending,
@@ -333,15 +336,20 @@ const BookshelfPage = () => {
                     </div>
                 }
             />
-            <TripList
-                trips={trips}
-                userId={userId}
-                onDeleteBtnClick={handleOpenDeleteTripModal}
-                onEditBtnClick={handleEditTripBtnClick}
-                onPermissionBtnClick={handlePermissionBtnClick}
-                onPrintBtnClick={handlePrintBtnClick}
-                onTripBtnClick={handleSelectTrip}
-            />
+            {isTripsLoading ? (
+                <BookshelfSkeleton />
+            ) : (
+                <TripList
+                    trips={trips}
+                    userId={userId}
+                    membersByTrip={membersByTrip}
+                    onDeleteBtnClick={handleOpenDeleteTripModal}
+                    onEditBtnClick={handleEditTripBtnClick}
+                    onPermissionBtnClick={handlePermissionBtnClick}
+                    onPrintBtnClick={handlePrintBtnClick}
+                    onTripBtnClick={handleSelectTrip}
+                />
+            )}
             {isTripModalOpen && (
                 <TripModal
                     formData={formTrip}

@@ -17,6 +17,7 @@ import PreviewPlaceModal from "../../components/itinerary/PreviewPlaceModal";
 import OptimizeRouteModal from "../../components/itinerary/OptimizeRouteModal";
 import PlaceMapView from "../../components/place/PlaceMapView";
 import ItineraryDayTabBar from "../../components/itinerary/timeline/ItineraryDayTabBar";
+import TimelineSkeleton from "../../components/common/skeletons/TimelineSkeleton";
 import type BookLayoutContextType from "../../models/types/BookLayoutContextTypes";
 import type LayoutContextType from "../../models/types/LayoutContextTypes";
 import type { ItineraryActivitiy, ItineraryVM } from "../../models/types/ItineraryTypes";
@@ -112,8 +113,8 @@ const ItineraryPage = ({ isPrinting, tripDataOverride, tripIdOverride }: Itinera
 
     const mutatingCount = useIsMutating({ mutationKey: ["itinerary_day"] });
     useEffect(() => {
-        setIsPageLoading(isLoading || anyPending || mutatingCount > 0);
-    }, [isLoading, anyPending, mutatingCount, setIsPageLoading]);
+        setIsPageLoading(anyPending || mutatingCount > 0);
+    }, [anyPending, mutatingCount, setIsPageLoading]);
 
     const handleDaySubmit = async (e: FormEvent) => {
         e.preventDefault();
@@ -163,13 +164,17 @@ const ItineraryPage = ({ isPrinting, tripDataOverride, tripIdOverride }: Itinera
             )}
 
             <div className={isPrinting ? "space-y-6 overflow-visible" : "flex-1 flex flex-col min-h-0 px-3 sm:px-6 pt-2 pb-20 lg:pb-6 lg:overflow-hidden gap-3"}>
-                {!isPrinting && Array.isArray(itinerarys) && itinerarys.length > 0 && (
-                    <ItineraryDayTabBar days={itinerarys} selectedDayId={selectedDayFilter} onSelectDay={setSelectedDayFilter} dayPlaceCounts={dayPlaceCounts} totalPlacesCount={dayPlacesMap.all?.length} theme={tripData?.theme_config} />
-                )}
+                {isLoading ? (
+                    <TimelineSkeleton />
+                ) : (
+                    <>
+                        {!isPrinting && Array.isArray(itinerarys) && itinerarys.length > 0 && (
+                            <ItineraryDayTabBar days={itinerarys} selectedDayId={selectedDayFilter} onSelectDay={setSelectedDayFilter} dayPlaceCounts={dayPlaceCounts} totalPlacesCount={dayPlacesMap.all?.length} theme={tripData?.theme_config} />
+                        )}
 
-                <div className={isPrinting ? "block space-y-6" : "flex flex-col lg:flex-row gap-4 sm:gap-5 lg:flex-1 lg:min-h-0"}>
-                    <div ref={scrollContainerRef} className={isPrinting ? "w-full" : "w-full lg:max-w-[58%] flex-1 lg:h-full lg:overflow-y-auto no-scrollbar lg:pr-2"}>
-                        <ItineraryList
+                        <div className={isPrinting ? "block space-y-6" : "flex flex-col lg:flex-row gap-4 sm:gap-5 lg:flex-1 lg:min-h-0"}>
+                            <div ref={scrollContainerRef} className={isPrinting ? "w-full" : "w-full lg:max-w-[58%] flex-1 lg:h-full lg:overflow-y-auto no-scrollbar lg:pr-2"}>
+                                <ItineraryList
                             itinerarys={itinerarys} pcSelectedDayId={selectedDayFilter} itineraryPlacesMap={dayPlacesMap} placeMap={linkedPlacesMap}
                             isEditing={isEditing} isPrinting={isPrinting} theme={tripData?.theme_config!} scrollContainerRef={scrollContainerRef}
                             onAddActivityBtnClick={(day) => {
@@ -205,12 +210,14 @@ const ItineraryPage = ({ isPrinting, tripDataOverride, tripIdOverride }: Itinera
                         </div>
                     )}
                 </div>
+                </>
+                )}
             </div>
 
 
 
             {!isPrinting && !isDesktop && showMobileMap && (
-                <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-md flex flex-col animate-in fade-in duration-200">
+                <div className="fixed inset-0 z-[60] bg-background/95 backdrop-blur-md flex flex-col animate-in fade-in duration-200">
                     <div className="px-4 py-3 border-b border-border flex items-center justify-between bg-card/90">
                         <div className="flex items-center gap-2">
                             <MapIcon size={16} className="text-primary shrink-0" />

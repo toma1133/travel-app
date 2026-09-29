@@ -11,6 +11,7 @@ import PlaceModal from "../../components/place/PlaceModal";
 import PlaceFilter from "../../components/place/PlaceFilter";
 import PlaceCardList from "../../components/place/PlaceCardList";
 import PreviewPlaceModal from "../../components/itinerary/PreviewPlaceModal";
+import PlaceListSkeleton from "../../components/common/skeletons/PlaceListSkeleton";
 import BookLayoutContextType from "../../models/types/BookLayoutContextTypes";
 import LayoutContextType from "../../models/types/LayoutContextTypes";
 import type { PlaceCategory, PlaceVM } from "../../models/types/PlaceTypes";
@@ -130,7 +131,7 @@ const GuidePage = ({
 
     useEffect(() => {
         let timer: number | undefined;
-        const shouldShow = isLoading || anyPending || mutatingCount > 0;
+        const shouldShow = anyPending || mutatingCount > 0;
 
         if (shouldShow) {
             // 延遲 150ms 再顯示，避免瞬間消失造成閃爍
@@ -147,7 +148,7 @@ const GuidePage = ({
             // 離開頁面時確保關閉
             setIsPageLoading(false);
         };
-    }, [isLoading, anyPending, mutatingCount, setIsPageLoading]);
+    }, [anyPending, mutatingCount, setIsPageLoading]);
 
     const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -315,30 +316,36 @@ const GuidePage = ({
                     isPrinting ? "space-y-4 px-0" : "px-4 mt-6 space-y-6"
                 }`}
             >
-                {!isPrinting && (
-                    <PlaceFilter
-                        activeFilterId={filter}
-                        placeCategories={placeCategories}
-                        availableTags={availableTags}
-                        selectedTags={selectedTags}
-                        filteredPlacesCount={filteredPlaces?.length ?? 0}
-                        theme={tripData?.theme_config!}
-                        onFilterBtnClick={handleFilterBtnClick}
-                        onTagBtnClick={handleTagClick}
-                        onRemoveTagBtnClick={handleRemoveTag}
-                        onClearAllFilters={handleClearAllFilters}
-                    />
+                {isLoading ? (
+                    <PlaceListSkeleton />
+                ) : (
+                    <>
+                        {!isPrinting && (
+                            <PlaceFilter
+                                activeFilterId={filter}
+                                placeCategories={placeCategories}
+                                availableTags={availableTags}
+                                selectedTags={selectedTags}
+                                filteredPlacesCount={filteredPlaces?.length ?? 0}
+                                theme={tripData?.theme_config!}
+                                onFilterBtnClick={handleFilterBtnClick}
+                                onTagBtnClick={handleTagClick}
+                                onRemoveTagBtnClick={handleRemoveTag}
+                                onClearAllFilters={handleClearAllFilters}
+                            />
+                        )}
+                        <PlaceCardList
+                            isPrinting={isPrinting}
+                            places={filteredPlaces}
+                            theme={tripData?.theme_config!}
+                            selectedTags={selectedTags}
+                            onDeleteBtnClick={handleOpenDeleteModal}
+                            onEditBtnClick={handleOpenEditModal}
+                            onTagBtnClick={handleTagClick}
+                            onViewBtnClick={(place) => setPreviewPlace(place)}
+                        />
+                    </>
                 )}
-                <PlaceCardList
-                    isPrinting={isPrinting}
-                    places={filteredPlaces}
-                    theme={tripData?.theme_config!}
-                    selectedTags={selectedTags}
-                    onDeleteBtnClick={handleOpenDeleteModal}
-                    onEditBtnClick={handleOpenEditModal}
-                    onTagBtnClick={handleTagClick}
-                    onViewBtnClick={(place) => setPreviewPlace(place)}
-                />
             </div>
             {isModalOpen && (
                 <PlaceModal

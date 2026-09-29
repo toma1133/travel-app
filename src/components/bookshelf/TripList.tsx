@@ -1,11 +1,13 @@
 import { useRef } from "react";
 import TripCard from "./TripCard";
 import type { TripVM } from "../../models/types/TripTypes";
+import type { TripMemberVM } from "../../models/types/TripMemberTypes";
 import BackToTopButton from "../common/BackToTopBtn";
 
 type TripListProps = {
     trips?: TripVM[];
     userId?: string;
+    membersByTrip?: Record<string, TripMemberVM[]>;
     onDeleteBtnClick: (tripItem: TripVM) => void;
     onEditBtnClick: (tripItem: TripVM) => void;
     onPermissionBtnClick: (tripItem: TripVM) => void;
@@ -16,6 +18,7 @@ type TripListProps = {
 const TripList = ({
     trips,
     userId,
+    membersByTrip = {},
     onDeleteBtnClick,
     onEditBtnClick,
     onPermissionBtnClick,
@@ -30,11 +33,12 @@ const TripList = ({
             ref={scrollContainerRef}
         >
             {Array.isArray(trips) &&
-                trips.map((trip, i) => (
+                trips.map((trip) => (
                     <TripCard
-                        key={i}
+                        key={trip.id}
                         trip={trip}
                         userId={userId}
+                        members={membersByTrip[trip.id] || []}
                         onDeleteBtnClick={onDeleteBtnClick}
                         onEditBtnClick={onEditBtnClick}
                         onPermissionBtnClick={onPermissionBtnClick}

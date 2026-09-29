@@ -39,7 +39,7 @@ const BackToTopButton = ({
             title={label}
             onClick={scrollToTop}
             className={`
-                fixed z-50 inline-flex items-center justify-center
+                fixed z-30 inline-flex items-center justify-center
                 rounded-full w-12 h-12 shadow-lg backdrop-blur-md
                 bg-background/80 border border-border text-foreground
                 hover:bg-accent hover:text-accent-foreground transition-all

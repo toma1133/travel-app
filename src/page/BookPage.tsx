@@ -5,21 +5,18 @@ import {
     useOutletContext,
     useParams,
 } from "react-router-dom";
-import { BookOpen, Info, Map, PieChart, Printer, ShoppingBag, Sun, X } from "lucide-react";
 import useTrip from "../hooks/trip/UseTrip";
 import LayoutContextType from "../models/types/LayoutContextTypes";
-import TabButton from "../components/common/TabButton";
 import BackToTopButton from "../components/common/BackToTopBtn";
-import ChecklistModal from "../components/common/ChecklistModal";
+import LiquidGlassBottomNav from "../components/navigation/LiquidGlassBottomNav";
+import DesktopGlassSidebar from "../components/navigation/DesktopGlassSidebar";
 
 const BookPage = () => {
     const { id: tripId } = useParams<{ id: string }>();
-    const { data: tripData, isLoading, error } = useTrip(tripId);
+    const { data: tripData, isLoading } = useTrip(tripId);
     const { setIsPageLoading } = useOutletContext<LayoutContextType>();
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const location = useLocation();
-
-    const [isChecklistOpen, setIsChecklistOpen] = useState(false);
 
     useEffect(() => {
         setIsPageLoading(isLoading);
@@ -35,115 +32,40 @@ const BookPage = () => {
         }
     }, [location.pathname]);
 
+    if (!tripData && !isLoading) {
+        return (
+            <div className="flex-1 flex items-center justify-center p-6 text-center text-muted-foreground">
+                查無此旅程資料
+            </div>
+        );
+    }
+
     return (
-        <div className="w-full h-full overflow-hidden flex flex-col md:flex-row min-h-full bg-background transition-colors duration-300">
+        <div className="w-full h-full overflow-hidden flex flex-col md:flex-row min-h-full bg-background transition-colors duration-300 relative">
             {tripData && (
                 <>
-                    {/* Desktop Sidebar Navigation */}
-                    <div className="hidden md:flex flex-col w-64 border-r border-border bg-card shrink-0 pt-6 px-4 space-y-2">
-                        <div className="text-xl font-bold mb-6 px-4 truncate" title={tripData.title}>{tripData.title}</div>
-                        <TabButton
-                            to={`/trip/${tripId}/cover`}
-                            icon={Sun}
-                            label="首頁"
-                            theme={tripData.theme_config}
-                            end
-                            isSidebar
-                        />
-                        <TabButton
-                            to={`/trip/${tripId}/guide`}
-                            icon={BookOpen}
-                            label="景點"
-                            theme={tripData.theme_config}
-                            isSidebar
-                        />
-                        <TabButton
-                            to={`/trip/${tripId}/itinerary`}
-                            icon={Map}
-                            label="行程"
-                            theme={tripData.theme_config}
-                            isSidebar
-                        />
-                        <TabButton
-                            to={`/trip/${tripId}/shopping`}
-                            icon={ShoppingBag}
-                            label="購物"
-                            theme={tripData.theme_config}
-                            isSidebar
-                        />
-                        <TabButton
-                            to={`/trip/${tripId}/budget`}
-                            icon={PieChart}
-                            label="帳本"
-                            theme={tripData.theme_config}
-                            isSidebar
-                        />
-                        <TabButton
-                            to={`/trip/${tripId}/info`}
-                            icon={Info}
-                            label="資訊"
-                            theme={tripData.theme_config}
-                            isSidebar
-                        />
-                    </div>
+                    {/* Modern Glass Sidebar for Desktop */}
+                    <DesktopGlassSidebar tripData={tripData} />
 
-                    {/* Main Content */}
-                    <div
-                        className="flex-1 overflow-y-auto no-scrollbar scroll-smooth relative"
+                    {/* Main Content Area */}
+                    <main
+                        className="flex-1 overflow-y-auto no-scrollbar scroll-smooth relative pb-28 md:pb-8 flex flex-col min-h-0"
                         ref={scrollContainerRef}
                     >
                         <Outlet context={{ tripData, setIsPageLoading }} />
 
                         <BackToTopButton
                             showAt={200}
-                            size={24}
+                            size={20}
                             getTarget={() => scrollContainerRef.current}
                         />
-                    </div>
-                    {/* Styled Bottom Navigation */}
-                    <div
-                        className={`md:hidden border-t border-border ${tripData.theme_config?.nav || "bg-card"} px-3 pb-safe pt-1 shrink-0 z-40 h-[70px]`}
-                    >
-                        <div className="flex justify-between items-center max-w-md mx-auto">
-                            <TabButton
-                                to={`/trip/${tripId}/cover`}
-                                icon={Sun}
-                                label="首頁"
-                                theme={tripData.theme_config}
-                                end
-                            />
-                            <TabButton
-                                to={`/trip/${tripId}/guide`}
-                                icon={BookOpen}
-                                label="景點"
-                                theme={tripData.theme_config}
-                            />
-                            <TabButton
-                                to={`/trip/${tripId}/itinerary`}
-                                icon={Map}
-                                label="行程"
-                                theme={tripData.theme_config}
-                            />
-                            <TabButton
-                                to={`/trip/${tripId}/shopping`}
-                                icon={ShoppingBag}
-                                label="購物"
-                                theme={tripData.theme_config}
-                            />
-                            <TabButton
-                                to={`/trip/${tripId}/budget`}
-                                icon={PieChart}
-                                label="帳本"
-                                theme={tripData.theme_config}
-                            />
-                            <TabButton
-                                to={`/trip/${tripId}/info`}
-                                icon={Info}
-                                label="資訊"
-                                theme={tripData.theme_config}
-                            />
-                        </div>
-                    </div>
+                    </main>
+
+                    {/* Floating Liquid Glass Navigation Dock for Mobile */}
+                    <LiquidGlassBottomNav
+                        tripId={tripId!}
+                        theme={tripData.theme_config}
+                    />
                 </>
             )}
         </div>

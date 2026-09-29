@@ -1,6 +1,6 @@
 # ✨ Phase 5: 整體導航、書架 (Bookshelf) 與極致體驗打磨
 
-> **狀態**：待執行 (Pending)  
+> **狀態**：已完成 (Completed)  
 > **前置需求**：[Phase 0](file:///d:/Projects/travel-app/docs/refactor/PHASE_0_DESIGN_SYSTEM_AND_LIQUID_GLASS.md) ~ [Phase 4](file:///d:/Projects/travel-app/docs/refactor/PHASE_4_SHOPPING_AND_BUDGET_OPTIMIZATION.md) 全數完成  
 > **核心任務**：打造 iOS 動態島風格的懸浮毛玻璃導航底欄、升級旅遊書架 3D 質感、以骨架屏取代全螢幕轉圈，完成最後的極致 UX 潤飾。
 
@@ -87,11 +87,11 @@
 
 ## 5. 驗收標準 (Acceptance Criteria)
 
-- [ ] 手機端導航底欄改為懸浮 Liquid Glass 樣式，不遮擋任何操作按鈕與時間軸項目。
-- [ ] 頁面初始讀取或切換天數時，以優雅骨架屏過渡，不再出現阻斷式全螢幕黑屏旋轉。
-- [ ] 網路斷開時，離線膠囊優雅呈現，離線檢視行程與景點依然正常可用。
-- [ ] `npm run build` 成功建置，無任何 TypeScript 與 ESLint 錯誤。
-- [ ] 全站設計風格統一，全面煥發現代 Liquid Glass 液態毛玻璃的高級精品質感。
+- [x] 手機端導航底欄改為懸浮 Liquid Glass 樣式，不遮擋任何操作按鈕與時間軸項目。
+- [x] 頁面初始讀取或切換天數時，以優雅骨架屏過渡，不再出現阻斷式全螢幕黑屏旋轉。
+- [x] 網路斷開時，離線膠囊優雅呈現，離線檢視行程與景點依然正常可用。
+- [x] `npm run build` 成功建置，無任何 TypeScript 與 ESLint 錯誤。
+- [x] 全站設計風格統一，全面煥發現代 Liquid Glass 液態毛玻璃的高級精品質感。
 
 ---
 

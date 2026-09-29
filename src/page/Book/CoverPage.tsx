@@ -46,7 +46,7 @@ const CoverPage = ({
         >
             {/* Top Nav (Floating) */}
             <nav className={`absolute top-0 right-0 w-full flex justify-between items-center px-6 md:px-12 py-6 z-50 pointer-events-none print:hidden ${isPrinting ? 'hidden' : ''}`}>
-                <div className="pointer-events-auto">
+                <div className="pointer-events-auto md:hidden">
                     <BackBtn className="bg-background/80 dark:bg-black/40 text-foreground border border-border/80 shadow-md backdrop-blur-md" />
                 </div>
                 <div className="pointer-events-auto">

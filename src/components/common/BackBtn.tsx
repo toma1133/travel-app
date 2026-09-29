@@ -14,7 +14,7 @@ const BackBtn = ({ className, icon }: BackBtnProps) => {
         <button
             type="button"
             onClick={() => navigate("/", { replace: false })}
-            className={`text-foreground/80 hover:text-foreground p-2 -ml-2 rounded-full hover:bg-accent transition-colors shrink-0 ${className || ""}`}
+            className={`md:hidden text-foreground/80 hover:text-foreground p-2 -ml-2 rounded-full hover:bg-accent transition-colors shrink-0 ${className || ""}`}
         >
             {icon || <ArrowLeft size={20} />}
         </button>
