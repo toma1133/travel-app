@@ -49,7 +49,7 @@ const PlaceCardList = ({
                   />
               ))
             : !isPrinting && (
-                  <div className="text-center py-20 text-muted-foreground text-sm col-span-full border-2 border-dashed border-border rounded-2xl">
+                  <div className="text-center py-20 text-muted-foreground text-sm col-span-full border border-dashed border-border/80 rounded-3xl glass-panel shadow-2xs">
                       此分類尚無地點，點擊右上角新增。
                   </div>
               )}

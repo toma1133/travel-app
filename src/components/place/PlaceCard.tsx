@@ -385,7 +385,7 @@ const PlaceCard = ({
         <div
             id={place.id}
             onClick={() => onView?.(place)}
-            className="group relative flex flex-col rounded-3xl overflow-hidden bg-card text-card-foreground border border-border/70 hover:border-primary/50 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer h-full justify-between"
+            className="group relative flex flex-col rounded-3xl overflow-hidden glass-panel liquid-glass-interactive text-card-foreground hover:border-primary/50 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer h-full justify-between"
         >
             {/* 頂部：視覺封面圖與微徽章 */}
             <div className="relative w-full h-44 sm:h-48 overflow-hidden bg-muted shrink-0">

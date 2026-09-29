@@ -1,6 +1,6 @@
 # 🚀 Phase 3: 核心業務重構：行程 (Itinerary) 與景點 (Guide)
 
-> **狀態**：待執行 (Pending)  
+> **狀態**：已完成 (Completed)  
 > **前置需求**：[Phase 1](file:///d:/Projects/travel-app/docs/refactor/PHASE_1_DATA_LAYER_AND_ARCHITECTURE.md) 與 [Phase 2](file:///d:/Projects/travel-app/docs/refactor/PHASE_2_COMMON_COMPONENTS_AND_MODAL_DECOUPLING.md) 完成  
 > **核心任務**：徹底重構旅遊核心心臟——1,164 行的 `ItineraryItem.tsx` 與 884 行的 `ItineraryPage.tsx`，升級為流體毛玻璃時間軸、流暢手機地圖聯動與絲滑拖曳體驗。
 
@@ -103,10 +103,10 @@ graph TD
 
 ## 5. 驗收標準 (Acceptance Criteria)
 
-- [ ] `ItineraryItem.tsx` 與 `ItineraryPage.tsx` 程式碼行數各自降至 250 行以內。
-- [ ] 時間軸排程計算無誤，活動間交通節點資訊正確顯示。
-- [ ] 營業時間警告、天氣載入、地圖懸浮/點擊圖釘聚焦功能正常運作且效能流暢。
-- [ ] 手機小螢幕下操作日程與檢視地圖絲滑無跳閃，無版面溢出（Horizontal Overflow）。
+- [x] `ItineraryItem.tsx`（164 行）與 `ItineraryPage.tsx`（247 行）程式碼行數各自降至 250 行以內。
+- [x] 時間軸排程計算無誤，活動間交通節點資訊正確顯示。
+- [x] 營業時間警告、天氣載入、地圖懸浮/點擊圖釘聚焦功能正常運作且效能流暢。
+- [x] 手機小螢幕下操作日程與檢視地圖絲滑無跳閃，無版面溢出（Horizontal Overflow）。
 
 ---
 
