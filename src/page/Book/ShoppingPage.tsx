@@ -24,6 +24,7 @@ import { shoppingRepo } from "../../services/repositories/ShoppingRepo";
 import SectionHeader from "../../components/common/SectionHeader";
 import DeleteModal from "../../components/common/DeleteModal";
 import ShoppingCard from "../../components/shopping/ShoppingCard";
+import SwipeableRow from "../../components/common/SwipeableRow";
 import ClerkShowModal from "../../components/shopping/ClerkShowModal";
 import TaxFreeBar from "../../components/shopping/TaxFreeBar";
 import PriceCompareModal from "../../components/shopping/PriceCompareModal";
@@ -750,21 +751,28 @@ const ShoppingPage = ({
                 ) : (
                     <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4 sm:gap-6">
                         {filteredItems.map((item) => (
-                            <ShoppingCard
+                            <SwipeableRow
                                 key={item.id}
-                                item={item}
-                                tripData={tripData}
-                                creatorLabel={getCreatorLabel(item.user_id)}
-                                resolveRecipient={(rec) => resolveRecipientName(rec, item.user_id)}
-                                onToggleComplete={handleToggleComplete}
-                                onUpdateBoughtQty={handleUpdateBoughtQty}
-                                onShowToClerk={setClerkItem}
-                                onOpenPriceCompare={setPriceCompareItem}
-                                onEdit={handleOpenEditModal}
-                                onDelete={setItemToDelete}
-                                onExportToBudget={handleExportToBudget}
-                                onViewPlace={handleViewPlace}
-                            />
+                                onSwipeRight={() => handleToggleComplete(item, !item.is_completed)}
+                                rightLabel={item.is_completed ? "設為未購" : "標記已購"}
+                                onSwipeLeft={() => setItemToDelete(item)}
+                                leftLabel="刪除商品"
+                            >
+                                <ShoppingCard
+                                    item={item}
+                                    tripData={tripData}
+                                    creatorLabel={getCreatorLabel(item.user_id)}
+                                    resolveRecipient={(rec) => resolveRecipientName(rec, item.user_id)}
+                                    onToggleComplete={handleToggleComplete}
+                                    onUpdateBoughtQty={handleUpdateBoughtQty}
+                                    onShowToClerk={setClerkItem}
+                                    onOpenPriceCompare={setPriceCompareItem}
+                                    onEdit={handleOpenEditModal}
+                                    onDelete={setItemToDelete}
+                                    onExportToBudget={handleExportToBudget}
+                                    onViewPlace={handleViewPlace}
+                                />
+                            </SwipeableRow>
                         ))}
                     </div>
                 )}

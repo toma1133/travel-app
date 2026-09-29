@@ -23,6 +23,7 @@ import {
 import { detectAutoLanguage } from "./ClerkShowModal";
 import { getCurrencySymbol } from "../../utils/CurrencyUtil";
 import { GlassCard } from "../ui";
+import { hapticFeedback } from "../../utils/HapticUtil";
 
 export type ShoppingCardProps = {
     item: ShoppingItemVM;
@@ -218,7 +219,14 @@ const ShoppingCard: React.FC<ShoppingCardProps> = ({
                             {/* Completed Checkbox */}
                             <button
                                 type="button"
-                                onClick={() => onToggleComplete(item, !isFullyBought)}
+                                onClick={() => {
+                                    if (!isFullyBought) {
+                                        hapticFeedback.success();
+                                    } else {
+                                        hapticFeedback.light();
+                                    }
+                                    onToggleComplete(item, !isFullyBought);
+                                }}
                                 className={`w-7 h-7 rounded-xl flex items-center justify-center transition-all cursor-pointer active:scale-90 ${
                                     isFullyBought
                                         ? "bg-emerald-500 text-white shadow-emerald-500/30 shadow-md ring-2 ring-emerald-500/20"
@@ -348,7 +356,10 @@ const ShoppingCard: React.FC<ShoppingCardProps> = ({
                 <div className="flex items-center gap-1.5 sm:gap-2">
                     <button
                         type="button"
-                        onClick={() => onShowToClerk(item)}
+                        onClick={() => {
+                            hapticFeedback.medium();
+                            onShowToClerk(item);
+                        }}
                         className="flex-1 sm:flex-initial px-3 py-1.5 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer shrink-0 whitespace-nowrap"
                         title="全螢幕展示大圖與原文品名給店員看"
                     >
@@ -358,7 +369,10 @@ const ShoppingCard: React.FC<ShoppingCardProps> = ({
 
                     <button
                         type="button"
-                        onClick={() => onOpenPriceCompare(item)}
+                        onClick={() => {
+                            hapticFeedback.light();
+                            onOpenPriceCompare(item);
+                        }}
                         className="flex-1 sm:flex-initial px-3 py-1.5 rounded-xl bg-white/50 dark:bg-neutral-800/50 border border-white/30 dark:border-white/10 hover:bg-white text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-2xs shrink-0 whitespace-nowrap"
                         title="門市報價與比價明細"
                     >
@@ -375,7 +389,10 @@ const ShoppingCard: React.FC<ShoppingCardProps> = ({
                             <button
                                 type="button"
                                 disabled={displayBought <= 0}
-                                onClick={() => onUpdateBoughtQty(item, Math.max(0, displayBought - 1))}
+                                onClick={() => {
+                                    hapticFeedback.selection();
+                                    onUpdateBoughtQty(item, Math.max(0, displayBought - 1));
+                                }}
                                 className="w-6 h-6 rounded-lg flex items-center justify-center hover:bg-emerald-500/20 disabled:opacity-25 disabled:pointer-events-none cursor-pointer transition-colors"
                                 title={displayBought > 0 ? "點錯退回：已購件數 -1" : "尚未購買"}
                             >
@@ -389,7 +406,10 @@ const ShoppingCard: React.FC<ShoppingCardProps> = ({
                             </span>
                             <button
                                 type="button"
-                                onClick={() => onUpdateBoughtQty(item, displayBought + 1)}
+                                onClick={() => {
+                                    hapticFeedback.selection();
+                                    onUpdateBoughtQty(item, displayBought + 1);
+                                }}
                                 className="w-6 h-6 rounded-lg flex items-center justify-center hover:bg-emerald-500/20 cursor-pointer transition-colors"
                                 title="累計 +1 件已購"
                             >
@@ -403,7 +423,10 @@ const ShoppingCard: React.FC<ShoppingCardProps> = ({
                         {onExportToBudget && (
                             <button
                                 type="button"
-                                onClick={() => onExportToBudget(item)}
+                                onClick={() => {
+                                    hapticFeedback.medium();
+                                    onExportToBudget(item);
+                                }}
                                 className="p-1.5 sm:p-2 rounded-xl text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 transition-colors cursor-pointer"
                                 title="轉入記帳本"
                             >
@@ -413,7 +436,10 @@ const ShoppingCard: React.FC<ShoppingCardProps> = ({
 
                         <button
                             type="button"
-                            onClick={() => onEdit(item)}
+                            onClick={() => {
+                                hapticFeedback.light();
+                                onEdit(item);
+                            }}
                             className="p-1.5 sm:p-2 rounded-xl text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-white/50 transition-colors cursor-pointer"
                             title="編輯商品"
                         >
@@ -422,7 +448,10 @@ const ShoppingCard: React.FC<ShoppingCardProps> = ({
 
                         <button
                             type="button"
-                            onClick={() => onDelete(item)}
+                            onClick={() => {
+                                hapticFeedback.warning();
+                                onDelete(item);
+                            }}
                             className="p-1.5 sm:p-2 rounded-xl text-neutral-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer"
                             title="刪除"
                         >

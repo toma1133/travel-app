@@ -23,7 +23,7 @@ const LiquidGlassBottomNav = ({
     return (
         <nav
             aria-label="主要底部導航"
-            className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-1.5rem)] max-w-md md:hidden pointer-events-auto"
+            className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom,0px))] left-1/2 -translate-x-1/2 z-40 w-[calc(100%-1.5rem)] max-w-md md:hidden pointer-events-auto"
         >
             <div className="relative liquid-glass-elevated rounded-2xl p-1.5 px-2 flex items-center justify-between border border-white/60 dark:border-white/15 shadow-[0_16px_36px_rgba(0,0,0,0.14)] dark:shadow-[0_20px_40px_rgba(0,0,0,0.65)] backdrop-blur-2xl">
                 {navItems.map((item) => {

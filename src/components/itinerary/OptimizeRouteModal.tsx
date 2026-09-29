@@ -31,6 +31,7 @@ import type {
 } from "../../models/types/ItineraryTypes";
 import type { PlaceVM } from "../../models/types/PlaceTypes";
 import type { TripThemeConf } from "../../models/types/TripTypes";
+import { hapticFeedback } from "../../utils/HapticUtil";
 
 type ActivityWithLocation = {
     activity: ItineraryActivitiy;
@@ -206,27 +207,92 @@ const OptimizeRouteModal = ({
         return finalOrder;
     }, [itineraryDay.activities, locActivities, result, fixedIndices]);
 
+    const [translateY, setTranslateY] = useState(0);
+    const [isDragging, setIsDragging] = useState(false);
+    const startYRef = React.useRef(0);
+    const currentYRef = React.useRef(0);
+
+    const handleDismiss = () => {
+        hapticFeedback.light();
+        onClose();
+    };
+
+    const handleTouchStart = (e: React.TouchEvent) => {
+        const touch = e.touches[0];
+        startYRef.current = touch.clientY;
+        currentYRef.current = touch.clientY;
+        setIsDragging(true);
+    };
+
+    const handleTouchMove = (e: React.TouchEvent) => {
+        if (!isDragging) return;
+        const touch = e.touches[0];
+        currentYRef.current = touch.clientY;
+        const deltaY = currentYRef.current - startYRef.current;
+
+        if (deltaY > 0) {
+            setTranslateY(Math.pow(deltaY, 0.92));
+        } else {
+            setTranslateY(0);
+        }
+    };
+
+    const handleTouchEnd = () => {
+        if (!isDragging) return;
+        setIsDragging(false);
+
+        const deltaY = currentYRef.current - startYRef.current;
+        if (deltaY > 80) {
+            handleDismiss();
+        } else {
+            setTranslateY(0);
+        }
+    };
+
     const handleApply = () => {
+        hapticFeedback.success();
         onApplyOptimizedOrder(itineraryDay, reorderedActivities);
         onClose();
     };
 
     const hasSavings = result && (result.savedDistanceKm > 0.05 || result.savedDurationMinutes > 1);
 
+    const backdropOpacity = Math.max(0.2, 1 - translateY / 320);
+
     return (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200">
+        <div
+            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200"
+            style={{ opacity: backdropOpacity }}
+            onClick={handleDismiss}
+        >
             <div
-                className="w-full max-w-2xl max-h-[92vh] bg-card text-card-foreground rounded-t-3xl sm:rounded-3xl shadow-2xl border border-border/80 flex flex-col overflow-hidden animate-in slide-in-from-bottom-6 sm:zoom-in-95 duration-200"
+                style={{
+                    transform: translateY > 0 ? `translateY(${translateY}px)` : undefined,
+                    transition: isDragging ? 'none' : 'transform 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+                }}
+                className="w-full max-w-full sm:max-w-2xl max-h-[92vh] bg-card text-card-foreground rounded-t-3xl sm:rounded-3xl shadow-2xl border border-border/80 flex flex-col overflow-hidden animate-in slide-in-from-bottom-6 sm:zoom-in-95 duration-200"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* 📱 頂部行動把手 */}
-                <div className="w-10 h-1 rounded-full bg-muted-foreground/30 mx-auto mt-2.5 sm:hidden shrink-0" />
+                <div
+                    className="w-full pt-3 pb-1 sm:hidden flex justify-center items-center cursor-grab active:cursor-grabbing touch-none select-none shrink-0"
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
+                >
+                    <div className="w-10 h-1.5 rounded-full bg-muted-foreground/35 hover:bg-muted-foreground/50 transition-colors" />
+                </div>
 
                 {/* 📱 iOS 原生導航列 */}
-                <div className="px-4 py-3 border-b border-border/70 bg-card/90 backdrop-blur-md flex items-center justify-between shrink-0">
+                <div
+                    className="px-4 py-3 border-b border-border/70 bg-card/90 backdrop-blur-md flex items-center justify-between shrink-0 touch-none select-none"
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
+                >
                     <button
                         type="button"
-                        onClick={onClose}
+                        onClick={handleDismiss}
                         className="text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors cursor-pointer px-2 py-1"
                     >
                         取消

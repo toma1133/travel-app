@@ -19,6 +19,7 @@ import {
 } from "../../constants/ClerkPhrases";
 import { playPronunciation } from "../../utils/SpeechLanguageUtil";
 import type { TripVM } from "../../models/types/TripTypes";
+import { hapticFeedback } from "../../utils/HapticUtil";
 
 export interface ClerkPhraseModalProps {
     isOpen: boolean;
@@ -98,17 +99,84 @@ const ClerkPhraseModal: React.FC<ClerkPhraseModalProps> = ({
         }
     };
 
+    const [translateY, setTranslateY] = useState(0);
+    const [isDragging, setIsDragging] = useState(false);
+    const touchStartYRef = React.useRef(0);
+    const touchCurrentYRef = React.useRef(0);
+
+    const handleDismiss = () => {
+        hapticFeedback.light();
+        onClose();
+    };
+
+    const handleTouchStart = (e: React.TouchEvent) => {
+        const touch = e.touches[0];
+        touchStartYRef.current = touch.clientY;
+        touchCurrentYRef.current = touch.clientY;
+        setIsDragging(true);
+    };
+
+    const handleTouchMove = (e: React.TouchEvent) => {
+        if (!isDragging) return;
+        const touch = e.touches[0];
+        touchCurrentYRef.current = touch.clientY;
+        const deltaY = touchCurrentYRef.current - touchStartYRef.current;
+
+        if (deltaY > 0) {
+            setTranslateY(Math.pow(deltaY, 0.92));
+        } else {
+            setTranslateY(0);
+        }
+    };
+
+    const handleTouchEnd = () => {
+        if (!isDragging) return;
+        setIsDragging(false);
+
+        const deltaY = touchCurrentYRef.current - touchStartYRef.current;
+        if (deltaY > 80) {
+            handleDismiss();
+        } else {
+            setTranslateY(0);
+        }
+    };
+
     if (!isOpen) return null;
 
+    const backdropOpacity = Math.max(0.2, 1 - translateY / 320);
+
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/60 backdrop-blur-md animate-in fade-in duration-200">
+        <div
+            className="fixed inset-0 z-50 flex flex-col justify-end md:justify-center md:items-center p-0 md:p-6 bg-black/60 backdrop-blur-md animate-in fade-in duration-200"
+            style={{ opacity: backdropOpacity }}
+            onClick={handleDismiss}
+        >
             {/* Main Dialog Container */}
             <div
-                className="bg-card text-card-foreground border border-border/80 shadow-2xl rounded-3xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden"
+                style={{
+                    transform: translateY > 0 ? `translateY(${translateY}px)` : undefined,
+                    transition: isDragging ? 'none' : 'transform 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+                }}
+                className="bg-card text-card-foreground border border-border/80 shadow-2xl rounded-t-3xl md:rounded-3xl w-full max-w-full md:max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-in slide-in-from-bottom-6 md:zoom-in-95 duration-200"
                 onClick={(e) => e.stopPropagation()}
             >
+                {/* 📱 頂部行動把手 */}
+                <div
+                    className="w-full pt-3 pb-1 md:hidden flex justify-center items-center cursor-grab active:cursor-grabbing touch-none select-none shrink-0"
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
+                >
+                    <div className="w-10 h-1.5 rounded-full bg-muted-foreground/35 hover:bg-muted-foreground/50 transition-colors" />
+                </div>
+
                 {/* Header */}
-                <div className="px-5 py-4 border-b border-border/60 bg-muted/30 flex items-center justify-between shrink-0">
+                <div
+                    className="px-5 py-3.5 md:py-4 border-b border-border/60 bg-muted/30 flex items-center justify-between shrink-0 touch-none select-none"
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
+                >
                     <div className="flex items-center gap-2.5">
                         <div className="w-9 h-9 rounded-2xl bg-primary/10 text-primary flex items-center justify-center text-lg shadow-2xs">
                             💬
@@ -127,7 +195,7 @@ const ClerkPhraseModal: React.FC<ClerkPhraseModalProps> = ({
                     </div>
                     <button
                         type="button"
-                        onClick={onClose}
+                        onClick={handleDismiss}
                         className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
                         title="關閉"
                     >

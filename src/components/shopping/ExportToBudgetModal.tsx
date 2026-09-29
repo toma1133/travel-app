@@ -7,6 +7,7 @@ import useTripMembers from "../../hooks/tripMember/UseTripMembers";
 import type { ShoppingItemVM } from "../../models/types/ShoppingTypes";
 import type { TripVM } from "../../models/types/TripTypes";
 import { getCurrencySymbol } from "../../utils/CurrencyUtil";
+import { hapticFeedback } from "../../utils/HapticUtil";
 
 type ExportToBudgetModalProps = {
     item: ShoppingItemVM;
@@ -180,17 +181,81 @@ const ExportToBudgetModal = ({
         }
     };
 
+    const [translateY, setTranslateY] = useState(0);
+    const [isDragging, setIsDragging] = useState(false);
+    const touchStartYRef = React.useRef(0);
+    const touchCurrentYRef = React.useRef(0);
+
+    const handleDismiss = () => {
+        hapticFeedback.light();
+        onClose();
+    };
+
+    const handleTouchStart = (e: React.TouchEvent) => {
+        const touch = e.touches[0];
+        touchStartYRef.current = touch.clientY;
+        touchCurrentYRef.current = touch.clientY;
+        setIsDragging(true);
+    };
+
+    const handleTouchMove = (e: React.TouchEvent) => {
+        if (!isDragging) return;
+        const touch = e.touches[0];
+        touchCurrentYRef.current = touch.clientY;
+        const deltaY = touchCurrentYRef.current - touchStartYRef.current;
+
+        if (deltaY > 0) {
+            setTranslateY(Math.pow(deltaY, 0.92));
+        } else {
+            setTranslateY(0);
+        }
+    };
+
+    const handleTouchEnd = () => {
+        if (!isDragging) return;
+        setIsDragging(false);
+
+        const deltaY = touchCurrentYRef.current - touchStartYRef.current;
+        if (deltaY > 80) {
+            handleDismiss();
+        } else {
+            setTranslateY(0);
+        }
+    };
+
+    const backdropOpacity = Math.max(0.2, 1 - translateY / 320);
+
     return (
         <div
             className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200 font-sans"
-            onClick={onClose}
+            style={{ opacity: backdropOpacity }}
+            onClick={handleDismiss}
         >
             <div
-                className="bg-card text-card-foreground border border-border/80 rounded-t-3xl sm:rounded-3xl w-full max-w-md max-h-[92vh] flex flex-col shadow-2xl overflow-hidden animate-in slide-in-from-bottom-6 sm:zoom-in-95 duration-200"
+                style={{
+                    transform: translateY > 0 ? `translateY(${translateY}px)` : undefined,
+                    transition: isDragging ? 'none' : 'transform 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+                }}
+                className="bg-card text-card-foreground border border-border/80 rounded-t-3xl sm:rounded-3xl w-full max-w-full sm:max-w-md max-h-[92vh] flex flex-col shadow-2xl overflow-hidden animate-in slide-in-from-bottom-6 sm:zoom-in-95 duration-200"
                 onClick={(e) => e.stopPropagation()}
             >
+                {/* 📱 頂部行動把手 */}
+                <div
+                    className="w-full pt-3 pb-1 sm:hidden flex justify-center items-center cursor-grab active:cursor-grabbing touch-none select-none shrink-0"
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
+                >
+                    <div className="w-10 h-1.5 rounded-full bg-muted-foreground/35 hover:bg-muted-foreground/50 transition-colors" />
+                </div>
+
                 {/* Header */}
-                <div className="px-5 py-4 border-b border-border/70 flex items-center justify-between shrink-0 bg-muted/20">
+                <div
+                    className="px-5 py-3.5 sm:py-4 border-b border-border/70 flex items-center justify-between shrink-0 bg-muted/20 touch-none select-none"
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
+                >
                     <div className="flex items-center gap-2">
                         <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
                             <Wallet size={18} />
@@ -207,7 +272,7 @@ const ExportToBudgetModal = ({
 
                     <button
                         type="button"
-                        onClick={onClose}
+                        onClick={handleDismiss}
                         className="p-1.5 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                     >
                         <X size={18} />

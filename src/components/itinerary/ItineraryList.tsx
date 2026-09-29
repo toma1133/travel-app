@@ -198,6 +198,11 @@ const ItineraryList = ({
                     </div>
                 )
             )}
+
+            {/* Bottom blank space cushion for comfortable scroll clearance */}
+            {!isPrinting && (
+                <div className="w-full shrink-0 h-24 lg:h-10 pointer-events-none" aria-hidden="true" />
+            )}
         </div>
     );
 };

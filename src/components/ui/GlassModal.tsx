@@ -1,6 +1,7 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
+import { hapticFeedback } from '../../utils/HapticUtil';
 
 export interface GlassModalProps {
   isOpen: boolean;
@@ -8,6 +9,7 @@ export interface GlassModalProps {
   children: React.ReactNode;
   maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | 'full';
   closeOnBackdropClick?: boolean;
+  asBottomSheetOnMobile?: boolean;
   className?: string;
 }
 
@@ -35,7 +37,7 @@ const maxWidthMap = {
   lg: 'max-w-lg',
   xl: 'max-w-xl',
   '2xl': 'max-w-2xl',
-  full: 'max-w-[calc(100vw-2rem)] md:max-w-4xl',
+  full: 'max-w-full md:max-w-4xl',
 };
 
 export const GlassModalRoot: React.FC<GlassModalProps> = ({
@@ -44,8 +46,14 @@ export const GlassModalRoot: React.FC<GlassModalProps> = ({
   children,
   maxWidth = 'lg',
   closeOnBackdropClick = true,
+  asBottomSheetOnMobile = true,
   className = '',
 }) => {
+  const [translateY, setTranslateY] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const startYRef = useRef(0);
+  const currentYRef = useRef(0);
+
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -56,7 +64,11 @@ export const GlassModalRoot: React.FC<GlassModalProps> = ({
   );
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      setTranslateY(0);
+      setIsDragging(false);
+      return;
+    }
 
     // 防止背景滾動穿透
     const originalOverflow = document.body.style.overflow;
@@ -69,34 +81,103 @@ export const GlassModalRoot: React.FC<GlassModalProps> = ({
     };
   }, [isOpen, handleKeyDown]);
 
+  // Touch gesture handlers for mobile pull-down to dismiss
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (!asBottomSheetOnMobile) return;
+    const touch = e.touches[0];
+    startYRef.current = touch.clientY;
+    currentYRef.current = touch.clientY;
+    setIsDragging(true);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging || !asBottomSheetOnMobile) return;
+    const touch = e.touches[0];
+    currentYRef.current = touch.clientY;
+    const deltaY = currentYRef.current - startYRef.current;
+
+    // Only allow downwards dragging
+    if (deltaY > 0) {
+      const dampedDelta = Math.pow(deltaY, 0.92);
+      setTranslateY(dampedDelta);
+    } else {
+      setTranslateY(0);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (!isDragging || !asBottomSheetOnMobile) return;
+    setIsDragging(false);
+
+    const deltaY = currentYRef.current - startYRef.current;
+    const dismissThreshold = 80;
+
+    if (deltaY > dismissThreshold) {
+      hapticFeedback.light();
+      onClose();
+    } else {
+      setTranslateY(0);
+    }
+  };
+
   if (!isOpen) return null;
+
+  const backdropOpacity = Math.max(0.2, 1 - translateY / 320);
 
   const modalContent = (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 sm:p-6 overflow-y-auto"
+      className={`
+        fixed inset-0 z-50 flex overflow-y-auto
+        ${
+          asBottomSheetOnMobile
+            ? 'flex-col justify-end md:justify-center md:items-center p-0 md:p-4'
+            : 'items-center justify-center p-3 sm:p-4 sm:p-6'
+        }
+      `}
       role="dialog"
       aria-modal="true"
     >
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/45 dark:bg-black/65 backdrop-blur-md transition-opacity"
+        className="fixed inset-0 bg-black/45 dark:bg-black/65 backdrop-blur-md transition-opacity duration-150"
+        style={{ opacity: backdropOpacity }}
         onClick={closeOnBackdropClick ? onClose : undefined}
         aria-hidden="true"
       />
 
-      {/* Modal Dialog Card */}
+      {/* Modal Dialog / Bottom Sheet Card */}
       <div
+        style={{
+          transform: translateY > 0 ? `translateY(${translateY}px)` : undefined,
+          transition: isDragging ? 'none' : 'transform 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+        }}
         className={`
-          relative w-full ${maxWidthMap[maxWidth]}
+          relative w-full
+          ${asBottomSheetOnMobile ? `max-w-full md:${maxWidthMap[maxWidth]}` : maxWidthMap[maxWidth]}
           liquid-glass-elevated
-          rounded-3xl sm:rounded-[2rem]
+          ${
+            asBottomSheetOnMobile
+              ? 'rounded-t-[2rem] md:rounded-3xl max-h-[88vh] md:max-h-[90vh] animate-in slide-in-from-bottom-6 md:animate-glass-modal-in duration-300'
+              : 'rounded-3xl sm:rounded-[2rem] max-h-[90vh] animate-glass-modal-in'
+          }
           shadow-2xl overflow-hidden
-          flex flex-col max-h-[90vh]
-          animate-glass-modal-in
+          flex flex-col
           z-10
           ${className}
         `}
       >
+        {/* iOS Drag Handle on Mobile (when asBottomSheetOnMobile is true) */}
+        {asBottomSheetOnMobile && (
+          <div
+            className="w-full pt-3 pb-1 md:hidden flex justify-center items-center cursor-grab active:cursor-grabbing touch-none select-none"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+          >
+            <div className="w-10 h-1.5 rounded-full bg-neutral-300 dark:bg-neutral-600 hover:bg-neutral-400 transition-colors" />
+          </div>
+        )}
+
         {children}
       </div>
     </div>
@@ -117,7 +198,7 @@ const GlassModalHeader: React.FC<GlassModalHeaderProps> = ({
   return (
     <div
       className={`
-        px-5 py-4 sm:px-6 sm:py-5
+        px-5 py-3.5 sm:px-6 sm:py-5
         border-b border-white/20 dark:border-white/10
         flex items-center justify-between gap-4
         bg-white/30 dark:bg-black/20
@@ -129,7 +210,7 @@ const GlassModalHeader: React.FC<GlassModalHeaderProps> = ({
       ) : (
         <div className="flex-1 min-w-0">
           {title && (
-            <h3 className="text-lg sm:text-xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-100 truncate">
+            <h3 className="text-lg sm:text-xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100 truncate">
               {title}
             </h3>
           )}
@@ -144,12 +225,15 @@ const GlassModalHeader: React.FC<GlassModalHeaderProps> = ({
       {onClose && (
         <button
           type="button"
-          onClick={onClose}
+          onClick={() => {
+            hapticFeedback.light();
+            onClose();
+          }}
           className="
             p-1.5 sm:p-2 rounded-full text-neutral-500 hover:text-neutral-900
             dark:text-neutral-400 dark:hover:text-neutral-100
             bg-white/40 hover:bg-white/70 dark:bg-neutral-800/60 dark:hover:bg-neutral-700/80
-            transition-all duration-150 active:scale-95
+            transition-all duration-150 active:scale-95 cursor-pointer
             focus:outline-none focus:ring-2 focus:ring-neutral-400/50
           "
           aria-label="Close modal"
@@ -171,6 +255,7 @@ const GlassModalBody: React.FC<GlassModalBodyProps> = ({
         px-5 py-4 sm:px-6 sm:py-5
         overflow-y-auto flex-1
         text-neutral-800 dark:text-neutral-200
+        overscroll-contain
         ${className}
       `}
     >
@@ -190,6 +275,7 @@ const GlassModalFooter: React.FC<GlassModalFooterProps> = ({
         border-t border-white/20 dark:border-white/10
         bg-white/30 dark:bg-black/25
         flex items-center justify-end gap-2.5 sm:gap-3
+        pb-safe
         ${className}
       `}
     >
@@ -203,3 +289,5 @@ export const GlassModal = Object.assign(GlassModalRoot, {
   Body: GlassModalBody,
   Footer: GlassModalFooter,
 });
+
+export default GlassModal;

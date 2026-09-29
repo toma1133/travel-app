@@ -33,7 +33,7 @@ const DeleteModal: React.FC<DeleteModalProps> = ({
             isOpen={true}
             onClose={handleClose}
             maxWidth="sm"
-            className="p-6 text-center overflow-hidden bg-card/95 border border-white/20 dark:border-white/10 shadow-2xl"
+            className="p-6 pb-8 md:p-6 pb-safe text-center overflow-hidden bg-card/95 border border-white/20 dark:border-white/10 shadow-2xl"
         >
             {/* 🗑️ Liquid Glass Alert Icon */}
             <div className="w-14 h-14 rounded-2xl bg-rose-500/15 text-rose-500 flex items-center justify-center mx-auto mb-4 shadow-sm border border-rose-500/25">

@@ -52,6 +52,7 @@ import { toPlacesVM } from "../../services/mappers/PlaceMapper";
 import { RoutingService } from "../../services/api/RoutingService";
 import { parseDurationToMinutes, addMinutesToTime } from "../../utils/ItineraryTimeUtil";
 import { getBusinessStatus, getScheduledMoment } from "../../utils/OpeningHoursUtil";
+import { hapticFeedback } from "../../utils/HapticUtil";
 
 type ItineraryActivityModalProps = {
     formData: ItineraryActivitiy;
@@ -329,19 +330,86 @@ const ItineraryActivityModal = ({
         };
     }, [selectedPlace, itinerary?.date, formData.time]);
 
-    const QUICK_DURATIONS = ["30分鐘", "1小時", "1.5小時", "2小時", "3小時", "半天"];
+    const [translateY, setTranslateY] = useState(0);
+    const [isDragging, setIsDragging] = useState(false);
+    const startYRef = useState(0); // placeholder or ref
+    const touchStartYRef = React.useRef(0);
+    const touchCurrentYRef = React.useRef(0);
+
+    const handleDismiss = () => {
+        hapticFeedback.light();
+        const fakeEvent = {
+            stopPropagation: () => {},
+            preventDefault: () => {},
+        } as unknown as React.MouseEvent<HTMLButtonElement>;
+        onCloseBtnClick(fakeEvent);
+    };
+
+    const handleTouchStart = (e: React.TouchEvent) => {
+        const touch = e.touches[0];
+        touchStartYRef.current = touch.clientY;
+        touchCurrentYRef.current = touch.clientY;
+        setIsDragging(true);
+    };
+
+    const handleTouchMove = (e: React.TouchEvent) => {
+        if (!isDragging) return;
+        const touch = e.touches[0];
+        touchCurrentYRef.current = touch.clientY;
+        const deltaY = touchCurrentYRef.current - touchStartYRef.current;
+
+        if (deltaY > 0) {
+            setTranslateY(Math.pow(deltaY, 0.92));
+        } else {
+            setTranslateY(0);
+        }
+    };
+
+    const handleTouchEnd = () => {
+        if (!isDragging) return;
+        setIsDragging(false);
+
+        const deltaY = touchCurrentYRef.current - touchStartYRef.current;
+        if (deltaY > 80) {
+            handleDismiss();
+        } else {
+            setTranslateY(0);
+        }
+    };
+
+    const backdropOpacity = Math.max(0.2, 1 - translateY / 320);
 
     return (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-200">
+        <div
+            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200"
+            style={{ opacity: backdropOpacity }}
+            onClick={handleDismiss}
+        >
             <div
-                className="w-full max-w-xl bg-card text-card-foreground rounded-3xl shadow-2xl border border-border/80 flex flex-col max-h-[92vh] overflow-hidden animate-in zoom-in-95 duration-200"
+                style={{
+                    transform: translateY > 0 ? `translateY(${translateY}px)` : undefined,
+                    transition: isDragging ? 'none' : 'transform 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+                }}
+                className="w-full max-w-full sm:max-w-xl bg-card text-card-foreground rounded-t-3xl sm:rounded-3xl shadow-2xl border border-border/80 flex flex-col max-h-[92vh] overflow-hidden animate-in slide-in-from-bottom-6 sm:zoom-in-95 duration-200"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* 📱 頂部行動把手 (Mobile drag indicator) */}
-                <div className="w-10 h-1 rounded-full bg-muted-foreground/30 mx-auto mt-2.5 sm:hidden shrink-0" />
+                <div
+                    className="w-full pt-3 pb-1 sm:hidden flex justify-center items-center cursor-grab active:cursor-grabbing touch-none select-none shrink-0"
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
+                >
+                    <div className="w-10 h-1.5 rounded-full bg-muted-foreground/35 hover:bg-muted-foreground/50 transition-colors" />
+                </div>
 
                 {/* 📱 iOS 原生導航列 (iOS Navigation Top Bar) */}
-                <div className="px-4 py-3 border-b border-border/70 bg-card/90 backdrop-blur-md flex items-center justify-between shrink-0">
+                <div
+                    className="px-4 py-3 border-b border-border/70 bg-card/90 backdrop-blur-md flex items-center justify-between shrink-0 touch-none select-none"
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
+                >
                     <button
                         type="button"
                         onClick={onCloseBtnClick}
@@ -350,7 +418,7 @@ const ItineraryActivityModal = ({
                         取消
                     </button>
 
-                    <h3 className="text-sm font-black tracking-tight text-foreground">
+                    <h3 className="text-sm font-black tracking-tight text-foreground truncate max-w-[60%] text-center">
                         {mode === "create"
                             ? `新增 Day ${itinerary?.day_number || ""} 行程`
                             : `編輯行程 · ${formData.title || ""}`}
@@ -359,7 +427,8 @@ const ItineraryActivityModal = ({
                     <button
                         type="submit"
                         form="itinerary-activity-form"
-                        className="text-xs font-bold bg-blue-500 hover:bg-blue-600 text-white px-3.5 py-1.5 rounded-full transition-all shadow-xs cursor-pointer active:scale-95"
+                        onClick={() => hapticFeedback.success()}
+                        className="text-xs font-bold bg-blue-500 hover:bg-blue-600 text-white px-3.5 py-1.5 rounded-full transition-all shadow-xs cursor-pointer active:scale-95 shrink-0"
                     >
                         {mode === "create" ? "加入" : "完成"}
                     </button>

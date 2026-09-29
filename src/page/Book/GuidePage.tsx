@@ -313,7 +313,7 @@ const GuidePage = ({
             )}
             <div
                 className={`flex-1 flex flex-col ${
-                    isPrinting ? "space-y-4 px-0" : "px-4 mt-6 space-y-6"
+                    isPrinting ? "space-y-4 px-0" : "px-4 mt-6 space-y-6 pb-28 md:pb-12"
                 }`}
             >
                 {isLoading ? (
@@ -344,6 +344,9 @@ const GuidePage = ({
                             onTagBtnClick={handleTagClick}
                             onViewBtnClick={(place) => setPreviewPlace(place)}
                         />
+                        {!isPrinting && (
+                            <div className="w-full shrink-0 h-12 md:h-8 pointer-events-none" aria-hidden="true" />
+                        )}
                     </>
                 )}
             </div>

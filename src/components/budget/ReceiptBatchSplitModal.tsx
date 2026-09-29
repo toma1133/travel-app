@@ -22,6 +22,7 @@ import { CATEGORY_DEFINITIONS } from "../../constants/Categories";
 import { CURRENCIES } from "../../constants/Currencies";
 import { ImageVaultDB } from "../../services/storage/ImageVaultDB";
 import { compressImage } from "../../utils/ImageCompressor";
+import { hapticFeedback } from "../../utils/HapticUtil";
 
 export interface ReceiptBatchSplitModalProps {
     parsedData: ParsedReceiptData;
@@ -239,9 +240,11 @@ export const ReceiptBatchSplitModal: React.FC<ReceiptBatchSplitModalProps> = ({
                 }
             }
 
+            hapticFeedback.success();
             onBatchSaved(budgetRowsToInsert.length);
             onClose();
         } catch (err) {
+            hapticFeedback.error();
             console.error("批次記帳失敗:", err);
             alert("批次記帳失敗，請檢查網路連線或重試");
         } finally {

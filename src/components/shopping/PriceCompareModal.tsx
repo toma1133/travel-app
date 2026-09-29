@@ -20,6 +20,7 @@ import type { TripVM } from "../../models/types/TripTypes";
 import type { PlaceVM } from "../../models/types/PlaceTypes";
 import { getCurrencySymbol } from "../../utils/CurrencyUtil";
 import usePlaces from "../../hooks/place/UsePlaces";
+import { hapticFeedback } from "../../utils/HapticUtil";
 
 type PriceCompareModalProps = {
     item: ShoppingItemVM;
@@ -245,17 +246,81 @@ const PriceCompareModal = ({
         return `≈ ${baseSymbol} ${convertPrice(num, newCurrency, baseCurrency).toLocaleString()} ${baseCurrency}`;
     }, [newPrice, newCurrency, baseCurrency, homeCurrency, exchangeRate]);
 
+    const [translateY, setTranslateY] = useState(0);
+    const [isDragging, setIsDragging] = useState(false);
+    const touchStartYRef = React.useRef(0);
+    const touchCurrentYRef = React.useRef(0);
+
+    const handleDismiss = () => {
+        hapticFeedback.light();
+        onClose();
+    };
+
+    const handleTouchStart = (e: React.TouchEvent) => {
+        const touch = e.touches[0];
+        touchStartYRef.current = touch.clientY;
+        touchCurrentYRef.current = touch.clientY;
+        setIsDragging(true);
+    };
+
+    const handleTouchMove = (e: React.TouchEvent) => {
+        if (!isDragging) return;
+        const touch = e.touches[0];
+        touchCurrentYRef.current = touch.clientY;
+        const deltaY = touchCurrentYRef.current - touchStartYRef.current;
+
+        if (deltaY > 0) {
+            setTranslateY(Math.pow(deltaY, 0.92));
+        } else {
+            setTranslateY(0);
+        }
+    };
+
+    const handleTouchEnd = () => {
+        if (!isDragging) return;
+        setIsDragging(false);
+
+        const deltaY = touchCurrentYRef.current - touchStartYRef.current;
+        if (deltaY > 80) {
+            handleDismiss();
+        } else {
+            setTranslateY(0);
+        }
+    };
+
+    const backdropOpacity = Math.max(0.2, 1 - translateY / 320);
+
     return (
         <div
             className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200"
-            onClick={onClose}
+            style={{ opacity: backdropOpacity }}
+            onClick={handleDismiss}
         >
             <div
-                className="liquid-glass-elevated border border-white/40 dark:border-white/10 rounded-t-3xl sm:rounded-3xl w-full max-w-lg max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in slide-in-from-bottom-6 sm:zoom-in-95 duration-200"
+                style={{
+                    transform: translateY > 0 ? `translateY(${translateY}px)` : undefined,
+                    transition: isDragging ? 'none' : 'transform 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+                }}
+                className="liquid-glass-elevated border border-white/40 dark:border-white/10 rounded-t-3xl sm:rounded-3xl w-full max-w-full sm:max-w-lg max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in slide-in-from-bottom-6 sm:zoom-in-95 duration-200"
                 onClick={(e) => e.stopPropagation()}
             >
+                {/* 📱 頂部行動把手 */}
+                <div
+                    className="w-full pt-3 pb-1 sm:hidden flex justify-center items-center cursor-grab active:cursor-grabbing touch-none select-none shrink-0"
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
+                >
+                    <div className="w-10 h-1.5 rounded-full bg-muted-foreground/35 hover:bg-muted-foreground/50 transition-colors" />
+                </div>
+
                 {/* Header */}
-                <div className="px-5 py-4 border-b border-border/70 flex items-center justify-between shrink-0 bg-white/40 dark:bg-white/[0.03]">
+                <div
+                    className="px-5 py-3.5 sm:py-4 border-b border-border/70 flex items-center justify-between shrink-0 bg-white/40 dark:bg-white/[0.03] touch-none select-none"
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
+                >
                     <div className="flex items-center gap-2.5">
                         <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center shadow-xs">
                             <Calculator size={17} />
@@ -275,7 +340,7 @@ const PriceCompareModal = ({
 
                     <button
                         type="button"
-                        onClick={onClose}
+                        onClick={handleDismiss}
                         className="p-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                     >
                         <X size={18} />

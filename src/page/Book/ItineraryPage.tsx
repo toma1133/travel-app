@@ -210,7 +210,7 @@ const ItineraryPage = ({ isPrinting, tripDataOverride, tripIdOverride }: Itinera
                         )}
 
                         <div className={isPrinting ? "block space-y-6" : "flex flex-col lg:flex-row gap-4 sm:gap-5 lg:flex-1 lg:min-h-0"}>
-                            <div ref={scrollContainerRef} className={isPrinting ? "w-full" : "w-full lg:max-w-[58%] flex-1 lg:h-full lg:overflow-y-auto no-scrollbar lg:pr-2"}>
+                            <div ref={scrollContainerRef} className={isPrinting ? "w-full" : "w-full lg:max-w-[58%] flex-1 lg:h-full lg:overflow-y-auto no-scrollbar lg:pr-2 pb-16 lg:pb-8"}>
                                 <ItineraryList
                             itinerarys={itinerarys} pcSelectedDayId={selectedDayFilter} itineraryPlacesMap={dayPlacesMap} placeMap={linkedPlacesMap}
                             isEditing={isEditing} isPrinting={isPrinting} theme={tripData?.theme_config!} scrollContainerRef={scrollContainerRef}

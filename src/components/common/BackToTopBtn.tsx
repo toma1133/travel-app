@@ -30,7 +30,7 @@ const BackToTopButton = ({
     if (position?.right !== undefined) style.right = position.right;
     if (position?.bottom !== undefined) style.bottom = position.bottom;
 
-    const defaultPositionClass = position ? "" : "bottom-[90px] md:bottom-10 right-6 md:right-8";
+    const defaultPositionClass = position ? "" : "bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] md:bottom-10 right-6 md:right-8";
 
     return (
         <button
@@ -45,7 +45,6 @@ const BackToTopButton = ({
                 hover:bg-accent hover:text-accent-foreground transition-all
                 hover:-translate-y-1
                 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2
-                pb-[env(safe-area-inset-bottom)]
                 ${defaultPositionClass}
                 ${className || ""}
             `}

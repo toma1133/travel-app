@@ -4,6 +4,7 @@ import { Bell, Check, X, MapPin } from "lucide-react";
 import useAuth from "../../hooks/UseAuth";
 import { useMyInvitations } from "../../hooks/tripInvitation/UseTripInvitations";
 import { useTripInvitationMutations } from "../../hooks/tripInvitation/UseTripInvitationMutations";
+import { hapticFeedback } from "../../utils/HapticUtil";
 
 const NotificationBell = () => {
     const { session } = useAuth();
@@ -37,12 +38,58 @@ const NotificationBell = () => {
     };
 
     const unreadCount = invitations.length;
+    const [translateY, setTranslateY] = useState(0);
+    const [isDragging, setIsDragging] = useState(false);
+    const touchStartYRef = useRef(0);
+    const touchCurrentYRef = useRef(0);
+
+    const handleDismiss = () => {
+        hapticFeedback.light();
+        setIsOpen(false);
+    };
+
+    const handleTouchStart = (e: React.TouchEvent) => {
+        const touch = e.touches[0];
+        touchStartYRef.current = touch.clientY;
+        touchCurrentYRef.current = touch.clientY;
+        setIsDragging(true);
+    };
+
+    const handleTouchMove = (e: React.TouchEvent) => {
+        if (!isDragging) return;
+        const touch = e.touches[0];
+        touchCurrentYRef.current = touch.clientY;
+        const deltaY = touchCurrentYRef.current - touchStartYRef.current;
+
+        if (deltaY > 0) {
+            setTranslateY(Math.pow(deltaY, 0.92));
+        } else {
+            setTranslateY(0);
+        }
+    };
+
+    const handleTouchEnd = () => {
+        if (!isDragging) return;
+        setIsDragging(false);
+
+        const deltaY = touchCurrentYRef.current - touchStartYRef.current;
+        if (deltaY > 80) {
+            handleDismiss();
+        } else {
+            setTranslateY(0);
+        }
+    };
+
+    const backdropOpacity = Math.max(0.2, 1 - translateY / 320);
 
     return (
         <>
             <button
                 type="button"
-                onClick={() => setIsOpen(true)}
+                onClick={() => {
+                    hapticFeedback.light();
+                    setIsOpen(true);
+                }}
                 className="relative text-muted-foreground hover:text-foreground transition-colors focus:outline-none flex items-center justify-center p-1 rounded-full hover:bg-muted/50"
                 title="通知"
             >
@@ -57,15 +104,35 @@ const NotificationBell = () => {
             {isOpen &&
                 createPortal(
                     <div 
-                        className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in p-4"
-                        onClick={() => setIsOpen(false)}
+                        className="fixed inset-0 z-[9999] flex flex-col justify-end md:justify-center md:items-center bg-black/60 backdrop-blur-sm animate-in fade-in p-0 md:p-4"
+                        style={{ opacity: backdropOpacity }}
+                        onClick={handleDismiss}
                     >
                         <div 
-                            className="bg-card w-full max-w-md rounded-2xl shadow-2xl animate-in zoom-in-95 border border-border flex flex-col max-h-[85vh] font-[Noto_Sans_TC] overflow-hidden"
+                            style={{
+                                transform: translateY > 0 ? `translateY(${translateY}px)` : undefined,
+                                transition: isDragging ? 'none' : 'transform 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+                            }}
+                            className="bg-card w-full max-w-full md:max-w-md rounded-t-3xl md:rounded-2xl shadow-2xl animate-in slide-in-from-bottom-6 md:zoom-in-95 border border-border flex flex-col max-h-[85vh] font-[Noto_Sans_TC] overflow-hidden"
                             onClick={(e) => e.stopPropagation()}
                         >
+                            {/* 📱 頂部行動把手 */}
+                            <div
+                                className="w-full pt-3 pb-1 md:hidden flex justify-center items-center cursor-grab active:cursor-grabbing touch-none select-none shrink-0"
+                                onTouchStart={handleTouchStart}
+                                onTouchMove={handleTouchMove}
+                                onTouchEnd={handleTouchEnd}
+                            >
+                                <div className="w-10 h-1.5 rounded-full bg-muted-foreground/35 hover:bg-muted-foreground/50 transition-colors" />
+                            </div>
+
                             {/* Header */}
-                            <div className="p-5 border-b border-border/60 flex items-center justify-between bg-muted/30">
+                            <div
+                                className="p-4 md:p-5 border-b border-border/60 flex items-center justify-between bg-muted/30 touch-none select-none"
+                                onTouchStart={handleTouchStart}
+                                onTouchMove={handleTouchMove}
+                                onTouchEnd={handleTouchEnd}
+                            >
                                 <div className="flex items-center gap-2">
                                     <Bell size={18} className="text-primary shrink-0" />
                                     <h4 className="font-bold text-base text-foreground">旅程邀請通知</h4>
@@ -78,8 +145,8 @@ const NotificationBell = () => {
                                     )}
                                     <button
                                         type="button"
-                                        onClick={() => setIsOpen(false)}
-                                        className="p-1.5 rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                                        onClick={handleDismiss}
+                                        className="p-1.5 rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground transition-colors cursor-pointer"
                                     >
                                         <X size={18} />
                                     </button>

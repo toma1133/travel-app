@@ -111,7 +111,7 @@ const FloatingCurrencyConverter: React.FC<FloatingCurrencyConverterProps> = ({
     };
 
     return (
-        <div className="fixed bottom-20 right-4 sm:right-6 z-40 flex flex-col items-end">
+        <div className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] md:bottom-20 right-4 sm:right-6 z-40 flex flex-col items-end">
             {/* Pop-up Mini Glass Calculator Panel */}
             {isOpen && (
                 <div className="mb-3 w-[310px] sm:w-[340px] bg-card/95 dark:bg-neutral-900/95 backdrop-blur-xl border border-border/80 shadow-2xl rounded-3xl p-4 space-y-3.5 animate-in slide-in-from-bottom-5 fade-in duration-200 text-card-foreground">

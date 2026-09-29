@@ -508,7 +508,7 @@ const InfoPage = ({
             )}
             <div
                 className={`space-y-6 ${
-                    isPrinting ? "space-y-4 px-0" : "px-4 mt-6"
+                    isPrinting ? "space-y-4 px-0" : "px-4 mt-6 pb-28 md:pb-12"
                 }`}
             >
                 <FlightList
@@ -544,6 +544,9 @@ const InfoPage = ({
                 />
                 {!isPrinting && (
                     <ChecklistSection tripId={tripId || "default"} isEditing={isEditing} />
+                )}
+                {!isPrinting && (
+                    <div className="w-full shrink-0 h-12 md:h-8 pointer-events-none" aria-hidden="true" />
                 )}
             </div>
             {isFlightModalOpen && (
