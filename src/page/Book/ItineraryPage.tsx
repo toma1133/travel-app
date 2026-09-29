@@ -207,11 +207,7 @@ const ItineraryPage = ({ isPrinting, tripDataOverride, tripIdOverride }: Itinera
                 </div>
             </div>
 
-            {!isPrinting && !isDesktop && (dayPlacesMap.all?.length || 0) > 0 && (
-                <button type="button" onClick={() => setShowMobileMap(true)} className="fixed bottom-[84px] left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 px-5 py-2.5 rounded-full shadow-2xl bg-primary text-primary-foreground font-bold text-xs hover:scale-105 active:scale-95 transition-all border border-white/20 backdrop-blur-md cursor-pointer whitespace-nowrap">
-                    <MapIcon size={15} /><span>路線地圖 {activeDayLabel ? `· ${activeDayLabel}` : ""} ({activeMapPlaces.length})</span>
-                </button>
-            )}
+
 
             {!isPrinting && !isDesktop && showMobileMap && (
                 <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-md flex flex-col animate-in fade-in duration-200">

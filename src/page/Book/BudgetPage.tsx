@@ -1,11 +1,9 @@
-import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
+import React, { FormEvent, useEffect, useMemo, useState } from "react";
 import { useOutletContext, useParams } from "react-router-dom";
 import { useIsMutating } from "@tanstack/react-query";
-import { LucideIcon, Wallet, Filter, Settings, Plus } from "lucide-react";
+import { Wallet, Filter, Settings, Plus } from "lucide-react";
 import { CATEGORY_DEFINITIONS } from "../../constants/Categories";
 import moment from "moment";
-import { DragEndEvent } from "@dnd-kit/core";
-import { arrayMove } from "@dnd-kit/sortable";
 import useAuth from "../../hooks/UseAuth";
 import useBudgets from "../../hooks/budget/UseBudgets";
 import useBudgetMutations from "../../hooks/budget/UseBudgetMutations";
@@ -17,22 +15,18 @@ import useTripMutations from "../../hooks/trip/UseTripMutations";
 import DeleteModal from "../../components/common/DeleteModal";
 import SectionHeader from "../../components/common/SectionHeader";
 import SettingModal from "../../components/budget/SettingModal";
-import BudgetChart from "../../components/budget/BudgetChart";
-import BudgetLimitList from "../../components/budget/BudgetLimitList";
+import BudgetOverviewCard from "../../components/budget/BudgetOverviewCard";
 import TransactionList from "../../components/budget/TransactionList";
 import TransactionModal from "../../components/budget/TransactionModal";
 import SplitInfoModal from "../../components/budget/SplitInfoModal";
 import TransactionFilterModal from "../../components/budget/TransactionFilterModal";
+import QuickExpenseBar from "../../components/budget/QuickExpenseBar";
+import { usePaymentMethodSettings } from "../../components/budget/usePaymentMethodSettings";
 import type BookLayoutContextType from "../../models/types/BookLayoutContextTypes";
 import type LayoutContextType from "../../models/types/LayoutContextTypes";
 import type { BudgetRow } from "../../models/types/BudgetTypes";
-import type { PaymentMethodRow } from "../../models/types/PaymentMethodTypes";
 import type { TransactionFilterType } from "../../models/types/TransactionFilterTypes";
-import type {
-    TripSettingConf,
-    TripThemeConf,
-    TripVM,
-} from "../../models/types/TripTypes";
+import type { TripVM } from "../../models/types/TripTypes";
 
 type BudgetPageProps = {
     isPrinting?: boolean;
@@ -40,729 +34,213 @@ type BudgetPageProps = {
     tripIdOverride?: string;
 };
 
-const BudgetPage = ({
+const BudgetPage: React.FC<BudgetPageProps> = ({
     isPrinting,
     tripDataOverride,
     tripIdOverride,
-}: BudgetPageProps) => {
+}) => {
     const { session } = useAuth();
     const { id: paramsId } = useParams<{ id: string }>();
     const tripId = tripIdOverride || paramsId;
     const contextData = useOutletContext<BookLayoutContextType | null>();
     const tripData = tripDataOverride || contextData?.tripData;
-    const {
-        data: budgets,
-        isLoading: isBudgetsLoading,
-        error: isBudgetsError,
-    } = useBudgets(tripId, session?.user.id);
-    const {
-        insert: insertBudget,
-        update: updateBudget,
-        remove: removeBudget,
-        anyPending: anyBudgetPending,
-    } = useBudgetMutations();
-    const {
-        data: paymentMethods,
-        isLoading: isPaymentMethodsLoading,
-        error: isPaymentMethodsError,
-    } = usePaymentMethods(tripId, session?.user.id);
-    const {
-        upsert: upsertPaymentMethod,
-        remove: removePaymentMethod,
-        anyPending: anyPaymentMethodPending,
-    } = usePaymentMethodMutations();
-    const {
-        data: profiles,
-        isLoading: isProfilesLoading,
-        error: profilesError,
-    } = useProfiles(true);
-    const {
-        data: tripMembers,
-        isLoading: isTripMembersLoading,
-        error: tripMembersError,
-    } = useTripMembers(tripId, true);
-    const { update: updateTrip, anyPending: anyTripPending } =
-        useTripMutations();
-    const { setIsPageLoading } = useOutletContext<LayoutContextType>();
 
-    const mutatingCount = useIsMutating({
-        mutationKey: ["trip", "budget_item", "payment_method"],
-    });
+    const { data: budgets, isLoading: isBudgetsLoading } = useBudgets(tripId, session?.user.id);
+    const { insert: insertBudget, update: updateBudget, remove: removeBudget, anyPending: anyBudgetPending } = useBudgetMutations();
+    const { data: paymentMethods, isLoading: isPaymentMethodsLoading } = usePaymentMethods(tripId, session?.user.id);
+    const { upsert: upsertPaymentMethod, remove: removePaymentMethod, anyPending: anyPaymentMethodPending } = usePaymentMethodMutations();
+    const { data: profiles, isLoading: isProfilesLoading } = useProfiles(true);
+    const { data: tripMembers, isLoading: isTripMembersLoading } = useTripMembers(tripId, true);
+    const { update: updateTrip, anyPending: anyTripPending } = useTripMutations();
+    const { setIsPageLoading } = useOutletContext<LayoutContextType>();
+    const mutatingCount = useIsMutating({ mutationKey: ["trip", "budget_item", "payment_method"] });
     const currentSetting = tripData?.settings_config || null;
     const currentTheme = tripData?.theme_config || null;
 
     useEffect(() => {
         let timer: number | undefined;
-        const shouldShow =
-            isBudgetsLoading ||
-            isPaymentMethodsLoading ||
-            isProfilesLoading ||
-            isTripMembersLoading ||
-            anyBudgetPending ||
-            anyPaymentMethodPending ||
-            anyTripPending ||
-            mutatingCount > 0;
+        const shouldShow = isBudgetsLoading || isPaymentMethodsLoading || isProfilesLoading || isTripMembersLoading || anyBudgetPending || anyPaymentMethodPending || anyTripPending || mutatingCount > 0;
+        if (shouldShow) timer = window.setTimeout(() => setIsPageLoading(true), 150);
+        else setIsPageLoading(false);
+        return () => { if (timer) clearTimeout(timer); setIsPageLoading(false); };
+    }, [isBudgetsLoading, isPaymentMethodsLoading, isProfilesLoading, isTripMembersLoading, anyBudgetPending, anyPaymentMethodPending, anyTripPending, mutatingCount, setIsPageLoading]);
 
-        if (shouldShow) {
-            timer = window.setTimeout(() => setIsPageLoading(true), 150);
-        } else {
-            setIsPageLoading(false);
-        }
-
-        return () => {
-            if (timer) {
-                clearTimeout(timer);
-            }
-            setIsPageLoading(false);
-        };
-    }, [
-        isBudgetsLoading,
-        isPaymentMethodsLoading,
-        isProfilesLoading,
-        isTripMembersLoading,
-        anyBudgetPending,
-        anyPaymentMethodPending,
-        anyTripPending,
-        mutatingCount,
-        setIsPageLoading,
-    ]);
-
-    // --- Common delete modal
-    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-    const [deleteType, setDeleteType] = useState("");
-    const [deleteKey, setDeleteKey] = useState("");
-
-    // Utils
-    const convertToHome = (
-        amount: number,
-        currency: string,
-        homeCurrency?: string,
-        exchangeRate?: number
-    ) => {
+    // 幣別換算工具
+    const convertToHome = (amount: number, currency: string, homeCurrency?: string, exchangeRate?: number) => {
         if (currency === homeCurrency) return amount;
-        return Math.round(amount * exchangeRate!);
+        return Math.round(amount * (exchangeRate || 1));
     };
-    const convertToLocal = (
-        amount: number,
-        currency: string,
-        localCurrency?: string,
-        exchangeRate?: number
-    ) => {
+    const convertToLocal = (amount: number, currency: string, localCurrency?: string, exchangeRate?: number) => {
         if (currency === localCurrency) return amount;
-        return Math.round(amount / exchangeRate!);
+        return Math.round(amount / (exchangeRate || 1));
     };
 
-    const getChartGradient = (
-        totalSpentHome: number,
-        categoryStats: { [key: string]: number },
-        theme: TripThemeConf | null
-    ) => {
-        if (totalSpentHome === 0) return `conic-gradient(#E5E7EB 0% 100%)`;
-        let currentDeg = 0;
-        const gradients = Object.entries(categoryStats).map(([cat, amount]) => {
-            const percent = amount / totalSpentHome;
-            const deg = percent * 360;
-            const color = theme?.categoryColor[cat] || "#9CA3AF";
-            const str = `${color} ${currentDeg}deg ${currentDeg + deg}deg`;
-            currentDeg += deg;
-            return str;
-        });
-        return `conic-gradient(${gradients.join(", ")})`;
-    };
+    // Filter State & Logic
+    const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+    const initialFilterState: TransactionFilterType = useMemo(() => ({ categories: [], payment_method_ids: [], start_date: moment().format("YYYY-MM-DD"), end_date: moment().format("YYYY-MM-DD") }), []);
+    const [filters, setFilters] = useState(initialFilterState);
+    const [formFilter, setFormFilter] = useState(initialFilterState);
 
-    const getCategoryName = (cat: string) => {
-        const item = CATEGORY_DEFINITIONS.find((c) => c.id === cat);
-        return item ? item.label : "其他";
-    };
+    const filteredBudgets = useMemo(() => budgets?.filter((ex) => {
+        const matchCategory = filters.categories.length > 0 ? filters.categories.includes(ex.category) : true;
+        const matchMethod = filters.payment_method_ids.length > 0 ? filters.payment_method_ids.includes(ex.payment_method_id) : true;
+        return matchCategory && matchMethod;
+    }), [budgets, filters]);
 
-    const getCategoryIcon = (cat: string) => {
-        const item = CATEGORY_DEFINITIONS.find((c) => c.id === cat);
-        const IconComponent = item ? item.icon : CATEGORY_DEFINITIONS[CATEGORY_DEFINITIONS.length - 1].icon;
-        return <IconComponent size={14} />;
-    };
+    const filteredPayments = useMemo(() => paymentMethods?.filter((ex) => {
+        return filters.payment_method_ids.length > 0 ? filters.payment_method_ids.includes(ex.id) : true;
+    }), [paymentMethods, filters]);
 
-    // Setting Modal
-    const [isSettingModalOpen, setIsSettingModalOpen] = useState(false);
-    const [formSetting, setFormSetting] = useState<TripSettingConf | null>(
-        null
-    );
-    const [formPaymentMethods, setFormPaymentMethods] = useState<
-        PaymentMethodRow[] | undefined
-    >([]);
-
-    const handleSettingModalOpenBtnClick = () => {
-        setFormSetting(tripData?.settings_config!);
-        setFormPaymentMethods(paymentMethods);
-        setIsSettingModalOpen(true);
-    };
-
-    const handleSettingModalCloseBtnClick = () => {
-        setIsSettingModalOpen(false);
-    };
-
-    const handleSettingModalResetBtnClick = () => {
-        setFormSetting(tripData?.settings_config!);
-        setFormPaymentMethods(paymentMethods);
-    };
-
-    const handleSettingModalSubmit = async (e: FormEvent) => {
-        e.preventDefault();
-
-        const updateTripData: TripVM = {
-            ...tripData!,
-            settings_config: formSetting,
-        };
-        const paymentMethodsData: PaymentMethodRow[] = [...formPaymentMethods!];
-
-        try {
-            await updateTrip.mutateAsync(updateTripData);
-
-            const deletePaymentMethods = paymentMethods?.filter(
-                (ap) => formPaymentMethods!.findIndex((p) => p.id === ap.id) < 0
-            );
-
-            // upsert payment method
-            for (const paymentMethod of paymentMethodsData) {
-                await upsertPaymentMethod.mutateAsync(paymentMethod);
-            }
-
-            // remove
-            for (const paymentMethod of deletePaymentMethods!) {
-                await removePaymentMethod.mutateAsync(paymentMethod.id);
-            }
-
-            setFormPaymentMethods(undefined);
-            setFormSetting(null);
-            setIsSettingModalOpen(false);
-        } catch (err) {
-            console.error(err);
-        }
-    };
-
-    const initialPaymentState: PaymentMethodRow = useMemo(
-        () => ({
-            created_at: null,
-            credit_limit: 0,
-            currency_code: tripData?.settings_config?.localCurrency || "",
-            id: crypto.randomUUID(),
-            name: "新卡片",
-            order: 0,
-            trip_id: tripId || "",
-            type: "credit",
-            updated_at: null,
-            user_id: session ? session.user.id : "",
-        }),
-        [tripId, session]
-    );
-
-    const handleDragPaymentItem = (event: DragEndEvent) => {
-        if (!formPaymentMethods) return;
-
-        if (event.over && event.active.id !== event.over.id) {
-            const oldIndex = formPaymentMethods
-                .map((m) => m.id)
-                .indexOf(event.active.id.toString());
-            const newIndex = formPaymentMethods
-                .map((m) => m.id)
-                .indexOf(event.over.id.toString());
-            const afterDrag = arrayMove(formPaymentMethods, oldIndex, newIndex);
-            const finalizedMethods = afterDrag.map((method, index) => ({
-                ...method,
-                order: index, // Synchronize the explicit 'order' property with the final array index
-            }));
-            setFormPaymentMethods(finalizedMethods);
-        }
-    };
-
-    const handlePaymentChange = (
-        index: number,
-        field: string,
-        value: string | number
-    ) => {
-        const newMethods = [...formPaymentMethods!];
-        newMethods[index] = { ...newMethods[index], [field]: value };
-        setFormPaymentMethods(newMethods);
-    };
-
-    const handleSettingChange = (e: ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        setFormSetting(
-            (prev) => ({ ...prev, [name]: value } as TripSettingConf)
-        );
-    };
-
-    const handleAddPaymentBtnClick = () => {
-        const newOrder = formPaymentMethods?.length;
-        const newMethod: PaymentMethodRow = {
-            ...initialPaymentState,
-            id: crypto.randomUUID(),
-            order: newOrder!,
-        };
-        let newPaymentMethods: PaymentMethodRow[] = [];
-
-        if (Array.isArray(formPaymentMethods))
-            newPaymentMethods = [...formPaymentMethods];
-
-        setFormPaymentMethods([...newPaymentMethods, newMethod]);
-    };
-
-    const handleRemovePaymentBtnClick = (index: number) => {
-        const newMethods = formPaymentMethods?.filter((_, i) => i !== index);
-        const reorderedMethods = newMethods?.map((method, index) => ({
-            ...method,
-            order: index,
-        }));
-        setFormPaymentMethods(reorderedMethods);
-    };
-
-    const handlePaymentMoveUp = (index: number) => {
-        if (!formPaymentMethods) return;
-
-        if (index > 0) {
-            const afterDrag = arrayMove(formPaymentMethods, index, index - 1);
-            const finalizedMethods = afterDrag.map((method, index) => ({
-                ...method,
-                order: index, // Synchronize the explicit 'order' property with the final array index
-            }));
-            setFormPaymentMethods(finalizedMethods);
-        }
-    };
-
-    const handlePaymentMoveDown = (index: number) => {
-        if (!formPaymentMethods) return;
-
-        if (index < formPaymentMethods.length - 1) {
-            const afterDrag = arrayMove(formPaymentMethods, index, index + 1);
-            const finalizedMethods = afterDrag.map((method, index) => ({
-                ...method,
-                order: index, // Synchronize the explicit 'order' property with the final array index
-            }));
-            setFormPaymentMethods(finalizedMethods);
-        }
-    };
-
-    // Budget Modal
+    // Budget Create/Edit State
     const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false);
-    const initialBudgetState: BudgetRow = useMemo(
-        () => ({
-            amount: 0,
-            category: "food",
-            created_at: null,
-            currency_code: tripData?.settings_config?.localCurrency || "",
-            expense_date: moment().format("YYYY-MM-DD"),
-            id: crypto.randomUUID(),
-            payment_method_id:
-                Array.isArray(paymentMethods) && paymentMethods.length > 0
-                    ? paymentMethods[0].id
-                    : "",
-            title: "",
-            trip_id: tripId || "",
-            updated_at: null,
-            user_id: session ? session.user.id : "",
-            split_with: [],
-            is_payer_included: true,
-            settled_with: [],
-        }),
-        [tripId, session]
-    );
-    const [budgetModalMode, setBudgetModalMode] = useState("create"); // 'create' | 'edit'
+    const [budgetModalMode, setBudgetModalMode] = useState<"create" | "edit">("create");
+    const initialBudgetState: BudgetRow = useMemo(() => ({
+        amount: 0, category: "food", created_at: null,
+        currency_code: tripData?.settings_config?.localCurrency || "",
+        expense_date: moment().format("YYYY-MM-DD"), id: crypto.randomUUID(),
+        payment_method_id: paymentMethods?.[0]?.id || "",
+        title: "", trip_id: tripId || "", updated_at: null,
+        user_id: session ? session.user.id : "", split_with: [],
+        is_payer_included: true, settled_with: [],
+    }), [tripId, session, tripData, paymentMethods]);
     const [formBudget, setFormBudget] = useState<BudgetRow>(initialBudgetState);
-    const [budgetCategory] = useState<
-        {
-            id: string;
-            name: string;
-            icon: LucideIcon;
-        }[]
-    >(
-        CATEGORY_DEFINITIONS.map((cat) => ({
-            id: cat.id,
-            name: cat.label,
-            icon: cat.icon,
-        }))
-    );
-    const [budgetToDelete, setBudgetToDelete] = useState<BudgetRow | null>(
-        null
-    );
+    const budgetCategory = useMemo(() => CATEGORY_DEFINITIONS.map((cat) => ({ id: cat.id, name: cat.label, icon: cat.icon })), []);
 
-    const handleAddBudgetBtnClick = () => {
-        setBudgetModalMode("create");
-        setFormBudget(initialBudgetState);
-        setIsBudgetModalOpen(true);
-    };
+    // Payment Setting hook
+    const pmSettings = usePaymentMethodSettings();
+    const [isSplitInfoModalOpen, setSplitInfoModalOpen] = useState(false);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [budgetToDelete, setBudgetToDelete] = useState<BudgetRow | null>(null);
 
-    const handleEditBudgetBtnClick = (transactionItem: BudgetRow) => {
-        setBudgetModalMode("edit");
-        setFormBudget(transactionItem);
-        setIsBudgetModalOpen(true);
-    };
-
-    const handleCloseBudgetModalClick = () => {
-        setBudgetModalMode("create");
-        setFormBudget(initialBudgetState);
-        setIsBudgetModalOpen(false);
-    };
-
-    const handleBudgetFormDataChange = (
-        name: string,
-        value?: string | number | boolean
-    ) => {
-        if (name == "split_with") {
-            if (formBudget.split_with!.indexOf(value!.toString()) > -1) {
-                setFormBudget((prev) => ({
-                    ...prev,
-                    split_with: prev.split_with!.filter(
-                        (x) => x !== value!.toString()
-                    ),
-                }));
-            } else {
-                setFormBudget((prev) => ({
-                    ...prev,
-                    split_with: [...prev.split_with!, value!.toString()],
-                }));
-            }
-        } else if (name == "settled_with") {
-            const currentSettled = formBudget.settled_with || [];
-            if (currentSettled.indexOf(value!.toString()) > -1) {
-                setFormBudget((prev) => ({
-                    ...prev,
-                    settled_with: prev.settled_with!.filter(
-                        (x) => x !== value!.toString()
-                    ),
-                }));
-            } else {
-                setFormBudget((prev) => ({
-                    ...prev,
-                    settled_with: [...currentSettled, value!.toString()],
-                }));
-            }
-        } else {
-            setFormBudget((prev) => ({ ...prev, [name]: value }));
-        }
-    };
-
-    const handleBudgetFormInputChange = (e: ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        setFormBudget((prev) => ({ ...prev, [name]: value }));
-    };
-
-    const handleBudgetFormSubmit = async (e: FormEvent) => {
+    const handleBudgetSubmit = async (e: FormEvent) => {
         e.preventDefault();
-
-        const budgetData = { ...formBudget };
-
         try {
             if (budgetModalMode === "create") {
-                await insertBudget.mutateAsync({
-                    ...budgetData,
-                    id: crypto.randomUUID(),
-                });
+                await insertBudget.mutateAsync({ ...formBudget, id: crypto.randomUUID() });
             } else {
-                await updateBudget.mutateAsync(budgetData);
+                await updateBudget.mutateAsync(formBudget);
             }
             setFormBudget(initialBudgetState);
             setIsBudgetModalOpen(false);
-        } catch (err) {
-            console.error(err);
-        }
+        } catch (err) { console.error(err); }
     };
 
-    const handleOpenDeleteBudgetModal = (budgetItem: BudgetRow) => {
-        setBudgetToDelete(budgetItem);
-        setDeleteType("budget_item");
-        setDeleteKey(`
-            ${moment(budgetItem.expense_date).format("YYYY-MM-DD")} ${
-            budgetItem.title
-        }`);
-        setIsDeleteModalOpen(true);
-    };
-
-    // --- Filter
-    const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
-    const initialFilterState: TransactionFilterType = useMemo(
-        () => ({
-            categories: [],
-            payment_method_ids: [],
-            start_date: moment().format("YYYY-MM-DD"),
-            end_date: moment().format("YYYY-MM-DD"),
-        }),
-        []
-    );
-    const [filters, setFilters] = useState(initialFilterState);
-    const [formFilter, setFormFilter] = useState(initialFilterState);
-    const filteredBudgets = useMemo(() => {
-        return budgets?.filter((ex) => {
-            const matchCategory =
-                filters.categories.length > 0
-                    ? filters.categories.includes(ex.category)
-                    : true;
-            const matchMethod =
-                filters.payment_method_ids.length > 0
-                    ? filters.payment_method_ids.includes(ex.payment_method_id)
-                    : true;
-            return matchCategory && matchMethod;
-        });
-    }, [budgets, filters]);
-    const filteredPayments = useMemo(() => {
-        return paymentMethods?.filter((ex) => {
-            const matchMethod =
-                filters.payment_method_ids.length > 0
-                    ? filters.payment_method_ids.includes(ex.id)
-                    : true;
-            return matchMethod;
-        });
-    }, [paymentMethods, filters]);
-    const handleFilterChange = (name: string, value?: string | number | string[]) => {
-        setFormFilter((prev) => ({ ...prev, [name]: value }));
-    };
-    const handleFilterModalOpenBtnClick = () => {
-        setIsFilterModalOpen(true);
-    };
-    const handleFilterModalCancelBtnClick = () => {
-        setIsFilterModalOpen(false);
-    };
-    const handleCloseFilterModalClick = () => {
-        setIsFilterModalOpen(false);
-    };
-    const handleFilterFormSubmit = async (e: FormEvent) => {
-        e.preventDefault();
-
-        const filterData = { ...formFilter };
-
-        try {
-            setFilters(filterData);
-            setIsFilterModalOpen(false);
-        } catch (err) {
-            console.error(err);
-        }
-    };
-
-    // Split info
-    const [isSplitInfoModalOpen, setSplitInfoModalOpen] = useState(false);
-
-    const handleSplitInfoModalOpenBtnClick = () => {
-        setSplitInfoModalOpen(true);
-    };
-
-    const handleCloseSplitInfoModalClick = () => {
-        setSplitInfoModalOpen(false);
-    };
-
-    // --- Common Modal Handlers ---
     const handleConfirmDelete = async () => {
+        if (!budgetToDelete) return;
         try {
-            switch (deleteType) {
-                case "budget_item":
-                    if (!budgetToDelete) return;
-                    await removeBudget.mutateAsync(budgetToDelete.id);
-                    break;
-            }
-
+            await removeBudget.mutateAsync(budgetToDelete.id);
             setIsDeleteModalOpen(false);
             setIsBudgetModalOpen(false);
             setBudgetToDelete(null);
-            setDeleteType("");
-            setDeleteKey("");
-        } catch (err) {
-            console.error(err);
-        }
+        } catch (err) { console.error(err); }
     };
 
-    const handleCloseDeleteModal = () => {
-        setIsDeleteModalOpen(false);
-        setBudgetToDelete(null);
-        setDeleteType("");
-        setDeleteKey("");
+    const handleSettingSubmit = async (e: FormEvent) => {
+        e.preventDefault();
+        try {
+            await updateTrip.mutateAsync({ ...tripData!, settings_config: pmSettings.formSetting });
+            const deleteMethods = paymentMethods?.filter((ap) => pmSettings.formPaymentMethods!.findIndex((p) => p.id === ap.id) < 0);
+            for (const pm of pmSettings.formPaymentMethods || []) await upsertPaymentMethod.mutateAsync(pm);
+            for (const dm of deleteMethods || []) await removePaymentMethod.mutateAsync(dm.id);
+            pmSettings.setIsSettingModalOpen(false);
+        } catch (err) { console.error(err); }
     };
-
-    const printStyle = isPrinting ? {
-        "--background": "0 0% 100%",
-        "--foreground": "0 0% 9%",
-        "--card": "0 0% 100%",
-        "--card-foreground": "0 0% 9%",
-        "--popover": "0 0% 100%",
-        "--popover-foreground": "0 0% 9%",
-        "--primary": "0 0% 9%",
-        "--primary-foreground": "0 0% 98%",
-        "--secondary": "0 0% 96.1%",
-        "--secondary-foreground": "0 0% 9%",
-        "--muted": "0 0% 96.1%",
-        "--muted-foreground": "0 0% 45.1%",
-        "--accent": "0 0% 96.1%",
-        "--accent-foreground": "0 0% 9%",
-        "--destructive": "0 84.2% 60.2%",
-        "--destructive-foreground": "0 0% 98%",
-        "--border": "0 0% 89.8%",
-        "--input": "0 0% 89.8%",
-        "--ring": "0 0% 9%",
-    } as React.CSSProperties : {};
 
     return (
-        <div
-            style={printStyle}
-            className={`min-h-full font-[Noto_Sans_TC] text-foreground ${
-                isPrinting
-                    ? "h-auto min-h-0 overflow-visible bg-white pointer-events-none" // 列印模式：強制白底與禁用事件(無hover)
-                    : `${
-                          tripData?.theme_config?.bg || "bg-background"
-                      } dark:bg-background pb-24 lg:pb-0 lg:h-[100dvh] lg:overflow-hidden lg:flex lg:flex-col`
-            }`}
-        >
+        <div className={`min-h-full font-[Noto_Sans_TC] text-foreground ${isPrinting ? "h-auto overflow-visible bg-white pointer-events-none" : `${tripData?.theme_config?.bg || "bg-background"} dark:bg-background pb-24 lg:pb-0 lg:h-[100dvh] lg:overflow-hidden lg:flex lg:flex-col`}`}>
             {!isPrinting && (
                 <SectionHeader
-                    title="帳本"
-                    subtitle="Budget"
-                    theme={tripData?.theme_config!}
-                    hasBackBtn={true}
+                    title="帳本" subtitle="Budget" theme={tripData?.theme_config!} hasBackBtn={true}
                     rightAction={
-                        <div className="flex justify-center items-center gap-4">
-                            <button
-                                type="button"
-                                onClick={handleSplitInfoModalOpenBtnClick}
-                                className={`flex items-center text-sm font-medium bg-card text-emerald-500 border border-border/50 px-3 py-1.5 rounded-lg shadow-md hover:bg-muted/50 transition-colors`}
-                                title="結算"
-                            >
+                        <div className="flex justify-center items-center gap-2 sm:gap-3">
+                            <button type="button" onClick={() => setSplitInfoModalOpen(true)} className="flex items-center text-sm font-medium bg-card text-emerald-500 border border-border/50 px-3 py-1.5 rounded-xl shadow-xs hover:bg-muted/50 transition-colors" title="結算">
                                 <Wallet size={16} />
                             </button>
-                            {(() => {
-                                const hasFilters = filters.categories.length > 0 || filters.payment_method_ids.length > 0;
-                                return (
-                                    <>
-                                        <button
-                                            type="button"
-                                            onClick={handleFilterModalOpenBtnClick}
-                                            className={`flex items-center text-sm font-medium bg-card text-blue-500 border border-border/50 px-3 py-1.5 rounded-lg shadow-md hover:bg-muted/50 transition-colors ${hasFilters ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}
-                                            title="交易過濾"
-                                        >
-                                            <Filter size={16} fill={hasFilters ? "currentColor" : "none"} />
-                                        </button>
-                                    </>
-                                );
-                            })()}
-                            <button
-                                type="button"
-                                onClick={handleSettingModalOpenBtnClick}
-                                className={`flex items-center text-sm font-medium px-3 py-1.5 rounded-lg shadow-md bg-card text-foreground border border-border/50 hover:bg-muted/50 transition-colors`}
-                                title="設定"
-                            >
+                            <button type="button" onClick={() => setIsFilterModalOpen(true)} className={`flex items-center text-sm font-medium bg-card text-blue-500 border border-border/50 px-3 py-1.5 rounded-xl shadow-xs hover:bg-muted/50 transition-colors ${filters.categories.length > 0 || filters.payment_method_ids.length > 0 ? "bg-blue-50 dark:bg-blue-900/20" : ""}`} title="交易過濾">
+                                <Filter size={16} fill={filters.categories.length > 0 || filters.payment_method_ids.length > 0 ? "currentColor" : "none"} />
+                            </button>
+                            <button type="button" onClick={() => { pmSettings.setFormSetting(tripData?.settings_config!); pmSettings.setFormPaymentMethods(paymentMethods); pmSettings.setIsSettingModalOpen(true); }} className="flex items-center text-sm font-medium px-3 py-1.5 rounded-xl shadow-xs bg-card text-foreground border border-border/50 hover:bg-muted/50 transition-colors" title="設定">
                                 <Settings size={16} />
                             </button>
-                            <button
-                                type="button"
-                                onClick={handleAddBudgetBtnClick}
-                                className={`flex items-center text-sm font-medium text-white px-3 py-1.5 rounded-lg shadow-md ${tripData?.theme_config?.accent} hover:opacity-90 transition-opacity`}
-                                title="新增"
-                            >
+                            <button type="button" onClick={() => { setBudgetModalMode("create"); setFormBudget(initialBudgetState); setIsBudgetModalOpen(true); }} className={`flex items-center gap-1 text-sm font-bold text-white px-3.5 py-1.5 rounded-xl shadow-xs ${tripData?.theme_config?.accent} hover:opacity-90 transition-opacity`} title="記一筆">
                                 <Plus size={16} />
+                                <span className="hidden sm:inline">記一筆</span>
                             </button>
                         </div>
                     }
                 />
             )}
-            <div className={`lg:flex-1 ${isPrinting ? "px-0" : "lg:flex lg:flex-row lg:overflow-hidden px-4 mt-6"}`}>
-                {/* 左側：總覽 (圓環圖與預算列表) */}
-                <div className={`${isPrinting ? "w-full mb-8" : "lg:w-[350px] xl:w-[400px] lg:flex-shrink-0 lg:overflow-y-auto no-scrollbar lg:pr-6 lg:border-r lg:border-border lg:mr-6 mb-6 lg:mb-0"}`}>
-                    <BudgetChart
-                        budgetItems={filteredBudgets}
-                        isPrinting={isPrinting}
-                        setting={currentSetting}
-                        theme={currentTheme}
-                        convertToHome={convertToHome}
-                        convertToLocal={convertToLocal}
-                        getChartGradient={getChartGradient}
-                        getCategoryName={getCategoryName}
-                    />
-                    <BudgetLimitList
-                        budgetItems={filteredBudgets}
-                        isPrinting={isPrinting}
-                        paymentMethods={filteredPayments}
-                        setting={currentSetting}
-                        theme={currentTheme}
-                        convertToHome={convertToHome}
-                        convertToLocal={convertToLocal}
+
+            {!isPrinting && (
+                <div className="px-4 mt-3 lg:hidden">
+                    <QuickExpenseBar
+                        onQuickAdd={(catId) => { setBudgetModalMode("create"); setFormBudget({ ...initialBudgetState, id: crypto.randomUUID(), category: catId, currency_code: tripData?.settings_config?.localCurrency || "", payment_method_id: paymentMethods?.[0]?.id || "" }); setIsBudgetModalOpen(true); }}
+                        onOpenGeneralAdd={() => { setBudgetModalMode("create"); setFormBudget(initialBudgetState); setIsBudgetModalOpen(true); }}
                     />
                 </div>
+            )}
 
-                {/* 右側：交易列表 */}
+            <div className={`lg:flex-1 ${isPrinting ? "px-0" : "lg:flex lg:flex-row lg:overflow-hidden px-4 mt-4 lg:mt-6"}`}>
+                <div className={`${isPrinting ? "w-full mb-8" : "lg:w-[350px] xl:w-[400px] lg:flex-shrink-0 lg:overflow-y-auto no-scrollbar lg:pr-6 lg:border-r lg:border-border lg:mr-6 mb-6 lg:mb-0"}`}>
+                    <BudgetOverviewCard budgetItems={filteredBudgets} isPrinting={isPrinting} paymentMethods={filteredPayments} setting={currentSetting} theme={currentTheme} convertToHome={convertToHome} convertToLocal={convertToLocal} />
+                </div>
+
                 <div className={`${isPrinting ? "w-full" : "lg:flex-1 lg:overflow-y-auto no-scrollbar lg:min-w-0 flex flex-col pb-20 lg:pb-0"}`}>
                     <TransactionList
-                        categories={budgetCategory}
-                        budgetItems={filteredBudgets}
-                        isPrinting={isPrinting}
-                        paymentMethods={paymentMethods}
-                        session={session}
-                        setting={currentSetting}
-                        theme={currentTheme}
-                        tripMembers={tripMembers}
-                        convertToHome={convertToHome}
-                        getCategoryIcon={getCategoryIcon}
-                        getCategoryName={getCategoryName}
-                        onEditBtnClick={handleEditBudgetBtnClick}
+                        categories={budgetCategory} budgetItems={filteredBudgets} isPrinting={isPrinting}
+                        paymentMethods={paymentMethods} session={session} setting={currentSetting}
+                        theme={currentTheme} tripMembers={tripMembers} convertToHome={convertToHome}
+                        getCategoryIcon={(cat) => { const item = CATEGORY_DEFINITIONS.find((c) => c.id === cat) || CATEGORY_DEFINITIONS[CATEGORY_DEFINITIONS.length - 1]; const Icon = item.icon; return <Icon size={14} />; }}
+                        getCategoryName={(cat) => CATEGORY_DEFINITIONS.find((c) => c.id === cat)?.label || "其他"}
+                        onEditBtnClick={(item) => { setBudgetModalMode("edit"); setFormBudget(item); setIsBudgetModalOpen(true); }}
                     />
                 </div>
             </div>
-            {isSettingModalOpen && (
+
+            {pmSettings.isSettingModalOpen && (
                 <SettingModal
-                    paymentMethods={formPaymentMethods}
-                    setting={formSetting}
-                    theme={currentTheme}
-                    onAddPaymentMethodBtnClick={handleAddPaymentBtnClick}
-                    onCloseBtnClick={handleSettingModalCloseBtnClick}
-                    onDragPaymentItem={handleDragPaymentItem}
-                    onPaymentChange={handlePaymentChange}
-                    onPaymentMoveDown={handlePaymentMoveDown}
-                    onPaymentMoveUp={handlePaymentMoveUp}
-                    onPaymentRemove={handleRemovePaymentBtnClick}
-                    onResetBtnClick={handleSettingModalResetBtnClick}
-                    onSettingChange={handleSettingChange}
-                    onFormSubmit={handleSettingModalSubmit}
+                    paymentMethods={pmSettings.formPaymentMethods} setting={pmSettings.formSetting} theme={currentTheme}
+                    onAddPaymentMethodBtnClick={() => pmSettings.handleAddPayment(tripId || "", tripData?.settings_config?.localCurrency || "", session?.user.id || "")}
+                    onCloseBtnClick={() => pmSettings.setIsSettingModalOpen(false)}
+                    onDragPaymentItem={pmSettings.handleDragPaymentItem}
+                    onPaymentChange={pmSettings.handlePaymentChange}
+                    onPaymentMoveDown={(idx) => pmSettings.handlePaymentMove(idx, "down")}
+                    onPaymentMoveUp={(idx) => pmSettings.handlePaymentMove(idx, "up")}
+                    onPaymentRemove={pmSettings.handlePaymentRemove}
+                    onResetBtnClick={() => { pmSettings.setFormSetting(tripData?.settings_config!); pmSettings.setFormPaymentMethods(paymentMethods); }}
+                    onSettingChange={pmSettings.handleSettingChange}
+                    onFormSubmit={handleSettingSubmit}
                 />
             )}
             {isBudgetModalOpen && (
                 <TransactionModal
-                    categories={budgetCategory}
-                    formData={formBudget}
-                    mode={budgetModalMode}
-                    paymentMethods={paymentMethods}
-                    setting={currentSetting}
-                    theme={currentTheme}
-                    tripMembers={tripMembers}
-                    onCloseBtnClick={handleCloseBudgetModalClick}
-                    onDeleteBtnClick={handleOpenDeleteBudgetModal}
-                    onFormDataChange={handleBudgetFormDataChange}
-                    onFormInputChange={handleBudgetFormInputChange}
-                    onFormSubmit={handleBudgetFormSubmit}
+                    categories={budgetCategory} formData={formBudget} mode={budgetModalMode}
+                    paymentMethods={paymentMethods} setting={currentSetting} theme={currentTheme}
+                    tripMembers={tripMembers} onCloseBtnClick={() => setIsBudgetModalOpen(false)}
+                    onDeleteBtnClick={(item) => { setBudgetToDelete(item); setIsDeleteModalOpen(true); }}
+                    onFormDataChange={(name, value) => {
+                        if (name === "split_with" || name === "settled_with") {
+                            const field = name as "split_with" | "settled_with";
+                            const val = value!.toString();
+                            const arr = formBudget[field] || [];
+                            const exists = arr.includes(val);
+                            setFormBudget((prev) => ({ ...prev, [field]: exists ? arr.filter((x) => x !== val) : [...arr, val] }));
+                        } else {
+                            setFormBudget((prev) => ({ ...prev, [name]: value }));
+                        }
+                    }}
+                    onFormInputChange={(e) => setFormBudget((prev) => ({ ...prev, [e.target.name]: e.target.value }))}
+                    onFormSubmit={handleBudgetSubmit}
                 />
             )}
             {isSplitInfoModalOpen && (
-                <SplitInfoModal
-                    budgets={filteredBudgets}
-                    profiles={profiles}
-                    session={session}
-                    setting={currentSetting}
-                    theme={currentTheme}
-                    convertToHome={convertToHome}
-                    convertToLocal={convertToLocal}
-                    onCloseBtnClick={handleCloseSplitInfoModalClick}
-                />
+                <SplitInfoModal budgets={filteredBudgets} profiles={profiles} session={session} setting={currentSetting} theme={currentTheme} convertToHome={convertToHome} convertToLocal={convertToLocal} onCloseBtnClick={() => setSplitInfoModalOpen(false)} />
             )}
             {isFilterModalOpen && (
-                <TransactionFilterModal
-                    categories={budgetCategory}
-                    formData={formFilter}
-                    paymentMethods={paymentMethods}
-                    theme={currentTheme}
-                    onFormDataChange={handleFilterChange}
-                    onCancelBtnClick={handleFilterModalCancelBtnClick}
-                    onCloseBtnClick={handleCloseFilterModalClick}
-                    onFormSubmit={handleFilterFormSubmit}
-                />
+                <TransactionFilterModal categories={budgetCategory} formData={formFilter} paymentMethods={paymentMethods} theme={currentTheme} onFormDataChange={(name, val) => setFormFilter((p) => ({ ...p, [name]: val }))} onCancelBtnClick={() => setIsFilterModalOpen(false)} onCloseBtnClick={() => setIsFilterModalOpen(false)} onFormSubmit={(e) => { e.preventDefault(); setFilters(formFilter); setIsFilterModalOpen(false); }} />
             )}
-            {isDeleteModalOpen && (
-                <DeleteModal
-                    deleteKey={deleteKey}
-                    onCloseClick={handleCloseDeleteModal}
-                    onConfirmClick={handleConfirmDelete}
-                />
+            {isDeleteModalOpen && budgetToDelete && (
+                <DeleteModal deleteKey={`${moment(budgetToDelete.expense_date).format("YYYY-MM-DD")} ${budgetToDelete.title}`} onCloseClick={() => { setIsDeleteModalOpen(false); setBudgetToDelete(null); }} onConfirmClick={handleConfirmDelete} />
             )}
         </div>
     );

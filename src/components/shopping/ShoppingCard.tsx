@@ -7,10 +7,7 @@ import {
     Edit3,
     Trash2,
     Tag,
-    Share2,
     ArrowUpRight,
-    CircleCheck,
-    ShoppingBag,
     Plus,
     Minus,
     User,
@@ -25,8 +22,9 @@ import {
 } from "../../models/types/ShoppingTypes";
 import { detectAutoLanguage } from "./ClerkShowModal";
 import { getCurrencySymbol } from "../../utils/CurrencyUtil";
+import { GlassCard } from "../ui";
 
-type ShoppingCardProps = {
+export type ShoppingCardProps = {
     item: ShoppingItemVM;
     tripData?: TripVM | null;
     creatorLabel?: string | null;
@@ -41,7 +39,7 @@ type ShoppingCardProps = {
     onViewPlace?: (placeId: string) => void;
 };
 
-const ShoppingCard = ({
+const ShoppingCard: React.FC<ShoppingCardProps> = ({
     item,
     tripData,
     creatorLabel,
@@ -54,7 +52,7 @@ const ShoppingCard = ({
     onDelete,
     onExportToBudget,
     onViewPlace,
-}: ShoppingCardProps) => {
+}) => {
     const [imgFailed, setImgFailed] = useState(false);
 
     // Quantity calculations
@@ -120,41 +118,46 @@ const ShoppingCard = ({
     const allocations = item.recipient_allocations || {};
 
     return (
-        <div
-            className={`group relative rounded-3xl border transition-all duration-300 overflow-hidden flex flex-col justify-between ${
-                item.is_completed
-                    ? "bg-card/45 border-border/40 opacity-75 dark:bg-card/25"
-                    : "bg-card border-border/80 hover:border-primary/40 shadow-xs hover:shadow-md"
+        <GlassCard
+            variant={isFullyBought ? "subtle" : "elevated"}
+            rounded="3xl"
+            padding="none"
+            className={`group transition-all duration-300 flex flex-col justify-between ${
+                isFullyBought
+                    ? "opacity-80 border-emerald-500/30 dark:border-emerald-500/20"
+                    : "hover:border-primary/50 hover:shadow-xl hover:-translate-y-0.5"
             }`}
         >
             {/* Top row: Image & Main Info */}
             <div className="p-4 sm:p-5 flex gap-4 min-w-0">
-                {/* Product Image with Fallback */}
+                {/* Product Image with Fallback & Depth */}
                 <div
                     onClick={() => onShowToClerk(item)}
-                    className="relative w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-2xl overflow-hidden shrink-0 border border-border/60 bg-muted/20 flex items-center justify-center cursor-pointer group-hover:scale-[1.02] transition-transform duration-200"
+                    className="relative w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-2xl overflow-hidden shrink-0 border border-white/30 dark:border-white/10 bg-white/40 dark:bg-black/20 flex items-center justify-center cursor-pointer group/img transition-all duration-300 shadow-inner"
                     title="點擊向店員全螢幕展示大圖與外文品名"
                 >
                     {item.image_url && !imgFailed ? (
                         <img
                             src={item.image_url}
                             alt={item.name}
-                            className="w-full h-full object-cover"
+                            className={`w-full h-full object-cover transition-transform duration-300 group-hover/img:scale-110 ${
+                                isFullyBought ? "grayscale-20" : ""
+                            }`}
                             onError={() => setImgFailed(true)}
                         />
                     ) : (
                         <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-rose-500/10 via-amber-500/10 to-blue-500/10 p-2 text-center">
-                            <span className="text-3xl sm:text-4xl drop-shadow-xs mb-0.5">
+                            <span className="text-3xl sm:text-4xl drop-shadow-xs mb-0.5 transition-transform group-hover/img:scale-110">
                                 {getCategoryEmoji(item.category)}
                             </span>
-                            <span className="text-[10px] text-muted-foreground font-bold line-clamp-1">
+                            <span className="text-[10px] text-neutral-500 dark:text-neutral-400 font-bold line-clamp-1">
                                 {item.name.slice(0, 5)}
                             </span>
                         </div>
                     )}
 
                     {/* Quick clerk mode overlay badge */}
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold backdrop-blur-2xs">
+                    <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold backdrop-blur-xs">
                         問店員
                     </div>
                 </div>
@@ -174,10 +177,10 @@ const ShoppingCard = ({
                                                 onViewPlace(item.place_id);
                                             }
                                         }}
-                                        className={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md border truncate ${
+                                        className={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-lg border truncate transition-colors ${
                                             item.place_id
                                                 ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20 cursor-pointer"
-                                                : "bg-muted text-muted-foreground border-border/60"
+                                                : "bg-white/40 dark:bg-neutral-800/40 text-neutral-600 dark:text-neutral-400 border-white/20 dark:border-white/10"
                                         }`}
                                     >
                                         <Store size={11} className="shrink-0" />
@@ -188,30 +191,28 @@ const ShoppingCard = ({
 
                                 {creatorLabel && (
                                     <span
-                                        className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-muted/70 text-muted-foreground border border-border/50 shrink-0"
+                                        className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-white/40 dark:bg-neutral-800/40 text-neutral-500 dark:text-neutral-400 border border-white/20 dark:border-white/10 shrink-0"
                                         title={creatorLabel}
                                     >
-                                        <User size={10} className="shrink-0 text-muted-foreground" />
+                                        <User size={10} className="shrink-0 text-neutral-500" />
                                         <span className="max-w-[85px] truncate">{creatorLabel}</span>
                                     </span>
                                 )}
                             </div>
 
-                            {/* Completed Checkbox (Master Toggle: Check = Full Target, Uncheck = 0 Revert) */}
+                            {/* Completed Checkbox */}
                             <button
                                 type="button"
-                                onClick={() =>
-                                    onToggleComplete(item, !isFullyBought)
-                                }
-                                className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all cursor-pointer ${
+                                onClick={() => onToggleComplete(item, !isFullyBought)}
+                                className={`w-7 h-7 rounded-xl flex items-center justify-center transition-all cursor-pointer active:scale-90 ${
                                     isFullyBought
-                                        ? "bg-emerald-500 text-white shadow-xs"
-                                        : "border-2 border-border/80 hover:border-primary bg-background"
+                                        ? "bg-emerald-500 text-white shadow-emerald-500/30 shadow-md ring-2 ring-emerald-500/20"
+                                        : "border border-white/40 dark:border-white/20 hover:border-primary bg-white/60 dark:bg-neutral-900/60"
                                 }`}
                                 title={isFullyBought ? "點擊取消勾選 (退回未購)" : "點擊標記為全部已購"}
                             >
                                 {isFullyBought && (
-                                    <Check size={14} className="stroke-[3]" />
+                                    <Check size={15} className="stroke-[3] animate-in zoom-in-75 duration-200" />
                                 )}
                             </button>
                         </div>
@@ -229,7 +230,7 @@ const ShoppingCard = ({
                                 <button
                                     type="button"
                                     onClick={handleSpeakName}
-                                    className="p-1 rounded-md text-muted-foreground hover:text-rose-500 hover:bg-rose-500/10 transition-colors shrink-0 cursor-pointer"
+                                    className="p-1 rounded-md text-neutral-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors shrink-0 cursor-pointer"
                                     title="播放當地發音"
                                 >
                                     <Volume2 size={12} />
@@ -239,8 +240,8 @@ const ShoppingCard = ({
 
                         {/* Main Product Name */}
                         <h4
-                            className={`text-sm sm:text-base font-bold text-foreground leading-snug line-clamp-2 ${
-                                isFullyBought ? "line-through text-muted-foreground" : ""
+                            className={`text-sm sm:text-base font-bold text-neutral-900 dark:text-neutral-100 leading-snug line-clamp-2 ${
+                                isFullyBought ? "line-through text-neutral-400 dark:text-neutral-500" : ""
                             }`}
                         >
                             {item.name}
@@ -248,7 +249,7 @@ const ShoppingCard = ({
 
                         {/* Target Specs */}
                         {item.target_specs && (
-                            <div className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                            <div className="text-xs text-neutral-500 dark:text-neutral-400 flex items-center gap-1 mt-0.5">
                                 <Tag size={11} className="shrink-0 text-amber-500" />
                                 <span className="truncate font-medium">{item.target_specs}</span>
                             </div>
@@ -256,15 +257,15 @@ const ShoppingCard = ({
                     </div>
 
                     {/* Quantities & Price Progress Bar */}
-                    <div className="mt-2 space-y-1">
+                    <div className="mt-2 space-y-1.5">
                         <div className="flex items-center justify-between text-xs font-mono">
                             <div className="flex items-center gap-1.5">
-                                <span className="text-[11px] font-bold text-muted-foreground">
+                                <span className="text-[11px] font-bold text-neutral-500 dark:text-neutral-400">
                                     已購：{displayBought} / {targetQty} 件
                                 </span>
                                 {isFullyBought && (
                                     <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 bg-emerald-500/15 px-1.5 py-0.2 rounded-full font-sans">
-                                        ✓ 已達標
+                                        ✓ 已購足
                                     </span>
                                 )}
                             </div>
@@ -273,7 +274,7 @@ const ShoppingCard = ({
                                     <span className="text-xs font-black text-emerald-600 dark:text-emerald-400">
                                         {localSymbol}{lowestPrice.toLocaleString()}
                                         {records.length > 1 && (
-                                            <span className="text-[10px] text-muted-foreground font-normal ml-1">
+                                            <span className="text-[10px] text-neutral-400 font-normal ml-1">
                                                 (均 {localSymbol}{averagePrice})
                                             </span>
                                         )}
@@ -281,7 +282,7 @@ const ShoppingCard = ({
                                     {exchangeRate > 0 &&
                                         itemCurrency.toUpperCase() !==
                                             homeCurrency.toUpperCase() && (
-                                            <span className="text-[10px] font-mono text-muted-foreground">
+                                            <span className="text-[10px] font-mono text-neutral-400">
                                                 ≈ {homeSymbol}
                                                 {Math.round(
                                                     lowestPrice * exchangeRate
@@ -293,17 +294,17 @@ const ShoppingCard = ({
                         </div>
 
                         {/* Progress meter */}
-                        <div className="w-full bg-muted/60 h-1.5 rounded-full overflow-hidden">
+                        <div className="w-full bg-black/5 dark:bg-white/10 h-1.5 rounded-full overflow-hidden">
                             <div
-                                className={`h-full transition-all duration-300 rounded-full ${
+                                className={`h-full transition-all duration-500 rounded-full ${
                                     isFullyBought ? "bg-emerald-500" : "bg-primary"
                                 }`}
                                 style={{ width: `${progressPercent}%` }}
                             />
                         </div>
 
-                        {/* Recipient Color Pills with Quantity Allocations */}
-                        <div className="flex items-center gap-1 overflow-x-auto no-scrollbar pt-1">
+                        {/* Recipient Color Pills */}
+                        <div className="flex items-center gap-1 overflow-x-auto no-scrollbar pt-0.5">
                             {recipients.map((rec) => {
                                 const style = getRecipientColorStyle(rec);
                                 const q = allocations[rec] || allocations["自己"];
@@ -327,7 +328,7 @@ const ShoppingCard = ({
             </div>
 
             {/* Bottom Actions Bar */}
-            <div className="px-3.5 sm:px-4 py-2.5 bg-muted/20 border-t border-border/60 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs">
+            <div className="px-3.5 sm:px-4 py-2.5 bg-white/30 dark:bg-black/20 border-t border-white/20 dark:border-white/10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs">
                 {/* Row 1 on mobile: Store Clerk & Price Compare */}
                 <div className="flex items-center gap-1.5 sm:gap-2">
                     <button
@@ -343,7 +344,7 @@ const ShoppingCard = ({
                     <button
                         type="button"
                         onClick={() => onOpenPriceCompare(item)}
-                        className="flex-1 sm:flex-initial px-3 py-1.5 rounded-xl bg-card border border-border hover:bg-muted text-muted-foreground hover:text-foreground font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-2xs shrink-0 whitespace-nowrap"
+                        className="flex-1 sm:flex-initial px-3 py-1.5 rounded-xl bg-white/50 dark:bg-neutral-800/50 border border-white/30 dark:border-white/10 hover:bg-white text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-2xs shrink-0 whitespace-nowrap"
                         title="門市報價與比價明細"
                     >
                         <Calculator size={13} className="shrink-0" />
@@ -352,8 +353,8 @@ const ShoppingCard = ({
                 </div>
 
                 {/* Row 2 on mobile: Stepper & Management Action Buttons */}
-                <div className="flex items-center justify-between sm:justify-end gap-2 border-t border-border/40 sm:border-t-0 pt-2 sm:pt-0">
-                    {/* Flexible In-Store Bought Stepper (Allows both +1 and -1 revert) */}
+                <div className="flex items-center justify-between sm:justify-end gap-2 border-t border-white/20 dark:border-white/10 sm:border-t-0 pt-2 sm:pt-0">
+                    {/* Flexible In-Store Bought Stepper */}
                     {onUpdateBoughtQty && (
                         <div className="flex items-center rounded-xl bg-emerald-500/10 border border-emerald-500/25 p-0.5 text-emerald-700 dark:text-emerald-300">
                             <button
@@ -391,14 +392,14 @@ const ShoppingCard = ({
                                 className="p-1.5 sm:p-2 rounded-xl text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 transition-colors cursor-pointer"
                                 title="轉入記帳本"
                             >
-                                <Wallet size={16} />
+                                <Wallet size={15} />
                             </button>
                         )}
 
                         <button
                             type="button"
                             onClick={() => onEdit(item)}
-                            className="p-1.5 sm:p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+                            className="p-1.5 sm:p-2 rounded-xl text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-white/50 transition-colors cursor-pointer"
                             title="編輯商品"
                         >
                             <Edit3 size={15} />
@@ -407,7 +408,7 @@ const ShoppingCard = ({
                         <button
                             type="button"
                             onClick={() => onDelete(item)}
-                            className="p-1.5 sm:p-2 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
+                            className="p-1.5 sm:p-2 rounded-xl text-neutral-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer"
                             title="刪除"
                         >
                             <Trash2 size={15} />
@@ -415,7 +416,7 @@ const ShoppingCard = ({
                     </div>
                 </div>
             </div>
-        </div>
+        </GlassCard>
     );
 };
 

@@ -9,6 +9,7 @@ export interface GlassButtonProps
   icon?: React.ReactNode;
   iconPosition?: 'left' | 'right';
   children?: React.ReactNode;
+  destructive?: boolean;
 }
 
 const variantStyles = {
@@ -32,6 +33,12 @@ const variantStyles = {
     border border-transparent
   `,
   danger: `
+    bg-gradient-to-r from-rose-500 to-red-600
+    hover:from-rose-400 hover:to-red-500
+    text-white shadow-md shadow-rose-500/25
+    border border-white/20
+  `,
+  destructive: `
     bg-gradient-to-r from-rose-500 to-red-600
     hover:from-rose-400 hover:to-red-500
     text-white shadow-md shadow-rose-500/25
@@ -62,19 +69,20 @@ export const GlassButton = forwardRef<HTMLButtonElement, GlassButtonProps>(
     ref
   ) => {
     const isDisabled = disabled || loading;
+    const resolvedVariant = (variant as string) === 'destructive' ? 'danger' : variant;
 
     return (
       <button
         ref={ref}
         disabled={isDisabled}
         className={`
-          inline-flex items-center justify-center
+          inline-flex items-center justify-center whitespace-nowrap
           transition-all duration-200 ease-out
           active:scale-[0.98]
           focus:outline-none focus:ring-2 focus:ring-sky-500/40
           disabled:opacity-50 disabled:pointer-events-none disabled:active:scale-100
           cursor-pointer
-          ${variantStyles[variant]}
+          ${variantStyles[resolvedVariant as keyof typeof variantStyles] || variantStyles.secondary}
           ${sizeStyles[size]}
           ${className}
         `}
@@ -86,7 +94,7 @@ export const GlassButton = forwardRef<HTMLButtonElement, GlassButtonProps>(
           icon && iconPosition === 'left' && <span className="shrink-0">{icon}</span>
         )}
 
-        {children && <span>{children}</span>}
+        {children && <span className="inline-flex items-center gap-1.5 whitespace-nowrap">{children}</span>}
 
         {!loading && icon && iconPosition === 'right' && (
           <span className="shrink-0">{icon}</span>
