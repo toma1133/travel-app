@@ -20,6 +20,7 @@ import useTripMemberMutations from "../hooks/tripMember/UseTripMemberMutations";
 import LoadingMask from "../components/common/LoadingMask";
 import BookshelfSkeleton from "../components/common/skeletons/BookshelfSkeleton";
 import useTripsMembersBatch from "../hooks/tripMember/UseTripsMembersBatch";
+import { ImageVaultDB } from "../services/storage/ImageVaultDB";
 
 const BookshelfPage = () => {
     const { session } = useAuth();
@@ -281,6 +282,9 @@ const BookshelfPage = () => {
             switch (deleteType) {
                 case "trip":
                     if (!tripToDelete) return;
+                    await ImageVaultDB.deleteImagesByTrip(tripToDelete.id).catch((err) => {
+                        console.warn("Cascade delete trip images warning:", err);
+                    });
                     await removeTrip.mutateAsync(tripToDelete.id);
                     break;
             }
