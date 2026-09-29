@@ -20,6 +20,7 @@ import AccommodationModal from "../../components/info/AccommodationModal";
 import CarRentalList from "../../components/info/CarRentalList";
 import CarRentalModal from "../../components/info/CarRentalModal";
 import ChecklistSection from "../../components/info/ChecklistSection";
+import { VoucherWalletSection } from "../../components/info/voucher/VoucherWalletSection";
 import PreviewPlaceModal from "../../components/itinerary/PreviewPlaceModal";
 import PlaceCard from "../../components/place/PlaceCard";
 import { placeRepo } from "../../services/repositories/PlaceRepo";
@@ -518,6 +519,11 @@ const InfoPage = ({
                     onAddBtnClick={handleOpenCreateFlightModal}
                     onDeleteBtnClick={handleOpenDeleteFlightModal}
                     onEditBtnClick={handleOpenEditFlightModal}
+                />
+                <VoucherWalletSection
+                    tripId={tripId || "default"}
+                    isEditing={isEditing}
+                    isPrinting={isPrinting}
                 />
                 <AccommodationList
                     accommodations={accommodations}

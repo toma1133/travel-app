@@ -1,6 +1,6 @@
 # 🎟️ Phase 2: 電子票券與 QR Code 集中票夾 (Voucher & Pass Wallet)
 
-> **狀態**：規劃中 (Ready for Implementation)  
+> **狀態**：已完成 (Completed)  
 > **前置需求**：[Phase 1: 本地圖片引擎與容量管理](file:///d:/Projects/travel-app/docs/enhancements/PHASE_1_STORAGE_AND_IMAGE_VAULT.md)  
 > **核心目標**：在 `InfoPage` 打造統一的電子票夾保險箱，將散落相簿各處的 Visit Japan Web、機票 QR、Klook 門票、eSIM 截圖集中管理，支援離線存取與全螢幕高對比刷碼。
 
@@ -44,7 +44,7 @@
 
 ## 4. 驗收標準 (Acceptance Criteria)
 
-1. [ ] 可新增一筆「Visit Japan Web 申報碼」，貼上網址自動生成清晰向量 QR 碼，無需上傳任何圖檔。
-2. [ ] 可新增一筆門票憑證，拍照上傳後圖片自動壓縮並存入本地 IndexedDB。
-3. [ ] 點擊卡片彈出全螢幕刷碼介面，在手機與電腦端均能完美置中展示。
-4. [ ] 拔除網路（進入飛航模式），重新整理頁面後，票夾依然能正常讀取與出示所有 QR 碼。
+1. [x] 可新增一筆「Visit Japan Web 申報碼」，貼上網址自動生成清晰向量 QR 碼，無需上傳任何圖檔。
+2. [x] 可新增一筆門票憑證，拍照上傳後圖片自動壓縮並存入本地 IndexedDB。
+3. [x] 點擊卡片彈出全螢幕刷碼介面，在手機與電腦端均能完美置中展示。
+4. [x] 拔除網路（進入飛航模式），重新整理頁面後，票夾依然能正常讀取與出示所有 QR 碼。
