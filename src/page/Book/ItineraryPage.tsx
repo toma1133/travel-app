@@ -7,8 +7,7 @@ import useAuth from "../../hooks/UseAuth";
 import useMediaQuery from "../../hooks/UseMediaQuery";
 import useItinerarys from "../../hooks/itinerary/UseItinerarys";
 import useItineraryMutations from "../../hooks/itinerary/UseItineraryMutations";
-import { placeRepo } from "../../services/repositories/PlaceRepo";
-import { toPlaceVM } from "../../services/mappers/PlaceMapper";
+import useTripPlacesBatch from "../../hooks/place/UseTripPlacesBatch";
 import SectionHeader from "../../components/common/SectionHeader";
 import DeleteModal from "../../components/common/DeleteModal";
 import ItineraryList from "../../components/itinerary/ItineraryList";
@@ -96,87 +95,60 @@ const ItineraryPage = ({
         });
     }, [itinerarys]);
 
-    // 當行程變更時，批次抓取該行程所有活動有關聯的 Place 地標 (善用 快取 與 單次批次查詢 避免額外 API 消耗)
+    // 收集行程中所有有連結的 Place ID
+    const allPlaceIds = useMemo(() => {
+        if (!Array.isArray(itinerarys)) return [];
+        const ids = new Set<string>();
+        itinerarys.forEach((day) => {
+            day.activities?.forEach((act) => {
+                if (act.linkId) ids.add(act.linkId);
+            });
+        });
+        return Array.from(ids);
+    }, [itinerarys]);
+
+    // 透過 React Query 快取批次取得所有關聯地標
+    const { placeMap: linkedPlacesMap, isLoading: isPlacesBatchLoading } = useTripPlacesBatch(
+        tripId,
+        allPlaceIds
+    );
+
+    // 當地標或行程變更時，分群每日地標 (嚴格僅納入具備有效 GPS 經緯度之地標)
     useEffect(() => {
         if (!Array.isArray(itinerarys)) return;
-        let isMounted = true;
 
-        const fetchLinkedPlacesByDay = async () => {
-            const allPlaceIds = new Set<string>();
+        if (allPlaceIds.length === 0) {
+            setItineraryPlacesMap({ all: [] });
+            setAllPlacesMap({});
+            return;
+        }
 
-            // 1. 收集行程中所有有連結的 Place ID
-            itinerarys.forEach((day) => {
-                day.activities?.forEach((act) => {
-                    if (act.linkId) allPlaceIds.add(act.linkId);
-                });
-            });
+        const dayMap: Record<string, PlaceVM[]> = {};
+        const allVMs: PlaceVM[] = [];
 
-            if (allPlaceIds.size === 0) {
-                if (isMounted) {
-                    setItineraryPlacesMap({ all: [] });
-                    setAllPlacesMap({});
-                }
-                return;
-            }
-
-            // 2. 一次性批次向 repo 請求（經由記憶體快取或單次併發）
-            setIsPageLoading(true);
-            try {
-                const placeIdList = Array.from(allPlaceIds);
-                // @ts-ignore - getByIds added to PlaceRepo
-                const rows = await placeRepo.getByIds(placeIdList);
-                
-                const placeMapById = new Map<string, PlaceVM>();
-                const placeRecord: Record<string, PlaceVM> = {};
-                rows.forEach((r: any) => {
-                    if (r) {
-                        const vm = toPlaceVM(r);
-                        placeMapById.set(r.id, vm);
-                        placeRecord[r.id] = vm;
+        itinerarys.forEach((day) => {
+            const dayVMs: PlaceVM[] = [];
+            day.activities?.forEach((act) => {
+                if (act.linkId && linkedPlacesMap[act.linkId]) {
+                    const vm = linkedPlacesMap[act.linkId];
+                    if (
+                        typeof vm.lat === "number" &&
+                        typeof vm.lng === "number" &&
+                        !isNaN(vm.lat) &&
+                        !isNaN(vm.lng)
+                    ) {
+                        dayVMs.push(vm);
+                        allVMs.push(vm);
                     }
-                });
-
-                // 3. 組合每日的 Place 陣列與全部天數陣列 (嚴格僅納入具備有效 GPS 經緯度的地點)
-                const dayMap: Record<string, PlaceVM[]> = {};
-                const allVMs: PlaceVM[] = [];
-
-                itinerarys.forEach((day) => {
-                    const dayVMs: PlaceVM[] = [];
-                    day.activities?.forEach((act) => {
-                        if (act.linkId && placeMapById.has(act.linkId)) {
-                            const vm = placeMapById.get(act.linkId)!;
-                            if (
-                                typeof vm.lat === "number" &&
-                                typeof vm.lng === "number" &&
-                                !isNaN(vm.lat) &&
-                                !isNaN(vm.lng)
-                            ) {
-                                dayVMs.push(vm);
-                                allVMs.push(vm);
-                            }
-                        }
-                    });
-                    dayMap[day.id] = dayVMs;
-                });
-
-                dayMap["all"] = allVMs;
-
-                if (isMounted) {
-                    setItineraryPlacesMap(dayMap);
-                    setAllPlacesMap(placeRecord);
                 }
-            } finally {
-                if (isMounted) {
-                    setIsPageLoading(false);
-                }
-            }
-        };
+            });
+            dayMap[day.id] = dayVMs;
+        });
 
-        fetchLinkedPlacesByDay();
-        return () => {
-            isMounted = false;
-        };
-    }, [itinerarys]);
+        dayMap["all"] = allVMs;
+        setItineraryPlacesMap(dayMap);
+        setAllPlacesMap(linkedPlacesMap);
+    }, [itinerarys, allPlaceIds, linkedPlacesMap]);
 
     const [hoveredPlace, setHoveredPlace] = useState<{
         id: string | null;

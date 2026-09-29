@@ -7,7 +7,7 @@ export type PlaceRowUpdate = TablesUpdate<"places">;
 export type PlaceCategory = {
     id: string;
     label: string;
-}
+};
 
 export type RecommendedItem = {
     name: string;
@@ -18,6 +18,13 @@ export type RecommendedItem = {
     note?: string | null;
     image_url?: string | null;
 };
+
+export type PlaceBookingStatus =
+    | "required"
+    | "recommended"
+    | "none"
+    | "walk_in"
+    | string;
 
 export type PlaceInfo = {
     open?: string | null;
@@ -33,7 +40,7 @@ export type PlaceInfo = {
     rating_source?: string | null;
     stay_duration?: string | null;
     booking_url?: string | null;
-    booking_status?: "required" | "recommended" | "none" | "walk_in" | string | null;
+    booking_status?: PlaceBookingStatus | null;
     transit_access?: string | null;
     payment_methods?: string[] | string | null;
     amenities?: string[] | string | null;
@@ -47,3 +54,27 @@ export type PlaceVM = Omit<PlaceRow, "type" | "tags" | "info"> & {
     tags: string | null;
 };
 
+/**
+ * 建立空白初始 PlaceInfo 物件
+ */
+export const createDefaultPlaceInfo = (): PlaceInfo => ({
+    open: "",
+    closed_days: "",
+    check_in: "",
+    check_out: "",
+    native_name: "",
+    price: "",
+    loc: "",
+    phone: "",
+    rating: null,
+    rating_count: null,
+    rating_source: "",
+    stay_duration: "",
+    booking_url: "",
+    booking_status: "none",
+    transit_access: "",
+    payment_methods: [],
+    amenities: [],
+    website_url: "",
+    recommended_items: [],
+});

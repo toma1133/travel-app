@@ -26,13 +26,9 @@ import {
     getCategoryTypeName,
     DEFAULT_CATEGORY_COLORS,
 } from "../../constants/Categories";
-import {
-    fetchDailyWeather,
-    getWeatherInfoByCode,
-    WeatherForecastData,
-} from "../../services/WeatherService";
-import { placeRepo } from "../../services/repositories/PlaceRepo";
-import { toPlaceVM } from "../../services/mappers/PlaceMapper";
+import { getWeatherInfoByCode } from "../../services/WeatherService";
+import useDailyWeather from "../../hooks/weather/UseDailyWeather";
+import useTripPlacesBatch from "../../hooks/place/UseTripPlacesBatch";
 import { getBusinessStatus, getScheduledMoment } from "../../utils/OpeningHoursUtil";
 import { detectLanguage, playPronunciation } from "../../utils/SpeechLanguageUtil";
 
@@ -88,98 +84,59 @@ const ItineraryItem = ({
             ? theme.accent.replace("bg-", "text-")
             : "text-rose-600 dark:text-rose-400");
 
-    const [weatherData, setWeatherData] = useState<WeatherForecastData | null>(null);
-    const [isWeatherLoading, setIsWeatherLoading] = useState(false);
-    const [localPlaceMap, setLocalPlaceMap] = useState<Record<string, PlaceVM>>({});
     const [speakingId, setSpeakingId] = useState<string | null>(null);
 
-    const placeMap =
-        externalPlaceMap && Object.keys(externalPlaceMap).length > 0
-            ? externalPlaceMap
-            : localPlaceMap;
-
-    // 載入當天活動所有已連結的地點資料 (當父層未傳入時作為 fallback)
-    useEffect(() => {
-        if (externalPlaceMap && Object.keys(externalPlaceMap).length > 0) return;
-
-        const linkIds = (itinerary.activities || [])
+    // 收集當天活動所有已連結的地點 ID
+    const activityLinkIds = useMemo(() => {
+        return (itinerary.activities || [])
             .map((a) => a.linkId)
             .filter(Boolean) as string[];
+    }, [itinerary.activities]);
 
-        if (linkIds.length === 0) {
-            setLocalPlaceMap({});
-            return;
-        }
+    const hasExternalMap = Boolean(externalPlaceMap && Object.keys(externalPlaceMap).length > 0);
 
-        let isMounted = true;
-        if (placeRepo.getByIds) {
-            placeRepo
-                .getByIds(linkIds)
-                .then((places) => {
-                    if (isMounted) {
-                        const map: Record<string, PlaceVM> = {};
-                        (places || []).forEach((p) => {
-                            if (p) map[p.id] = toPlaceVM(p);
-                        });
-                        setLocalPlaceMap(map);
-                    }
-                })
-                .catch(console.error);
-        }
+    // 當父層未傳入 placeMap 時，透過 React Query 快取批次取得地標
+    const { placeMap: fallbackPlaceMap } = useTripPlacesBatch(
+        itinerary.trip_id,
+        hasExternalMap ? [] : activityLinkIds
+    );
 
-        return () => {
-            isMounted = false;
-        };
-    }, [itinerary.activities, externalPlaceMap]);
+    const placeMap = hasExternalMap ? externalPlaceMap! : fallbackPlaceMap;
 
-    // 載入天氣預報
-    useEffect(() => {
-        if (isPrinting || !itinerary.date) {
-            setWeatherData(null);
-            setIsWeatherLoading(false);
-            return;
-        }
-
-        let isMounted = true;
-        setWeatherData(null);
-        setIsWeatherLoading(true);
-
-        let targetLat = 25.033;
-        let targetLng = 121.565;
-
-        const resolveLocationAndFetch = async () => {
-            if (Array.isArray(itinerary.activities)) {
-                for (const act of itinerary.activities) {
-                    if (act.linkId) {
-                        try {
-                            const pRow = await placeRepo.getById(act.linkId);
-                            if (pRow && typeof pRow.lat === "number" && typeof pRow.lng === "number") {
-                                targetLat = pRow.lat;
-                                targetLng = pRow.lng;
-                                break;
-                            }
-                        } catch (e) {
-                            // Ignore error
-                        }
+    // 解析當天天氣經緯度 (依據當日第一個有座標的地標)
+    const weatherCoordinates = useMemo(() => {
+        let lat = 25.033;
+        let lng = 121.565;
+        if (Array.isArray(itinerary.activities)) {
+            for (const act of itinerary.activities) {
+                if (act.linkId && placeMap[act.linkId]) {
+                    const p = placeMap[act.linkId];
+                    if (
+                        typeof p.lat === "number" &&
+                        typeof p.lng === "number" &&
+                        !isNaN(p.lat) &&
+                        !isNaN(p.lng)
+                    ) {
+                        lat = p.lat;
+                        lng = p.lng;
+                        break;
                     }
                 }
             }
+        }
+        return { lat, lng };
+    }, [itinerary.activities, placeMap]);
 
-            if (isMounted) {
-                const res = await fetchDailyWeather(targetLat, targetLng, itinerary.date);
-                if (isMounted) {
-                    setWeatherData(res);
-                    setIsWeatherLoading(false);
-                }
-            }
-        };
-
-        resolveLocationAndFetch();
-
-        return () => {
-            isMounted = false;
-        };
-    }, [itinerary.date, itinerary.activities, isPrinting]);
+    // 透過 React Query 自動快取天氣預報
+    const {
+        weather: weatherData,
+        isLoading: isWeatherLoading,
+    } = useDailyWeather(
+        weatherCoordinates.lat,
+        weatherCoordinates.lng,
+        itinerary.date,
+        { enabled: !isPrinting && !!itinerary.date }
+    );
 
     const handleSpeakPlace = (place: PlaceVM, e: React.MouseEvent) => {
         e.stopPropagation();

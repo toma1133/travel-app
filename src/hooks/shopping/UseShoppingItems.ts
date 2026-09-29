@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import { shoppingRepo } from "../../services/repositories/ShoppingRepo";
 import { supabaseClient } from "../../services/SupabaseClient";
+import { QUERY_KEYS } from "../../constants/QueryKeys";
 import type { ShoppingItemVM } from "../../models/types/ShoppingTypes";
 
 const useShoppingItems = (tripId: string | undefined) => {
@@ -22,7 +23,7 @@ const useShoppingItems = (tripId: string | undefined) => {
                     filter: `trip_id=eq.${tripId}`,
                 },
                 () => {
-                    qc.invalidateQueries({ queryKey: ["shopping_items", tripId] });
+                    qc.invalidateQueries({ queryKey: QUERY_KEYS.shopping.list(tripId) });
                 }
             )
             .subscribe();
@@ -33,11 +34,12 @@ const useShoppingItems = (tripId: string | undefined) => {
     }, [tripId, qc]);
 
     return useQuery<ShoppingItemVM[]>({
-        queryKey: ["shopping_items", tripId],
+        queryKey: QUERY_KEYS.shopping.list(tripId),
         queryFn: async () => {
             const rows = await shoppingRepo.list(tripId);
             return rows;
         },
+        enabled: !!tripId,
         staleTime: 30_000,
         placeholderData: keepPreviousData,
     });

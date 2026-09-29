@@ -1,13 +1,11 @@
-import { defineConfig, loadEnv } from "vite";
+import { defineConfig } from "vite";
 import path from "node:path";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
 import tailwindcss from "@tailwindcss/vite";
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => {
-    const env = loadEnv(mode, process.cwd());
-
+export default defineConfig(() => {
     return {
         base: process.env.NODE_ENV === "production" ? "/travel-app/" : "/",
         envPrefix: ["VITE_", "SUPABASE_"],

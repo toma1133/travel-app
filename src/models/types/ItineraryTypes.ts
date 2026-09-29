@@ -28,7 +28,7 @@ export type TransitDetails = {
     gate?: string; // 登機門/航廈 (例如 "T1 B5登機門")
 };
 
-export type ItineraryActivitiy = {
+export type ItineraryActivity = {
     time: string;
     title: string;
     desc: string;
@@ -43,6 +43,9 @@ export type ItineraryActivitiy = {
     fixedReason?: "hotel" | "reservation" | "manual"; // 固定原因 (飯店放行李/特定預約/手動鎖定)
 };
 
+/** 相容舊程式碼拼寫 (相容別名) */
+export type ItineraryActivitiy = ItineraryActivity;
+
 export type ItineraryVM = Omit<ItineraryRow, "activities"> & {
-    activities: ItineraryActivitiy[] | null;
+    activities: ItineraryActivity[] | null;
 };

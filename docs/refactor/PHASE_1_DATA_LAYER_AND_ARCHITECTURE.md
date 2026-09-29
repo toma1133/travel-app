@@ -1,6 +1,6 @@
 # ⚙️ Phase 1: 架構解耦與資料層統整 (Data Layer & Architecture)
 
-> **狀態**：待執行 (Pending)  
+> **狀態**：已完成 (Completed)  
 > **前置需求**：[Phase 0: Design System & Liquid Glass 基礎建設](file:///d:/Projects/travel-app/docs/refactor/PHASE_0_DESIGN_SYSTEM_AND_LIQUID_GLASS.md) 完成  
 > **核心任務**：掃除 View 元件直接存取 Repository 的壞味道、統整 React Query 快取鍵與資料流、清理資料型別。
 
@@ -88,9 +88,9 @@ export const QUERY_KEYS = {
 
 ## 5. 驗收標準 (Acceptance Criteria)
 
-- [ ] View 元件中不再有為了拉取資料而直接呼叫 `repo.getByIds` 的裸 `useEffect`，全部透過 React Query Hook 統一取得。
-- [ ] 多個元件查詢相同地標清單時，在 Network 面板中只發出一次查詢，隨後命中 React Query 快取。
-- [ ] 執行 `npm run build` 通過，TypeScript 型別完全吻合。
+- [x] View 元件中不再有為了拉取資料而直接呼叫 `repo.getByIds` 的裸 `useEffect`，全部透過 React Query Hook 統一取得。
+- [x] 多個元件查詢相同地標清單時，在 Network 面板中只發出一次查詢，隨後命中 React Query 快取。
+- [x] 執行 `npm run build` 通過，TypeScript 型別完全吻合。
 
 ---
 
