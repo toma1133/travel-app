@@ -44,7 +44,17 @@
     --border: 0 0% 89.8%;
     --input: 0 0% 89.8%;
     --ring: 0 0% 9%;
-    --radius: 0.5rem;
+    --radius: 0.75rem;
+
+    /* Liquid Glass Tokens - Light Mode */
+    --glass-bg: rgba(255, 255, 255, 0.72);
+    --glass-bg-subtle: rgba(255, 255, 255, 0.45);
+    --glass-bg-elevated: rgba(255, 255, 255, 0.88);
+    --glass-border: rgba(255, 255, 255, 0.65);
+    --glass-border-subtle: rgba(255, 255, 255, 0.35);
+    --glass-shadow: 0 12px 36px 0 rgba(0, 0, 0, 0.06), 0 4px 12px 0 rgba(0, 0, 0, 0.03);
+    --glass-shadow-lg: 0 20px 48px -4px rgba(0, 0, 0, 0.12), 0 8px 16px -2px rgba(0, 0, 0, 0.04);
+    --glass-specular: inset 0 1px 1px 0 rgba(255, 255, 255, 0.9);
   }
  
   .dark {
@@ -67,6 +77,16 @@
     --border: 0 0% 14.9%;
     --input: 0 0% 14.9%;
     --ring: 0 0% 83.1%;
+
+    /* Liquid Glass Tokens - Dark Mode */
+    --glass-bg: rgba(24, 24, 28, 0.68);
+    --glass-bg-subtle: rgba(30, 30, 36, 0.45);
+    --glass-bg-elevated: rgba(36, 36, 44, 0.85);
+    --glass-border: rgba(255, 255, 255, 0.12);
+    --glass-border-subtle: rgba(255, 255, 255, 0.06);
+    --glass-shadow: 0 14px 40px 0 rgba(0, 0, 0, 0.45), 0 4px 14px 0 rgba(0, 0, 0, 0.3);
+    --glass-shadow-lg: 0 24px 56px -6px rgba(0, 0, 0, 0.6), 0 10px 20px -2px rgba(0, 0, 0, 0.4);
+    --glass-specular: inset 0 1px 1px 0 rgba(255, 255, 255, 0.12);
   }
 }
  
@@ -128,7 +148,8 @@
   background: rgba(0, 0, 0, 0.4) !important;
   color: white !important;
   border-radius: 9999px !important;
-  backdrop-filter: blur(4px) !important;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   padding: 0 !important;
   font-size: 14px !important;
   font-weight: bold !important;
@@ -141,39 +162,84 @@
   color: white !important;
 }
 
-/* iOS Liquid Glass Aesthetics */
+/* ==========================================================================
+   Liquid Glass Aesthetics & Utilities
+   ========================================================================== */
+
+/* Standard Liquid Glass Panel */
+.liquid-glass,
 .glass-panel {
-  background: rgba(255, 255, 255, 0.75);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04), inset 0 1px 1px 0 rgba(255, 255, 255, 0.6);
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px) saturate(190%);
+  -webkit-backdrop-filter: blur(20px) saturate(190%);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow), var(--glass-specular);
 }
 
-.dark .glass-panel {
-  background: rgba(24, 24, 27, 0.65);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35), inset 0 1px 1px 0 rgba(255, 255, 255, 0.05);
+/* Subtle Glass (Secondary surfaces, cards in active panels) */
+.liquid-glass-subtle {
+  background: var(--glass-bg-subtle);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  border: 1px solid var(--glass-border-subtle);
+  box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.03);
 }
 
+/* Elevated Glass (Modals, Dropdowns, Floating bars, Popovers) */
+.liquid-glass-elevated {
+  background: var(--glass-bg-elevated);
+  backdrop-filter: blur(28px) saturate(210%);
+  -webkit-backdrop-filter: blur(28px) saturate(210%);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow-lg), var(--glass-specular);
+}
+
+/* Glass Pill (Badges, Floating controls, Chips) */
+.liquid-glass-pill,
 .glass-pill {
-  background: rgba(255, 255, 255, 0.65);
-  backdrop-filter: blur(12px) saturate(160%);
-  -webkit-backdrop-filter: blur(12px) saturate(160%);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+  background: var(--glass-bg-subtle);
+  backdrop-filter: blur(14px) saturate(170%);
+  -webkit-backdrop-filter: blur(14px) saturate(170%);
+  border: 1px solid var(--glass-border-subtle);
+  box-shadow: 0 2px 10px 0 rgba(0, 0, 0, 0.04), var(--glass-specular);
+  border-radius: 9999px;
 }
 
-.dark .glass-pill {
-  background: rgba(39, 39, 42, 0.55);
-  backdrop-filter: blur(12px) saturate(160%);
-  -webkit-backdrop-filter: blur(12px) saturate(160%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+/* Interactive Floating Hover for Glass Cards */
+.liquid-glass-interactive {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              background 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+.liquid-glass-interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--glass-shadow-lg), var(--glass-specular);
+  border-color: rgba(255, 255, 255, 0.85);
+}
+
+.dark .liquid-glass-interactive:hover {
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+/* Micro Animations */
+@keyframes modal-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-glass-modal-in {
+  animation: modal-scale-in 0.24s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Print Overrides */
 @media print {
   :root,
   .dark,
@@ -195,6 +261,10 @@
     color: #000000 !important;
   }
 
+  .liquid-glass,
+  .liquid-glass-subtle,
+  .liquid-glass-elevated,
+  .liquid-glass-pill,
   .glass-panel,
   .glass-pill {
     background: #ffffff !important;

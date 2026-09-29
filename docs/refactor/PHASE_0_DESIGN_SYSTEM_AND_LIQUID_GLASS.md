@@ -1,6 +1,6 @@
 # 💎 Phase 0: Design System & Liquid Glass 基礎建設
 
-> **狀態**：待執行 (Pending)  
+> **狀態**：已完成 (Completed)  
 > **前置需求**：無  
 > **核心任務**：建立全站統一的 Liquid Glass（液態水滴毛玻璃）設計語言、Tokens 與高頻通用原子元件。
 
@@ -108,10 +108,10 @@
 
 ## 5. 驗收標準 (Acceptance Criteria)
 
-- [ ] `npm run build` 順利通過，無任何 TypeScript 編譯錯誤或 lint 警告。
-- [ ] 支援亮色與暗色模式無縫切換，毛玻璃在淺色底與深色底上文字對比均符合 WCAG AA 規範。
-- [ ] 支援桌面與行動裝置（包括 iOS Safari `-webkit-backdrop-filter` 相容性）。
-- [ ] 列印模式（`@media print`）下毛玻璃能自動平整化為清晰白底黑字。
+- [x] `npm run build` 順利通過，無任何 TypeScript 編譯錯誤或 lint 警告。
+- [x] 支援亮色與暗色模式無縫切換，毛玻璃在淺色底與深色底上文字對比均符合 WCAG AA 規範。
+- [x] 支援桌面與行動裝置（包括 iOS Safari `-webkit-backdrop-filter` 相容性）。
+- [x] 列印模式（`@media print`）下毛玻璃能自動平整化為清晰白底黑字。
 
 ---
 

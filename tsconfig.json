@@ -8,6 +8,11 @@
         "jsx": "react-jsx",
         "types": ["vite/client", "node"],
         "forceConsistentCasingInFileNames": true,
-        "skipLibCheck": true
+        "skipLibCheck": true,
+        "baseUrl": ".",
+        "paths": {
+            "@/*": ["src/*"],
+            "~/*": ["src/*"]
+        }
     }
 }
