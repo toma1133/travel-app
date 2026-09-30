@@ -9,7 +9,7 @@ import {
     Calculator,
     Receipt,
 } from "lucide-react";
-import { GlassModal, GlassButton, GlassSegmentedControl } from "../ui";
+import { GlassModal, GlassSegmentedControl } from "../ui";
 import { CategoryCustomSelect } from "../common/CategoryCustomSelect";
 import { formatThousands, handleThousandsInputChange, parseThousandsToNumber } from "../../utils/numberFormat";
 import type { BudgetRow } from "../../models/types/BudgetTypes";
@@ -82,16 +82,24 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
             : 0;
 
     return (
-        <GlassModal isOpen={true} onClose={() => onCloseBtnClick({} as any)} maxWidth="lg">
+        <GlassModal isOpen={true} onClose={() => onCloseBtnClick({} as any)} maxWidth="md" className="md:!max-w-[460px]">
             <GlassModal.Header
                 title={
-                    <div className="flex items-center gap-2">
-                        <Receipt size={20} className="text-primary" />
-                        <span>{mode === "create" ? "新增支出帳目" : "編輯支出帳目"}</span>
+                    <div className="flex items-center justify-center gap-1.5">
+                        <Receipt size={17} className="text-primary shrink-0" />
+                        <span className="truncate">{mode === "create" ? "新增支出帳目" : "編輯支出帳目"}</span>
                     </div>
                 }
-                subtitle="出國極速記帳，支援雙幣別與旅伴即時分攤試算"
                 onClose={() => onCloseBtnClick({} as any)}
+                rightAction={
+                    <button
+                        type="submit"
+                        form="transaction-form"
+                        className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-full shadow-xs active:scale-95 transition-all cursor-pointer shrink-0"
+                    >
+                        {mode === "create" ? "完成" : "儲存"}
+                    </button>
+                }
             />
 
             <GlassModal.Body className="p-4 sm:p-6 space-y-4 max-h-[75vh] overflow-y-auto no-scrollbar">
@@ -118,13 +126,13 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                     {activeTab === "basic" && (
                         <div className="space-y-4">
                             {/* 💰 Hero 金額輸入區塊 (Liquid Glass 醒目卡片) */}
-                            <div className="bg-white/40 dark:bg-black/30 border border-white/20 dark:border-white/10 rounded-3xl p-4 sm:p-5 shadow-xs backdrop-blur-md flex flex-col gap-2">
+                            <div className="bg-gradient-to-br from-white to-slate-50/90 dark:from-neutral-900/90 dark:to-neutral-950/90 border border-slate-200/90 dark:border-white/10 rounded-3xl p-4 sm:p-5 shadow-sm backdrop-blur-md flex flex-col gap-2">
                                 <div className="flex items-center justify-between">
-                                    <span className="text-[11px] font-bold text-neutral-500 uppercase tracking-wider">
+                                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                                         支出金額
                                     </span>
                                     {/* 幣別切換膠囊 */}
-                                    <div className="flex bg-black/5 dark:bg-white/5 p-0.5 rounded-xl border border-white/20 dark:border-white/10">
+                                    <div className="flex bg-slate-100 dark:bg-white/5 p-0.5 rounded-xl border border-slate-200 dark:border-white/10">
                                         {[setting?.localCurrency, setting?.homeCurrency]
                                             .filter(Boolean)
                                             .map((curr) => (
@@ -134,8 +142,8 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                                                     onClick={() => onFormDataChange("currency_code", curr)}
                                                     className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
                                                         formData.currency_code === curr
-                                                            ? "bg-primary text-primary-foreground shadow-2xs"
-                                                            : "text-neutral-500 hover:text-neutral-900 dark:hover:text-white"
+                                                            ? "bg-blue-600 text-white shadow-2xs"
+                                                            : "text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white"
                                                     }`}
                                                 >
                                                     {curr}
@@ -161,7 +169,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                                 </div>
 
                                 {totalSplitParticipants > 1 && amountNum > 0 && (
-                                    <div className="pt-2 border-t border-white/20 dark:border-white/10 flex items-center gap-1.5 text-xs text-blue-600 dark:text-blue-400 font-mono">
+                                    <div className="pt-2 border-t border-black/[0.06] dark:border-white/[0.08] flex items-center gap-1.5 text-xs text-blue-600 dark:text-blue-400 font-mono">
                                         <Calculator size={13} />
                                         <span>
                                             共 {totalSplitParticipants} 人分攤，每人約{" "}
@@ -176,10 +184,10 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                                 <span className="text-[11px] font-bold text-neutral-500 uppercase tracking-wider px-1">
                                     交易明細
                                 </span>
-                                <div className="bg-white/40 dark:bg-black/25 border border-white/20 dark:border-white/10 rounded-2xl overflow-hidden divide-y divide-white/20 dark:divide-white/10 backdrop-blur-md">
+                                <div className="bg-white/90 dark:bg-neutral-900/70 border border-black/10 dark:border-white/10 rounded-2xl overflow-hidden divide-y divide-black/[0.06] dark:divide-white/[0.08] backdrop-blur-md shadow-xs">
                                     {/* 標題 */}
                                     <div className="p-3.5 flex items-center gap-3">
-                                        <span className="text-xs font-bold text-neutral-500 w-16 shrink-0">
+                                        <span className="text-xs font-bold text-neutral-700 dark:text-neutral-300 w-16 shrink-0">
                                             名稱 <span className="text-rose-500">*</span>
                                         </span>
                                         <input
@@ -206,7 +214,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                                     <div className="p-3.5 flex items-center justify-between gap-3">
                                         <div className="flex items-center gap-2">
                                             <Wallet size={14} className="text-emerald-500 shrink-0" />
-                                            <span className="text-xs font-bold text-neutral-500">
+                                            <span className="text-xs font-bold text-neutral-700 dark:text-neutral-300">
                                                 支付方式
                                             </span>
                                         </div>
@@ -215,14 +223,14 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                                             name="payment_method_id"
                                             value={formData.payment_method_id || ""}
                                             onChange={(e) => onFormDataChange("payment_method_id", e.target.value)}
-                                            className="bg-white/70 dark:bg-neutral-900/60 border border-white/30 dark:border-white/15 rounded-xl px-2.5 py-1.5 text-xs text-neutral-900 dark:text-neutral-100 font-medium outline-none cursor-pointer"
+                                            className="bg-neutral-50 dark:bg-neutral-800 border border-black/15 dark:border-white/15 rounded-xl px-3 py-1.5 text-xs text-neutral-900 dark:text-neutral-100 font-medium outline-none cursor-pointer shadow-2xs"
                                         >
-                                            <option value="" disabled>
+                                            <option value="" disabled className="bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100">
                                                 請選擇支付方式
                                             </option>
                                             {Array.isArray(paymentMethods) &&
                                                 paymentMethods.map((pm) => (
-                                                    <option key={pm.id} value={pm.id} className="bg-background text-foreground">
+                                                    <option key={pm.id} value={pm.id} className="bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100">
                                                         {pm.type === "credit" ? "💳 " : "💵 "}
                                                         {pm.name}
                                                     </option>
@@ -234,7 +242,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                                     <div className="p-3.5 flex items-center justify-between gap-3">
                                         <div className="flex items-center gap-2">
                                             <Calendar size={14} className="text-blue-500 shrink-0" />
-                                            <span className="text-xs font-bold text-neutral-500">
+                                            <span className="text-xs font-bold text-neutral-700 dark:text-neutral-300">
                                                 交易日期 <span className="text-rose-500">*</span>
                                             </span>
                                         </div>
@@ -244,7 +252,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                                             name="expense_date"
                                             value={formData.expense_date || ""}
                                             onChange={onFormInputChange}
-                                            className="bg-white/70 dark:bg-neutral-900/60 border border-white/30 dark:border-white/15 rounded-xl px-2.5 py-1 text-xs font-mono font-bold text-neutral-900 dark:text-neutral-100 outline-none cursor-pointer dark:[color-scheme:dark]"
+                                            className="bg-neutral-50 dark:bg-neutral-800 border border-black/15 dark:border-white/15 rounded-xl px-3 py-1.5 text-xs font-mono font-bold text-neutral-900 dark:text-neutral-100 outline-none cursor-pointer shadow-2xs dark:[color-scheme:dark]"
                                         />
                                     </div>
                                 </div>
@@ -266,7 +274,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                                     </span>
                                 </div>
 
-                                <div className="bg-white/40 dark:bg-black/25 border border-white/20 dark:border-white/10 rounded-2xl p-3.5 backdrop-blur-md space-y-3">
+                                <div className="bg-white/90 dark:bg-neutral-900/70 border border-black/10 dark:border-white/10 rounded-2xl p-3.5 backdrop-blur-md space-y-3 shadow-xs">
                                     <div className="flex flex-wrap gap-2">
                                         {/* 自己 */}
                                         <button
@@ -279,8 +287,8 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                                             }
                                             className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border ${
                                                 formData.is_payer_included !== false
-                                                    ? "bg-primary text-primary-foreground border-primary shadow-xs"
-                                                    : "bg-white/50 dark:bg-neutral-800/50 border-white/25 dark:border-white/10 text-neutral-500 hover:text-neutral-900"
+                                                    ? "bg-blue-600 text-white border-blue-600 shadow-xs"
+                                                    : "bg-slate-100 hover:bg-slate-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 border-slate-200 dark:border-neutral-700 text-slate-700 dark:text-neutral-300 shadow-2xs"
                                             }`}
                                         >
                                             {formData.is_payer_included !== false && <Check size={12} className="stroke-[3]" />}
@@ -302,8 +310,8 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                                                             onClick={() => onFormDataChange("split_with", tm.user_id)}
                                                             className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border ${
                                                                 isSelected
-                                                                    ? "bg-primary text-primary-foreground border-primary shadow-xs"
-                                                                    : "bg-white/50 dark:bg-neutral-800/50 border-white/25 dark:border-white/10 text-neutral-500 hover:text-neutral-900"
+                                                                    ? "bg-blue-600 text-white border-blue-600 shadow-xs"
+                                                                    : "bg-slate-100 hover:bg-slate-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 border-slate-200 dark:border-neutral-700 text-slate-700 dark:text-neutral-300 shadow-2xs"
                                                             }`}
                                                         >
                                                             {isSelected && <Check size={12} className="stroke-[3]" />}
@@ -327,7 +335,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                                         </span>
                                     </div>
 
-                                    <div className="bg-white/40 dark:bg-black/25 border border-white/20 dark:border-white/10 rounded-2xl overflow-hidden divide-y divide-white/20 dark:divide-white/10 backdrop-blur-md">
+                                    <div className="bg-white/90 dark:bg-neutral-900/70 border border-black/10 dark:border-white/10 rounded-2xl overflow-hidden divide-y divide-black/[0.06] dark:divide-white/[0.08] backdrop-blur-md shadow-xs">
                                         {Array.isArray(tripMembers) &&
                                             tripMembers
                                                 .filter((tm) => formData.split_with?.includes(tm.user_id))
@@ -367,36 +375,22 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                             )}
                         </div>
                     )}
+
+                    {/* 🗑️ 編輯模式下的刪除按鈕 */}
+                    {mode === "edit" && (
+                        <div className="pt-2">
+                            <button
+                                type="button"
+                                onClick={() => onDeleteBtnClick(formData)}
+                                className="w-full py-2.5 px-4 rounded-xl border border-red-500/20 bg-red-50/50 dark:bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-100/50 dark:hover:bg-red-500/20 font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                            >
+                                <Trash2 size={14} />
+                                刪除此筆支出
+                            </button>
+                        </div>
+                    )}
                 </form>
             </GlassModal.Body>
-
-            <GlassModal.Footer>
-                {mode === "edit" && (
-                    <GlassButton
-                        type="button"
-                        variant="danger"
-                        size="sm"
-                        icon={<Trash2 size={14} />}
-                        onClick={() => onDeleteBtnClick(formData)}
-                        className="mr-auto font-bold whitespace-nowrap shrink-0"
-                    >
-                        刪除帳目
-                    </GlassButton>
-                )}
-
-                <GlassButton variant="ghost" size="sm" onClick={() => onCloseBtnClick({} as any)} className="whitespace-nowrap shrink-0">
-                    取消
-                </GlassButton>
-                <GlassButton
-                    type="submit"
-                    form="transaction-form"
-                    variant="primary"
-                    size="sm"
-                    className="font-bold px-5 whitespace-nowrap shrink-0"
-                >
-                    {mode === "create" ? "確認新增" : "儲存修改"}
-                </GlassButton>
-            </GlassModal.Footer>
         </GlassModal>
     );
 };

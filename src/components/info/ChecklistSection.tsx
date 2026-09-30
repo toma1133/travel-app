@@ -84,7 +84,7 @@ const ChecklistSection = ({ tripId, isEditing, isPrinting }: ChecklistSectionPro
             className={
                 isPrinting
                     ? "bg-transparent mb-8 font-[Noto_Sans_TC]"
-                    : "liquid-glass-elevated rounded-3xl p-5 md:p-6 border border-white/40 dark:border-white/10 shadow-lg relative transition-all font-[Noto_Sans_TC]"
+                    : "bg-white/95 dark:bg-neutral-900/90 liquid-glass-elevated rounded-3xl p-5 md:p-6 border border-slate-200/90 dark:border-white/10 shadow-lg relative transition-all font-[Noto_Sans_TC]"
             }
         >
             {/* Header */}
@@ -152,14 +152,14 @@ const ChecklistSection = ({ tripId, isEditing, isPrinting }: ChecklistSectionPro
             {(isOpen || isPrinting) && (
                 <div className="space-y-4 pt-1">
                     {/* Progress bar */}
-                    <div className="space-y-1.5 p-3 rounded-2xl bg-white/40 dark:bg-black/20 border border-white/20 dark:border-white/5">
+                    <div className="space-y-2 p-3.5 rounded-2xl bg-white dark:bg-neutral-800 border border-slate-200/90 dark:border-neutral-700/80 shadow-xs backdrop-blur-md">
                         <div className="flex justify-between items-center text-xs">
-                            <span className="font-semibold text-foreground">完成進度</span>
-                            <span className="font-mono text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                            <span className="font-bold text-slate-900 dark:text-white">完成進度</span>
+                            <span className="font-mono text-xs font-black text-emerald-600 dark:text-emerald-400">
                                 {completedCount} / {items.length} ({progressPercent}%)
                             </span>
                         </div>
-                        <div className="w-full bg-black/5 dark:bg-white/10 rounded-full h-2.5 overflow-hidden p-0.5">
+                        <div className="w-full bg-slate-200/80 dark:bg-neutral-900 rounded-full h-3 overflow-hidden p-0.5 border border-slate-300/60 dark:border-neutral-700">
                             <div
                                 className="bg-gradient-to-r from-emerald-500 to-teal-400 h-full transition-all duration-300 rounded-full shadow-xs"
                                 style={{ width: `${progressPercent}%` }}
@@ -173,10 +173,10 @@ const ChecklistSection = ({ tripId, isEditing, isPrinting }: ChecklistSectionPro
                             <select
                                 value={selectedCategory}
                                 onChange={(e) => setSelectedCategory(e.target.value as any)}
-                                className="liquid-glass-subtle rounded-xl px-3 py-2 text-xs text-foreground outline-none shrink-0 border border-border/60 font-medium"
+                                className="bg-white dark:bg-neutral-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white outline-none shrink-0 border border-slate-300 dark:border-neutral-700 font-semibold shadow-xs focus:border-blue-500 cursor-pointer"
                             >
                                 {CHECKLIST_CATEGORIES.map((cat) => (
-                                    <option key={cat.id} value={cat.id} className="bg-card text-foreground">
+                                    <option key={cat.id} value={cat.id} className="bg-white dark:bg-neutral-900 text-slate-900 dark:text-white">
                                         {cat.icon} {cat.label}
                                     </option>
                                 ))}
@@ -186,11 +186,11 @@ const ChecklistSection = ({ tripId, isEditing, isPrinting }: ChecklistSectionPro
                                 placeholder="新增打包項目 (如: 護照、隱形眼鏡、充電線)..."
                                 value={newItemTitle}
                                 onChange={(e) => setNewItemTitle(e.target.value)}
-                                className="flex-1 liquid-glass-subtle rounded-xl px-3 py-2 text-xs text-foreground outline-none border border-border/60 placeholder:text-muted-foreground/60"
+                                className="flex-1 bg-white dark:bg-neutral-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white outline-none border border-slate-300 dark:border-neutral-700 placeholder:text-slate-400 dark:placeholder:text-neutral-500 shadow-xs focus:border-blue-500"
                             />
                             <button
                                 type="submit"
-                                className="px-4 py-2 rounded-xl bg-primary text-primary-foreground font-bold text-xs flex items-center gap-1 shrink-0 hover:opacity-90 active:scale-95 transition-all shadow-sm"
+                                className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-bold text-xs flex items-center gap-1.5 shrink-0 transition-all shadow-sm cursor-pointer"
                             >
                                 <Plus size={14} /> 新增
                             </button>
@@ -205,10 +205,10 @@ const ChecklistSection = ({ tripId, isEditing, isPrinting }: ChecklistSectionPro
 
                             return (
                                 <div key={cat.id} className="space-y-2">
-                                    <h4 className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-1.5 border-b border-border/40 pb-1">
+                                    <h4 className="text-xs font-black text-slate-800 dark:text-neutral-200 uppercase flex items-center gap-1.5 border-b border-slate-200 dark:border-neutral-800 pb-1.5">
                                         <span>{cat.icon}</span>
                                         <span>{cat.label}</span>
-                                        <span className="text-[10px] text-muted-foreground font-mono font-normal">
+                                        <span className="text-[10px] text-slate-500 dark:text-neutral-400 font-mono font-medium">
                                             ({catItems.filter((i) => i.isCompleted).length}/{catItems.length})
                                         </span>
                                     </h4>
@@ -219,17 +219,19 @@ const ChecklistSection = ({ tripId, isEditing, isPrinting }: ChecklistSectionPro
                                                 onClick={() => toggleItem(item.id)}
                                                 className={`flex items-center justify-between p-2.5 rounded-xl border transition-all cursor-pointer select-none ${
                                                     item.isCompleted
-                                                        ? "bg-emerald-500/10 border-emerald-500/20 text-muted-foreground line-through opacity-70"
-                                                        : "liquid-glass-subtle border-white/30 dark:border-white/10 text-foreground hover:border-primary/40 shadow-2xs"
+                                                        ? "bg-emerald-500/[0.08] dark:bg-emerald-500/10 border-emerald-500/25 text-slate-500 dark:text-neutral-400"
+                                                        : "bg-white dark:bg-neutral-800 border border-slate-200/90 dark:border-neutral-700 text-slate-900 dark:text-neutral-100 hover:border-blue-400 hover:shadow-xs shadow-xs"
                                                 }`}
                                             >
                                                 <div className="flex items-center gap-2 min-w-0 pr-2">
                                                     {item.isCompleted ? (
-                                                        <CheckSquare size={16} className="text-emerald-500 shrink-0" />
+                                                        <CheckSquare size={16} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
                                                     ) : (
-                                                        <Square size={16} className="text-muted-foreground/70 shrink-0" />
+                                                        <Square size={16} className="text-slate-400 dark:text-neutral-500 shrink-0" />
                                                     )}
-                                                    <span className="text-xs font-medium truncate">{item.title}</span>
+                                                    <span className={`text-xs truncate ${item.isCompleted ? "line-through text-slate-400 dark:text-neutral-500" : "font-semibold text-slate-900 dark:text-neutral-100"}`}>
+                                                        {item.title}
+                                                    </span>
                                                 </div>
                                                 <button
                                                     type="button"
@@ -237,7 +239,7 @@ const ChecklistSection = ({ tripId, isEditing, isPrinting }: ChecklistSectionPro
                                                         e.stopPropagation();
                                                         deleteItem(item.id);
                                                     }}
-                                                    className="text-muted-foreground/50 hover:text-destructive p-1 rounded transition-colors"
+                                                    className="text-slate-400 hover:text-rose-600 p-1 rounded transition-colors"
                                                 >
                                                     <Trash2 size={12} />
                                                 </button>

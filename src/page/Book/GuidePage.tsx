@@ -283,37 +283,40 @@ const GuidePage = ({
 
     return (
         <div
-            className={`font-[Noto_Sans_TC] text-foreground flex flex-col ${
+            className={`font-[Noto_Sans_TC] text-foreground w-full flex-1 min-h-0 flex flex-col overflow-hidden ${
                 isPrinting
                     ? "p-0 h-auto min-h-0 overflow-visible bg-white text-black"
-                    : `min-h-full ${
+                    : `${
                           tripData?.theme_config?.bg || "bg-background"
-                      } dark:bg-background pb-24`
+                      } dark:bg-background`
             }`}
         >
             {!isPrinting && (
-                <SectionHeader
-                    title="景點誌"
-                    subtitle="Scene • Food • Shopping"
-                    theme={tripData?.theme_config!}
-                    hasBackBtn={true}
-                    rightAction={
-                        <div className="flex justify-center items-center gap-4">
-                            <button
-                                type="button"
-                                onClick={handleOpenCreateModal}
-                                className={`flex items-center text-sm font-medium text-white px-3 py-1.5 rounded-lg shadow-md ${tripData?.theme_config?.accent} hover:opacity-90 transition-opacity`}
-                                title="新增"
-                            >
-                                <Plus size={16} />
-                            </button>
-                        </div>
-                    }
-                />
+                <div className="shrink-0">
+                    <SectionHeader
+                        title="景點誌"
+                        subtitle="Scene • Food • Shopping"
+                        theme={tripData?.theme_config!}
+                        hasBackBtn={true}
+                        rightAction={
+                            <div className="flex justify-center items-center gap-4">
+                                <button
+                                    type="button"
+                                    onClick={handleOpenCreateModal}
+                                    className={`flex items-center text-sm font-medium text-white px-3 py-1.5 rounded-lg shadow-md ${tripData?.theme_config?.accent} hover:opacity-90 transition-opacity`}
+                                    title="新增"
+                                >
+                                    <Plus size={16} />
+                                </button>
+                            </div>
+                        }
+                    />
+                </div>
             )}
             <div
-                className={`flex-1 flex flex-col ${
-                    isPrinting ? "space-y-4 px-0" : "px-4 mt-6 space-y-6 pb-28 md:pb-12"
+                data-scroll-container="true"
+                className={`flex-1 min-h-0 ${
+                    isPrinting ? "space-y-4 px-0 overflow-visible" : "overflow-y-auto no-scrollbar px-4 pt-4 space-y-6 pb-28 md:pb-12"
                 }`}
             >
                 {isLoading ? (

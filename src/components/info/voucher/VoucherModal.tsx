@@ -11,7 +11,6 @@ import {
     Info,
 } from "lucide-react";
 import { GlassModal } from "../../ui/GlassModal";
-import { GlassButton } from "../../ui/GlassButton";
 import {
     VoucherItem,
     VoucherCategory,
@@ -192,16 +191,25 @@ export const VoucherModal: React.FC<VoucherModalProps> = ({
         >
             <GlassModal.Header
                 title={
-                    <div className="flex items-center gap-2">
-                        <span className="text-xl">🎟️</span>
-                        <span>{isEditMode ? "編輯電子票券" : "收納新票券至票夾"}</span>
+                    <div className="flex items-center justify-center gap-1.5">
+                        <span className="text-base shrink-0">🎟️</span>
+                        <span className="truncate">{isEditMode ? "編輯電子票券" : "新增電子票券"}</span>
                     </div>
                 }
-                subtitle="集中保存機票、入境申報、交通卡與門票，離線隨時感應出示"
                 onClose={onClose}
+                rightAction={
+                    <button
+                        type="submit"
+                        form="voucher-form"
+                        disabled={isSubmitting || isCompressing}
+                        className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-full shadow-xs active:scale-95 transition-all cursor-pointer shrink-0 disabled:opacity-50"
+                    >
+                        {isSubmitting ? "儲存中..." : "完成"}
+                    </button>
+                }
             />
 
-            <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+            <form id="voucher-form" onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
                 <GlassModal.Body className="space-y-5">
                     {/* Quick Template Presets (新增模式展示) */}
                     {!isEditMode && (
@@ -421,25 +429,6 @@ export const VoucherModal: React.FC<VoucherModalProps> = ({
                         </span>
                     </div>
                 </GlassModal.Body>
-
-                <GlassModal.Footer>
-                    <GlassButton
-                        type="button"
-                        variant="secondary"
-                        size="md"
-                        onClick={onClose}
-                    >
-                        取消
-                    </GlassButton>
-                    <GlassButton
-                        type="submit"
-                        variant="primary"
-                        size="md"
-                        loading={isSubmitting || isCompressing}
-                    >
-                        {isEditMode ? "儲存修改" : "存入票夾"}
-                    </GlassButton>
-                </GlassModal.Footer>
             </form>
         </GlassModal>
     );

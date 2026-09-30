@@ -1,4 +1,4 @@
-import {
+import React, {
     ChangeEventHandler,
     ChangeEvent,
     FormEventHandler,
@@ -53,6 +53,8 @@ import { RoutingService } from "../../services/api/RoutingService";
 import { parseDurationToMinutes, addMinutesToTime } from "../../utils/ItineraryTimeUtil";
 import { getBusinessStatus, getScheduledMoment } from "../../utils/OpeningHoursUtil";
 import { hapticFeedback } from "../../utils/HapticUtil";
+
+const QUICK_DURATIONS = ["30分鐘", "1小時", "1.5小時", "2小時", "3小時", "半天"];
 
 type ItineraryActivityModalProps = {
     formData: ItineraryActivitiy;
@@ -390,7 +392,7 @@ const ItineraryActivityModal = ({
                     transform: translateY > 0 ? `translateY(${translateY}px)` : undefined,
                     transition: isDragging ? 'none' : 'transform 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
                 }}
-                className="w-full max-w-full sm:max-w-xl bg-card text-card-foreground rounded-t-3xl sm:rounded-3xl shadow-2xl border border-border/80 flex flex-col max-h-[92vh] overflow-hidden animate-in slide-in-from-bottom-6 sm:zoom-in-95 duration-200"
+                className="w-full max-w-full sm:max-w-xl bg-white/95 dark:bg-neutral-900/95 text-neutral-900 dark:text-neutral-100 rounded-t-3xl sm:rounded-3xl shadow-2xl border border-black/10 dark:border-white/10 flex flex-col max-h-[92vh] overflow-hidden animate-in slide-in-from-bottom-6 sm:zoom-in-95 duration-200"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* 📱 頂部行動把手 (Mobile drag indicator) */}
@@ -400,12 +402,12 @@ const ItineraryActivityModal = ({
                     onTouchMove={handleTouchMove}
                     onTouchEnd={handleTouchEnd}
                 >
-                    <div className="w-10 h-1.5 rounded-full bg-muted-foreground/35 hover:bg-muted-foreground/50 transition-colors" />
+                    <div className="w-10 h-1.5 rounded-full bg-neutral-300 dark:bg-neutral-600 hover:bg-neutral-400 transition-colors" />
                 </div>
 
                 {/* 📱 iOS 原生導航列 (iOS Navigation Top Bar) */}
                 <div
-                    className="px-4 py-3 border-b border-border/70 bg-card/90 backdrop-blur-md flex items-center justify-between shrink-0 touch-none select-none"
+                    className="px-4 py-3 border-b border-black/[0.06] dark:border-white/[0.08] bg-white/85 dark:bg-neutral-900/85 backdrop-blur-xl flex items-center justify-between shrink-0 touch-none select-none"
                     onTouchStart={handleTouchStart}
                     onTouchMove={handleTouchMove}
                     onTouchEnd={handleTouchEnd}
@@ -413,12 +415,12 @@ const ItineraryActivityModal = ({
                     <button
                         type="button"
                         onClick={onCloseBtnClick}
-                        className="text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors cursor-pointer px-2 py-1"
+                        className="text-xs font-semibold text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white transition-colors cursor-pointer px-2 py-1"
                     >
                         取消
                     </button>
 
-                    <h3 className="text-sm font-black tracking-tight text-foreground truncate max-w-[60%] text-center">
+                    <h3 className="text-sm font-black tracking-tight text-neutral-900 dark:text-white truncate max-w-[60%] text-center">
                         {mode === "create"
                             ? `新增 Day ${itinerary?.day_number || ""} 行程`
                             : `編輯行程 · ${formData.title || ""}`}
@@ -441,14 +443,14 @@ const ItineraryActivityModal = ({
                     className="flex-1 overflow-y-auto p-3.5 sm:p-5 space-y-4 no-scrollbar"
                 >
                     {/* 🧭 新增模式：地點優先選取 vs 手動填寫 分段控制器 */}
-                    <div className="p-1 rounded-2xl bg-muted/60 border border-border/60 flex items-center gap-1 text-xs">
+                    <div className="p-1 rounded-2xl bg-neutral-100/90 dark:bg-neutral-800/80 border border-black/5 dark:border-white/10 flex items-center gap-1 text-xs">
                         <button
                             type="button"
                             onClick={() => setEntryMode("place")}
                             className={`flex-1 py-1.5 px-3 rounded-xl font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                                 entryMode === "place"
-                                    ? "bg-card text-foreground shadow-xs"
-                                    : "text-muted-foreground hover:text-foreground"
+                                    ? "bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white shadow-xs"
+                                    : "text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white"
                             }`}
                         >
                             <MapPin size={13} className="text-blue-500" />
@@ -464,8 +466,8 @@ const ItineraryActivityModal = ({
                             onClick={() => setEntryMode("manual")}
                             className={`flex-1 py-1.5 px-3 rounded-xl font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                                 entryMode === "manual"
-                                    ? "bg-card text-foreground shadow-xs"
-                                    : "text-muted-foreground hover:text-foreground"
+                                    ? "bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white shadow-xs"
+                                    : "text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white"
                             }`}
                         >
                             <Building2 size={13} className="text-purple-500" />

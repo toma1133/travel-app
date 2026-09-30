@@ -38,8 +38,8 @@ const LiquidGlassBottomNav = ({
                             className={({ isActive }) =>
                                 `relative flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition-all duration-300 flex-1 active:scale-90 select-none ${
                                     isActive
-                                        ? "text-primary dark:text-white font-semibold"
-                                        : "text-muted-foreground/80 hover:text-foreground hover:bg-black/5 dark:hover:bg-white/5"
+                                        ? "text-neutral-950 dark:text-white font-bold"
+                                        : "text-neutral-500 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200"
                                 }`
                             }
                         >
@@ -48,7 +48,7 @@ const LiquidGlassBottomNav = ({
                                     {/* Active Liquid Pill Backdrop */}
                                     {isActive && (
                                         <div
-                                            className="absolute inset-0 rounded-xl bg-primary/10 dark:bg-white/10 border border-primary/20 dark:border-white/20 shadow-sm animate-in fade-in zoom-in-95 duration-200"
+                                            className="absolute inset-0 rounded-xl bg-neutral-900/10 dark:bg-white/15 border border-black/10 dark:border-white/20 shadow-xs animate-in fade-in zoom-in-95 duration-200"
                                         />
                                     )}
 
@@ -56,13 +56,13 @@ const LiquidGlassBottomNav = ({
                                     <div
                                         className={`relative z-10 transition-transform duration-300 ${
                                             isActive
-                                                ? "scale-110 -translate-y-0.5"
+                                                ? "scale-110 -translate-y-0.5 text-neutral-950 dark:text-white"
                                                 : "group-hover:scale-105"
                                         }`}
                                     >
                                         <Icon
                                             size={20}
-                                            strokeWidth={isActive ? 2.4 : 1.9}
+                                            strokeWidth={isActive ? 2.5 : 1.9}
                                         />
                                     </div>
 
@@ -70,8 +70,8 @@ const LiquidGlassBottomNav = ({
                                     <span
                                         className={`relative z-10 text-[10px] tracking-tight mt-0.5 transition-colors duration-200 ${
                                             isActive
-                                                ? "font-bold"
-                                                : "font-normal"
+                                                ? "font-black text-neutral-950 dark:text-white"
+                                                : "font-medium"
                                         }`}
                                     >
                                         {item.label}
@@ -79,7 +79,7 @@ const LiquidGlassBottomNav = ({
 
                                     {/* Active Highlight Dot */}
                                     {isActive && (
-                                        <div className="absolute -bottom-0.5 w-1 h-1 rounded-full bg-primary dark:bg-white animate-pulse" />
+                                        <div className="absolute -bottom-0.5 w-1 h-1 rounded-full bg-neutral-950 dark:bg-white animate-pulse" />
                                     )}
                                 </>
                             )}

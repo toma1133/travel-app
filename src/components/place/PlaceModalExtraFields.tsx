@@ -418,10 +418,10 @@ export const RecommendedItemsSection = ({
                                                         const updatedPrice = cleanItemAmount ? `${newCurr} ${cleanItemAmount}` : "";
                                                         handleUpdateItem(idx, "price", updatedPrice);
                                                     }}
-                                                    className="bg-muted/40 text-foreground text-xs font-mono font-bold px-2 py-1 rounded-xl outline-none cursor-pointer border border-border/60"
+                                                    className="bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100 text-xs font-mono font-bold px-2 py-1 rounded-xl outline-none cursor-pointer border border-black/10 dark:border-white/15"
                                                 >
                                                     {CURRENCIES.map((c) => (
-                                                        <option key={c.code} value={c.code} className="bg-background text-foreground">
+                                                        <option key={c.code} value={c.code} className="bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100">
                                                             {c.code}
                                                         </option>
                                                     ))}
@@ -455,16 +455,16 @@ export const RecommendedItemsSection = ({
                                             <select
                                                 value={item.category || (isShopping ? "🎁 必買伴手禮" : "⭐ 必點招牌")}
                                                 onChange={(e) => handleUpdateItem(idx, "category", e.target.value)}
-                                                className="bg-muted/30 text-foreground text-xs font-semibold px-2.5 py-1 rounded-xl outline-none cursor-pointer border border-border/60"
+                                                className="bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100 text-xs font-semibold px-2.5 py-1.5 rounded-xl outline-none cursor-pointer border border-black/10 dark:border-white/15 focus:ring-2 focus:ring-amber-500/30"
                                             >
-                                                <option value="⭐ 必點招牌">⭐ 必點招牌</option>
-                                                <option value="🔥 人氣推薦">🔥 人氣推薦</option>
-                                                <option value="🌸 季節限定">🌸 季節限定</option>
-                                                <option value="🎁 必買伴手禮">🎁 必買伴手禮</option>
-                                                <option value="👨‍🍳 主廚推薦">👨‍🍳 主廚推薦</option>
-                                                <option value="🍰 甜點飲品">🍰 甜點飲品</option>
-                                                <option value="🏷️ 自訂推薦">🏷️ 自訂推薦</option>
-                                                <option value="">（無標籤）</option>
+                                                <option value="⭐ 必點招牌" className="bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100">⭐ 必點招牌</option>
+                                                <option value="🔥 人氣推薦" className="bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100">🔥 人氣推薦</option>
+                                                <option value="🌸 季節限定" className="bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100">🌸 季節限定</option>
+                                                <option value="🎁 必買伴手禮" className="bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100">🎁 必買伴手禮</option>
+                                                <option value="👨‍🍳 主廚推薦" className="bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100">👨‍🍳 主廚推薦</option>
+                                                <option value="🍰 甜點飲品" className="bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100">🍰 甜點飲品</option>
+                                                <option value="🏷️ 自訂推薦" className="bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100">🏷️ 自訂推薦</option>
+                                                <option value="" className="bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100">（無標籤）</option>
                                             </select>
                                         </div>
 
@@ -596,7 +596,7 @@ export const BudgetAndDetailsSection = ({
                             return (
                                 <>
                                     <select
-                                        className="bg-muted/40 text-foreground px-2.5 py-2 rounded-xl text-xs font-mono font-bold outline-none cursor-pointer border border-border/60 shrink-0"
+                                        className="bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100 px-2.5 py-2 rounded-xl text-xs font-mono font-bold outline-none cursor-pointer border border-black/10 dark:border-white/15 shrink-0"
                                         value={currency}
                                         onChange={(e) => {
                                             const newCurr = e.target.value;
@@ -608,7 +608,7 @@ export const BudgetAndDetailsSection = ({
                                         }}
                                     >
                                         {CURRENCIES.map((c) => (
-                                            <option key={c.code} value={c.code} className="bg-background text-foreground">
+                                            <option key={c.code} value={c.code} className="bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100">
                                                 {c.code} ({c.label})
                                             </option>
                                         ))}

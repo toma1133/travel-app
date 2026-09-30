@@ -28,8 +28,8 @@ export const ShoppingStoreSelect: React.FC<ShoppingStoreSelectProps> = ({
     onSelectPlace,
 }) => {
     return (
-        <div className="space-y-1 relative" ref={placeComboboxRef}>
-            <label className="font-semibold text-neutral-800 dark:text-neutral-200 text-xs flex items-center justify-between">
+        <div className="space-y-1.5 relative" ref={placeComboboxRef}>
+            <label className="font-bold text-neutral-900 dark:text-neutral-100 text-xs flex items-center justify-between">
                 <span className="flex items-center gap-1">
                     <Store size={12} className="text-primary" />
                     <span>預計購買店家 / 地點</span>
@@ -48,13 +48,13 @@ export const ShoppingStoreSelect: React.FC<ShoppingStoreSelectProps> = ({
                     value={store}
                     onChange={(e) => onStoreChange(e.target.value)}
                     onFocus={onToggleDropdown}
-                    className="w-full pl-3 pr-20 py-2 bg-white/70 dark:bg-neutral-900/60 border border-white/30 dark:border-white/15 rounded-xl text-neutral-900 dark:text-neutral-100 outline-none text-xs focus:ring-2 focus:ring-primary/40"
+                    className="w-full pl-3.5 pr-20 py-2.5 bg-neutral-50/90 dark:bg-neutral-900/80 border border-black/15 dark:border-white/15 rounded-xl text-neutral-900 dark:text-neutral-100 outline-none text-xs focus:bg-white dark:focus:bg-neutral-900 focus:border-primary/60 focus:ring-2 focus:ring-primary/20 font-medium shadow-2xs transition-all"
                 />
 
                 <button
                     type="button"
                     onClick={onToggleDropdown}
-                    className="absolute right-1.5 top-1/2 -translate-y-1/2 px-2 py-1 text-[11px] font-semibold bg-white/60 dark:bg-neutral-800/60 hover:bg-white text-neutral-800 dark:text-neutral-200 rounded-lg border border-white/30 dark:border-white/15 flex items-center gap-1 cursor-pointer transition-all"
+                    className="absolute right-1.5 top-1/2 -translate-y-1/2 px-2.5 py-1 text-[11px] font-bold bg-white dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-700 text-neutral-800 dark:text-neutral-200 rounded-lg border border-black/10 dark:border-white/15 flex items-center gap-1 cursor-pointer transition-all shadow-2xs"
                 >
                     <MapPin size={11} className="text-primary" />
                     <span>選地標</span>
@@ -63,7 +63,7 @@ export const ShoppingStoreSelect: React.FC<ShoppingStoreSelectProps> = ({
 
             {/* 行程地標候選下拉清單 */}
             {isPlaceDropdownOpen && places.length > 0 && (
-                <div className="absolute top-full left-0 right-0 z-30 mt-1 bg-white/95 dark:bg-neutral-900/95 border border-white/30 dark:border-white/15 rounded-2xl shadow-xl max-h-48 overflow-y-auto p-1.5 space-y-1 backdrop-blur-xl">
+                <div className="absolute top-full left-0 right-0 z-30 mt-1 bg-white/95 dark:bg-neutral-900/95 border border-black/10 dark:border-white/15 rounded-2xl shadow-xl max-h-48 overflow-y-auto p-1.5 space-y-1 backdrop-blur-xl">
                     <div className="px-2 py-1 text-[10px] font-bold text-neutral-500 uppercase tracking-wider flex items-center justify-between">
                         <span>行程地標 ({filteredPlaces.length})</span>
                         <button

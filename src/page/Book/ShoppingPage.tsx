@@ -510,218 +510,227 @@ const ShoppingPage = ({
 
     return (
         <div
-            className={`font-[Noto_Sans_TC] min-h-full text-foreground ${
+            className={`font-[Noto_Sans_TC] h-full text-foreground ${
                 tripData?.theme_config?.bg || "bg-background"
-            } dark:bg-background pb-28 w-full`}
+            } dark:bg-background overflow-hidden flex flex-col w-full`}
         >
-            {!isPrinting && (
-                <SectionHeader
-                    title="購物清單"
-                    subtitle="Shopping & Wishlist"
-                    theme={tripData?.theme_config!}
-                    hasBackBtn={true}
-                    rightAction={
-                        <div className="flex items-center gap-2">
-                            <button
-                                type="button"
-                                onClick={() => setIsClerkPhraseModalOpen(true)}
-                                className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 transition-all cursor-pointer shadow-2xs"
-                                title="出國結帳對話速查庫 (大字展示與語音發音)"
-                            >
-                                <MessageSquare size={14} />
-                                <span className="hidden sm:inline">結帳小卡</span>
-                            </button>
+            {/* Pinned Top: Header, Notices, Filters & Tax-Free Hub */}
+            <div className="shrink-0 w-full flex flex-col">
+                {!isPrinting && (
+                    <SectionHeader
+                        title="購物清單"
+                        subtitle="Shopping & Wishlist"
+                        theme={tripData?.theme_config!}
+                        hasBackBtn={true}
+                        rightAction={
+                            <div className="flex items-center gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsClerkPhraseModalOpen(true)}
+                                    className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 transition-all cursor-pointer shadow-2xs"
+                                    title="出國結帳對話速查庫 (大字展示與語音發音)"
+                                >
+                                    <MessageSquare size={14} />
+                                    <span className="hidden sm:inline">結帳小卡</span>
+                                </button>
 
-                            <button
-                                type="button"
-                                onClick={() => setIsShareModalOpen(true)}
-                                className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl border border-border bg-card hover:bg-muted text-foreground transition-all cursor-pointer shadow-2xs"
-                                title="分享或匯入購物清單"
-                            >
-                                <Share2 size={14} />
-                                <span className="hidden sm:inline">分享</span>
-                            </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setIsShareModalOpen(true)}
+                                    className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl border border-border bg-card hover:bg-muted text-foreground transition-all cursor-pointer shadow-2xs"
+                                    title="分享或匯入購物清單"
+                                >
+                                    <Share2 size={14} />
+                                    <span className="hidden sm:inline">分享</span>
+                                </button>
 
-                            <button
-                                type="button"
-                                onClick={() => handleOpenCreateModal()}
-                                className="flex items-center gap-1.5 text-xs font-bold px-3.5 py-1.5 rounded-xl bg-primary text-primary-foreground hover:opacity-90 transition-all cursor-pointer shadow-xs"
-                            >
-                                <Plus size={15} />
-                                <span>新增商品</span>
-                            </button>
-                        </div>
-                    }
-                />
-            )}
-
-            {/* Success Toast Notice */}
-            {budgetSuccessNotice && (
-                <div className="mx-4 sm:mx-6 md:mx-8 mt-3 p-3 rounded-2xl bg-emerald-500 text-white font-bold text-xs shadow-md animate-in fade-in flex items-center justify-between">
-                    <span>{budgetSuccessNotice}</span>
-                    <button
-                        type="button"
-                        onClick={() => setBudgetSuccessNotice("")}
-                        className="text-white/80 hover:text-white"
-                    >
-                        ✕
-                    </button>
-                </div>
-            )}
-
-            {/* Responsive Full Width Container */}
-            <div className="px-4 sm:px-6 md:px-8 mt-4 space-y-4 w-full">
-                {/* Search & Status Controls */}
-                <div className="flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center justify-between">
-                    {/* Search bar */}
-                    <div className="relative flex-1">
-                        <Search
-                            size={15}
-                            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground"
-                        />
-                        <input
-                            type="text"
-                            placeholder="搜尋商品名稱、外文原名、店家或規格標籤..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-9 pr-4 py-2 bg-card border border-border/80 rounded-2xl text-xs text-foreground outline-none shadow-2xs placeholder:text-muted-foreground/50"
-                        />
-                        {searchQuery && (
-                            <button
-                                type="button"
-                                onClick={() => setSearchQuery("")}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground text-xs"
-                            >
-                                ✕
-                            </button>
-                        )}
-                    </div>
-
-                    {/* Status Filters: 全部 / 未買 / 已買 */}
-                    <div className="flex items-center gap-1 bg-card border border-border/80 p-1 rounded-2xl shrink-0 shadow-2xs self-end sm:self-auto">
-                        <button
-                            type="button"
-                            onClick={() => setStatusFilter("all")}
-                            className={`px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                                statusFilter === "all"
-                                    ? "bg-primary text-primary-foreground shadow-2xs"
-                                    : "text-muted-foreground hover:text-foreground"
-                            }`}
-                        >
-                            全部 ({rawItems.length})
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setStatusFilter("unbought")}
-                            className={`px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                                statusFilter === "unbought"
-                                    ? "bg-rose-500 text-white shadow-2xs"
-                                    : "text-muted-foreground hover:text-foreground"
-                            }`}
-                        >
-                            未買 ({rawItems.length - completedCount})
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setStatusFilter("bought")}
-                            className={`px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                                statusFilter === "bought"
-                                    ? "bg-emerald-500 text-white shadow-2xs"
-                                    : "text-muted-foreground hover:text-foreground"
-                            }`}
-                        >
-                            已買 ({completedCount})
-                        </button>
-                    </div>
-                </div>
-
-                {/* Member Filter Row (Option A: View by User / Shared Trip) */}
-                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs">
-                    <div className="flex items-center gap-1 text-muted-foreground font-bold text-xs shrink-0 pr-1">
-                        <Users size={13} className="text-primary" />
-                        <span>成員：</span>
-                    </div>
-
-                    {/* All Members */}
-                    <button
-                        type="button"
-                        onClick={() => setSelectedUser("all")}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1 border ${
-                            selectedUser === "all"
-                                ? "bg-foreground text-background border-foreground shadow-2xs"
-                                : "bg-card border-border/70 text-muted-foreground hover:text-foreground"
-                        }`}
-                    >
-                        <span>全部旅伴</span>
-                        <span className="text-[10px] font-mono opacity-80">({rawItems.length})</span>
-                    </button>
-
-                    {/* My Items */}
-                    <button
-                        type="button"
-                        onClick={() => setSelectedUser("me")}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1 border ${
-                            selectedUser === "me"
-                                ? "bg-primary text-primary-foreground border-primary shadow-2xs"
-                                : "bg-card border-border/70 text-muted-foreground hover:text-foreground"
-                        }`}
-                    >
-                        <User size={11} />
-                        <span>我的清單</span>
-                        <span className="text-[10px] font-mono opacity-80">
-                            ({rawItems.filter((i) => i.user_id === session?.user?.id).length})
-                        </span>
-                    </button>
-
-                    {/* Other members */}
-                    {otherMembers.map((m) => {
-                        const count = rawItems.filter((i) => i.user_id === m.user_id).length;
-                        const name = m.profiles?.username || m.profiles?.email?.split("@")[0] || "旅伴";
-                        const isSelected = selectedUser === m.user_id;
-
-                        return (
-                            <button
-                                key={m.user_id}
-                                type="button"
-                                onClick={() => setSelectedUser(m.user_id)}
-                                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1 border ${
-                                    isSelected
-                                        ? "bg-primary text-primary-foreground border-primary shadow-2xs"
-                                        : "bg-card border-border/70 text-muted-foreground hover:text-foreground"
-                                }`}
-                            >
-                                <span>{name}</span>
-                                <span className="text-[10px] font-mono opacity-80">({count})</span>
-                            </button>
-                        );
-                    })}
-                </div>
-
-                {/* Recipient Filter Row (User Story 2 & Feedback #4) */}
-                <RecipientFilter
-                    items={rawItems}
-                    selectedRecipient={selectedRecipient}
-                    resolveRecipient={(rec, item) => resolveRecipientName(rec, item.user_id)}
-                    onSelectRecipient={setSelectedRecipient}
-                    onOpenSummary={() => setIsRecipientSummaryOpen(true)}
-                />
-
-                {/* Unified Store & Tax-Free Hub (Consolidated Filter + Status + Progress Bar) */}
-                {allStores.length > 0 && (
-                    <TaxFreeBar
-                        selectedStore={selectedStore}
-                        allStores={allStores}
-                        currency={tripData?.settings_config?.localCurrency || "JPY"}
-                        onSelectStore={(st) => {
-                            setSelectedStore(st);
-                            setTaxFreeStore(st);
-                        }}
-                        onUpdateThreshold={handleUpdateThreshold}
-                        onOpenStoreBatchBuy={handleOpenStoreBatchBuy}
+                                <button
+                                    type="button"
+                                    onClick={() => handleOpenCreateModal()}
+                                    className="flex items-center gap-1.5 text-xs font-bold px-3.5 py-1.5 rounded-xl bg-primary text-primary-foreground hover:opacity-90 transition-all cursor-pointer shadow-xs"
+                                >
+                                    <Plus size={15} />
+                                    <span>新增商品</span>
+                                </button>
+                            </div>
+                        }
                     />
                 )}
 
-                {/* Shopping Cards Grid (Generous wide cards on PC with 1-2-3 columns) */}
+                {/* Success Toast Notice */}
+                {budgetSuccessNotice && (
+                    <div className="mx-4 sm:mx-6 md:mx-8 mt-2 p-3 rounded-2xl bg-emerald-500 text-white font-bold text-xs shadow-md animate-in fade-in flex items-center justify-between">
+                        <span>{budgetSuccessNotice}</span>
+                        <button
+                            type="button"
+                            onClick={() => setBudgetSuccessNotice("")}
+                            className="text-white/80 hover:text-white"
+                        >
+                            ✕
+                        </button>
+                    </div>
+                )}
+
+                {/* Pinned Controls, Filters & Tax-Free Hub */}
+                <div className="px-4 sm:px-6 md:px-8 pt-2.5 pb-2.5 space-y-2.5 w-full border-b border-border/40 bg-background/50 backdrop-blur-xs">
+                    {/* Search & Status Controls */}
+                    <div className="flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center justify-between">
+                        {/* Search bar */}
+                        <div className="relative flex-1">
+                            <Search
+                                size={15}
+                                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground"
+                            />
+                            <input
+                                type="text"
+                                placeholder="搜尋商品名稱、外文原名、店家或規格標籤..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full pl-9 pr-4 py-2 bg-card border border-border/80 rounded-2xl text-xs text-foreground outline-none shadow-2xs placeholder:text-muted-foreground/50"
+                            />
+                            {searchQuery && (
+                                <button
+                                    type="button"
+                                    onClick={() => setSearchQuery("")}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground text-xs"
+                                >
+                                    ✕
+                                </button>
+                            )}
+                        </div>
+
+                        {/* Status Filters: 全部 / 未買 / 已買 */}
+                        <div className="flex items-center gap-1 bg-card border border-border/80 p-1 rounded-2xl shrink-0 shadow-2xs self-end sm:self-auto">
+                            <button
+                                type="button"
+                                onClick={() => setStatusFilter("all")}
+                                className={`px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                                    statusFilter === "all"
+                                        ? "bg-primary text-primary-foreground shadow-2xs"
+                                        : "text-muted-foreground hover:text-foreground"
+                                }`}
+                            >
+                                全部 ({rawItems.length})
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setStatusFilter("unbought")}
+                                className={`px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                                    statusFilter === "unbought"
+                                        ? "bg-rose-500 text-white shadow-2xs"
+                                        : "text-muted-foreground hover:text-foreground"
+                                }`}
+                            >
+                                未買 ({rawItems.length - completedCount})
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setStatusFilter("bought")}
+                                className={`px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                                    statusFilter === "bought"
+                                        ? "bg-emerald-500 text-white shadow-2xs"
+                                        : "text-muted-foreground hover:text-foreground"
+                                }`}
+                            >
+                                已買 ({completedCount})
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Member Filter Row */}
+                    <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs">
+                        <div className="flex items-center gap-1 text-muted-foreground font-bold text-xs shrink-0 pr-1">
+                            <Users size={13} className="text-primary" />
+                            <span>成員：</span>
+                        </div>
+
+                        {/* All Members */}
+                        <button
+                            type="button"
+                            onClick={() => setSelectedUser("all")}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1 border ${
+                                selectedUser === "all"
+                                    ? "bg-foreground text-background border-foreground shadow-2xs"
+                                    : "bg-card border-border/70 text-muted-foreground hover:text-foreground"
+                            }`}
+                        >
+                            <span>全部旅伴</span>
+                            <span className="text-[10px] font-mono opacity-80">({rawItems.length})</span>
+                        </button>
+
+                        {/* My Items */}
+                        <button
+                            type="button"
+                            onClick={() => setSelectedUser("me")}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1 border ${
+                                selectedUser === "me"
+                                    ? "bg-primary text-primary-foreground border-primary shadow-2xs"
+                                    : "bg-card border-border/70 text-muted-foreground hover:text-foreground"
+                            }`}
+                        >
+                            <User size={11} />
+                            <span>我的清單</span>
+                            <span className="text-[10px] font-mono opacity-80">
+                                ({rawItems.filter((i) => i.user_id === session?.user?.id).length})
+                            </span>
+                        </button>
+
+                        {/* Other members */}
+                        {otherMembers.map((m) => {
+                            const count = rawItems.filter((i) => i.user_id === m.user_id).length;
+                            const name = m.profiles?.username || m.profiles?.email?.split("@")[0] || "旅伴";
+                            const isSelected = selectedUser === m.user_id;
+
+                            return (
+                                <button
+                                    key={m.user_id}
+                                    type="button"
+                                    onClick={() => setSelectedUser(m.user_id)}
+                                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1 border ${
+                                        isSelected
+                                            ? "bg-primary text-primary-foreground border-primary shadow-2xs"
+                                            : "bg-card border-border/70 text-muted-foreground hover:text-foreground"
+                                    }`}
+                                >
+                                    <span>{name}</span>
+                                    <span className="text-[10px] font-mono opacity-80">({count})</span>
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    {/* Recipient Filter Row */}
+                    <RecipientFilter
+                        items={rawItems}
+                        selectedRecipient={selectedRecipient}
+                        resolveRecipient={(rec, item) => resolveRecipientName(rec, item.user_id)}
+                        onSelectRecipient={setSelectedRecipient}
+                        onOpenSummary={() => setIsRecipientSummaryOpen(true)}
+                    />
+
+                    {/* Unified Store & Tax-Free Hub */}
+                    {allStores.length > 0 && (
+                        <TaxFreeBar
+                            selectedStore={selectedStore}
+                            allStores={allStores}
+                            currency={tripData?.settings_config?.localCurrency || "JPY"}
+                            onSelectStore={(st) => {
+                                setSelectedStore(st);
+                                setTaxFreeStore(st);
+                            }}
+                            onUpdateThreshold={handleUpdateThreshold}
+                            onOpenStoreBatchBuy={handleOpenStoreBatchBuy}
+                        />
+                    )}
+                </div>
+            </div>
+
+            {/* Scrollable Shopping Items Container */}
+            <div
+                data-scroll-container="true"
+                className="flex-1 min-h-0 overflow-y-auto no-scrollbar px-4 sm:px-6 md:px-8 py-3 pb-28 md:pb-12 w-full"
+            >
+                {/* Shopping Cards Grid */}
                 {filteredItems.length === 0 ? (
                     <div className="py-16 text-center space-y-3 bg-card/60 rounded-3xl border border-dashed border-border/80">
                         <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mx-auto text-3xl">

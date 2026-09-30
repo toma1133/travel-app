@@ -60,7 +60,7 @@ export const ShoppingRecipientsSection: React.FC<ShoppingRecipientsSectionProps>
                                     className={`px-3 py-1 rounded-full text-xs font-semibold transition-all border cursor-pointer flex items-center gap-1 ${
                                         isChecked
                                             ? "bg-primary text-primary-foreground border-primary shadow-2xs"
-                                            : "bg-white/60 dark:bg-neutral-800/60 text-neutral-700 dark:text-neutral-300 border-white/30 dark:border-white/10 hover:bg-white/90"
+                                            : "bg-white/60 dark:bg-neutral-800/60 text-neutral-700 dark:text-neutral-300 border-white/30 dark:border-white/10 hover:bg-white/90 dark:hover:bg-neutral-700/80"
                                     }`}
                                 >
                                     {isChecked ? (
@@ -94,7 +94,7 @@ export const ShoppingRecipientsSection: React.FC<ShoppingRecipientsSectionProps>
                                     className={`px-3 py-1 rounded-full text-xs font-semibold transition-all border cursor-pointer flex items-center gap-1 ${
                                         isChecked
                                             ? "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 border-transparent shadow-2xs"
-                                            : "bg-white/60 dark:bg-neutral-800/60 text-neutral-700 dark:text-neutral-300 border-white/30 dark:border-white/10 hover:bg-white/90"
+                                            : "bg-white/60 dark:bg-neutral-800/60 text-neutral-700 dark:text-neutral-300 border-white/30 dark:border-white/10 hover:bg-white/90 dark:hover:bg-neutral-700/80"
                                     }`}
                                 >
                                     {isChecked && <Check size={12} />}
@@ -112,7 +112,7 @@ export const ShoppingRecipientsSection: React.FC<ShoppingRecipientsSectionProps>
                                     className={`inline-flex items-center rounded-full text-xs font-semibold transition-all border shadow-2xs pl-3 pr-1 py-0.5 gap-1 ${
                                         isChecked
                                             ? "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 border-transparent"
-                                            : "bg-white/60 dark:bg-neutral-800/60 text-neutral-700 dark:text-neutral-300 border-white/30 dark:border-white/10 hover:bg-white/90"
+                                            : "bg-white/60 dark:bg-neutral-800/60 text-neutral-700 dark:text-neutral-300 border-white/30 dark:border-white/10 hover:bg-white/90 dark:hover:bg-neutral-700/80"
                                     }`}
                                 >
                                     <button
@@ -186,13 +186,13 @@ export const ShoppingRecipientsSection: React.FC<ShoppingRecipientsSectionProps>
                     <div className="text-[11px] font-semibold text-neutral-500">
                         各對象分配件數：
                     </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         {recipients.map((rec) => {
                             const qty = recipientAllocations[rec] || 1;
                             return (
                                 <div
                                     key={rec}
-                                    className="p-2 rounded-xl bg-white/60 dark:bg-neutral-900/40 border border-white/25 dark:border-white/10 flex items-center justify-between gap-1 shadow-2xs"
+                                    className="p-2.5 rounded-xl bg-white/80 dark:bg-neutral-800/80 border border-black/10 dark:border-white/10 flex items-center justify-between gap-2 shadow-2xs"
                                 >
                                     <div className="flex items-center gap-1.5 min-w-0 flex-1">
                                         <button
@@ -201,9 +201,12 @@ export const ShoppingRecipientsSection: React.FC<ShoppingRecipientsSectionProps>
                                             className="p-1 rounded-md text-neutral-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors shrink-0 cursor-pointer"
                                             title="移除此受贈人"
                                         >
-                                            <Trash2 size={12} />
+                                            <Trash2 size={13} />
                                         </button>
-                                        <span className="font-semibold text-xs truncate text-neutral-800 dark:text-neutral-200">
+                                        <span
+                                            className="font-bold text-xs text-neutral-900 dark:text-neutral-100 truncate"
+                                            title={rec}
+                                        >
                                             {rec}
                                         </span>
                                     </div>
@@ -211,17 +214,17 @@ export const ShoppingRecipientsSection: React.FC<ShoppingRecipientsSectionProps>
                                         <button
                                             type="button"
                                             onClick={() => onUpdateRecipientQty(rec, -1)}
-                                            className="w-5 h-5 rounded border border-white/30 dark:border-white/15 bg-white/50 dark:bg-neutral-800/50 flex items-center justify-center hover:bg-white text-xs font-bold cursor-pointer"
+                                            className="w-6 h-6 rounded-lg border border-black/10 dark:border-white/15 bg-neutral-100 dark:bg-neutral-700/80 flex items-center justify-center hover:bg-neutral-200 dark:hover:bg-neutral-600 text-neutral-800 dark:text-neutral-100 text-xs font-bold transition-colors cursor-pointer"
                                         >
                                             -
                                         </button>
-                                        <span className="font-mono text-xs font-bold w-5 text-center text-neutral-900 dark:text-neutral-100">
+                                        <span className="font-mono text-xs font-bold w-6 text-center text-neutral-900 dark:text-neutral-100">
                                             {qty}
                                         </span>
                                         <button
                                             type="button"
                                             onClick={() => onUpdateRecipientQty(rec, 1)}
-                                            className="w-5 h-5 rounded border border-white/30 dark:border-white/15 bg-white/50 dark:bg-neutral-800/50 flex items-center justify-center hover:bg-white text-xs font-bold cursor-pointer"
+                                            className="w-6 h-6 rounded-lg border border-black/10 dark:border-white/15 bg-neutral-100 dark:bg-neutral-700/80 flex items-center justify-center hover:bg-neutral-200 dark:hover:bg-neutral-600 text-neutral-800 dark:text-neutral-100 text-xs font-bold transition-colors cursor-pointer"
                                         >
                                             +
                                         </button>

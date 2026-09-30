@@ -165,21 +165,23 @@ const ItineraryPage = ({ isPrinting, tripDataOverride, tripIdOverride }: Itinera
     };
 
     return (
-        <div className={isPrinting ? "font-[Noto_Sans_TC] text-foreground block bg-white" : `min-h-[100dvh] font-[Noto_Sans_TC] text-foreground flex flex-col ${tripData?.theme_config?.bg || "bg-background"} dark:bg-background pb-24 lg:pb-6 lg:h-[100dvh] lg:overflow-hidden`}>
+        <div className={isPrinting ? "font-[Noto_Sans_TC] text-foreground block bg-white" : `h-full font-[Noto_Sans_TC] text-foreground flex flex-col ${tripData?.theme_config?.bg || "bg-background"} dark:bg-background overflow-hidden`}>
             {!isPrinting && (
-                <SectionHeader title="行程表" subtitle="Timeline" theme={tripData?.theme_config!} hasBackBtn rightAction={
-                    <div className="flex items-center gap-2">
-                        <button type="button" onClick={() => setIsEditing(!isEditing)} className={`p-2 rounded-xl text-xs font-bold transition-all ${isEditing ? "bg-destructive text-destructive-foreground" : "glass-panel hover:bg-white/80 dark:hover:bg-white/[0.08]"}`} title={isEditing ? "完成" : "編輯"}>
-                            {isEditing ? <Lock size={15} /> : <Settings size={15} />}
-                        </button>
-                        <button type="button" onClick={() => setDayModal({ open: true, mode: "create", form: { activities: [], date: moment().format("YYYY-MM-DD"), day_number: (itinerarys?.length || 0) + 1, created_at: null, id: crypto.randomUUID(), title: "", trip_id: tripId ?? "", updated_at: null, user_id: session?.user?.id || "", weekday: moment().format("ddd") } })} className={`p-2 rounded-xl text-white shadow-md active:scale-95 transition-all ${tripData?.theme_config?.accent || "bg-primary"}`} title="新增日程">
-                            <Plus size={15} />
-                        </button>
-                    </div>
-                } />
+                <div className="shrink-0">
+                    <SectionHeader title="行程表" subtitle="Timeline" theme={tripData?.theme_config!} hasBackBtn rightAction={
+                        <div className="flex items-center gap-2">
+                            <button type="button" onClick={() => setIsEditing(!isEditing)} className={`p-2 rounded-xl text-xs font-bold transition-all ${isEditing ? "bg-destructive text-destructive-foreground" : "glass-panel hover:bg-white/80 dark:hover:bg-white/[0.08]"}`} title={isEditing ? "完成" : "編輯"}>
+                                {isEditing ? <Lock size={15} /> : <Settings size={15} />}
+                            </button>
+                            <button type="button" onClick={() => setDayModal({ open: true, mode: "create", form: { activities: [], date: moment().format("YYYY-MM-DD"), day_number: (itinerarys?.length || 0) + 1, created_at: null, id: crypto.randomUUID(), title: "", trip_id: tripId ?? "", updated_at: null, user_id: session?.user?.id || "", weekday: moment().format("ddd") } })} className={`p-2 rounded-xl text-white shadow-md active:scale-95 transition-all ${tripData?.theme_config?.accent || "bg-primary"}`} title="新增日程">
+                                <Plus size={15} />
+                            </button>
+                        </div>
+                    } />
+                </div>
             )}
 
-            <div className={isPrinting ? "space-y-6 overflow-visible" : "flex-1 flex flex-col min-h-0 px-3 sm:px-6 pt-2 pb-20 lg:pb-6 lg:overflow-hidden gap-3"}>
+            <div className={isPrinting ? "space-y-6 overflow-visible" : "flex-1 flex flex-col min-h-0 px-3 sm:px-6 pt-2 pb-2 lg:pb-3 overflow-hidden gap-3"}>
                 {isLoading ? (
                     <TimelineSkeleton />
                 ) : (
@@ -209,8 +211,8 @@ const ItineraryPage = ({ isPrinting, tripDataOverride, tripIdOverride }: Itinera
                             </div>
                         )}
 
-                        <div className={isPrinting ? "block space-y-6" : "flex flex-col lg:flex-row gap-4 sm:gap-5 lg:flex-1 lg:min-h-0"}>
-                            <div ref={scrollContainerRef} className={isPrinting ? "w-full" : "w-full lg:max-w-[58%] flex-1 lg:h-full lg:overflow-y-auto no-scrollbar lg:pr-2 pb-16 lg:pb-8"}>
+                        <div className={isPrinting ? "block space-y-6" : "flex flex-col lg:flex-row gap-4 sm:gap-5 flex-1 min-h-0 overflow-hidden"}>
+                            <div ref={scrollContainerRef} data-scroll-container="true" className={isPrinting ? "w-full" : "w-full lg:max-w-[58%] flex-1 h-full overflow-y-auto no-scrollbar lg:pr-2 pb-28 lg:pb-8"}>
                                 <ItineraryList
                             itinerarys={itinerarys} pcSelectedDayId={selectedDayFilter} itineraryPlacesMap={dayPlacesMap} placeMap={linkedPlacesMap}
                             isEditing={isEditing} isPrinting={isPrinting} theme={tripData?.theme_config!} scrollContainerRef={scrollContainerRef}
@@ -233,15 +235,15 @@ const ItineraryPage = ({ isPrinting, tripDataOverride, tripIdOverride }: Itinera
                     </div>
 
                     {!isPrinting && isDesktop && (
-                        <div className="flex flex-1 flex-col h-full rounded-3xl overflow-hidden glass-panel border border-border/80 min-h-[450px]">
-                            <div className="px-4 py-3 bg-muted/30 border-b border-border/50 flex items-center justify-between">
+                        <div className="flex flex-1 flex-col h-full rounded-3xl overflow-hidden glass-panel border border-border/80 min-h-0">
+                            <div className="px-4 py-3 bg-muted/30 border-b border-border/50 flex items-center justify-between shrink-0">
                                 <div className="flex items-center gap-2">
                                     <MapIcon size={16} className="text-primary shrink-0" />
                                     <span className="text-xs font-bold text-foreground">地圖動態路線 {activeDayLabel ? `· ${activeDayLabel}` : ""}</span>
                                 </div>
                                 <span className="text-[11px] text-muted-foreground font-mono bg-accent/50 px-2 py-0.5 rounded-full">{activeMapPlaces.length} 個地標</span>
                             </div>
-                            <div className="flex-1 w-full relative">
+                            <div className="flex-1 w-full relative min-h-0">
                                 <PlaceMapView places={activeMapPlaces} showRouteLine highlightedPlaceId={hoveredPlace.id} highlightedIndex={hoveredPlace.index} enabled />
                             </div>
                         </div>

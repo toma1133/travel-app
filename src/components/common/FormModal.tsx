@@ -109,7 +109,7 @@ const FormModal = ({
 
                 {/* 📱 iOS 原生導航頂部列 (iOS Navigation Top Bar) */}
                 <div
-                    className="px-4 py-3 border-b border-border/70 bg-card/90 backdrop-blur-md flex items-center justify-between shrink-0 touch-none select-none"
+                    className="px-4 py-3 sm:px-5 sm:py-3.5 border-b border-border/70 bg-card/90 backdrop-blur-md flex items-center justify-between shrink-0 touch-none select-none"
                     onTouchStart={handleTouchStart}
                     onTouchMove={handleTouchMove}
                     onTouchEnd={handleTouchEnd}
@@ -117,7 +117,7 @@ const FormModal = ({
                     <button
                         type="button"
                         onClick={onCancelBtnClick || onCloseBtnClick}
-                        className="text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors cursor-pointer px-2 py-1"
+                        className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 active:opacity-70 transition-opacity cursor-pointer px-1 py-1 shrink-0"
                     >
                         取消
                     </button>
@@ -132,7 +132,7 @@ const FormModal = ({
                             type="submit"
                             form={formId}
                             onClick={() => hapticFeedback.success()}
-                            className="text-xs font-bold bg-blue-500 hover:bg-blue-600 text-white px-3.5 py-1.5 rounded-full transition-all shadow-xs cursor-pointer active:scale-95 shrink-0"
+                            className="text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white px-3.5 py-1.5 rounded-full transition-all shadow-xs cursor-pointer active:scale-95 shrink-0"
                         >
                             {modalSaveTitle}
                         </button>
@@ -143,9 +143,11 @@ const FormModal = ({
                 <form
                     id={formId}
                     onSubmit={onSubmit}
-                    className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 no-scrollbar pb-safe"
+                    className="flex-1 overflow-y-auto p-4 sm:p-5 pb-8 sm:pb-10 space-y-4 no-scrollbar"
                 >
                     {children}
+                    {/* 底部保留舒適空白緩衝區 (確保表單最後一項不貼底，支援 Safe Area) */}
+                    <div className="h-6 sm:h-8 shrink-0" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }} aria-hidden="true" />
                 </form>
             </div>
         </div>

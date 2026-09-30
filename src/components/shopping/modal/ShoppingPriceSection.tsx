@@ -55,18 +55,18 @@ export const ShoppingPriceSection: React.FC<ShoppingPriceSectionProps> = ({
             : totalOriginal;
 
     return (
-        <div className="space-y-3 p-4 rounded-2xl bg-white/40 dark:bg-black/30 border border-white/20 dark:border-white/10 backdrop-blur-md shadow-xs">
+        <div className="space-y-3 p-4 rounded-2xl bg-neutral-50/70 dark:bg-neutral-900/50 border border-black/10 dark:border-white/10 backdrop-blur-md shadow-xs">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 {/* 數量步進器 */}
                 <div className="space-y-1.5">
-                    <label className="font-semibold text-neutral-800 dark:text-neutral-200 text-xs">
+                    <label className="font-bold text-neutral-900 dark:text-neutral-100 text-xs">
                         預計採購總數量
                     </label>
                     <div className="flex items-center gap-2">
                         <button
                             type="button"
                             onClick={() => onQuantityChange(Math.max(1, targetQuantity - 1))}
-                            className="w-9 h-9 rounded-xl border border-white/30 dark:border-white/15 bg-white/60 dark:bg-neutral-800/60 flex items-center justify-center text-neutral-800 dark:text-neutral-100 hover:bg-white/80 dark:hover:bg-neutral-700/80 active:scale-95 transition-all cursor-pointer shadow-2xs"
+                            className="w-9 h-9 rounded-xl border border-black/15 dark:border-white/15 bg-white dark:bg-neutral-800 flex items-center justify-center text-neutral-800 dark:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-700 active:scale-95 transition-all cursor-pointer shadow-2xs"
                         >
                             <Minus size={14} />
                         </button>
@@ -78,28 +78,28 @@ export const ShoppingPriceSection: React.FC<ShoppingPriceSectionProps> = ({
                                 const v = parseInt(e.target.value, 10);
                                 if (!isNaN(v) && v >= 1) onQuantityChange(v);
                             }}
-                            className="w-16 h-9 text-center font-mono font-bold text-sm bg-white/70 dark:bg-neutral-900/60 border border-white/30 dark:border-white/15 rounded-xl text-neutral-900 dark:text-neutral-100 outline-none focus:ring-2 focus:ring-primary/40"
+                            className="w-16 h-9 text-center font-mono font-bold text-sm bg-white dark:bg-neutral-900 border border-black/15 dark:border-white/15 rounded-xl text-neutral-900 dark:text-neutral-100 outline-none focus:ring-2 focus:ring-primary/20 shadow-2xs"
                         />
                         <button
                             type="button"
                             onClick={() => onQuantityChange(targetQuantity + 1)}
-                            className="w-9 h-9 rounded-xl border border-white/30 dark:border-white/15 bg-white/60 dark:bg-neutral-800/60 flex items-center justify-center text-neutral-800 dark:text-neutral-100 hover:bg-white/80 dark:hover:bg-neutral-700/80 active:scale-95 transition-all cursor-pointer shadow-2xs"
+                            className="w-9 h-9 rounded-xl border border-black/15 dark:border-white/15 bg-white dark:bg-neutral-800 flex items-center justify-center text-neutral-800 dark:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-700 active:scale-95 transition-all cursor-pointer shadow-2xs"
                         >
                             <Plus size={14} />
                         </button>
-                        <span className="text-xs text-neutral-500 dark:text-neutral-400 font-medium">件</span>
+                        <span className="text-xs text-neutral-600 dark:text-neutral-300 font-bold">件</span>
                     </div>
                 </div>
 
                 {/* 單價與幣別切換 */}
                 <div className="space-y-1.5">
                     <div className="flex items-center justify-between flex-wrap gap-1">
-                        <label className="font-semibold text-neutral-800 dark:text-neutral-200 text-xs">
+                        <label className="font-bold text-neutral-900 dark:text-neutral-100 text-xs">
                             預估 / 購入單價
                         </label>
 
                         {/* 幣別切換膠囊 */}
-                        <div className="inline-flex items-center rounded-xl border border-white/30 dark:border-white/15 bg-black/5 dark:bg-white/5 p-0.5">
+                        <div className="inline-flex items-center rounded-xl border border-black/10 dark:border-white/15 bg-black/5 dark:bg-white/5 p-0.5">
                             <button
                                 type="button"
                                 onClick={() => onCurrencyToggle(tripLocalCurrency)}
@@ -140,7 +140,7 @@ export const ShoppingPriceSection: React.FC<ShoppingPriceSectionProps> = ({
                             }
                             value={initialPriceInput}
                             onChange={(e) => onPriceChange(e.target.value)}
-                            className="w-full pl-8 pr-3 py-2 bg-white/70 dark:bg-neutral-900/60 border border-white/30 dark:border-white/15 rounded-xl text-neutral-900 dark:text-neutral-100 outline-none text-xs font-mono font-bold focus:ring-2 focus:ring-primary/40"
+                            className="w-full pl-8 pr-3 py-2 bg-white dark:bg-neutral-900 border border-black/15 dark:border-white/15 rounded-xl text-neutral-900 dark:text-neutral-100 outline-none text-xs font-mono font-bold focus:ring-2 focus:ring-primary/20 shadow-2xs"
                         />
                     </div>
                 </div>

@@ -29,6 +29,15 @@ const BookPage = () => {
                 top: 0,
                 behavior: "instant" as ScrollBehavior,
             });
+            const inner = scrollContainerRef.current.querySelector?.(
+                '[data-scroll-container="true"]'
+            );
+            if (inner) {
+                inner.scrollTo({
+                    top: 0,
+                    behavior: "instant" as ScrollBehavior,
+                });
+            }
         }
     }, [location.pathname]);
 
@@ -49,21 +58,19 @@ const BookPage = () => {
 
                     {/* Main Content Area */}
                     <main
-                        className="flex-1 overflow-y-auto no-scrollbar scroll-smooth relative flex flex-col min-h-0"
+                        className="flex-1 overflow-hidden relative flex flex-col min-h-0 w-full h-full"
                         ref={scrollContainerRef}
                     >
                         <Outlet context={{ tripData, setIsPageLoading }} />
 
-                        {/* Bottom scroll clearance cushion so last items scroll comfortably above floating LiquidGlassBottomNav */}
-                        <div
-                            className="w-full shrink-0 h-[calc(7.5rem+env(safe-area-inset-bottom,0px))] md:h-8 pointer-events-none"
-                            aria-hidden="true"
-                        />
-
                         <BackToTopButton
                             showAt={200}
                             size={20}
-                            getTarget={() => scrollContainerRef.current}
+                            getTarget={() =>
+                                (scrollContainerRef.current?.querySelector?.(
+                                    '[data-scroll-container="true"]'
+                                ) as HTMLElement) || scrollContainerRef.current
+                            }
                         />
                     </main>
 

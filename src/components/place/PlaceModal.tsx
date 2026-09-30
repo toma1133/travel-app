@@ -7,6 +7,7 @@ import React, {
 import type { PlaceCategory, PlaceVM } from "../../models/types/PlaceTypes";
 import type { TripThemeConf } from "../../models/types/TripTypes";
 import { GlassModal } from "../ui/GlassModal";
+import { GlassButton } from "../ui/GlassButton";
 import { PlaceSearchMapPickerModal } from "./PlaceSearchMapPickerModal";
 import {
     usePlaceFormState,
@@ -95,32 +96,22 @@ const PlaceModal: React.FC<PlaceModalProps> = ({
                     onCloseBtnClick(fakeEvent);
                 }}
                 maxWidth="2xl"
-                className="max-h-[92vh] sm:max-h-[88vh] bg-background/95 dark:bg-neutral-900/95 p-0"
+                className="max-h-[92vh] sm:max-h-[88vh] bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 p-0 shadow-2xl"
             >
                 {/* 頂部導航標題列 */}
-                <GlassModal.Header className="px-4 py-3 bg-card/60 backdrop-blur-md shrink-0">
-                    <button
-                        type="button"
-                        onClick={onCloseBtnClick}
-                        className="text-xs font-semibold text-blue-500 hover:text-blue-600 active:opacity-70 transition-opacity cursor-pointer"
-                    >
-                        取消
-                    </button>
-
-                    <div className="text-center">
-                        <h2 className="font-bold text-sm sm:text-base text-foreground flex items-center justify-center gap-1.5">
-                            {mode === "create" ? "✨ 新增地點" : "📍 編輯地點"}
-                        </h2>
-                    </div>
-
-                    <button
-                        type="button"
-                        onClick={() => formRef.current?.requestSubmit()}
-                        className="px-3.5 py-1.5 bg-blue-500 hover:bg-blue-600 text-white font-bold text-xs rounded-full shadow-xs active:scale-95 transition-all cursor-pointer"
-                    >
-                        完成
-                    </button>
-                </GlassModal.Header>
+                <GlassModal.Header
+                    title={mode === "create" ? "✨ 新增地點" : "📍 編輯地點"}
+                    onClose={onCloseBtnClick as any}
+                    rightAction={
+                        <button
+                            type="button"
+                            onClick={() => formRef.current?.requestSubmit()}
+                            className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-full shadow-xs active:scale-95 transition-all cursor-pointer shrink-0"
+                        >
+                            完成
+                        </button>
+                    }
+                />
 
                 {/* 智慧搜尋帶入列 (OpenStreetMap / Kakao / Wikipedia) */}
                 <PlaceSearchImportBar

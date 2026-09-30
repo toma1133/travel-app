@@ -114,7 +114,7 @@ const FloatingCurrencyConverter: React.FC<FloatingCurrencyConverterProps> = ({
         <div className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] md:bottom-20 right-4 sm:right-6 z-40 flex flex-col items-end">
             {/* Pop-up Mini Glass Calculator Panel */}
             {isOpen && (
-                <div className="mb-3 w-[310px] sm:w-[340px] bg-card/95 dark:bg-neutral-900/95 backdrop-blur-xl border border-border/80 shadow-2xl rounded-3xl p-4 space-y-3.5 animate-in slide-in-from-bottom-5 fade-in duration-200 text-card-foreground">
+                <div className="mb-3 w-[310px] sm:w-[340px] bg-white/98 dark:bg-neutral-900/98 backdrop-blur-2xl border border-slate-200/90 dark:border-neutral-700 shadow-2xl rounded-3xl p-4 space-y-3.5 animate-in slide-in-from-bottom-5 fade-in duration-200 text-slate-900 dark:text-white">
                     {/* Header */}
                     <div className="flex items-center justify-between pb-2 border-b border-border/60">
                         <div className="flex items-center gap-2">
@@ -217,17 +217,17 @@ const FloatingCurrencyConverter: React.FC<FloatingCurrencyConverterProps> = ({
                             </div>
                         </div>
 
-                        {/* Japan / Overseas Tax Mode Toggles */}
+                    {/* Japan / Overseas Tax Mode Toggles */}
                         <div className="flex items-center gap-1.5 justify-between">
-                            <div className="text-[10px] font-bold text-muted-foreground">稅金試算:</div>
+                            <div className="text-[10px] font-bold text-slate-500 dark:text-neutral-400">稅金試算:</div>
                             <div className="flex items-center gap-1">
                                 <button
                                     type="button"
                                     onClick={() => setTaxMode("none")}
                                     className={`px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
                                         taxMode === "none"
-                                            ? "bg-foreground text-background shadow-2xs"
-                                            : "bg-muted text-muted-foreground hover:text-foreground"
+                                            ? "bg-slate-900 text-white dark:bg-white dark:text-neutral-900 shadow-2xs"
+                                            : "bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white"
                                     }`}
                                 >
                                     原價/免稅
@@ -238,7 +238,7 @@ const FloatingCurrencyConverter: React.FC<FloatingCurrencyConverterProps> = ({
                                     className={`px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
                                         taxMode === "10"
                                             ? "bg-amber-500 text-white shadow-2xs"
-                                            : "bg-muted text-muted-foreground hover:text-foreground"
+                                            : "bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white"
                                     }`}
                                 >
                                     +10% (一般)
@@ -249,7 +249,7 @@ const FloatingCurrencyConverter: React.FC<FloatingCurrencyConverterProps> = ({
                                     className={`px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
                                         taxMode === "8"
                                             ? "bg-emerald-500 text-white shadow-2xs"
-                                            : "bg-muted text-muted-foreground hover:text-foreground"
+                                            : "bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white"
                                     }`}
                                 >
                                     +8% (食品)
@@ -258,16 +258,16 @@ const FloatingCurrencyConverter: React.FC<FloatingCurrencyConverterProps> = ({
                         </div>
 
                         {/* Converted Home Currency Readout (Big & Vibrant) */}
-                        <div className="p-3.5 rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/20 space-y-0.5">
-                            <div className="text-[10px] font-bold text-primary flex items-center justify-between">
+                        <div className="p-3.5 rounded-2xl bg-gradient-to-br from-blue-500/10 via-blue-500/5 to-transparent border border-blue-500/20 space-y-0.5">
+                            <div className="text-[10px] font-bold text-blue-600 dark:text-blue-400 flex items-center justify-between">
                                 <span>折合本幣約 ({getCurrencyName(homeCurrency)})</span>
                                 <span className="font-mono text-[10px] opacity-80">
                                     匯率 {exchangeRate}
                                 </span>
                             </div>
-                            <div className="text-2xl sm:text-3xl font-black font-mono text-foreground flex items-baseline gap-1">
-                                <span className="text-sm font-bold text-primary">{homeSymbol}</span>
-                                <span className="tracking-tight text-primary">
+                            <div className="text-2xl sm:text-3xl font-black font-mono text-slate-900 dark:text-white flex items-baseline gap-1">
+                                <span className="text-sm font-bold text-blue-600 dark:text-blue-400">{homeSymbol}</span>
+                                <span className="tracking-tight text-blue-600 dark:text-blue-400">
                                     {convertedHomeAmount.toLocaleString()}
                                 </span>
                             </div>
@@ -279,35 +279,35 @@ const FloatingCurrencyConverter: React.FC<FloatingCurrencyConverterProps> = ({
                         <button
                             type="button"
                             onClick={() => handleQuickAdd(100)}
-                            className="flex-1 py-1 rounded-xl bg-muted/60 hover:bg-muted text-foreground text-[11px] font-bold font-mono transition-colors cursor-pointer"
+                            className="flex-1 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-slate-800 dark:text-neutral-200 text-[11px] font-bold font-mono border border-slate-200/60 dark:border-neutral-700 transition-colors cursor-pointer"
                         >
                             +100
                         </button>
                         <button
                             type="button"
                             onClick={() => handleQuickAdd(500)}
-                            className="flex-1 py-1 rounded-xl bg-muted/60 hover:bg-muted text-foreground text-[11px] font-bold font-mono transition-colors cursor-pointer"
+                            className="flex-1 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-slate-800 dark:text-neutral-200 text-[11px] font-bold font-mono border border-slate-200/60 dark:border-neutral-700 transition-colors cursor-pointer"
                         >
                             +500
                         </button>
                         <button
                             type="button"
                             onClick={() => handleQuickAdd(1000)}
-                            className="flex-1 py-1 rounded-xl bg-muted/60 hover:bg-muted text-foreground text-[11px] font-bold font-mono transition-colors cursor-pointer"
+                            className="flex-1 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-slate-800 dark:text-neutral-200 text-[11px] font-bold font-mono border border-slate-200/60 dark:border-neutral-700 transition-colors cursor-pointer"
                         >
                             +1000
                         </button>
                         <button
                             type="button"
                             onClick={() => handleQuickAdd(5000)}
-                            className="flex-1 py-1 rounded-xl bg-muted/60 hover:bg-muted text-foreground text-[11px] font-bold font-mono transition-colors cursor-pointer"
+                            className="flex-1 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-slate-800 dark:text-neutral-200 text-[11px] font-bold font-mono border border-slate-200/60 dark:border-neutral-700 transition-colors cursor-pointer"
                         >
                             +5000
                         </button>
                         <button
                             type="button"
                             onClick={handleClear}
-                            className="px-2 py-1 rounded-xl bg-destructive/10 hover:bg-destructive/20 text-destructive text-[11px] font-bold transition-colors cursor-pointer"
+                            className="px-2 py-1 rounded-xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-500/10 dark:hover:bg-rose-500/20 text-rose-600 text-[11px] font-bold border border-rose-200/60 dark:border-rose-500/20 transition-colors cursor-pointer"
                             title="清空金額"
                         >
                             C
@@ -318,7 +318,7 @@ const FloatingCurrencyConverter: React.FC<FloatingCurrencyConverterProps> = ({
                     <button
                         type="button"
                         onClick={handleAddToList}
-                        className="w-full py-2.5 rounded-2xl bg-primary text-primary-foreground font-bold text-xs flex items-center justify-center gap-1.5 shadow-md hover:opacity-95 transition-all cursor-pointer active:scale-[0.98]"
+                        className="w-full py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-blue-500/20 transition-all cursor-pointer active:scale-[0.98]"
                     >
                         <Plus size={15} />
                         <span>加入購物清單 ({foreignSymbol}{taxedAmount.toLocaleString()})</span>
@@ -332,8 +332,8 @@ const FloatingCurrencyConverter: React.FC<FloatingCurrencyConverterProps> = ({
                 onClick={() => setIsOpen(!isOpen)}
                 className={`p-3.5 rounded-full shadow-2xl backdrop-blur-md border transition-all cursor-pointer flex items-center gap-2 group active:scale-95 ${
                     isOpen
-                        ? "bg-primary text-primary-foreground border-primary scale-105"
-                        : "bg-card/90 dark:bg-neutral-900/90 hover:bg-card text-foreground border-border/80 hover:border-primary/50 shadow-primary/10"
+                        ? "bg-blue-600 text-white border-blue-600 shadow-blue-500/30 scale-105"
+                        : "bg-white hover:bg-slate-50 dark:bg-neutral-900 dark:hover:bg-neutral-800 text-slate-800 dark:text-white border-slate-200/90 dark:border-neutral-700/80 hover:border-blue-400 shadow-xl"
                 }`}
                 title={isOpen ? "關閉計算機" : "展開即時匯率換算器"}
             >
@@ -341,12 +341,12 @@ const FloatingCurrencyConverter: React.FC<FloatingCurrencyConverterProps> = ({
                     <Calculator
                         size={20}
                         className={`transition-transform duration-300 ${
-                            isOpen ? "rotate-90 text-primary-foreground" : "text-primary group-hover:scale-110"
+                            isOpen ? "rotate-90 text-white" : "text-blue-600 dark:text-blue-400 group-hover:scale-110"
                         }`}
                     />
                     <span className="absolute -top-1 -right-1 flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-500 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
                     </span>
                 </div>
                 <span className="text-xs font-bold pr-0.5 hidden sm:inline">

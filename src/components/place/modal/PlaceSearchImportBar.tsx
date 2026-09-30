@@ -46,11 +46,11 @@ export const PlaceSearchImportBar: React.FC<PlaceSearchImportBarProps> = ({
     onOpenMapPicker,
 }) => {
     return (
-        <div className="p-3 border-b border-border/50 bg-muted/20 shrink-0">
+        <div className="p-3 border-b border-black/[0.06] dark:border-white/[0.08] bg-slate-50/70 dark:bg-neutral-900 shrink-0">
             <div className="flex items-center gap-2">
                 <div className="relative flex-1 min-w-0">
                     <Search
-                        className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground"
+                        className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-neutral-500"
                         size={14}
                     />
                     <input
@@ -58,7 +58,7 @@ export const PlaceSearchImportBar: React.FC<PlaceSearchImportBarProps> = ({
                         placeholder="🔍 搜尋真實景點/店家自動帶入 (Kakao / OSM)..."
                         value={searchTerm}
                         onChange={(e) => onSearchTermChange(e.target.value)}
-                        className="w-full bg-card border border-border/80 rounded-xl pl-9 pr-9 py-2 text-xs text-foreground placeholder:text-muted-foreground/60 outline-none focus:border-blue-500 transition-all shadow-2xs"
+                        className="w-full bg-white dark:bg-neutral-900 border border-slate-200/90 dark:border-neutral-700 rounded-xl pl-9 pr-9 py-2 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-neutral-500 outline-none focus:border-blue-500 transition-all shadow-2xs"
                     />
                     {isSearching ? (
                         <Loader2
@@ -79,7 +79,7 @@ export const PlaceSearchImportBar: React.FC<PlaceSearchImportBarProps> = ({
                 <button
                     type="button"
                     onClick={onOpenMapPicker}
-                    className="px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-95 shrink-0"
+                    className="px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-95 shrink-0"
                     title="開啟互動地圖搜尋與視覺化確認"
                 >
                     <MapPin size={13} />
@@ -89,20 +89,20 @@ export const PlaceSearchImportBar: React.FC<PlaceSearchImportBarProps> = ({
             </div>
 
             {showSuggestions && searchResults.length > 0 && (
-                <div className="mt-2 bg-card border border-border rounded-2xl shadow-xl max-h-56 overflow-y-auto no-scrollbar p-1.5 z-20">
+                <div className="mt-2 bg-white dark:bg-neutral-900 border border-slate-200/90 dark:border-neutral-750 rounded-2xl shadow-xl max-h-56 overflow-y-auto no-scrollbar p-1.5 z-20">
                     {searchResults.map((place) => (
                         <button
                             key={place.place_id}
                             type="button"
                             onClick={() => onSelectResult(place)}
-                            className="w-full text-left p-2.5 hover:bg-muted/70 rounded-xl transition-colors flex items-start gap-2.5 cursor-pointer"
+                            className="w-full text-left p-2.5 hover:bg-slate-50 dark:hover:bg-neutral-800/70 rounded-xl transition-colors flex items-start gap-2.5 cursor-pointer"
                         >
-                            <MapPin size={14} className="text-primary mt-0.5 shrink-0" />
+                            <MapPin size={14} className="text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
                             <div className="truncate flex-1">
-                                <div className="font-bold text-xs text-foreground truncate">
+                                <div className="font-bold text-xs text-slate-900 dark:text-white truncate">
                                     {place.name || place.display_name.split(",")[0]}
                                 </div>
-                                <div className="text-[10px] text-muted-foreground truncate">
+                                <div className="text-[10px] text-slate-500 dark:text-neutral-400 truncate">
                                     {place.display_name}
                                 </div>
                             </div>
@@ -112,9 +112,9 @@ export const PlaceSearchImportBar: React.FC<PlaceSearchImportBarProps> = ({
             )}
 
             {selectedPlace && (
-                <div className="mt-2 bg-card border border-blue-500/30 p-3 rounded-2xl shadow-xs text-xs space-y-2.5">
+                <div className="mt-2 bg-white dark:bg-neutral-900 border border-blue-500/30 p-3 rounded-2xl shadow-xs text-xs space-y-2.5">
                     <div className="flex justify-between items-start">
-                        <span className="font-bold text-blue-500 flex items-center gap-1">
+                        <span className="font-bold text-blue-600 dark:text-blue-400 flex items-center gap-1">
                             <Sparkles size={13} /> 找到地點資料：{selectedPlace.osm.name}
                         </span>
                         <button

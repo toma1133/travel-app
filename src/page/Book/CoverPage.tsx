@@ -45,12 +45,12 @@ const CoverPage = ({
             `}
         >
             {/* Top Nav (Floating) */}
-            <nav className={`absolute top-0 right-0 w-full flex justify-between md:justify-end items-center px-6 md:px-12 py-6 z-50 pointer-events-none print:hidden ${isPrinting ? 'hidden' : ''}`}>
+            <nav className={`absolute top-0 right-0 w-full flex justify-between md:justify-end items-center px-4 sm:px-6 md:px-12 py-5 z-50 pointer-events-none print:hidden ${isPrinting ? 'hidden' : ''}`}>
                 <div className="pointer-events-auto md:hidden">
-                    <BackBtn className="bg-background/80 dark:bg-black/40 text-foreground border border-border/80 shadow-md backdrop-blur-md" />
+                    <BackBtn className="w-10 h-10 flex items-center justify-center p-0 rounded-full liquid-glass-elevated border border-white/60 dark:border-white/15 text-neutral-800 dark:text-neutral-100 shadow-lg backdrop-blur-2xl hover:scale-105 active:scale-95 transition-all" />
                 </div>
                 <div className="pointer-events-auto md:ml-auto">
-                    <SystemControls className="bg-background/85 dark:bg-black/50 text-foreground border-border/80 shadow-md backdrop-blur-md" />
+                    <SystemControls className="liquid-glass-elevated border border-white/60 dark:border-white/15 text-neutral-800 dark:text-neutral-100 shadow-lg backdrop-blur-2xl" />
                 </div>
             </nav>
 

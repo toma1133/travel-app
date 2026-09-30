@@ -20,11 +20,11 @@ const variantStyles = {
     border border-white/25
   `,
   secondary: `
-    liquid-glass-subtle
+    bg-neutral-100/90 dark:bg-neutral-800/80
     text-neutral-800 dark:text-neutral-100
-    hover:bg-white/70 dark:hover:bg-white/15
-    border border-white/50 dark:border-white/10
-    shadow-sm
+    hover:bg-neutral-200/90 dark:hover:bg-neutral-700/90
+    border border-black/10 dark:border-white/10
+    shadow-xs
   `,
   ghost: `
     bg-transparent

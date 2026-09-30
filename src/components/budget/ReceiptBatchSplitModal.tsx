@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from "react";
 import {
-    X,
     Plus,
     Trash2,
     Check,
@@ -254,52 +253,52 @@ export const ReceiptBatchSplitModal: React.FC<ReceiptBatchSplitModalProps> = ({
 
     return (
         <div
-            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm p-0 sm:p-4 animate-in fade-in duration-200"
+            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 animate-in fade-in duration-200"
             onClick={onClose}
         >
             <div
-                className="bg-card text-card-foreground w-full max-w-2xl rounded-t-3xl sm:rounded-3xl shadow-2xl animate-in slide-in-from-bottom-6 sm:zoom-in-95 duration-200 border border-border/80 flex flex-col max-h-[92vh] overflow-hidden"
+                className="bg-white/98 dark:bg-neutral-900/98 text-slate-900 dark:text-white w-full max-w-2xl rounded-t-3xl sm:rounded-3xl shadow-2xl animate-in slide-in-from-bottom-6 sm:zoom-in-95 duration-200 border border-slate-200/90 dark:border-neutral-800 flex flex-col max-h-[92vh] overflow-hidden"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* 手機把手 */}
-                <div className="w-10 h-1 rounded-full bg-muted-foreground/30 mx-auto mt-2.5 sm:hidden shrink-0" />
+                <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-neutral-700 mx-auto mt-2.5 sm:hidden shrink-0" />
 
                 {/* 頂部導航列 */}
-                <div className="px-5 py-3 border-b border-border/70 bg-card/90 backdrop-blur-md flex items-center justify-between shrink-0">
-                    <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-                            <Sparkles size={16} />
-                        </div>
-                        <div>
-                            <div className="flex items-center gap-2">
-                                <h3 className="text-sm font-black tracking-tight text-foreground">
-                                    收據辨識與批次分帳
-                                </h3>
-                                {parsedData.source === "gemini_vision" && (
-                                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300">
-                                        Gemini Vision
-                                    </span>
-                                )}
-                            </div>
-                            <p className="text-[10px] text-muted-foreground font-mono">
-                                Receipt OCR & Multi-Item Split
-                            </p>
-                        </div>
+                <div className="px-4 py-3 sm:px-5 sm:py-3.5 border-b border-black/[0.08] dark:border-white/[0.08] bg-white dark:bg-neutral-900 flex items-center justify-between gap-2 sm:gap-3 shrink-0 select-none">
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 active:opacity-70 transition-opacity cursor-pointer px-1 py-1 shrink-0"
+                    >
+                        取消
+                    </button>
+
+                    <div className="flex-1 min-w-0 text-center flex items-center justify-center gap-1.5">
+                        <Sparkles size={16} className="text-primary shrink-0" />
+                        <h3 className="text-sm font-black tracking-tight text-slate-900 dark:text-white truncate">
+                            收據辨識與批次分帳
+                        </h3>
+                        {parsedData.source === "gemini_vision" && (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300 shrink-0">
+                                AI
+                            </span>
+                        )}
                     </div>
 
                     <button
                         type="button"
-                        onClick={onClose}
-                        className="p-1.5 rounded-xl hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                        onClick={handleBatchSave}
+                        disabled={isSaving}
+                        className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-full shadow-xs active:scale-95 transition-all cursor-pointer shrink-0 disabled:opacity-50"
                     >
-                        <X size={18} />
+                        {isSaving ? "處理中..." : `建立 (${items.filter((i) => i.selected).length})`}
                     </button>
                 </div>
 
                 {/* 表頭快速配置列：店名、日期、幣別、付款人、付款方式 (高對比度深淺模式支援) */}
-                <div className="px-5 py-3 border-b border-border/50 bg-muted/20 dark:bg-neutral-900/50 shrink-0 grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+                <div className="px-5 py-3 border-b border-slate-200/80 dark:border-white/[0.08] bg-slate-50 dark:bg-neutral-900/60 backdrop-blur-md shrink-0 grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
                     {/* 店名 */}
-                    <div className="col-span-2 flex items-center gap-1.5 bg-background dark:bg-neutral-800 border border-border/80 dark:border-neutral-700 px-2.5 py-1.5 rounded-xl shadow-xs">
+                    <div className="col-span-2 flex items-center gap-1.5 bg-white dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 px-2.5 py-1.5 rounded-xl shadow-2xs">
                         <Store size={14} className="text-muted-foreground shrink-0" />
                         <input
                             type="text"
@@ -311,18 +310,18 @@ export const ReceiptBatchSplitModal: React.FC<ReceiptBatchSplitModalProps> = ({
                     </div>
 
                     {/* 日期 */}
-                    <div className="flex items-center gap-1.5 bg-background dark:bg-neutral-800 border border-border/80 dark:border-neutral-700 px-2.5 py-1.5 rounded-xl shadow-xs">
-                        <Calendar size={14} className="text-muted-foreground shrink-0" />
+                    <div className="flex items-center gap-1 bg-white dark:bg-neutral-800 border border-black/10 dark:border-neutral-700 px-2.5 py-1.5 rounded-xl shadow-2xs min-w-0 overflow-hidden">
+                        <Calendar size={13} className="text-muted-foreground shrink-0 hidden sm:block" />
                         <input
                             type="date"
                             value={date}
                             onChange={(e) => setDate(e.target.value)}
-                            className="w-full bg-transparent text-foreground dark:text-neutral-100 font-medium focus:outline-none cursor-pointer"
+                            className="w-full min-w-0 bg-transparent text-foreground dark:text-neutral-100 text-xs font-mono font-medium focus:outline-none cursor-pointer p-0 [color-scheme:light] dark:[color-scheme:dark]"
                         />
                     </div>
 
                     {/* 幣別 */}
-                    <div className="flex items-center gap-1.5 bg-background dark:bg-neutral-800 border border-border/80 dark:border-neutral-700 px-2.5 py-1.5 rounded-xl shadow-xs">
+                    <div className="flex items-center gap-1.5 bg-white dark:bg-neutral-800 border border-black/10 dark:border-neutral-700 px-2.5 py-1.5 rounded-xl shadow-2xs">
                         <Coins size={14} className="text-muted-foreground shrink-0" />
                         <select
                             value={currency}
@@ -333,7 +332,7 @@ export const ReceiptBatchSplitModal: React.FC<ReceiptBatchSplitModalProps> = ({
                                 <option
                                     key={c.code}
                                     value={c.code}
-                                    className="bg-card dark:bg-neutral-900 text-foreground dark:text-neutral-100"
+                                    className="bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100"
                                 >
                                     {c.label}
                                 </option>
@@ -341,7 +340,7 @@ export const ReceiptBatchSplitModal: React.FC<ReceiptBatchSplitModalProps> = ({
                             {currency && !CURRENCIES.find((c) => c.code === currency) && (
                                 <option
                                     value={currency}
-                                    className="bg-card dark:bg-neutral-900 text-foreground dark:text-neutral-100"
+                                    className="bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100"
                                 >
                                     {currency}
                                 </option>
@@ -350,7 +349,7 @@ export const ReceiptBatchSplitModal: React.FC<ReceiptBatchSplitModalProps> = ({
                     </div>
 
                     {/* 付款人 */}
-                    <div className="flex items-center gap-1.5 bg-background dark:bg-neutral-800 border border-border/80 dark:border-neutral-700 px-2.5 py-1.5 rounded-xl shadow-xs">
+                    <div className="flex items-center gap-1.5 bg-white dark:bg-neutral-800 border border-black/10 dark:border-neutral-700 px-2.5 py-1.5 rounded-xl shadow-2xs">
                         <User size={14} className="text-muted-foreground shrink-0" />
                         <select
                             value={payerId}
@@ -358,7 +357,7 @@ export const ReceiptBatchSplitModal: React.FC<ReceiptBatchSplitModalProps> = ({
                             className="w-full bg-transparent text-foreground dark:text-neutral-100 font-medium focus:outline-none cursor-pointer"
                         >
                             {tripMembers.map((tm) => (
-                                <option key={tm.user_id} value={tm.user_id} className="bg-card dark:bg-neutral-900 text-foreground dark:text-neutral-100">
+                                <option key={tm.user_id} value={tm.user_id} className="bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100">
                                     {tm.profiles?.username || tm.user_id.slice(0, 6)} 代付
                                 </option>
                             ))}
@@ -366,7 +365,7 @@ export const ReceiptBatchSplitModal: React.FC<ReceiptBatchSplitModalProps> = ({
                     </div>
 
                     {/* 支付方式 */}
-                    <div className="flex items-center gap-1.5 bg-background dark:bg-neutral-800 border border-border/80 dark:border-neutral-700 px-2.5 py-1.5 rounded-xl shadow-xs">
+                    <div className="flex items-center gap-1.5 bg-white dark:bg-neutral-800 border border-black/10 dark:border-neutral-700 px-2.5 py-1.5 rounded-xl shadow-2xs">
                         <CreditCard size={14} className="text-muted-foreground shrink-0" />
                         <select
                             value={paymentMethodId}
@@ -374,7 +373,7 @@ export const ReceiptBatchSplitModal: React.FC<ReceiptBatchSplitModalProps> = ({
                             className="w-full bg-transparent text-foreground dark:text-neutral-100 font-medium focus:outline-none cursor-pointer"
                         >
                             {paymentMethods.map((pm) => (
-                                <option key={pm.id} value={pm.id} className="bg-card dark:bg-neutral-900 text-foreground dark:text-neutral-100">
+                                <option key={pm.id} value={pm.id} className="bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100">
                                     {pm.name}
                                 </option>
                             ))}
@@ -424,8 +423,8 @@ export const ReceiptBatchSplitModal: React.FC<ReceiptBatchSplitModalProps> = ({
                                     key={item.id || idx}
                                     className={`p-3.5 rounded-2xl border transition-all ${
                                         item.selected
-                                            ? "bg-card dark:bg-neutral-850 border-border/80 dark:border-neutral-700 shadow-xs"
-                                            : "bg-muted/20 dark:bg-neutral-900/30 border-border/40 dark:border-neutral-800 opacity-60"
+                                            ? "bg-white dark:bg-neutral-800 border-black/[0.08] dark:border-neutral-700 shadow-xs"
+                                            : "bg-neutral-50/70 dark:bg-neutral-900/40 border-black/[0.04] dark:border-neutral-800 opacity-60"
                                     }`}
                                 >
                                     {/* 第一行：勾選、品項名、分類、金額、刪除 */}
@@ -451,7 +450,7 @@ export const ReceiptBatchSplitModal: React.FC<ReceiptBatchSplitModalProps> = ({
                                                 })
                                             }
                                             placeholder="品項名稱"
-                                            className="flex-1 min-w-0 text-xs font-bold bg-transparent border-b border-transparent hover:border-border dark:hover:border-neutral-600 focus:border-primary focus:outline-none py-0.5 text-foreground dark:text-neutral-100 placeholder:text-muted-foreground/60"
+                                            className="flex-1 min-w-0 text-xs font-bold bg-transparent border-b border-transparent hover:border-black/20 dark:hover:border-neutral-600 focus:border-primary focus:outline-none py-0.5 text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400"
                                         />
 
                                         {/* 分類下拉 */}
@@ -462,10 +461,10 @@ export const ReceiptBatchSplitModal: React.FC<ReceiptBatchSplitModalProps> = ({
                                                     category: e.target.value,
                                                 })
                                             }
-                                            className="text-[11px] bg-muted/80 dark:bg-neutral-800 text-foreground dark:text-neutral-200 px-2.5 py-1 rounded-lg border border-border/80 dark:border-neutral-700 focus:outline-none shrink-0 font-medium cursor-pointer"
+                                            className="text-[11px] bg-neutral-100/90 dark:bg-neutral-900 text-neutral-800 dark:text-neutral-200 px-2.5 py-1 rounded-lg border border-black/10 dark:border-neutral-700 focus:outline-none shrink-0 font-medium cursor-pointer"
                                         >
                                             {CATEGORY_DEFINITIONS.map((c) => (
-                                                <option key={c.id} value={c.id} className="bg-card dark:bg-neutral-900 text-foreground dark:text-neutral-100">
+                                                <option key={c.id} value={c.id} className="bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100">
                                                     {c.label}
                                                 </option>
                                             ))}
@@ -487,7 +486,7 @@ export const ReceiptBatchSplitModal: React.FC<ReceiptBatchSplitModalProps> = ({
                                                         ),
                                                     })
                                                 }
-                                                className="w-full text-right font-mono font-bold text-xs bg-muted/40 dark:bg-neutral-800/80 text-foreground dark:text-neutral-100 px-1.5 py-1 rounded-lg border border-border/60 dark:border-neutral-700 focus:outline-none focus:ring-1 focus:ring-primary"
+                                                className="w-full text-right font-mono font-bold text-xs bg-neutral-100/90 dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 px-1.5 py-1 rounded-lg border border-black/10 dark:border-neutral-700 focus:outline-none focus:ring-1 focus:ring-primary"
                                             />
                                         </div>
 
@@ -503,7 +502,7 @@ export const ReceiptBatchSplitModal: React.FC<ReceiptBatchSplitModalProps> = ({
                                     </div>
 
                                     {/* 第二行：分帳指派膠囊 (高對比深淺色適配) */}
-                                    <div className="mt-2.5 pt-2 border-t border-border/40 dark:border-neutral-800 flex items-center flex-wrap gap-1.5 text-[11px]">
+                                    <div className="mt-2.5 pt-2 border-t border-black/[0.06] dark:border-neutral-800 flex items-center flex-wrap gap-1.5 text-[11px]">
                                         <span className="text-[10px] text-muted-foreground font-medium mr-1 flex items-center gap-1 shrink-0">
                                             <Users size={11} />
                                             分攤：
@@ -515,8 +514,8 @@ export const ReceiptBatchSplitModal: React.FC<ReceiptBatchSplitModalProps> = ({
                                             onClick={() => handleSetAllMembers(idx)}
                                             className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border transition-all cursor-pointer shadow-xs active:scale-95 ${
                                                 isAllSelected
-                                                    ? "bg-primary text-primary-foreground border-primary dark:bg-blue-600 dark:text-white dark:border-blue-500 shadow-sm"
-                                                    : "bg-muted/70 text-foreground/80 border-border/80 hover:bg-muted hover:text-foreground dark:bg-neutral-800 dark:text-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-700"
+                                                    ? "bg-blue-600 text-white border-blue-600 shadow-sm"
+                                                    : "bg-slate-100 dark:bg-neutral-900 text-slate-700 dark:text-neutral-300 border-slate-200 dark:border-neutral-700 hover:bg-slate-200 dark:hover:bg-neutral-700"
                                             }`}
                                         >
                                             全員均分
@@ -528,8 +527,8 @@ export const ReceiptBatchSplitModal: React.FC<ReceiptBatchSplitModalProps> = ({
                                             onClick={() => handleSetSoloMember(idx, currentUserId)}
                                             className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border transition-all cursor-pointer shadow-xs active:scale-95 ${
                                                 isSolo
-                                                    ? "bg-amber-500 text-white border-amber-500 dark:bg-amber-600 dark:border-amber-500 shadow-sm"
-                                                    : "bg-muted/70 text-foreground/80 border-border/80 hover:bg-muted hover:text-foreground dark:bg-neutral-800 dark:text-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-700"
+                                                    ? "bg-amber-500 text-white border-amber-500 shadow-sm"
+                                                    : "bg-slate-100 dark:bg-neutral-900 text-slate-700 dark:text-neutral-300 border-slate-200 dark:border-neutral-700 hover:bg-slate-200 dark:hover:bg-neutral-700"
                                             }`}
                                         >
                                             本人獨享
@@ -552,8 +551,8 @@ export const ReceiptBatchSplitModal: React.FC<ReceiptBatchSplitModalProps> = ({
                                                     }
                                                     className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold border transition-all flex items-center gap-1 cursor-pointer active:scale-95 ${
                                                         isSelected
-                                                            ? "bg-emerald-500/15 text-emerald-700 dark:bg-emerald-500/25 dark:text-emerald-300 border-emerald-500/40 dark:border-emerald-500/60 font-bold"
-                                                            : "bg-background text-muted-foreground border-border/70 hover:bg-muted dark:bg-neutral-800 dark:text-neutral-300 dark:border-neutral-700 dark:hover:bg-neutral-700"
+                                                            ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/25 dark:text-emerald-300 border-emerald-300 dark:border-emerald-500/60 font-bold"
+                                                            : "bg-white dark:bg-neutral-900 text-slate-600 dark:text-neutral-300 border-slate-200 dark:border-neutral-700 hover:bg-slate-100 dark:hover:bg-neutral-700"
                                                     }`}
                                                 >
                                                     {isSelected && <Check size={10} />}
@@ -568,71 +567,42 @@ export const ReceiptBatchSplitModal: React.FC<ReceiptBatchSplitModalProps> = ({
                     )}
                 </div>
 
-                {/* 底部總額核對與儲存按鈕 */}
-                <div className="p-4 sm:p-5 border-t border-border/70 bg-card/90 backdrop-blur-md flex flex-col gap-3 shrink-0">
+                {/* 底部總額核對資訊列 */}
+                <div className="px-4 py-3 sm:px-5 sm:py-3 border-t border-slate-200/90 dark:border-white/[0.08] bg-slate-50/90 dark:bg-neutral-900/90 backdrop-blur-xl flex items-center justify-between text-xs shrink-0">
                     {/* 核對指標膠囊 */}
-                    <div className="flex items-center justify-between text-xs">
-                        <div className="flex items-center gap-2">
-                            {isReconciled ? (
-                                <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold">
-                                    <CheckCircle2 size={15} />
-                                    <span>明細與收據總額吻合</span>
-                                </span>
-                            ) : (
-                                <div className="flex items-center gap-2">
-                                    <span className="flex items-center gap-1 text-amber-500 font-bold">
-                                        <AlertCircle size={15} />
-                                        <span>
-                                            差額: {diff > 0 ? "+" : ""}
-                                            {diff.toLocaleString()} {currency}
-                                        </span>
+                    <div className="flex items-center gap-2">
+                        {isReconciled ? (
+                            <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold">
+                                <CheckCircle2 size={15} />
+                                <span>明細與收據總額吻合</span>
+                            </span>
+                        ) : (
+                            <div className="flex items-center gap-2">
+                                <span className="flex items-center gap-1 text-amber-500 font-bold">
+                                    <AlertCircle size={15} />
+                                    <span>
+                                        差額: {diff > 0 ? "+" : ""}
+                                        {diff.toLocaleString()} {currency}
                                     </span>
-                                    <button
-                                        type="button"
-                                        onClick={handleBalanceDiff}
-                                        className="text-[11px] text-primary hover:underline font-bold cursor-pointer"
-                                    >
-                                        自動補齊差額
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="font-mono text-right">
-                            <span className="text-muted-foreground text-[11px] mr-1.5">
-                                明細總計:
-                            </span>
-                            <span className="font-black text-sm text-foreground">
-                                {currency} {selectedTotal.toLocaleString()}
-                            </span>
-                        </div>
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={handleBalanceDiff}
+                                    className="text-[11px] text-blue-600 dark:text-blue-400 hover:underline font-bold cursor-pointer"
+                                >
+                                    自動補齊差額
+                                </button>
+                            </div>
+                        )}
                     </div>
 
-                    {/* 按鈕組 */}
-                    <div className="flex items-center gap-2.5">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="px-4 py-2.5 rounded-xl border border-border/80 dark:border-neutral-700 text-muted-foreground hover:bg-muted text-xs font-bold transition-colors cursor-pointer"
-                        >
-                            取消
-                        </button>
-
-                        <button
-                            type="button"
-                            onClick={handleBatchSave}
-                            disabled={isSaving}
-                            className="flex-1 py-2.5 rounded-xl bg-primary hover:opacity-90 text-primary-foreground font-black text-xs transition-all shadow-md active:scale-95 cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
-                        >
-                            {isSaving ? (
-                                <span>批次建立中...</span>
-                            ) : (
-                                <span>
-                                    批次建立 {items.filter((i) => i.selected).length} 筆記帳 (合計{" "}
-                                    {currency} {selectedTotal.toLocaleString()})
-                                </span>
-                            )}
-                        </button>
+                    <div className="font-mono text-right">
+                        <span className="text-slate-500 dark:text-neutral-400 text-[11px] mr-1.5 font-sans font-medium">
+                            明細總計:
+                        </span>
+                        <span className="font-black text-sm text-slate-900 dark:text-white">
+                            {currency} {selectedTotal.toLocaleString()}
+                        </span>
                     </div>
                 </div>
             </div>

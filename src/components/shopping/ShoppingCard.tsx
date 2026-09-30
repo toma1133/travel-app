@@ -351,7 +351,7 @@ const ShoppingCard: React.FC<ShoppingCardProps> = ({
             </div>
 
             {/* Bottom Actions Bar */}
-            <div className="px-3.5 sm:px-4 py-2.5 bg-white/30 dark:bg-black/20 border-t border-white/20 dark:border-white/10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs">
+            <div className="px-3.5 sm:px-4 py-2.5 bg-slate-50/90 dark:bg-neutral-900/60 border-t border-slate-200/90 dark:border-white/[0.08] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs">
                 {/* Row 1 on mobile: Store Clerk & Price Compare */}
                 <div className="flex items-center gap-1.5 sm:gap-2">
                     <button
@@ -360,7 +360,7 @@ const ShoppingCard: React.FC<ShoppingCardProps> = ({
                             hapticFeedback.medium();
                             onShowToClerk(item);
                         }}
-                        className="flex-1 sm:flex-initial px-3 py-1.5 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer shrink-0 whitespace-nowrap"
+                        className="flex-1 sm:flex-initial px-3 py-1.5 rounded-xl bg-rose-500/15 text-rose-700 dark:text-rose-400 hover:bg-rose-500/25 border border-rose-500/25 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer shrink-0 whitespace-nowrap"
                         title="全螢幕展示大圖與原文品名給店員看"
                     >
                         <Sparkles size={13} className="shrink-0" />
@@ -373,19 +373,19 @@ const ShoppingCard: React.FC<ShoppingCardProps> = ({
                             hapticFeedback.light();
                             onOpenPriceCompare(item);
                         }}
-                        className="flex-1 sm:flex-initial px-3 py-1.5 rounded-xl bg-white/50 dark:bg-neutral-800/50 border border-white/30 dark:border-white/10 hover:bg-white text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-2xs shrink-0 whitespace-nowrap"
+                        className="flex-1 sm:flex-initial px-3 py-1.5 rounded-xl bg-white dark:bg-neutral-800 border border-slate-200/90 dark:border-neutral-700 hover:bg-slate-50 text-slate-800 dark:text-neutral-200 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs shrink-0 whitespace-nowrap"
                         title="門市報價與比價明細"
                     >
-                        <Calculator size={13} className="shrink-0" />
+                        <Calculator size={13} className="shrink-0 text-blue-600 dark:text-blue-400" />
                         <span>比價 ({records.length})</span>
                     </button>
                 </div>
 
                 {/* Row 2 on mobile: Stepper & Management Action Buttons */}
-                <div className="flex items-center justify-between sm:justify-end gap-2 border-t border-white/20 dark:border-white/10 sm:border-t-0 pt-2 sm:pt-0">
+                <div className="flex items-center justify-between sm:justify-end gap-2 border-t border-slate-200/90 dark:border-white/10 sm:border-t-0 pt-2 sm:pt-0">
                     {/* Flexible In-Store Bought Stepper */}
                     {onUpdateBoughtQty && (
-                        <div className="flex items-center rounded-xl bg-emerald-500/10 border border-emerald-500/25 p-0.5 text-emerald-700 dark:text-emerald-300">
+                        <div className="flex items-center rounded-xl bg-emerald-500/10 border border-emerald-500/30 p-0.5 text-emerald-800 dark:text-emerald-300">
                             <button
                                 type="button"
                                 disabled={displayBought <= 0}
@@ -440,7 +440,7 @@ const ShoppingCard: React.FC<ShoppingCardProps> = ({
                                 hapticFeedback.light();
                                 onEdit(item);
                             }}
-                            className="p-1.5 sm:p-2 rounded-xl text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-white/50 transition-colors cursor-pointer"
+                            className="p-1.5 sm:p-2 rounded-xl text-slate-600 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-white/10 transition-colors cursor-pointer"
                             title="編輯商品"
                         >
                             <Edit3 size={15} />
@@ -452,7 +452,7 @@ const ShoppingCard: React.FC<ShoppingCardProps> = ({
                                 hapticFeedback.warning();
                                 onDelete(item);
                             }}
-                            className="p-1.5 sm:p-2 rounded-xl text-neutral-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                            className="p-1.5 sm:p-2 rounded-xl text-slate-500 dark:text-neutral-400 hover:text-rose-600 hover:bg-rose-500/10 transition-colors cursor-pointer"
                             title="刪除"
                         >
                             <Trash2 size={15} />

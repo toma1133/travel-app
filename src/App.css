@@ -1,7 +1,7 @@
 @import url("https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@100..900&family=Noto+Serif+TC:wght@200..900&display=swap");
 
 .pb-safe {
-    padding-bottom: env(safe-area-inset-bottom, 20px);
+    padding-bottom: max(1.5rem, calc(env(safe-area-inset-bottom, 0px) + 1.25rem));
 }
 .no-scrollbar::-webkit-scrollbar {
     display: none;

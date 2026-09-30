@@ -17,6 +17,8 @@ export interface GlassModalHeaderProps {
   title?: React.ReactNode;
   subtitle?: React.ReactNode;
   onClose?: () => void;
+  leftAction?: React.ReactNode;
+  rightAction?: React.ReactNode;
   children?: React.ReactNode;
   className?: string;
 }
@@ -154,7 +156,8 @@ export const GlassModalRoot: React.FC<GlassModalProps> = ({
         className={`
           relative w-full
           ${asBottomSheetOnMobile ? `max-w-full md:${maxWidthMap[maxWidth]}` : maxWidthMap[maxWidth]}
-          liquid-glass-elevated
+          bg-white/98 dark:bg-neutral-900/98 backdrop-blur-2xl
+          border border-black/10 dark:border-white/10
           ${
             asBottomSheetOnMobile
               ? 'rounded-t-[2rem] md:rounded-3xl max-h-[88vh] md:max-h-[90vh] animate-in slide-in-from-bottom-6 md:animate-glass-modal-in duration-300'
@@ -192,35 +195,97 @@ const GlassModalHeader: React.FC<GlassModalHeaderProps> = ({
   title,
   subtitle,
   onClose,
+  leftAction,
+  rightAction,
   children,
   className = '',
 }) => {
-  return (
-    <div
-      className={`
-        px-5 py-3.5 sm:px-6 sm:py-5
-        border-b border-white/20 dark:border-white/10
-        flex items-center justify-between gap-4
-        bg-white/30 dark:bg-black/20
-        ${className}
-      `}
-    >
-      {children ? (
-        children
-      ) : (
-        <div className="flex-1 min-w-0">
+  if (children) {
+    return (
+      <div
+        className={`
+          px-4 py-3 sm:px-5 sm:py-3.5
+          border-b border-black/[0.08] dark:border-white/[0.08]
+          flex items-center justify-between gap-3
+          bg-white dark:bg-neutral-900 backdrop-blur-xl shrink-0
+          ${className}
+        `}
+      >
+        {children}
+      </div>
+    );
+  }
+
+  // Symmetrical iOS modal header layout when leftAction or rightAction is present
+  if (leftAction || rightAction) {
+    return (
+      <div
+        className={`
+          px-4 py-3 sm:px-5 sm:py-3.5
+          border-b border-black/[0.08] dark:border-white/[0.08]
+          flex items-center justify-between gap-2 sm:gap-3
+          bg-white dark:bg-neutral-900 backdrop-blur-xl shrink-0 select-none
+          ${className}
+        `}
+      >
+        <div className="min-w-[56px] flex items-center justify-start shrink-0">
+          {leftAction || (onClose && (
+            <button
+              type="button"
+              onClick={() => {
+                hapticFeedback.light();
+                onClose();
+              }}
+              className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 active:opacity-70 transition-opacity cursor-pointer px-1 py-1"
+            >
+              取消
+            </button>
+          ))}
+        </div>
+
+        <div className="flex-1 min-w-0 text-center px-1">
           {title && (
-            <h3 className="text-lg sm:text-xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100 truncate">
+            <h3 className="text-sm sm:text-base font-bold text-neutral-900 dark:text-neutral-100 truncate">
               {title}
             </h3>
           )}
           {subtitle && (
-            <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 mt-0.5 truncate">
+            <p className="text-[10px] sm:text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5 truncate">
               {subtitle}
             </p>
           )}
         </div>
-      )}
+
+        <div className="min-w-[56px] flex items-center justify-end shrink-0">
+          {rightAction}
+        </div>
+      </div>
+    );
+  }
+
+  // Classic title + close X button layout
+  return (
+    <div
+      className={`
+        px-5 py-4 sm:px-6 sm:py-5
+        border-b border-black/[0.08] dark:border-white/[0.08]
+        flex items-center justify-between gap-4
+        bg-white dark:bg-neutral-900 backdrop-blur-xl shrink-0
+        ${className}
+      `}
+    >
+      <div className="flex-1 min-w-0">
+        {title && (
+          <h3 className="text-lg sm:text-xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100 truncate">
+            {title}
+          </h3>
+        )}
+        {subtitle && (
+          <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 mt-0.5 truncate">
+            {subtitle}
+          </p>
+        )}
+      </div>
 
       {onClose && (
         <button
@@ -232,7 +297,7 @@ const GlassModalHeader: React.FC<GlassModalHeaderProps> = ({
           className="
             p-1.5 sm:p-2 rounded-full text-neutral-500 hover:text-neutral-900
             dark:text-neutral-400 dark:hover:text-neutral-100
-            bg-white/40 hover:bg-white/70 dark:bg-neutral-800/60 dark:hover:bg-neutral-700/80
+            bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800/60 dark:hover:bg-neutral-700/80
             transition-all duration-150 active:scale-95 cursor-pointer
             focus:outline-none focus:ring-2 focus:ring-neutral-400/50
           "
@@ -271,9 +336,9 @@ const GlassModalFooter: React.FC<GlassModalFooterProps> = ({
   return (
     <div
       className={`
-        px-5 py-3.5 sm:px-6 sm:py-4
-        border-t border-white/20 dark:border-white/10
-        bg-white/30 dark:bg-black/25
+        px-5 py-4 sm:px-6 sm:py-4
+        border-t border-black/[0.08] dark:border-white/[0.08]
+        bg-neutral-50/90 dark:bg-neutral-900/90 backdrop-blur-xl
         flex items-center justify-end gap-2.5 sm:gap-3
         pb-safe
         ${className}

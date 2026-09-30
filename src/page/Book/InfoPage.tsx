@@ -464,51 +464,56 @@ const InfoPage = ({
 
     return (
         <div
-            className={`font-[Noto_Sans_TC] ${
+            className={`font-[Noto_Sans_TC] w-full flex-1 min-h-0 flex flex-col overflow-hidden ${
                 isPrinting
-                    ? "h-auto min-h-0 overflow-visible bg-white text-black"
-                    : `min-h-full text-foreground ${
+                    ? "h-auto overflow-visible bg-white text-black"
+                    : `text-foreground ${
                           tripData?.theme_config?.bg || "bg-background"
-                      } dark:bg-background pb-24`
+                      } dark:bg-background`
             }`}
         >
             {!isPrinting && (
-                <SectionHeader
-                    title="旅遊資訊"
-                    subtitle="Information"
-                    theme={tripData?.theme_config!}
-                    hasBackBtn={true}
-                    rightAction={
-                        <div className="flex items-center gap-2">
-                            <button
-                                type="button"
-                                onClick={() => setIsEditing(!isEditing)}
-                                className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full shadow-sm transition-all active:scale-95 cursor-pointer ${
-                                    isEditing
-                                        ? "bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-destructive/20"
-                                        : "liquid-glass-pill hover:bg-black/5 dark:hover:bg-white/10 text-foreground border border-border/60"
-                                }`}
-                                title={isEditing ? "完成編輯" : "編輯資訊"}
-                            >
-                                {isEditing ? (
-                                    <>
-                                        <Lock size={13} />
-                                        <span>完成</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <Settings size={13} />
-                                        <span>編輯</span>
-                                    </>
-                                )}
-                            </button>
-                        </div>
-                    }
-                />
+                <div className="shrink-0">
+                    <SectionHeader
+                        title="旅遊資訊"
+                        subtitle="Information"
+                        theme={tripData?.theme_config!}
+                        hasBackBtn={true}
+                        rightAction={
+                            <div className="flex items-center gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsEditing(!isEditing)}
+                                    className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full shadow-sm transition-all active:scale-95 cursor-pointer ${
+                                        isEditing
+                                            ? "bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-destructive/20"
+                                            : "liquid-glass-pill hover:bg-black/5 dark:hover:bg-white/10 text-foreground border border-border/60"
+                                    }`}
+                                    title={isEditing ? "完成編輯" : "編輯資訊"}
+                                >
+                                    {isEditing ? (
+                                        <>
+                                            <Lock size={13} />
+                                            <span>完成</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Settings size={13} />
+                                            <span>編輯</span>
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        }
+                    />
+                </div>
             )}
             <div
-                className={`space-y-6 ${
-                    isPrinting ? "space-y-4 px-0" : "px-4 mt-6 pb-28 md:pb-12"
+                data-scroll-container="true"
+                className={`flex-1 min-h-0 ${
+                    isPrinting
+                        ? "space-y-4 px-0 overflow-visible"
+                        : "overflow-y-auto no-scrollbar px-4 pt-4 pb-28 md:pb-12 space-y-6"
                 }`}
             >
                 <FlightList

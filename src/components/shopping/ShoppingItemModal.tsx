@@ -34,11 +34,19 @@ const ShoppingItemModal: React.FC<ShoppingItemModalProps> = (props) => {
     if (!isOpen) return null;
 
     return (
-        <GlassModal isOpen={isOpen} onClose={onClose} maxWidth="xl">
+        <GlassModal isOpen={isOpen} onClose={onClose} maxWidth="md" className="md:!max-w-[480px]">
             <GlassModal.Header
-                title={mode === "create" ? "✨ 新增商品至願望清單" : "✏️ 編輯商品資訊"}
-                subtitle="輕鬆管理伴手禮、免稅試算與受贈對象"
+                title={mode === "create" ? "✨ 新增商品" : "✏️ 編輯商品"}
                 onClose={onClose}
+                rightAction={
+                    <button
+                        type="submit"
+                        form="shopping-item-form"
+                        className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-full shadow-xs active:scale-95 transition-all cursor-pointer shrink-0"
+                    >
+                        完成
+                    </button>
+                }
             />
 
             <GlassModal.Body className="p-4 sm:p-6 space-y-4 max-h-[75vh] overflow-y-auto no-scrollbar">
@@ -53,8 +61,8 @@ const ShoppingItemModal: React.FC<ShoppingItemModalProps> = (props) => {
 
                     {/* 商品名稱與當地名稱 */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div className="space-y-1">
-                            <label className="font-semibold text-neutral-800 dark:text-neutral-200 text-xs">
+                        <div className="space-y-1.5">
+                            <label className="font-bold text-neutral-900 dark:text-neutral-100 text-xs">
                                 商品名稱 <span className="text-destructive">*</span>
                             </label>
                             <input
@@ -62,45 +70,45 @@ const ShoppingItemModal: React.FC<ShoppingItemModalProps> = (props) => {
                                 placeholder="例: KATE 怪獸級持色唇膏"
                                 value={form.name}
                                 onChange={(e) => form.setName(e.target.value)}
-                                className="w-full px-3 py-2 bg-white/70 dark:bg-neutral-900/60 border border-white/30 dark:border-white/15 rounded-xl text-neutral-900 dark:text-neutral-100 outline-none text-xs focus:ring-2 focus:ring-primary/40 font-medium"
+                                className="w-full px-3.5 py-2.5 bg-neutral-50/90 dark:bg-neutral-900/80 border border-black/15 dark:border-white/15 rounded-xl text-neutral-900 dark:text-neutral-100 outline-none text-xs focus:bg-white dark:focus:bg-neutral-900 focus:border-primary/60 focus:ring-2 focus:ring-primary/20 font-medium shadow-2xs transition-all"
                                 required
                             />
                         </div>
 
-                        <div className="space-y-1">
-                            <label className="font-semibold text-neutral-800 dark:text-neutral-200 text-xs flex items-center justify-between">
+                        <div className="space-y-1.5">
+                            <label className="font-bold text-neutral-900 dark:text-neutral-100 text-xs flex items-center justify-between">
                                 <span>當地原文名稱 (日/韓/英)</span>
-                                <span className="text-[10px] text-rose-500 font-semibold">問路神器</span>
+                                <span className="text-[10px] text-rose-500 font-bold">問路神器</span>
                             </label>
                             <input
                                 type="text"
                                 placeholder="例: リップモンスター 03 陽炎"
                                 value={form.localName}
                                 onChange={(e) => form.setLocalName(e.target.value)}
-                                className="w-full px-3 py-2 bg-white/70 dark:bg-neutral-900/60 border border-white/30 dark:border-white/15 rounded-xl text-rose-600 dark:text-rose-400 outline-none text-xs focus:ring-2 focus:ring-rose-400/40 font-medium"
+                                className="w-full px-3.5 py-2.5 bg-neutral-50/90 dark:bg-neutral-900/80 border border-black/15 dark:border-white/15 rounded-xl text-rose-600 dark:text-rose-400 outline-none text-xs focus:bg-white dark:focus:bg-neutral-900 focus:border-rose-500 focus:ring-2 focus:ring-rose-400/20 font-medium shadow-2xs transition-all"
                             />
                         </div>
                     </div>
 
                     {/* 商品類別與規格 */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div className="space-y-1">
-                            <label className="font-semibold text-neutral-800 dark:text-neutral-200 text-xs">商品類別</label>
+                        <div className="space-y-1.5">
+                            <label className="font-bold text-neutral-900 dark:text-neutral-100 text-xs">商品類別</label>
                             <select
                                 value={form.category}
                                 onChange={(e) => form.setCategory(e.target.value)}
-                                className="w-full px-3 py-2 bg-white/70 dark:bg-neutral-900/60 border border-white/30 dark:border-white/15 rounded-xl text-neutral-900 dark:text-neutral-100 outline-none text-xs focus:ring-2 focus:ring-primary/40"
+                                className="w-full px-3.5 py-2.5 bg-neutral-50/90 dark:bg-neutral-900/80 border border-black/15 dark:border-white/15 rounded-xl text-neutral-900 dark:text-neutral-100 outline-none text-xs focus:bg-white dark:focus:bg-neutral-900 focus:border-primary/60 focus:ring-2 focus:ring-primary/20 font-medium shadow-2xs transition-all cursor-pointer"
                             >
                                 {SHOPPING_CATEGORIES.map((cat) => (
-                                    <option key={cat.id} value={cat.id}>
+                                    <option key={cat.id} value={cat.id} className="bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100">
                                         {cat.emoji} {cat.label}
                                     </option>
                                 ))}
                             </select>
                         </div>
 
-                        <div className="space-y-1">
-                            <label className="font-semibold text-neutral-800 dark:text-neutral-200 text-xs flex items-center gap-1">
+                        <div className="space-y-1.5">
+                            <label className="font-bold text-neutral-900 dark:text-neutral-100 text-xs flex items-center gap-1">
                                 <Tag size={12} className="text-primary" />
                                 <span>目標規格 / 色號 / 容量</span>
                             </label>
@@ -109,7 +117,7 @@ const ShoppingItemModal: React.FC<ShoppingItemModalProps> = (props) => {
                                 placeholder="例: 03 陽炎 3g / 240錠"
                                 value={form.targetSpecs}
                                 onChange={(e) => form.setTargetSpecs(e.target.value)}
-                                className="w-full px-3 py-2 bg-white/70 dark:bg-neutral-900/60 border border-white/30 dark:border-white/15 rounded-xl text-neutral-900 dark:text-neutral-100 outline-none text-xs focus:ring-2 focus:ring-primary/40"
+                                className="w-full px-3.5 py-2.5 bg-neutral-50/90 dark:bg-neutral-900/80 border border-black/15 dark:border-white/15 rounded-xl text-neutral-900 dark:text-neutral-100 outline-none text-xs focus:bg-white dark:focus:bg-neutral-900 focus:border-primary/60 focus:ring-2 focus:ring-primary/20 font-medium shadow-2xs transition-all"
                             />
                         </div>
                     </div>
@@ -181,21 +189,6 @@ const ShoppingItemModal: React.FC<ShoppingItemModalProps> = (props) => {
                     </div>
                 </form>
             </GlassModal.Body>
-
-            <GlassModal.Footer>
-                <GlassButton variant="ghost" onClick={onClose} size="sm">
-                    取消
-                </GlassButton>
-                <GlassButton
-                    type="submit"
-                    form="shopping-item-form"
-                    variant="primary"
-                    size="sm"
-                    className="font-bold px-6"
-                >
-                    {mode === "create" ? "確認新增" : "儲存修改"}
-                </GlassButton>
-            </GlassModal.Footer>
         </GlassModal>
     );
 };

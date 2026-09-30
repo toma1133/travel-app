@@ -251,31 +251,35 @@ const ExportToBudgetModal = ({
 
                 {/* Header */}
                 <div
-                    className="px-5 py-3.5 sm:py-4 border-b border-border/70 flex items-center justify-between shrink-0 bg-muted/20 touch-none select-none"
+                    className="px-4 py-3 sm:px-5 sm:py-3.5 border-b border-black/[0.08] dark:border-white/[0.08] flex items-center justify-between gap-2 sm:gap-3 bg-white dark:bg-neutral-900 shrink-0 select-none"
                     onTouchStart={handleTouchStart}
                     onTouchMove={handleTouchMove}
                     onTouchEnd={handleTouchEnd}
                 >
-                    <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
-                            <Wallet size={18} />
-                        </div>
-                        <div>
-                            <h3 className="font-bold text-sm sm:text-base text-foreground">
-                                轉入記帳本
-                            </h3>
-                            <p className="text-[11px] text-muted-foreground truncate max-w-[240px]">
-                                {item.name}
-                            </p>
-                        </div>
-                    </div>
-
                     <button
                         type="button"
                         onClick={handleDismiss}
-                        className="p-1.5 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                        className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 active:opacity-70 transition-opacity cursor-pointer px-1 py-1 shrink-0"
                     >
-                        <X size={18} />
+                        取消
+                    </button>
+
+                    <div className="flex-1 min-w-0 text-center px-1">
+                        <h3 className="font-bold text-sm sm:text-base text-neutral-900 dark:text-neutral-100 flex items-center justify-center gap-1.5 truncate">
+                            轉入記帳本
+                        </h3>
+                        <p className="text-[10px] sm:text-[11px] text-muted-foreground truncate">
+                            {item.name}
+                        </p>
+                    </div>
+
+                    <button
+                        type="submit"
+                        form="export-budget-form"
+                        disabled={isSubmitting}
+                        className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-full shadow-xs active:scale-95 transition-all cursor-pointer shrink-0 disabled:opacity-50"
+                    >
+                        {isSubmitting ? "記帳中..." : "完成"}
                     </button>
                 </div>
 
@@ -506,25 +510,6 @@ const ExportToBudgetModal = ({
                         </div>
                     )}
                 </form>
-
-                {/* Footer */}
-                <div className="p-4 border-t border-border/70 bg-muted/10 flex items-center justify-end gap-2.5 shrink-0">
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="py-2 px-4 rounded-xl border border-border text-xs font-semibold hover:bg-muted transition-colors cursor-pointer"
-                    >
-                        取消
-                    </button>
-                    <button
-                        type="submit"
-                        form="export-budget-form"
-                        disabled={isSubmitting}
-                        className="py-2 px-5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs hover:opacity-90 transition-opacity shadow-sm cursor-pointer disabled:opacity-50"
-                    >
-                        {isSubmitting ? "記帳中..." : "確認記帳"}
-                    </button>
-                </div>
             </div>
         </div>
     );

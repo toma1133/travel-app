@@ -80,12 +80,12 @@ export const LiquidTaxFreeBar: React.FC<LiquidTaxFreeBarProps> = ({
             variant="elevated"
             rounded="3xl"
             padding="sm"
-            className="border-white/30 dark:border-white/10 shadow-lg space-y-2.5 transition-all"
+            className="bg-white/95 dark:liquid-glass-elevated border-slate-200/90 dark:border-white/10 shadow-lg space-y-2.5 transition-all"
         >
             {/* 1. 店家切換膠囊橫向滾動列 */}
             <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5 pt-0.5 px-1">
-                <div className="flex items-center gap-1 text-xs font-bold text-neutral-500 dark:text-neutral-400 shrink-0 pl-1 mr-1">
-                    <Store size={14} className="text-primary" />
+                <div className="flex items-center gap-1 text-xs font-bold text-slate-500 dark:text-neutral-400 shrink-0 pl-1 mr-1">
+                    <Store size={14} className="text-blue-600 dark:text-blue-400" />
                     <span className="hidden sm:inline">免稅店家:</span>
                 </div>
 
@@ -95,8 +95,8 @@ export const LiquidTaxFreeBar: React.FC<LiquidTaxFreeBarProps> = ({
                     onClick={() => onSelectStore("all")}
                     className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1.5 border ${
                         selectedStore === "all"
-                            ? "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 border-transparent shadow-xs scale-[1.02]"
-                            : "bg-white/40 dark:bg-neutral-800/40 hover:bg-white/70 text-neutral-700 dark:text-neutral-300 border-white/25 dark:border-white/10"
+                            ? "bg-blue-600 text-white border-blue-600 shadow-sm scale-[1.02]"
+                            : "bg-white dark:bg-neutral-800 hover:bg-slate-50 text-slate-800 dark:text-neutral-200 border-slate-200 dark:border-neutral-700 shadow-2xs"
                     }`}
                 >
                     <span>全部店家</span>
@@ -104,7 +104,7 @@ export const LiquidTaxFreeBar: React.FC<LiquidTaxFreeBarProps> = ({
                         className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
                             selectedStore === "all"
                                 ? "bg-white/20 dark:bg-black/20 text-current"
-                                : "bg-neutral-200 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-300"
+                                : "bg-slate-100 dark:bg-neutral-700 text-slate-700 dark:text-neutral-200 font-bold"
                         }`}
                     >
                         {totalItemsCount}
@@ -124,10 +124,10 @@ export const LiquidTaxFreeBar: React.FC<LiquidTaxFreeBarProps> = ({
                                 isSelected
                                     ? reach
                                         ? "bg-emerald-600 text-white border-emerald-500 shadow-emerald-500/20 shadow-sm scale-[1.02]"
-                                        : "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 border-transparent shadow-xs scale-[1.02]"
+                                        : "bg-blue-600 text-white border-blue-600 shadow-sm scale-[1.02]"
                                     : reach
-                                    ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/20"
-                                    : "bg-white/40 dark:bg-neutral-800/40 hover:bg-white/70 text-neutral-700 dark:text-neutral-300 border-white/25 dark:border-white/10"
+                                    ? "bg-emerald-50 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-500/40 hover:bg-emerald-100"
+                                    : "bg-white dark:bg-neutral-800 hover:bg-slate-50 text-slate-800 dark:text-neutral-200 border-slate-200 dark:border-neutral-700 shadow-2xs"
                             }`}
                         >
                             {reach && <Sparkles size={11} className="text-amber-300 shrink-0 animate-pulse" />}
@@ -137,8 +137,8 @@ export const LiquidTaxFreeBar: React.FC<LiquidTaxFreeBarProps> = ({
                                     isSelected
                                         ? "bg-white/25 dark:bg-black/25 text-current"
                                         : reach
-                                        ? "bg-emerald-500/20 text-emerald-800 dark:text-emerald-200"
-                                        : "bg-neutral-200 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-300"
+                                        ? "bg-emerald-200/50 dark:bg-emerald-500/25 text-emerald-900 dark:text-emerald-100 font-bold"
+                                        : "bg-slate-100 dark:bg-neutral-700 text-slate-700 dark:text-neutral-200 font-bold"
                                 }`}
                             >
                                 {st.total}
@@ -149,7 +149,7 @@ export const LiquidTaxFreeBar: React.FC<LiquidTaxFreeBarProps> = ({
             </div>
 
             {/* 2. 核心統計與流體免稅膠囊 */}
-            <div className="bg-white/50 dark:bg-neutral-900/50 rounded-2xl p-3 border border-white/20 dark:border-white/10 space-y-2.5">
+            <div className="bg-white/90 dark:bg-neutral-900/60 rounded-2xl p-3.5 border border-black/[0.06] dark:border-white/10 shadow-xs space-y-2.5 backdrop-blur-md">
                 {selectedStore === "all" ? (
                     /* 檢視「全部店家」時的毛玻璃總覽 */
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
@@ -281,7 +281,7 @@ export const LiquidTaxFreeBar: React.FC<LiquidTaxFreeBarProps> = ({
                         </div>
 
                         {/* 流體毛玻璃進度條 */}
-                        <div className="relative w-full h-3 rounded-full bg-black/10 dark:bg-white/10 overflow-hidden p-0.5 backdrop-blur-xs">
+                        <div className="relative w-full h-3 rounded-full bg-slate-200/80 dark:bg-neutral-800 border border-slate-300/60 dark:border-neutral-700 overflow-hidden p-0.5 backdrop-blur-xs">
                             <div
                                 className={`h-full rounded-full transition-all duration-500 relative overflow-hidden ${
                                     isQualified
@@ -296,12 +296,12 @@ export const LiquidTaxFreeBar: React.FC<LiquidTaxFreeBarProps> = ({
                         </div>
 
                         {/* 金額統計數字 */}
-                        <div className="flex items-center justify-between text-[11px] font-mono text-neutral-500 dark:text-neutral-400">
+                        <div className="flex items-center justify-between text-[11px] font-mono text-neutral-600 dark:text-neutral-300">
                             <span>
-                                預計金額: <strong className="text-neutral-900 dark:text-neutral-100">{currencySymbol} {activeStore.amount.toLocaleString()}</strong>
+                                預計金額: <strong className="text-neutral-900 dark:text-neutral-100 font-bold">{currencySymbol} {activeStore.amount.toLocaleString()}</strong>
                             </span>
                             <span>
-                                免稅門檻: <strong>{currencySymbol} {activeStore.threshold.toLocaleString()}</strong> ({activePercent}%)
+                                免稅門檻: <strong className="text-neutral-900 dark:text-neutral-100 font-bold">{currencySymbol} {activeStore.threshold.toLocaleString()}</strong> ({activePercent}%)
                             </span>
                         </div>
                     </div>

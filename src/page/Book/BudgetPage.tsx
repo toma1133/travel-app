@@ -183,7 +183,7 @@ const BudgetPage: React.FC<BudgetPageProps> = ({
     };
 
     return (
-        <div className={`min-h-full font-[Noto_Sans_TC] text-foreground ${isPrinting ? "h-auto overflow-visible bg-white pointer-events-none" : `${tripData?.theme_config?.bg || "bg-background"} dark:bg-background pb-24 lg:pb-0 lg:h-[100dvh] lg:overflow-hidden lg:flex lg:flex-col`}`}>
+        <div className={`h-full font-[Noto_Sans_TC] text-foreground flex flex-col overflow-hidden ${isPrinting ? "h-auto overflow-visible bg-white pointer-events-none" : `${tripData?.theme_config?.bg || "bg-background"} dark:bg-background`}`}>
             {/* 隱藏式收據照片上傳 Input (供桌面版 Header 觸發) */}
             <input
                 ref={desktopFileInputRef}
@@ -198,57 +198,57 @@ const BudgetPage: React.FC<BudgetPageProps> = ({
             />
 
             {!isPrinting && (
-                <SectionHeader
-                    title="帳本" subtitle="Budget" theme={tripData?.theme_config!} hasBackBtn={true}
-                    rightAction={
-                        <div className="flex justify-center items-center gap-2 sm:gap-3">
-                            <button
-                                type="button"
-                                onClick={() => setIsSmartSettlementModalOpen(true)}
-                                className="flex items-center text-sm font-medium bg-card text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 px-3 py-1.5 rounded-xl shadow-xs hover:bg-emerald-50 dark:hover:bg-emerald-950/20 transition-colors"
-                                title="分帳結算中心"
-                            >
-                                <Wallet size={16} />
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => desktopFileInputRef.current?.click()}
-                                className="hidden sm:flex items-center text-sm font-medium bg-card text-purple-600 dark:text-purple-300 border border-purple-500/30 px-3 py-1.5 rounded-xl shadow-xs hover:bg-purple-50 dark:hover:bg-purple-950/20 transition-colors"
-                                title="拍收據/上傳發票自動辨識分帳"
-                            >
-                                <Camera size={16} />
-                            </button>
-                            <button type="button" onClick={() => setIsFilterModalOpen(true)} className={`flex items-center text-sm font-medium bg-card text-blue-500 border border-border/50 px-3 py-1.5 rounded-xl shadow-xs hover:bg-muted/50 transition-colors ${filters.categories.length > 0 || filters.payment_method_ids.length > 0 ? "bg-blue-50 dark:bg-blue-900/20" : ""}`} title="交易過濾">
-                                <Filter size={16} fill={filters.categories.length > 0 || filters.payment_method_ids.length > 0 ? "currentColor" : "none"} />
-                            </button>
-                            <button type="button" onClick={() => { pmSettings.setFormSetting(tripData?.settings_config!); pmSettings.setFormPaymentMethods(paymentMethods); pmSettings.setIsSettingModalOpen(true); }} className="flex items-center text-sm font-medium px-3 py-1.5 rounded-xl shadow-xs bg-card text-foreground border border-border/50 hover:bg-muted/50 transition-colors" title="設定">
-                                <Settings size={16} />
-                            </button>
-                            <button type="button" onClick={() => { setBudgetModalMode("create"); setFormBudget(initialBudgetState); setIsBudgetModalOpen(true); }} className={`flex items-center gap-1 text-sm font-bold text-white px-3.5 py-1.5 rounded-xl shadow-xs ${tripData?.theme_config?.accent} hover:opacity-90 transition-opacity`} title="記一筆">
-                                <Plus size={16} />
-                                <span className="hidden sm:inline">記一筆</span>
-                            </button>
-                        </div>
-                    }
-                />
-            )}
-
-            {!isPrinting && (
-                <div className="px-4 mt-3 lg:hidden">
-                    <QuickExpenseBar
-                        onQuickAdd={(catId) => { setBudgetModalMode("create"); setFormBudget({ ...initialBudgetState, id: crypto.randomUUID(), category: catId, currency_code: tripData?.settings_config?.localCurrency || "", payment_method_id: paymentMethods?.[0]?.id || "" }); setIsBudgetModalOpen(true); }}
-                        onOpenGeneralAdd={() => { setBudgetModalMode("create"); setFormBudget(initialBudgetState); setIsBudgetModalOpen(true); }}
-                        onReceiptFileSelected={handleReceiptFileSelected}
+                <div className="shrink-0">
+                    <SectionHeader
+                        title="帳本" subtitle="Budget" theme={tripData?.theme_config!} hasBackBtn={true}
+                        rightAction={
+                            <div className="flex justify-center items-center gap-2 sm:gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsSmartSettlementModalOpen(true)}
+                                    className="flex items-center text-sm font-medium bg-card text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 px-3 py-1.5 rounded-xl shadow-xs hover:bg-emerald-50 dark:hover:bg-emerald-950/20 transition-colors"
+                                    title="分帳結算中心"
+                                >
+                                    <Wallet size={16} />
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => desktopFileInputRef.current?.click()}
+                                    className="hidden sm:flex items-center text-sm font-medium bg-card text-purple-600 dark:text-purple-300 border border-purple-500/30 px-3 py-1.5 rounded-xl shadow-xs hover:bg-purple-50 dark:hover:bg-purple-950/20 transition-colors"
+                                    title="拍收據/上傳發票自動辨識分帳"
+                                >
+                                    <Camera size={16} />
+                                </button>
+                                <button type="button" onClick={() => setIsFilterModalOpen(true)} className={`flex items-center text-sm font-medium bg-card text-blue-500 border border-border/50 px-3 py-1.5 rounded-xl shadow-xs hover:bg-muted/50 transition-colors ${filters.categories.length > 0 || filters.payment_method_ids.length > 0 ? "bg-blue-50 dark:bg-blue-900/20" : ""}`} title="交易過濾">
+                                    <Filter size={16} fill={filters.categories.length > 0 || filters.payment_method_ids.length > 0 ? "currentColor" : "none"} />
+                                </button>
+                                <button type="button" onClick={() => { pmSettings.setFormSetting(tripData?.settings_config!); pmSettings.setFormPaymentMethods(paymentMethods); pmSettings.setIsSettingModalOpen(true); }} className="flex items-center text-sm font-medium px-3 py-1.5 rounded-xl shadow-xs bg-card text-foreground border border-border/50 hover:bg-muted/50 transition-colors" title="設定">
+                                    <Settings size={16} />
+                                </button>
+                                <button type="button" onClick={() => { setBudgetModalMode("create"); setFormBudget(initialBudgetState); setIsBudgetModalOpen(true); }} className={`flex items-center gap-1 text-sm font-bold text-white px-3.5 py-1.5 rounded-xl shadow-xs ${tripData?.theme_config?.accent} hover:opacity-90 transition-opacity`} title="記一筆">
+                                    <Plus size={16} />
+                                    <span className="hidden sm:inline">記一筆</span>
+                                </button>
+                            </div>
+                        }
                     />
+
+                    <div className="px-4 mt-2 lg:hidden">
+                        <QuickExpenseBar
+                            onQuickAdd={(catId) => { setBudgetModalMode("create"); setFormBudget({ ...initialBudgetState, id: crypto.randomUUID(), category: catId, currency_code: tripData?.settings_config?.localCurrency || "", payment_method_id: paymentMethods?.[0]?.id || "" }); setIsBudgetModalOpen(true); }}
+                            onOpenGeneralAdd={() => { setBudgetModalMode("create"); setFormBudget(initialBudgetState); setIsBudgetModalOpen(true); }}
+                            onReceiptFileSelected={handleReceiptFileSelected}
+                        />
+                    </div>
                 </div>
             )}
 
-            <div className={`lg:flex-1 ${isPrinting ? "px-0" : "lg:flex lg:flex-row lg:overflow-hidden px-4 mt-4 lg:mt-6"}`}>
-                <div className={`${isPrinting ? "w-full mb-8" : "lg:w-[350px] xl:w-[400px] lg:flex-shrink-0 lg:overflow-y-auto no-scrollbar lg:pr-6 lg:border-r lg:border-border lg:mr-6 mb-6 lg:mb-0"}`}>
+            <div className={`flex-1 min-h-0 ${isPrinting ? "px-0 overflow-visible" : "flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden px-4 pt-2.5 pb-2 lg:pb-4 gap-6"} no-scrollbar`} data-scroll-container="true">
+                <div className={`${isPrinting ? "w-full mb-8" : "w-full lg:w-[350px] xl:w-[400px] shrink-0 lg:h-full lg:overflow-y-auto no-scrollbar lg:pr-6 lg:border-r lg:border-border"}`}>
                     <BudgetOverviewCard budgetItems={filteredBudgets} isPrinting={isPrinting} paymentMethods={filteredPayments} setting={currentSetting} theme={currentTheme} convertToHome={convertToHome} convertToLocal={convertToLocal} />
                 </div>
 
-                <div className={`${isPrinting ? "w-full" : "lg:flex-1 lg:overflow-y-auto no-scrollbar lg:min-w-0 flex flex-col pb-20 lg:pb-0"}`}>
+                <div className={`${isPrinting ? "w-full" : "w-full lg:flex-1 lg:h-full min-w-0 lg:overflow-y-auto no-scrollbar pb-28 lg:pb-8"}`}>
                     <TransactionList
                         categories={budgetCategory} budgetItems={filteredBudgets} isPrinting={isPrinting}
                         paymentMethods={paymentMethods} session={session} setting={currentSetting}
