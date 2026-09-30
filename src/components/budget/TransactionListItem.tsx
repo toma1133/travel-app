@@ -1,7 +1,8 @@
 import { JSX } from "react";
-import { Users, Receipt } from "lucide-react";
+import { Users, Receipt, Check, RotateCcw, Trash2, Wallet } from "lucide-react";
 import { Session } from "@supabase/supabase-js";
 import moment from "moment";
+import SwipeableRow from "../common/SwipeableRow";
 import type { BudgetRow } from "../../models/types/BudgetTypes";
 import type {
     TripSettingConf,
@@ -28,6 +29,8 @@ type TransactionListItemProps = {
     getCategoryIcon: (cat: string) => JSX.Element;
     getCategoryName: (cat: string) => string;
     onEditBtnClick: (transactionItem: BudgetRow) => void;
+    onDeleteBtnClick?: (transactionItem: BudgetRow) => void;
+    onToggleSettle?: (transactionItem: BudgetRow) => void;
     onOpenReceiptModal?: (record: StoredImageRecord, item: BudgetRow) => void;
 };
 
@@ -44,6 +47,8 @@ const TransactionListItem = ({
     getCategoryIcon,
     getCategoryName,
     onEditBtnClick,
+    onDeleteBtnClick,
+    onToggleSettle,
     onOpenReceiptModal,
 }: TransactionListItemProps) => {
     const isCreator = budgetItem.user_id === session?.user.id;
@@ -62,6 +67,52 @@ const TransactionListItem = ({
         ? budgetItem.amount / members.length
         : budgetItem.amount;
 
+    const otherMembers = budgetItem.split_with?.filter((uid) => uid !== budgetItem.user_id) || [];
+    const isSharedExpense = otherMembers.length > 0;
+    const isPayer = budgetItem.user_id === session?.user?.id;
+    const isParticipant = Boolean(session?.user?.id && otherMembers.includes(session.user.id));
+
+    let isSettled = false;
+    let rightLabel = "收回帳款";
+    let rightIcon = <Wallet className="w-5 h-5 text-white stroke-[2.5]" />;
+
+    if (isSharedExpense) {
+        if (isPayer) {
+            const isFullySettled = otherMembers.length > 0 && otherMembers.every((uid) => Boolean(budgetItem.settled_with?.includes(uid)));
+            isSettled = isFullySettled;
+            rightLabel = isFullySettled ? "設為未收回" : "收回帳款";
+            rightIcon = isFullySettled ? (
+                <RotateCcw className="w-5 h-5 text-white stroke-[2.5]" />
+            ) : (
+                <Wallet className="w-5 h-5 text-white stroke-[2.5]" />
+            );
+        } else if (isParticipant) {
+            const isMyDebtSettled = Boolean(session?.user?.id && budgetItem.settled_with?.includes(session.user.id));
+            isSettled = isMyDebtSettled;
+            rightLabel = isMyDebtSettled ? "設為未還款" : "標記已還款";
+            rightIcon = isMyDebtSettled ? (
+                <RotateCcw className="w-5 h-5 text-white stroke-[2.5]" />
+            ) : (
+                <Check className="w-5 h-5 text-white stroke-[2.5]" />
+            );
+        }
+    } else {
+        const isSelfSettled = Boolean(
+            budgetItem.settled_with?.includes("settled") ||
+            (budgetItem.user_id && budgetItem.settled_with?.includes(budgetItem.user_id))
+        );
+        isSettled = isSelfSettled;
+        rightLabel = isSelfSettled ? "取消對帳" : "標記已對帳";
+        rightIcon = isSelfSettled ? (
+            <RotateCcw className="w-5 h-5 text-white stroke-[2.5]" />
+        ) : (
+            <Check className="w-5 h-5 text-white stroke-[2.5]" />
+        );
+    }
+
+    const canSwipeRight = !isPrinting && Boolean(onToggleSettle && (isPayer || isParticipant || !isSharedExpense));
+    const canSwipeLeft = !isPrinting && Boolean(onDeleteBtnClick && isCreator);
+
     // --- 1. 列印模式專用佈局 (Compact Table Row) ---
     if (isPrinting) {
         return (
@@ -72,7 +123,7 @@ const TransactionListItem = ({
                 </div>
 
                 {/* 2. 分類 */}
-                <div className="w-16 text-[10px] uppercase tracking-tight truncate shrink-0 pr-2">
+                <div className="w-20 text-[10px] uppercase tracking-tight truncate shrink-0 pr-2">
                     {getCategoryName(budgetItem.category)}
                 </div>
 
@@ -135,55 +186,61 @@ const TransactionListItem = ({
         );
     }
 
-    // --- 螢幕模式專用佈局 (原本的 Card) ---
+    // --- 螢幕模式專用佈局 (支援左滑刪除、右滑收回帳款/結算) ---
     return (
-        <div
-            role="button"
-            onClick={() =>
-                isPrinting || !isCreator ? null : onEditBtnClick(budgetItem)
-            }
-            className={`w-full bg-card flex justify-between items-start text-left break-inside-avoid-page ${
-                isPrinting
-                    ? "py-2 border-b border-border"
-                    : "group items-center p-4 border border-border hover:border-border transition-colors rounded-lg shadow-sm"
-            }`}
-            title={isCreator ? "編輯" : "檢視"}
+        <SwipeableRow
+            disabled={isPrinting}
+            onSwipeRight={canSwipeRight ? () => onToggleSettle?.(budgetItem) : undefined}
+            rightLabel={rightLabel}
+            rightIcon={rightIcon}
+            onSwipeLeft={canSwipeLeft ? () => onDeleteBtnClick?.(budgetItem) : undefined}
+            leftLabel="刪除紀錄"
+            leftIcon={<Trash2 className="w-5 h-5 text-white stroke-[2.5]" />}
+            className="rounded-xl shadow-xs"
         >
-            <div className={`flex items-start`}>
-                {!isPrinting && (
-                    <div
-                        className="w-10 h-10 rounded-full flex items-center justify-center mr-3 text-primary-foreground shadow-sm"
-                        style={{
-                            backgroundColor:
-                                theme?.categoryColor[budgetItem.category] ||
-                                theme?.categoryColor.other,
-                        }}
-                    >
-                        {getCategoryIcon(budgetItem.category)}
-                    </div>
-                )}
-                <div className={`${isPrinting ? "flex-1" : ""}`}>
-                    {/* Title */}
-                    <div
-                        className={`text-sm font-bold text-foreground ${
-                            !isPrinting
-                                ? "group-hover:text-[#9F1239] transition-colors"
-                                : "print:text-foreground"
-                        }`}
-                    >
-                        <div className="flex flex-row items-center">
-                            <span className="mr-2">{budgetItem.title}</span>
-                            {/* {isCreator ? (
-                                <span className="text-[10px] bg-indigo-100 text-indigo-600 px-1.5 py-0.5 rounded mr-2">
-                                    由我建立
-                                </span>
-                            ) : (
-                                <span className="text-[10px] bg-amber-100 text-amber-600 px-1.5 py-0.5 rounded mr-2">
-                                    與我分帳
-                                </span>
-                            )} */}
+            <div
+                role="button"
+                onClick={() =>
+                    isPrinting || !isCreator ? null : onEditBtnClick(budgetItem)
+                }
+                className={`w-full bg-card flex justify-between items-start text-left break-inside-avoid-page ${
+                    isPrinting
+                        ? "py-2 border-b border-border"
+                        : "group items-center p-4 border border-border hover:border-border transition-colors rounded-xl shadow-xs"
+                }`}
+                title={isCreator ? "點擊編輯 (左滑刪除 / 右滑收帳)" : "檢視紀錄"}
+            >
+                <div className={`flex items-start`}>
+                    {!isPrinting && (
+                        <div
+                            className="w-10 h-10 rounded-full flex items-center justify-center mr-3 text-primary-foreground shadow-sm"
+                            style={{
+                                backgroundColor:
+                                    theme?.categoryColor[budgetItem.category] ||
+                                    theme?.categoryColor.other,
+                            }}
+                        >
+                            {getCategoryIcon(budgetItem.category)}
                         </div>
-                    </div>
+                    )}
+                    <div className={`${isPrinting ? "flex-1" : ""}`}>
+                        {/* Title & Status Badge */}
+                        <div
+                            className={`text-sm font-bold text-foreground ${
+                                !isPrinting
+                                    ? "group-hover:text-[#9F1239] transition-colors"
+                                    : "print:text-foreground"
+                            }`}
+                        >
+                            <div className="flex flex-row items-center flex-wrap gap-1">
+                                <span className="mr-1">{budgetItem.title}</span>
+                                {isSettled && (
+                                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 inline-flex items-center gap-0.5 shrink-0">
+                                        ✓ {isSharedExpense ? (isPayer ? "已收回" : "已還款") : "已對帳"}
+                                    </span>
+                                )}
+                            </div>
+                        </div>
                     {/* Meta info */}
                     <div className="text-[10px] text-muted-foreground mt-0.5 flex items-center print:text-muted-foreground print:mt-1">
                         <span
@@ -299,7 +356,8 @@ const TransactionListItem = ({
                 )}
             </div>
         </div>
-    );
+    </SwipeableRow>
+);
 };
 
 export default TransactionListItem;

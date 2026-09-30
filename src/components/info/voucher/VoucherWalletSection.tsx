@@ -30,22 +30,23 @@ export const VoucherWalletSection: React.FC<VoucherWalletSectionProps> = ({
     isEditing,
     isPrinting,
 }) => {
-    const {
-        vouchers,
-        imageUrls,
-        addVoucher,
-        updateVoucher,
-        deleteVoucher,
-    } = useVouchers(tripId);
+    const { vouchers, imageUrls, addVoucher, updateVoucher, deleteVoucher } =
+        useVouchers(tripId);
 
     const [isOpen, setIsOpen] = useState(true);
     const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
     // 模態視窗狀態
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-    const [voucherToEdit, setVoucherToEdit] = useState<VoucherItem | null>(null);
-    const [viewingVoucher, setViewingVoucher] = useState<VoucherItem | null>(null);
-    const [voucherToDelete, setVoucherToDelete] = useState<VoucherItem | null>(null);
+    const [voucherToEdit, setVoucherToEdit] = useState<VoucherItem | null>(
+        null,
+    );
+    const [viewingVoucher, setViewingVoucher] = useState<VoucherItem | null>(
+        null,
+    );
+    const [voucherToDelete, setVoucherToDelete] = useState<VoucherItem | null>(
+        null,
+    );
 
     // 依分類過濾
     const filteredVouchers = useMemo(() => {
@@ -64,7 +65,7 @@ export const VoucherWalletSection: React.FC<VoucherWalletSectionProps> = ({
 
     // 處理新增或更新儲存
     const handleSaveVoucher = async (
-        data: Omit<VoucherItem, "id" | "trip_id" | "created_at" | "updated_at">
+        data: Omit<VoucherItem, "id" | "trip_id" | "created_at" | "updated_at">,
     ) => {
         if (voucherToEdit) {
             await updateVoucher({
@@ -77,7 +78,9 @@ export const VoucherWalletSection: React.FC<VoucherWalletSectionProps> = ({
     };
 
     // 快速套用範本並開啟新增彈窗
-    const handlePresetQuickAdd = (preset: (typeof VOUCHER_TEMPLATE_PRESETS)[0]) => {
+    const handlePresetQuickAdd = (
+        preset: (typeof VOUCHER_TEMPLATE_PRESETS)[0],
+    ) => {
         addVoucher({
             title: preset.title,
             category: preset.category,
@@ -129,9 +132,9 @@ export const VoucherWalletSection: React.FC<VoucherWalletSectionProps> = ({
                                     : "text-sm text-foreground flex items-center gap-2"
                             }`}
                         >
-                            <span>電子票夾 & 憑證保險箱</span>
+                            <span>電子票夾 & 憑證</span>
                             <span className="text-[10px] text-muted-foreground font-mono font-normal">
-                                VOUCHER WALLET
+                                WALLET
                             </span>
                             {vouchers.length > 0 && (
                                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary">
@@ -155,7 +158,7 @@ export const VoucherWalletSection: React.FC<VoucherWalletSectionProps> = ({
                             title="新增票券"
                         >
                             <Plus size={13} />
-                            <span>新增票券</span>
+                            <span>新增</span>
                         </button>
                     )}
                     {!isPrinting && (
@@ -163,7 +166,11 @@ export const VoucherWalletSection: React.FC<VoucherWalletSectionProps> = ({
                             type="button"
                             className="text-muted-foreground hover:text-foreground p-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/5 transition-transform duration-200"
                         >
-                            {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                            {isOpen ? (
+                                <ChevronUp size={16} />
+                            ) : (
+                                <ChevronDown size={16} />
+                            )}
                         </button>
                     )}
                 </div>
@@ -189,13 +196,16 @@ export const VoucherWalletSection: React.FC<VoucherWalletSectionProps> = ({
 
                             {Object.values(VOUCHER_CATEGORIES).map((cat) => {
                                 const count = categoryCounts[cat.id] || 0;
-                                if (count === 0 && selectedCategory !== cat.id) return null;
+                                if (count === 0 && selectedCategory !== cat.id)
+                                    return null;
 
                                 return (
                                     <button
                                         key={cat.id}
                                         type="button"
-                                        onClick={() => setSelectedCategory(cat.id)}
+                                        onClick={() =>
+                                            setSelectedCategory(cat.id)
+                                        }
                                         className={`px-2.5 py-1.5 rounded-xl font-semibold transition-all shrink-0 flex items-center gap-1.5 active:scale-95 ${
                                             selectedCategory === cat.id
                                                 ? "bg-primary text-primary-foreground shadow-xs"
@@ -220,7 +230,11 @@ export const VoucherWalletSection: React.FC<VoucherWalletSectionProps> = ({
                                 <VoucherCard
                                     key={voucher.id}
                                     voucher={voucher}
-                                    imageUrl={voucher.image_id ? imageUrls[voucher.image_id] : undefined}
+                                    imageUrl={
+                                        voucher.image_id
+                                            ? imageUrls[voucher.image_id]
+                                            : undefined
+                                    }
                                     isEditing={isEditing}
                                     isPrinting={isPrinting}
                                     onView={(v) => setViewingVoucher(v)}
@@ -244,7 +258,9 @@ export const VoucherWalletSection: React.FC<VoucherWalletSectionProps> = ({
                                     尚未收納任何電子票券
                                 </h4>
                                 <p className="text-xs text-muted-foreground leading-relaxed">
-                                    將 Visit Japan Web、機票登機證、Klook 門票或 eSIM 截圖收進票夾，過海關與驗票口一秒展示，無需聯網或在相簿狂翻！
+                                    將 Visit Japan Web、機票登機證、Klook 門票或
+                                    eSIM
+                                    截圖收進票夾，過海關與驗票口一秒展示，無需聯網或在相簿狂翻！
                                 </p>
                             </div>
 
@@ -252,15 +268,23 @@ export const VoucherWalletSection: React.FC<VoucherWalletSectionProps> = ({
                             {!isPrinting && (
                                 <div className="pt-2">
                                     <div className="text-[11px] font-bold text-muted-foreground flex items-center justify-center gap-1 mb-2.5">
-                                        <Sparkles size={12} className="text-amber-500" />
+                                        <Sparkles
+                                            size={12}
+                                            className="text-amber-500"
+                                        />
                                         <span>點擊立即建立常見票券範本：</span>
                                     </div>
                                     <div className="flex flex-wrap justify-center gap-2 max-w-lg mx-auto">
-                                        {VOUCHER_TEMPLATE_PRESETS.slice(0, 4).map((preset, idx) => (
+                                        {VOUCHER_TEMPLATE_PRESETS.slice(
+                                            0,
+                                            4,
+                                        ).map((preset, idx) => (
                                             <button
                                                 key={idx}
                                                 type="button"
-                                                onClick={() => handlePresetQuickAdd(preset)}
+                                                onClick={() =>
+                                                    handlePresetQuickAdd(preset)
+                                                }
                                                 className="px-3 py-1.5 rounded-xl text-xs font-semibold liquid-glass-pill hover:bg-primary/10 hover:text-primary transition-all border border-border/60 active:scale-95 shadow-2xs"
                                             >
                                                 + {preset.title}

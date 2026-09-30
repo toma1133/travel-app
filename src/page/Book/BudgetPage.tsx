@@ -1,7 +1,7 @@
-import React, { FormEvent, useEffect, useMemo, useState } from "react";
+import React, { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useOutletContext, useParams } from "react-router-dom";
 import { useIsMutating } from "@tanstack/react-query";
-import { Wallet, Filter, Settings, Plus, Camera, Sparkles, Loader2 } from "lucide-react";
+import { Calculator, Camera, Plus } from "lucide-react";
 import { CATEGORY_DEFINITIONS } from "../../constants/Categories";
 import moment from "moment";
 import useAuth from "../../hooks/UseAuth";
@@ -14,6 +14,7 @@ import useTripMembers from "../../hooks/tripMember/UseTripMembers";
 import useTripMutations from "../../hooks/trip/UseTripMutations";
 import DeleteModal from "../../components/common/DeleteModal";
 import SectionHeader from "../../components/common/SectionHeader";
+import FloatingSpeedDial from "../../components/common/FloatingSpeedDial";
 import SettingModal from "../../components/budget/SettingModal";
 import BudgetOverviewCard from "../../components/budget/BudgetOverviewCard";
 import TransactionList from "../../components/budget/TransactionList";
@@ -23,6 +24,7 @@ import QuickExpenseBar from "../../components/budget/QuickExpenseBar";
 import ReceiptBatchSplitModal from "../../components/budget/ReceiptBatchSplitModal";
 import ReceiptViewerModal from "../../components/budget/ReceiptViewerModal";
 import SmartSettlementModal from "../../components/budget/SmartSettlementModal";
+import FloatingCurrencyConverter from "../../components/shopping/FloatingCurrencyConverter";
 import { ReceiptScanner } from "../../services/receipt/ReceiptScannerService";
 import { useTripReceipts } from "../../hooks/budget/useTripReceipts";
 import { usePaymentMethodSettings } from "../../components/budget/usePaymentMethodSettings";
@@ -86,6 +88,34 @@ const BudgetPage: React.FC<BudgetPageProps> = ({
     const [filters, setFilters] = useState(initialFilterState);
     const [formFilter, setFormFilter] = useState(initialFilterState);
 
+    const handleToggleCategoryFilter = (catId: string) => {
+        setFilters((prev) => {
+            const isSelected = prev.categories.includes(catId);
+            return {
+                ...prev,
+                categories: isSelected
+                    ? prev.categories.filter((id) => id !== catId)
+                    : [...prev.categories, catId],
+            };
+        });
+    };
+
+    const handleTogglePaymentMethodFilter = (pmId: string) => {
+        setFilters((prev) => {
+            const isSelected = prev.payment_method_ids.includes(pmId);
+            return {
+                ...prev,
+                payment_method_ids: isSelected
+                    ? prev.payment_method_ids.filter((id) => id !== pmId)
+                    : [...prev.payment_method_ids, pmId],
+            };
+        });
+    };
+
+    const handleClearAllFilters = () => {
+        setFilters(initialFilterState);
+    };
+
     const filteredBudgets = useMemo(() => budgets?.filter((ex) => {
         const matchCategory = filters.categories.length > 0 ? filters.categories.includes(ex.category) : true;
         const matchMethod = filters.payment_method_ids.length > 0 ? filters.payment_method_ids.includes(ex.payment_method_id) : true;
@@ -98,6 +128,8 @@ const BudgetPage: React.FC<BudgetPageProps> = ({
 
     // Budget Create/Edit State
     const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false);
+    const [isCurrencyConverterOpen, setIsCurrencyConverterOpen] = useState(false);
+    const [isSmartSettlementModalOpen, setIsSmartSettlementModalOpen] = useState(false);
     const [budgetModalMode, setBudgetModalMode] = useState<"create" | "edit">("create");
     const initialBudgetState: BudgetRow = useMemo(() => ({
         amount: 0, category: "food", created_at: null,
@@ -113,13 +145,60 @@ const BudgetPage: React.FC<BudgetPageProps> = ({
 
     // Payment Setting hook
     const pmSettings = usePaymentMethodSettings();
-    const [isSmartSettlementModalOpen, setIsSmartSettlementModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [budgetToDelete, setBudgetToDelete] = useState<BudgetRow | null>(null);
 
+    const handleDeleteTransaction = (item: BudgetRow) => {
+        setBudgetToDelete(item);
+        setIsDeleteModalOpen(true);
+    };
+
+    const handleToggleSettleTransaction = async (item: BudgetRow) => {
+        try {
+            const otherMembers = item.split_with?.filter((uid) => uid !== item.user_id) || [];
+            const isCreator = item.user_id === session?.user?.id;
+            let newSettledWith: string[] = [];
+
+            if (otherMembers.length > 0) {
+                if (isCreator) {
+                    const isFullySettled = otherMembers.every((uid) => item.settled_with?.includes(uid));
+                    if (isFullySettled) {
+                        newSettledWith = (item.settled_with || []).filter((uid) => !otherMembers.includes(uid));
+                    } else {
+                        newSettledWith = Array.from(new Set([...(item.settled_with || []), ...otherMembers]));
+                    }
+                } else if (session?.user?.id) {
+                    const myId = session.user.id;
+                    const isMyDebtSettled = item.settled_with?.includes(myId);
+                    if (isMyDebtSettled) {
+                        newSettledWith = (item.settled_with || []).filter((uid) => uid !== myId);
+                    } else {
+                        newSettledWith = [...(item.settled_with || []), myId];
+                    }
+                }
+            } else {
+                const isSelfSettled =
+                    item.settled_with?.includes("settled") ||
+                    (item.user_id ? item.settled_with?.includes(item.user_id) : false);
+                if (isSelfSettled) {
+                    newSettledWith = [];
+                } else {
+                    newSettledWith = [item.user_id || "settled"];
+                }
+            }
+
+            await updateBudget.mutateAsync({
+                id: item.id,
+                settled_with: newSettledWith,
+            });
+        } catch (err) {
+            console.error("切換結算狀態出錯:", err);
+        }
+    };
+
     // Phase 5: 收據管理與批次分帳 State
     const { receiptMap, refreshReceipts } = useTripReceipts(tripId);
-    const desktopFileInputRef = React.useRef<HTMLInputElement>(null);
+    const mobileReceiptInputRef = useRef<HTMLInputElement>(null);
     const [isScanningReceipt, setIsScanningReceipt] = useState(false);
     const [batchSplitData, setBatchSplitData] = useState<{ parsed: ParsedReceiptData; file: File } | null>(null);
     const [viewingReceipt, setViewingReceipt] = useState<{ imageId?: string; title?: string; date?: string; amount?: number; currency?: string } | null>(null);
@@ -184,80 +263,132 @@ const BudgetPage: React.FC<BudgetPageProps> = ({
 
     return (
         <div className={`h-full font-[Noto_Sans_TC] text-foreground flex flex-col overflow-hidden ${isPrinting ? "h-auto overflow-visible bg-white pointer-events-none" : `${tripData?.theme_config?.bg || "bg-background"} dark:bg-background`}`}>
-            {/* 隱藏式收據照片上傳 Input (供桌面版 Header 觸發) */}
-            <input
-                ref={desktopFileInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    if (f) handleReceiptFileSelected(f);
-                    if (desktopFileInputRef.current) desktopFileInputRef.current.value = "";
-                }}
-            />
-
             {!isPrinting && (
                 <div className="shrink-0">
                     <SectionHeader
-                        title="帳本" subtitle="Budget" theme={tripData?.theme_config!} hasBackBtn={true}
-                        rightAction={
-                            <div className="flex justify-center items-center gap-2 sm:gap-3">
-                                <button
-                                    type="button"
-                                    onClick={() => setIsSmartSettlementModalOpen(true)}
-                                    className="flex items-center text-sm font-medium bg-card text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 px-3 py-1.5 rounded-xl shadow-xs hover:bg-emerald-50 dark:hover:bg-emerald-950/20 transition-colors"
-                                    title="分帳結算中心"
-                                >
-                                    <Wallet size={16} />
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => desktopFileInputRef.current?.click()}
-                                    className="hidden sm:flex items-center text-sm font-medium bg-card text-purple-600 dark:text-purple-300 border border-purple-500/30 px-3 py-1.5 rounded-xl shadow-xs hover:bg-purple-50 dark:hover:bg-purple-950/20 transition-colors"
-                                    title="拍收據/上傳發票自動辨識分帳"
-                                >
-                                    <Camera size={16} />
-                                </button>
-                                <button type="button" onClick={() => setIsFilterModalOpen(true)} className={`flex items-center text-sm font-medium bg-card text-blue-500 border border-border/50 px-3 py-1.5 rounded-xl shadow-xs hover:bg-muted/50 transition-colors ${filters.categories.length > 0 || filters.payment_method_ids.length > 0 ? "bg-blue-50 dark:bg-blue-900/20" : ""}`} title="交易過濾">
-                                    <Filter size={16} fill={filters.categories.length > 0 || filters.payment_method_ids.length > 0 ? "currentColor" : "none"} />
-                                </button>
-                                <button type="button" onClick={() => { pmSettings.setFormSetting(tripData?.settings_config!); pmSettings.setFormPaymentMethods(paymentMethods); pmSettings.setIsSettingModalOpen(true); }} className="flex items-center text-sm font-medium px-3 py-1.5 rounded-xl shadow-xs bg-card text-foreground border border-border/50 hover:bg-muted/50 transition-colors" title="設定">
-                                    <Settings size={16} />
-                                </button>
-                                <button type="button" onClick={() => { setBudgetModalMode("create"); setFormBudget(initialBudgetState); setIsBudgetModalOpen(true); }} className={`flex items-center gap-1 text-sm font-bold text-white px-3.5 py-1.5 rounded-xl shadow-xs ${tripData?.theme_config?.accent} hover:opacity-90 transition-opacity`} title="記一筆">
-                                    <Plus size={16} />
-                                    <span className="hidden sm:inline">記一筆</span>
-                                </button>
-                            </div>
-                        }
+                        title="帳本"
+                        subtitle="Budget"
+                        theme={tripData?.theme_config!}
+                        hasBackBtn={true}
                     />
 
+                    {/* 手機版：快速記帳列 (提供 1 鍵極速分類，主新增按鈕移至右下角 FAB) */}
                     <div className="px-4 mt-2 lg:hidden">
                         <QuickExpenseBar
-                            onQuickAdd={(catId) => { setBudgetModalMode("create"); setFormBudget({ ...initialBudgetState, id: crypto.randomUUID(), category: catId, currency_code: tripData?.settings_config?.localCurrency || "", payment_method_id: paymentMethods?.[0]?.id || "" }); setIsBudgetModalOpen(true); }}
-                            onOpenGeneralAdd={() => { setBudgetModalMode("create"); setFormBudget(initialBudgetState); setIsBudgetModalOpen(true); }}
+                            onQuickAdd={(catId) => {
+                                setBudgetModalMode("create");
+                                setFormBudget({
+                                    ...initialBudgetState,
+                                    id: crypto.randomUUID(),
+                                    category: catId,
+                                    currency_code: tripData?.settings_config?.localCurrency || "",
+                                    payment_method_id: paymentMethods?.[0]?.id || "",
+                                });
+                                setIsBudgetModalOpen(true);
+                            }}
                             onReceiptFileSelected={handleReceiptFileSelected}
                         />
                     </div>
                 </div>
             )}
 
-            <div className={`flex-1 min-h-0 ${isPrinting ? "px-0 overflow-visible" : "flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden px-4 pt-2.5 pb-2 lg:pb-4 gap-6"} no-scrollbar`} data-scroll-container="true">
-                <div className={`${isPrinting ? "w-full mb-8" : "w-full lg:w-[350px] xl:w-[400px] shrink-0 lg:h-full lg:overflow-y-auto no-scrollbar lg:pr-6 lg:border-r lg:border-border"}`}>
-                    <BudgetOverviewCard budgetItems={filteredBudgets} isPrinting={isPrinting} paymentMethods={filteredPayments} setting={currentSetting} theme={currentTheme} convertToHome={convertToHome} convertToLocal={convertToLocal} />
+            <div
+                className={`flex-1 min-h-0 ${
+                    isPrinting
+                        ? "px-0 overflow-visible"
+                        : "flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden px-4 pt-2.5 pb-2 lg:pb-4 gap-6"
+                } no-scrollbar`}
+                data-scroll-container="true"
+            >
+                <div
+                    className={`${
+                        isPrinting
+                            ? "w-full mb-8"
+                            : "w-full lg:w-[350px] xl:w-[400px] shrink-0 lg:h-full lg:overflow-y-auto no-scrollbar lg:pr-6 lg:border-r lg:border-border"
+                    }`}
+                >
+                    <BudgetOverviewCard
+                        budgetItems={budgets}
+                        isPrinting={isPrinting}
+                        paymentMethods={paymentMethods}
+                        setting={currentSetting}
+                        theme={currentTheme}
+                        convertToHome={convertToHome}
+                        convertToLocal={convertToLocal}
+                        selectedCategories={filters.categories}
+                        onToggleCategoryFilter={handleToggleCategoryFilter}
+                        onClearCategoryFilter={() => setFilters((p) => ({ ...p, categories: [] }))}
+                        selectedPaymentMethods={filters.payment_method_ids}
+                        onTogglePaymentMethodFilter={handleTogglePaymentMethodFilter}
+                        onOpenSmartSettlement={() => setIsSmartSettlementModalOpen(true)}
+                        onOpenSettings={() => {
+                            pmSettings.setFormSetting(tripData?.settings_config!);
+                            pmSettings.setFormPaymentMethods(paymentMethods);
+                            pmSettings.setIsSettingModalOpen(true);
+                        }}
+                    />
                 </div>
 
-                <div className={`${isPrinting ? "w-full" : "w-full lg:flex-1 lg:h-full min-w-0 lg:overflow-y-auto no-scrollbar pb-28 lg:pb-8"}`}>
+                <div
+                    className={`${
+                        isPrinting
+                            ? "w-full"
+                            : "w-full lg:flex-1 lg:h-full min-w-0 lg:overflow-y-auto no-scrollbar pb-28 lg:pb-8"
+                    }`}
+                >
                     <TransactionList
-                        categories={budgetCategory} budgetItems={filteredBudgets} isPrinting={isPrinting}
-                        paymentMethods={paymentMethods} session={session} setting={currentSetting}
-                        theme={currentTheme} tripMembers={tripMembers} convertToHome={convertToHome}
+                        categories={budgetCategory}
+                        budgetItems={filteredBudgets}
+                        isPrinting={isPrinting}
+                        paymentMethods={paymentMethods}
+                        session={session}
+                        setting={currentSetting}
+                        theme={currentTheme}
+                        tripMembers={tripMembers}
+                        convertToHome={convertToHome}
                         receiptMap={receiptMap}
-                        onOpenReceiptModal={(rec, item) => setViewingReceipt({ imageId: rec.id, title: item.title, date: item.expense_date || undefined, amount: item.amount, currency: item.currency_code })}
-                        getCategoryIcon={(cat) => { const item = CATEGORY_DEFINITIONS.find((c) => c.id === cat) || CATEGORY_DEFINITIONS[CATEGORY_DEFINITIONS.length - 1]; const Icon = item.icon; return <Icon size={14} />; }}
-                        getCategoryName={(cat) => CATEGORY_DEFINITIONS.find((c) => c.id === cat)?.label || "其他"}
-                        onEditBtnClick={(item) => { setBudgetModalMode("edit"); setFormBudget(item); setIsBudgetModalOpen(true); }}
+                        selectedCategories={filters.categories}
+                        selectedPaymentMethods={filters.payment_method_ids}
+                        onToggleCategoryFilter={handleToggleCategoryFilter}
+                        onTogglePaymentMethodFilter={handleTogglePaymentMethodFilter}
+                        onClearAllFilters={handleClearAllFilters}
+                        onOpenReceiptModal={(rec, item) =>
+                            setViewingReceipt({
+                                imageId: rec.id,
+                                title: item.title,
+                                date: item.expense_date || undefined,
+                                amount: item.amount,
+                                currency: item.currency_code,
+                            })
+                        }
+                        getCategoryIcon={(cat) => {
+                            const item =
+                                CATEGORY_DEFINITIONS.find((c) => c.id === cat) ||
+                                CATEGORY_DEFINITIONS[CATEGORY_DEFINITIONS.length - 1];
+                            const Icon = item.icon;
+                            return <Icon size={14} />;
+                        }}
+                        getCategoryName={(cat) =>
+                            CATEGORY_DEFINITIONS.find((c) => c.id === cat)?.label || "其他"
+                        }
+                        onEditBtnClick={(item) => {
+                            setBudgetModalMode("edit");
+                            setFormBudget(item);
+                            setIsBudgetModalOpen(true);
+                        }}
+                        onDeleteBtnClick={handleDeleteTransaction}
+                        onToggleSettle={handleToggleSettleTransaction}
+                        onOpenFilterModal={() => setIsFilterModalOpen(true)}
+                        hasActiveFilters={
+                            filters.categories.length > 0 ||
+                            filters.payment_method_ids.length > 0
+                        }
+                        onAddTransaction={() => {
+                            setBudgetModalMode("create");
+                            setFormBudget(initialBudgetState);
+                            setIsBudgetModalOpen(true);
+                        }}
+                        onReceiptFileSelected={handleReceiptFileSelected}
                     />
                 </div>
             </div>
@@ -304,6 +435,20 @@ const BudgetPage: React.FC<BudgetPageProps> = ({
             {isDeleteModalOpen && budgetToDelete && (
                 <DeleteModal deleteKey={`${moment(budgetToDelete.expense_date).format("YYYY-MM-DD")} ${budgetToDelete.title}`} onCloseClick={() => { setIsDeleteModalOpen(false); setBudgetToDelete(null); }} onConfirmClick={handleConfirmDelete} />
             )}
+            {isSmartSettlementModalOpen && (
+                <SmartSettlementModal
+                    budgets={budgets}
+                    profiles={profiles}
+                    tripMembers={tripMembers}
+                    tripTitle={tripData?.name}
+                    session={session}
+                    setting={currentSetting}
+                    theme={currentTheme}
+                    convertToHome={convertToHome}
+                    convertToLocal={convertToLocal}
+                    onClose={() => setIsSmartSettlementModalOpen(false)}
+                />
+            )}
 
             {/* 收據辨識中 Loading 遮罩 */}
             {isScanningReceipt && (
@@ -348,20 +493,68 @@ const BudgetPage: React.FC<BudgetPageProps> = ({
                 />
             )}
 
-            {/* 分帳結算中心彈窗 (最少轉帳演算法與各員淨收支) */}
-            {isSmartSettlementModalOpen && (
-                <SmartSettlementModal
-                    budgets={filteredBudgets}
-                    profiles={profiles}
-                    tripMembers={tripMembers}
-                    tripTitle={tripData?.title}
-                    session={session}
-                    setting={currentSetting}
-                    theme={currentTheme}
-                    convertToHome={convertToHome}
-                    convertToLocal={convertToLocal}
-                    onClose={() => setIsSmartSettlementModalOpen(false)}
-                />
+            {/* 隱藏的手機版收據拍照上傳 input */}
+            <input
+                ref={mobileReceiptInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                className="hidden"
+                onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                        handleReceiptFileSelected(file);
+                    }
+                    if (mobileReceiptInputRef.current) {
+                        mobileReceiptInputRef.current.value = "";
+                    }
+                }}
+            />
+
+            {/* 手機版統一摺疊式懸浮按鈕 (Speed Dial) - 初始狀態僅顯示單一按鈕 */}
+            {!isPrinting && (
+                <>
+                    <FloatingSpeedDial
+                        className="lg:hidden"
+                        mainLabel="帳本快捷功能"
+                        themeAccent={currentTheme?.accent}
+                        actions={[
+                            {
+                                id: "manual-expense",
+                                label: "手動記一筆",
+                                icon: <Plus size={20} />,
+                                colorClass: "bg-primary text-primary-foreground",
+                                onClick: () => {
+                                    setBudgetModalMode("create");
+                                    setFormBudget(initialBudgetState);
+                                    setIsBudgetModalOpen(true);
+                                },
+                            },
+                            {
+                                id: "receipt-scan",
+                                label: "拍收據辨識",
+                                icon: <Camera size={18} />,
+                                colorClass: "bg-purple-600 text-white",
+                                onClick: () => mobileReceiptInputRef.current?.click(),
+                            },
+                            {
+                                id: "currency-converter",
+                                label: "即時匯率換算",
+                                icon: <Calculator size={18} />,
+                                colorClass: "bg-amber-500 text-white",
+                                onClick: () => setIsCurrencyConverterOpen(true),
+                            },
+                        ]}
+                    />
+
+                    {/* 即時匯率換算小計算機 */}
+                    <FloatingCurrencyConverter
+                        tripData={tripData}
+                        isOpen={isCurrencyConverterOpen}
+                        onOpenChange={setIsCurrencyConverterOpen}
+                        hideTriggerButtonOnMobile={true}
+                    />
+                </>
             )}
         </div>
     );

@@ -1,6 +1,14 @@
 import React, { useRef, useEffect } from "react";
 import moment from "moment";
-import { Calendar, MapPin, Umbrella, CloudRain, AlertTriangle, ChevronRight } from "lucide-react";
+import {
+    Calendar,
+    MapPin,
+    Umbrella,
+    CloudRain,
+    AlertTriangle,
+    ChevronRight,
+    Plus,
+} from "lucide-react";
 import type { ItineraryVM } from "../../../models/types/ItineraryTypes";
 import type { TripThemeConf } from "../../../models/types/TripTypes";
 import { getWeatherInfoByCode, type DailyWeatherMap } from "../../../services/weather/WeatherService";
@@ -9,6 +17,7 @@ export type ItineraryDayTabBarProps = {
     days: ItineraryVM[];
     selectedDayId: string;
     onSelectDay: (dayId: string) => void;
+    onAddDay?: () => void;
     dayPlaceCounts?: Record<string, number>;
     totalPlacesCount?: number;
     theme?: TripThemeConf | null;
@@ -23,6 +32,7 @@ export const ItineraryDayTabBar: React.FC<ItineraryDayTabBarProps> = ({
     days,
     selectedDayId,
     onSelectDay,
+    onAddDay,
     dayPlaceCounts,
     totalPlacesCount,
     theme,
@@ -224,6 +234,18 @@ export const ItineraryDayTabBar: React.FC<ItineraryDayTabBarProps> = ({
                             </button>
                         );
                     })}
+
+                {onAddDay && (
+                    <button
+                        type="button"
+                        onClick={onAddDay}
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold text-muted-foreground hover:text-foreground hover:bg-black/5 dark:hover:bg-white/10 border border-dashed border-border/80 transition-all shrink-0 cursor-pointer active:scale-95 shadow-2xs"
+                        title="新增一天日程"
+                    >
+                        <Plus size={13} className="text-primary" />
+                        <span>加一天</span>
+                    </button>
+                )}
             </div>
 
             {/* 雨天備案提示橫幅 (當選中日或當日降雨機率 >= 50% 時自動跳出) */}

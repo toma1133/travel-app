@@ -72,33 +72,33 @@ const CoverPage = ({
             </div>
 
             {/* Foreground Content Container */}
-            <div className={`relative z-10 flex-1 flex flex-col px-6 md:px-12 pb-6 print:pt-6 print:pb-12 ${isPrinting ? "pt-6 pb-12" : "pt-[35vh] md:pt-[40vh]"}`}>
+            <div className={`relative z-10 flex-1 flex flex-col px-6 md:px-12 pb-28 md:pb-6 print:pt-6 print:pb-12 ${isPrinting ? "pt-6 pb-12" : "pt-[26vh] sm:pt-[32vh] md:pt-[40vh]"}`}>
                 
                 {/* Title Block (Pushes up automatically via margins if needed, or stays centered) */}
                 <div className={`shrink-0 mb-auto print:mb-12 ${isPrinting ? "mb-12" : ""}`}>
-                    <div className="flex items-center gap-4 mb-3 md:mb-5">
+                    <div className="flex items-center gap-4 mb-2 md:mb-5">
                         <span className={`px-4 py-1.5 text-[10px] md:text-xs font-black tracking-[0.3em] uppercase rounded-full shadow-lg ${isPrinting ? "bg-black text-white" : "bg-primary text-primary-foreground"}`}>
                             JOURNEY
                         </span>
                     </div>
-                    <h1 className={`text-4xl sm:text-6xl md:text-7xl font-[Noto_Sans_TC] font-black drop-shadow-sm tracking-tighter leading-[1.1] max-w-5xl line-clamp-2 print:text-black print:drop-shadow-none ${isPrinting ? "text-black drop-shadow-none" : "text-foreground"}`}>
+                    <h1 className={`text-3xl sm:text-6xl md:text-7xl font-[Noto_Sans_TC] font-black drop-shadow-sm tracking-tighter leading-[1.1] max-w-5xl line-clamp-2 print:text-black print:drop-shadow-none ${isPrinting ? "text-black drop-shadow-none" : "text-foreground"}`}>
                         {tripData?.title || "Untitled Trip"}
                     </h1>
                     {tripData?.subtitle && (
-                        <h2 className={`text-lg md:text-2xl font-medium max-w-3xl leading-snug mt-2 line-clamp-1 print:text-gray-600 print:mt-4 ${isPrinting ? "text-gray-600 mt-4" : "text-muted-foreground"}`}>
+                        <h2 className={`text-base md:text-2xl font-medium max-w-3xl leading-snug mt-1.5 md:mt-2 line-clamp-1 print:text-gray-600 print:mt-4 ${isPrinting ? "text-gray-600 mt-4" : "text-muted-foreground"}`}>
                             {tripData.subtitle}
                         </h2>
                     )}
                 </div>
 
                 {/* Info Grid & Description Block */}
-                <div className={`shrink-0 mt-6 flex flex-col gap-4 md:gap-6 print:mt-auto print:mb-12 ${isPrinting ? "mt-auto mb-12" : ""}`}>
+                <div className={`shrink-0 mt-4 md:mt-6 flex flex-col gap-3 md:gap-6 print:mt-auto print:mb-12 ${isPrinting ? "mt-auto mb-12" : ""}`}>
                     
                     {/* Editorial Info Grid */}
-                    <div className={`grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 py-4 md:py-8 border-y border-border print:border-black print:border-y-2 ${isPrinting ? "border-black border-y-2" : ""}`}>
-                        <div className="flex flex-col gap-1 md:gap-2">
-                            <span className={`text-[10px] md:text-xs font-bold uppercase tracking-[0.2em] print:text-gray-500 ${isPrinting ? "text-gray-500" : "text-muted-foreground"}`}>Departure</span>
-                            <span className={`text-xl md:text-3xl font-medium font-mono whitespace-nowrap print:text-black ${isPrinting ? "text-black" : "text-foreground"}`}>
+                    <div className={`grid grid-cols-3 md:grid-cols-4 gap-2 sm:gap-4 md:gap-8 py-3 md:py-8 border-y border-border print:border-black print:border-y-2 ${isPrinting ? "border-black border-y-2" : ""}`}>
+                        <div className="flex flex-col gap-0.5 md:gap-2">
+                            <span className={`text-[10px] md:text-xs font-bold uppercase tracking-[0.15em] md:tracking-[0.2em] print:text-gray-500 ${isPrinting ? "text-gray-500" : "text-muted-foreground"}`}>Departure</span>
+                            <span className={`text-lg sm:text-2xl md:text-3xl font-medium font-mono whitespace-nowrap print:text-black ${isPrinting ? "text-black" : "text-foreground"}`}>
                                 {tripData?.start_date ? moment(tripData.start_date).format("MMM DD") : "--"}
                             </span>
                         </div>
@@ -107,20 +107,20 @@ const CoverPage = ({
                             <ArrowRight size={28} strokeWidth={1} />
                         </div>
 
-                        <div className="flex flex-col gap-1 md:gap-2">
-                            <span className={`text-[10px] md:text-xs font-bold uppercase tracking-[0.2em] print:text-gray-500 ${isPrinting ? "text-gray-500" : "text-muted-foreground"}`}>Return</span>
-                            <span className={`text-xl md:text-3xl font-medium font-mono whitespace-nowrap print:text-black ${isPrinting ? "text-black" : "text-foreground"}`}>
+                        <div className="flex flex-col gap-0.5 md:gap-2">
+                            <span className={`text-[10px] md:text-xs font-bold uppercase tracking-[0.15em] md:tracking-[0.2em] print:text-gray-500 ${isPrinting ? "text-gray-500" : "text-muted-foreground"}`}>Return</span>
+                            <span className={`text-lg sm:text-2xl md:text-3xl font-medium font-mono whitespace-nowrap print:text-black ${isPrinting ? "text-black" : "text-foreground"}`}>
                                 {tripData?.end_date ? moment(tripData.end_date).format("MMM DD") : "--"}
                             </span>
                         </div>
 
-                        <div className="flex flex-col gap-1 md:gap-2 md:items-end md:text-right">
-                            <span className={`text-[10px] md:text-xs font-bold uppercase tracking-[0.2em] print:text-gray-500 ${isPrinting ? "text-gray-500" : "text-muted-foreground"}`}>Duration</span>
-                            <div className="flex items-baseline gap-2">
-                                <span className={`text-2xl md:text-4xl font-black print:text-black ${isPrinting ? "text-black" : "text-foreground"}`}>
+                        <div className="flex flex-col gap-0.5 md:gap-2 items-end text-right">
+                            <span className={`text-[10px] md:text-xs font-bold uppercase tracking-[0.15em] md:tracking-[0.2em] print:text-gray-500 ${isPrinting ? "text-gray-500" : "text-muted-foreground"}`}>Duration</span>
+                            <div className="flex items-baseline gap-1 md:gap-2">
+                                <span className={`text-xl sm:text-3xl md:text-4xl font-black print:text-black ${isPrinting ? "text-black" : "text-foreground"}`}>
                                     {dayCount}
                                 </span>
-                                <span className={`text-xs md:text-sm font-medium uppercase tracking-widest ${isPrinting ? "text-gray-500" : "text-muted-foreground"}`}>Days</span>
+                                <span className={`text-[10px] md:text-sm font-medium uppercase tracking-widest ${isPrinting ? "text-gray-500" : "text-muted-foreground"}`}>Days</span>
                             </div>
                         </div>
                     </div>
@@ -128,7 +128,7 @@ const CoverPage = ({
                     {/* Description - Clamped to prevent scrolling */}
                     {tripData?.description && (
                         <div className={`max-w-4xl print:max-w-none ${isPrinting ? "max-w-none" : ""}`}>
-                            <p className={`text-sm md:text-base leading-relaxed font-light text-justify print:text-gray-800 print:line-clamp-none ${isPrinting ? "text-gray-800 line-clamp-none" : "text-muted-foreground/90 line-clamp-3 md:line-clamp-4"}`}>
+                            <p className={`text-xs md:text-base leading-relaxed font-light text-justify print:text-gray-800 print:line-clamp-none ${isPrinting ? "text-gray-800 line-clamp-none" : "text-muted-foreground/90 line-clamp-2 sm:line-clamp-3 md:line-clamp-4"}`}>
                                 {tripData.description}
                             </p>
                         </div>

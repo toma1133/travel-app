@@ -7,7 +7,6 @@ import {
 } from "react-router-dom";
 import useTrip from "../hooks/trip/UseTrip";
 import LayoutContextType from "../models/types/LayoutContextTypes";
-import BackToTopButton from "../components/common/BackToTopBtn";
 import LiquidGlassBottomNav from "../components/navigation/LiquidGlassBottomNav";
 import DesktopGlassSidebar from "../components/navigation/DesktopGlassSidebar";
 
@@ -62,16 +61,6 @@ const BookPage = () => {
                         ref={scrollContainerRef}
                     >
                         <Outlet context={{ tripData, setIsPageLoading }} />
-
-                        <BackToTopButton
-                            showAt={200}
-                            size={20}
-                            getTarget={() =>
-                                (scrollContainerRef.current?.querySelector?.(
-                                    '[data-scroll-container="true"]'
-                                ) as HTMLElement) || scrollContainerRef.current
-                            }
-                        />
                     </main>
 
                     {/* Floating Liquid Glass Navigation Dock for Mobile */}

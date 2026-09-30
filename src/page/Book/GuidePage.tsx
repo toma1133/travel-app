@@ -298,18 +298,6 @@ const GuidePage = ({
                         subtitle="Scene • Food • Shopping"
                         theme={tripData?.theme_config!}
                         hasBackBtn={true}
-                        rightAction={
-                            <div className="flex justify-center items-center gap-4">
-                                <button
-                                    type="button"
-                                    onClick={handleOpenCreateModal}
-                                    className={`flex items-center text-sm font-medium text-white px-3 py-1.5 rounded-lg shadow-md ${tripData?.theme_config?.accent} hover:opacity-90 transition-opacity`}
-                                    title="新增"
-                                >
-                                    <Plus size={16} />
-                                </button>
-                            </div>
-                        }
                     />
                 </div>
             )}
@@ -335,6 +323,7 @@ const GuidePage = ({
                                 onTagBtnClick={handleTagClick}
                                 onRemoveTagBtnClick={handleRemoveTag}
                                 onClearAllFilters={handleClearAllFilters}
+                                onAddPlaceClick={handleOpenCreateModal}
                             />
                         )}
                         <PlaceCardList
@@ -381,6 +370,16 @@ const GuidePage = ({
                     onCloseBtnClick={() => setPreviewPlace(null)}
                 />
             )}
+
+            {/* 手機版懸浮新增按鈕 (FAB) */}
+            <button
+                type="button"
+                onClick={handleOpenCreateModal}
+                className="md:hidden fixed bottom-[calc(5.2rem+env(safe-area-inset-bottom,0px))] right-4 sm:right-6 z-40 w-12 h-12 rounded-full bg-primary text-primary-foreground shadow-xl flex items-center justify-center active:scale-90 transition-all cursor-pointer hover:opacity-90"
+                title="新增景點"
+            >
+                <Plus size={22} />
+            </button>
         </div>
     );
 };

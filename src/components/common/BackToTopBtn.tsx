@@ -30,7 +30,9 @@ const BackToTopButton = ({
     if (position?.right !== undefined) style.right = position.right;
     if (position?.bottom !== undefined) style.bottom = position.bottom;
 
-    const defaultPositionClass = position ? "" : "bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] md:bottom-10 right-6 md:right-8";
+    const defaultPositionClass = position
+        ? ""
+        : "bottom-[calc(5.2rem+env(safe-area-inset-bottom,0px))] md:bottom-10 left-5 md:left-auto md:right-8";
 
     return (
         <button

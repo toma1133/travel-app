@@ -24,6 +24,13 @@ export interface BudgetOverviewCardProps {
         localCurrency?: string,
         exchangeRate?: number
     ) => number;
+    onOpenSmartSettlement?: () => void;
+    onOpenSettings?: () => void;
+    selectedCategories?: string[];
+    onToggleCategoryFilter?: (catId: string) => void;
+    onClearCategoryFilter?: () => void;
+    selectedPaymentMethods?: string[];
+    onTogglePaymentMethodFilter?: (pmId: string) => void;
 }
 
 export const BudgetOverviewCard: React.FC<BudgetOverviewCardProps> = ({
@@ -34,6 +41,13 @@ export const BudgetOverviewCard: React.FC<BudgetOverviewCardProps> = ({
     theme,
     convertToHome,
     convertToLocal,
+    onOpenSmartSettlement,
+    onOpenSettings,
+    selectedCategories,
+    onToggleCategoryFilter,
+    onClearCategoryFilter,
+    selectedPaymentMethods,
+    onTogglePaymentMethodFilter,
 }) => {
     const getChartGradient = (
         totalSpentHome: number,
@@ -69,6 +83,11 @@ export const BudgetOverviewCard: React.FC<BudgetOverviewCardProps> = ({
                 convertToLocal={convertToLocal}
                 getChartGradient={getChartGradient}
                 getCategoryName={getCategoryName}
+                onOpenSmartSettlement={onOpenSmartSettlement}
+                onOpenSettings={onOpenSettings}
+                selectedCategories={selectedCategories}
+                onToggleCategoryFilter={onToggleCategoryFilter}
+                onClearCategoryFilter={onClearCategoryFilter}
             />
             <BudgetLimitList
                 budgetItems={budgetItems}
@@ -78,6 +97,8 @@ export const BudgetOverviewCard: React.FC<BudgetOverviewCardProps> = ({
                 theme={theme}
                 convertToHome={convertToHome}
                 convertToLocal={convertToLocal}
+                selectedPaymentMethods={selectedPaymentMethods}
+                onTogglePaymentMethodFilter={onTogglePaymentMethodFilter}
             />
         </div>
     );

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from "react";
-import { Filter, X, Check, ChevronDown, Tag, Search, RotateCcw } from "lucide-react";
+import { Filter, X, Check, ChevronDown, Tag, Search, RotateCcw, Plus } from "lucide-react";
 import type { PlaceCategory } from "../../models/types/PlaceTypes";
 import type { TripThemeConf } from "../../models/types/TripTypes";
 
@@ -19,6 +19,7 @@ type PlaceFilterProps = {
     onTagBtnClick: (tag: string) => void;
     onRemoveTagBtnClick: (tag: string) => void;
     onClearAllFilters?: () => void;
+    onAddPlaceClick?: () => void;
 };
 
 const PlaceFilter = ({
@@ -32,6 +33,7 @@ const PlaceFilter = ({
     onTagBtnClick,
     onRemoveTagBtnClick,
     onClearAllFilters,
+    onAddPlaceClick,
 }: PlaceFilterProps) => {
     const [isCategoryOpen, setIsCategoryOpen] = useState(false);
     const [isTagOpen, setIsTagOpen] = useState(false);
@@ -273,6 +275,20 @@ const PlaceFilter = ({
                         >
                             <RotateCcw size={11} />
                             <span>重設</span>
+                        </button>
+                    )}
+
+                    {onAddPlaceClick && (
+                        <button
+                            type="button"
+                            onClick={onAddPlaceClick}
+                            className={`hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white shadow-xs ${
+                                theme?.accent || "bg-primary"
+                            } hover:opacity-90 active:scale-95 transition-all cursor-pointer`}
+                            title="新增景點"
+                        >
+                            <Plus size={13} />
+                            <span>新增景點</span>
                         </button>
                     )}
                 </div>

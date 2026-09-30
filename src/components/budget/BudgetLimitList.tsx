@@ -25,6 +25,8 @@ type BudgetLimitListProps = {
         localCurrency?: string,
         exchangeRate?: number
     ) => number;
+    selectedPaymentMethods?: string[];
+    onTogglePaymentMethodFilter?: (pmId: string) => void;
 };
 
 const BudgetLimitList = ({
@@ -35,6 +37,8 @@ const BudgetLimitList = ({
     theme,
     convertToHome,
     convertToLocal,
+    selectedPaymentMethods = [],
+    onTogglePaymentMethodFilter,
 }: BudgetLimitListProps) => {
     const [usage, setUsage] = useState<{ [key: string]: number }>({});
 
@@ -103,7 +107,7 @@ const BudgetLimitList = ({
                 支付額度狀態
             </h4>
             <div
-                className={`grid ${
+                className={`grid p-0.5 ${
                     isPrinting ? "grid-cols-2 gap-4" : "grid-cols-1 gap-3"
                 }`}
             >
@@ -128,6 +132,8 @@ const BudgetLimitList = ({
                             used={usage[paymentMethod.id] || 0}
                             convertToHome={convertToHome}
                             convertToLocal={convertToLocal}
+                            isSelected={selectedPaymentMethods.includes(paymentMethod.id)}
+                            onToggleSelect={() => onTogglePaymentMethodFilter?.(paymentMethod.id)}
                         />
                     ))}
             </div>

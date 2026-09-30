@@ -326,19 +326,6 @@ const BookshelfPage = () => {
                 title="我的旅程"
                 subtitle="Travel Collections"
                 theme={null}
-                rightAction={
-                    <div className="flex justify-center items-center gap-4">
-                        <button
-                            type="button"
-                            onClick={handleAddTripBtnClick}
-                            disabled={isTripsLoading}
-                            className={`flex items-center text-sm font-medium text-white px-3 py-1.5 rounded-lg shadow-md bg-[#9F1239] hover:opacity-90 transition-opacity`}
-                            title="新增"
-                        >
-                            <PlusIcon size={16} />
-                        </button>
-                    </div>
-                }
             />
             {isTripsLoading ? (
                 <BookshelfSkeleton />
@@ -352,6 +339,7 @@ const BookshelfPage = () => {
                     onPermissionBtnClick={handlePermissionBtnClick}
                     onPrintBtnClick={handlePrintBtnClick}
                     onTripBtnClick={handleSelectTrip}
+                    onAddTripBtnClick={handleAddTripBtnClick}
                 />
             )}
             {isTripModalOpen && (
@@ -382,6 +370,17 @@ const BookshelfPage = () => {
                     onRemoveMember={handleRemoveMember}
                 />
             )}
+
+            {/* 手機版懸浮新增旅程按鈕 (FAB) */}
+            <button
+                type="button"
+                onClick={handleAddTripBtnClick}
+                disabled={isTripsLoading}
+                className="md:hidden fixed bottom-6 right-6 z-30 w-14 h-14 rounded-full bg-[#9F1239] text-white shadow-xl flex items-center justify-center active:scale-90 transition-all cursor-pointer hover:opacity-90 disabled:opacity-50"
+                title="新增旅程"
+            >
+                <PlusIcon size={26} />
+            </button>
         </div>
     );
 };

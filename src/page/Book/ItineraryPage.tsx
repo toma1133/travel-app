@@ -2,7 +2,7 @@ import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "re
 import { useOutletContext, useParams } from "react-router-dom";
 import { useIsMutating } from "@tanstack/react-query";
 import moment from "moment";
-import { Lock, MapIcon, Plus, Settings, X } from "lucide-react";
+import { MapIcon, Plus, X } from "lucide-react";
 import useAuth from "../../hooks/UseAuth";
 import useMediaQuery from "../../hooks/UseMediaQuery";
 import useItinerarys from "../../hooks/itinerary/UseItinerarys";
@@ -44,7 +44,7 @@ const ItineraryPage = ({ isPrinting, tripDataOverride, tripIdOverride }: Itinera
     const tripData = tripDataOverride || contextData?.tripData;
     const { setIsPageLoading } = useOutletContext<LayoutContextType>();
 
-    const [isEditing, setIsEditing] = useState(false);
+    const isEditing = true;
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const [selectedDayFilter, setSelectedDayFilter] = useState<string>("all");
     const isDesktop = useMediaQuery("(min-width: 1024px)");
@@ -168,16 +168,12 @@ const ItineraryPage = ({ isPrinting, tripDataOverride, tripIdOverride }: Itinera
         <div className={isPrinting ? "font-[Noto_Sans_TC] text-foreground block bg-white" : `h-full font-[Noto_Sans_TC] text-foreground flex flex-col ${tripData?.theme_config?.bg || "bg-background"} dark:bg-background overflow-hidden`}>
             {!isPrinting && (
                 <div className="shrink-0">
-                    <SectionHeader title="行程表" subtitle="Timeline" theme={tripData?.theme_config!} hasBackBtn rightAction={
-                        <div className="flex items-center gap-2">
-                            <button type="button" onClick={() => setIsEditing(!isEditing)} className={`p-2 rounded-xl text-xs font-bold transition-all ${isEditing ? "bg-destructive text-destructive-foreground" : "glass-panel hover:bg-white/80 dark:hover:bg-white/[0.08]"}`} title={isEditing ? "完成" : "編輯"}>
-                                {isEditing ? <Lock size={15} /> : <Settings size={15} />}
-                            </button>
-                            <button type="button" onClick={() => setDayModal({ open: true, mode: "create", form: { activities: [], date: moment().format("YYYY-MM-DD"), day_number: (itinerarys?.length || 0) + 1, created_at: null, id: crypto.randomUUID(), title: "", trip_id: tripId ?? "", updated_at: null, user_id: session?.user?.id || "", weekday: moment().format("ddd") } })} className={`p-2 rounded-xl text-white shadow-md active:scale-95 transition-all ${tripData?.theme_config?.accent || "bg-primary"}`} title="新增日程">
-                                <Plus size={15} />
-                            </button>
-                        </div>
-                    } />
+                    <SectionHeader
+                        title="行程表"
+                        subtitle="Timeline"
+                        theme={tripData?.theme_config!}
+                        hasBackBtn
+                    />
                 </div>
             )}
 
@@ -201,6 +197,24 @@ const ItineraryPage = ({ isPrinting, tripDataOverride, tripIdOverride }: Itinera
                                     days={itinerarys}
                                     selectedDayId={selectedDayFilter}
                                     onSelectDay={setSelectedDayFilter}
+                                    onAddDay={() =>
+                                        setDayModal({
+                                            open: true,
+                                            mode: "create",
+                                            form: {
+                                                activities: [],
+                                                date: moment().format("YYYY-MM-DD"),
+                                                day_number: (itinerarys?.length || 0) + 1,
+                                                created_at: null,
+                                                id: crypto.randomUUID(),
+                                                title: "",
+                                                trip_id: tripId ?? "",
+                                                updated_at: null,
+                                                user_id: session?.user?.id || "",
+                                                weekday: moment().format("ddd"),
+                                            },
+                                        })
+                                    }
                                     dayPlaceCounts={dayPlaceCounts}
                                     totalPlacesCount={dayPlacesMap.all?.length}
                                     theme={tripData?.theme_config}

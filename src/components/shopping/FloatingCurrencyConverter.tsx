@@ -20,13 +20,31 @@ import type { TripVM } from "../../models/types/TripTypes";
 export interface FloatingCurrencyConverterProps {
     tripData?: TripVM | null;
     onAddToList?: (amount: number, currency: string) => void;
+    className?: string;
+    isOpen?: boolean;
+    onOpenChange?: (open: boolean) => void;
+    hideTriggerButton?: boolean;
+    hideTriggerButtonOnMobile?: boolean;
 }
 
 const FloatingCurrencyConverter: React.FC<FloatingCurrencyConverterProps> = ({
     tripData,
     onAddToList,
+    className,
+    isOpen: controlledIsOpen,
+    onOpenChange,
+    hideTriggerButton = false,
+    hideTriggerButtonOnMobile = false,
 }) => {
-    const [isOpen, setIsOpen] = useState(false);
+    const [internalIsOpen, setInternalIsOpen] = useState(false);
+    const isOpen = controlledIsOpen !== undefined ? controlledIsOpen : internalIsOpen;
+    const setIsOpen = (next: boolean) => {
+        if (controlledIsOpen !== undefined) {
+            onOpenChange?.(next);
+        } else {
+            setInternalIsOpen(next);
+        }
+    };
 
     // Trip currencies and exchange rate
     const tripLocalCurrency = tripData?.settings_config?.localCurrency || "JPY";
@@ -36,6 +54,47 @@ const FloatingCurrencyConverter: React.FC<FloatingCurrencyConverterProps> = ({
     const [foreignCurrency, setForeignCurrency] = useState(tripLocalCurrency);
     const [homeCurrency, setHomeCurrency] = useState(tripHomeCurrency);
     const [exchangeRate, setExchangeRate] = useState<number>(baseRate);
+    const [isFetchingRate, setIsFetchingRate] = useState(false);
+    const [rateUpdatedTime, setRateUpdatedTime] = useState<string | null>(null);
+
+    // Fetch live rate from public open exchange rate API
+    const fetchLiveRate = async (from = foreignCurrency, to = homeCurrency) => {
+        if (!from || !to) return;
+        if (from === to) {
+            setExchangeRate(1);
+            setCustomRateInput("1");
+            return;
+        }
+        setIsFetchingRate(true);
+        try {
+            const res = await fetch(`https://open.er-api.com/v6/latest/${from}`);
+            if (!res.ok) throw new Error("Exchange API network error");
+            const data = await res.json();
+            const live = data.rates?.[to];
+            if (typeof live === "number" && live > 0) {
+                const formatted = Number(live.toFixed(4));
+                setExchangeRate(formatted);
+                setCustomRateInput(formatted.toString());
+                const now = new Date();
+                setRateUpdatedTime(
+                    `${String(now.getHours()).padStart(2, "0")}:${String(
+                        now.getMinutes()
+                    ).padStart(2, "0")}`
+                );
+            }
+        } catch (err) {
+            console.warn("無法取得即時匯率，維持預設匯率:", err);
+        } finally {
+            setIsFetchingRate(false);
+        }
+    };
+
+    // Auto-fetch current live rate whenever converter is opened
+    useEffect(() => {
+        if (isOpen) {
+            fetchLiveRate(foreignCurrency, homeCurrency);
+        }
+    }, [isOpen, foreignCurrency, homeCurrency]);
 
     // Sync if tripData updates
     useEffect(() => {
@@ -47,6 +106,7 @@ const FloatingCurrencyConverter: React.FC<FloatingCurrencyConverterProps> = ({
         }
         if (tripData?.settings_config?.exchangeRate) {
             setExchangeRate(tripData.settings_config.exchangeRate);
+            setCustomRateInput(tripData.settings_config.exchangeRate.toString());
         }
     }, [tripData]);
 
@@ -100,21 +160,32 @@ const FloatingCurrencyConverter: React.FC<FloatingCurrencyConverterProps> = ({
 
     // Swap currencies
     const handleSwapCurrencies = () => {
-        const temp = foreignCurrency;
-        setForeignCurrency(homeCurrency);
-        setHomeCurrency(temp);
-        if (exchangeRate > 0) {
-            const inverted = Number((1 / exchangeRate).toFixed(4));
-            setExchangeRate(inverted);
-            setCustomRateInput(inverted.toString());
-        }
+        const nextForeign = homeCurrency;
+        const nextHome = foreignCurrency;
+        setForeignCurrency(nextForeign);
+        setHomeCurrency(nextHome);
+        fetchLiveRate(nextForeign, nextHome);
     };
 
     return (
-        <div className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] md:bottom-20 right-4 sm:right-6 z-40 flex flex-col items-end">
-            {/* Pop-up Mini Glass Calculator Panel */}
+        <>
+            {/* Mobile backdrop for easy tap-outside dismissal */}
             {isOpen && (
-                <div className="mb-3 w-[310px] sm:w-[340px] bg-white/98 dark:bg-neutral-900/98 backdrop-blur-2xl border border-slate-200/90 dark:border-neutral-700 shadow-2xl rounded-3xl p-4 space-y-3.5 animate-in slide-in-from-bottom-5 fade-in duration-200 text-slate-900 dark:text-white">
+                <div
+                    className="fixed inset-0 z-35 sm:hidden bg-black/25 backdrop-blur-[1px] pointer-events-auto animate-in fade-in duration-150"
+                    onClick={() => setIsOpen(false)}
+                />
+            )}
+
+            <div
+                className={
+                    className ||
+                    "fixed bottom-[calc(5.2rem+env(safe-area-inset-bottom,0px))] md:bottom-20 left-3.5 right-3.5 sm:left-auto sm:right-6 z-40 flex flex-col items-end pointer-events-none"
+                }
+            >
+                {/* Pop-up Glass Calculator Panel (Full width on mobile, 390px-420px on PC/tablet) */}
+                {isOpen && (
+                    <div className="mb-3 w-full sm:w-[390px] md:w-[420px] pointer-events-auto bg-white/98 dark:bg-neutral-900/98 backdrop-blur-2xl border border-slate-200/90 dark:border-neutral-700 shadow-2xl rounded-3xl p-4 sm:p-5 space-y-3.5 animate-in slide-in-from-bottom-5 fade-in duration-200 text-slate-900 dark:text-white">
                     {/* Header */}
                     <div className="flex items-center justify-between pb-2 border-b border-border/60">
                         <div className="flex items-center gap-2">
@@ -125,9 +196,28 @@ const FloatingCurrencyConverter: React.FC<FloatingCurrencyConverterProps> = ({
                                 <h3 className="font-bold text-xs text-foreground flex items-center gap-1">
                                     即時匯率換算
                                 </h3>
-                                <p className="text-[10px] text-muted-foreground">
-                                    1 {foreignCurrency} ≈ {exchangeRate} {homeCurrency}
-                                </p>
+                                <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                                    <span>
+                                        1 {foreignCurrency} ≈ {exchangeRate} {homeCurrency}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={() => fetchLiveRate(foreignCurrency, homeCurrency)}
+                                        disabled={isFetchingRate}
+                                        className="p-0.5 rounded text-muted-foreground hover:text-foreground transition-transform active:rotate-180 cursor-pointer disabled:opacity-50"
+                                        title="重新整理即時匯率"
+                                    >
+                                        <RefreshCw
+                                            size={10}
+                                            className={isFetchingRate ? "animate-spin text-primary" : ""}
+                                        />
+                                    </button>
+                                    {rateUpdatedTime && (
+                                        <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-medium">
+                                            {rateUpdatedTime} 更新
+                                        </span>
+                                    )}
+                                </div>
                             </div>
                         </div>
 
@@ -314,46 +404,53 @@ const FloatingCurrencyConverter: React.FC<FloatingCurrencyConverterProps> = ({
                         </button>
                     </div>
 
-                    {/* Action Button: ＋加入購物清單 */}
-                    <button
-                        type="button"
-                        onClick={handleAddToList}
-                        className="w-full py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-blue-500/20 transition-all cursor-pointer active:scale-[0.98]"
-                    >
-                        <Plus size={15} />
-                        <span>加入購物清單 ({foreignSymbol}{taxedAmount.toLocaleString()})</span>
-                    </button>
+                    {/* Action Button: ＋加入購物清單 (僅在購物頁面提供此回呼時顯示) */}
+                    {onAddToList && (
+                        <button
+                            type="button"
+                            onClick={handleAddToList}
+                            className="w-full py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-blue-500/20 transition-all cursor-pointer active:scale-[0.98]"
+                        >
+                            <Plus size={15} />
+                            <span>加入購物清單 ({foreignSymbol}{taxedAmount.toLocaleString()})</span>
+                        </button>
+                    )}
                 </div>
             )}
 
             {/* Floating Launcher Trigger Button */}
-            <button
-                type="button"
-                onClick={() => setIsOpen(!isOpen)}
-                className={`p-3.5 rounded-full shadow-2xl backdrop-blur-md border transition-all cursor-pointer flex items-center gap-2 group active:scale-95 ${
-                    isOpen
-                        ? "bg-blue-600 text-white border-blue-600 shadow-blue-500/30 scale-105"
-                        : "bg-white hover:bg-slate-50 dark:bg-neutral-900 dark:hover:bg-neutral-800 text-slate-800 dark:text-white border-slate-200/90 dark:border-neutral-700/80 hover:border-blue-400 shadow-xl"
-                }`}
-                title={isOpen ? "關閉計算機" : "展開即時匯率換算器"}
-            >
-                <div className="relative">
-                    <Calculator
-                        size={20}
-                        className={`transition-transform duration-300 ${
-                            isOpen ? "rotate-90 text-white" : "text-blue-600 dark:text-blue-400 group-hover:scale-110"
-                        }`}
-                    />
-                    <span className="absolute -top-1 -right-1 flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-500 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+            {!hideTriggerButton && (
+                <button
+                    type="button"
+                    onClick={() => setIsOpen(!isOpen)}
+                    className={`${
+                        hideTriggerButtonOnMobile ? "hidden md:flex" : "flex"
+                    } pointer-events-auto p-3.5 rounded-full shadow-2xl backdrop-blur-md border transition-all cursor-pointer items-center gap-2 group active:scale-95 ${
+                        isOpen
+                            ? "bg-blue-600 text-white border-blue-600 shadow-blue-500/30 scale-105"
+                            : "bg-white hover:bg-slate-50 dark:bg-neutral-900 dark:hover:bg-neutral-800 text-slate-800 dark:text-white border-slate-200/90 dark:border-neutral-700/80 hover:border-blue-400 shadow-xl"
+                    }`}
+                    title={isOpen ? "關閉計算機" : "展開即時匯率換算器"}
+                >
+                    <div className="relative">
+                        <Calculator
+                            size={20}
+                            className={`transition-transform duration-300 ${
+                                isOpen ? "rotate-90 text-white" : "text-blue-600 dark:text-blue-400 group-hover:scale-110"
+                            }`}
+                        />
+                        <span className="absolute -top-1 -right-1 flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-500 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                        </span>
+                    </div>
+                    <span className="text-xs font-bold pr-0.5 hidden sm:inline">
+                        {isOpen ? "收合換算" : "匯率換算"}
                     </span>
-                </div>
-                <span className="text-xs font-bold pr-0.5 hidden sm:inline">
-                    {isOpen ? "收合換算" : "匯率換算"}
-                </span>
-            </button>
+                </button>
+            )}
         </div>
+    </>
     );
 };
 

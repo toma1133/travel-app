@@ -19,7 +19,7 @@ const DEFAULT_QUICK_CATEGORIES: QuickExpenseCategory[] = [
 
 export interface QuickExpenseBarProps {
     onQuickAdd: (categoryId: string) => void;
-    onOpenGeneralAdd: () => void;
+    onOpenGeneralAdd?: () => void;
     onReceiptFileSelected?: (file: File) => void;
     className?: string;
 }
@@ -98,14 +98,16 @@ export const QuickExpenseBar: React.FC<QuickExpenseBarProps> = ({
                 })}
             </div>
 
-            <button
-                type="button"
-                onClick={onOpenGeneralAdd}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-primary text-primary-foreground font-bold text-xs shrink-0 cursor-pointer hover:opacity-90 active:scale-95 transition-all shadow-xs"
-            >
-                <Plus size={14} />
-                <span>記一筆</span>
-            </button>
+            {onOpenGeneralAdd && (
+                <button
+                    type="button"
+                    onClick={onOpenGeneralAdd}
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-primary text-primary-foreground font-bold text-xs shrink-0 cursor-pointer hover:opacity-90 active:scale-95 transition-all shadow-xs"
+                >
+                    <Plus size={14} />
+                    <span>記一筆</span>
+                </button>
+            )}
         </GlassCard>
     );
 };

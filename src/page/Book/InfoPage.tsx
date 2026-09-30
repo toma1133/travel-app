@@ -2,7 +2,7 @@ import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import { useOutletContext, useParams } from "react-router-dom";
 import { useIsMutating } from "@tanstack/react-query";
 import moment from "moment";
-import { Map, Lock, Settings } from "lucide-react";
+import { Map } from "lucide-react";
 import useAuth from "../../hooks/UseAuth";
 import useAccommodations from "../../hooks/info/UseAccommodations";
 import useAccommodationMutations from "../../hooks/info/UseAccommodationMutations";
@@ -100,7 +100,7 @@ const InfoPage = ({
         );
     }, [tripMembers]);
 
-    const [isEditing, setIsEditing] = useState(false);
+    const isEditing = true;
 
     const mutatingCount = useIsMutating({
         mutationKey: ["flight", "accommodation", "car_rental"],
@@ -479,32 +479,6 @@ const InfoPage = ({
                         subtitle="Information"
                         theme={tripData?.theme_config!}
                         hasBackBtn={true}
-                        rightAction={
-                            <div className="flex items-center gap-2">
-                                <button
-                                    type="button"
-                                    onClick={() => setIsEditing(!isEditing)}
-                                    className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full shadow-sm transition-all active:scale-95 cursor-pointer ${
-                                        isEditing
-                                            ? "bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-destructive/20"
-                                            : "liquid-glass-pill hover:bg-black/5 dark:hover:bg-white/10 text-foreground border border-border/60"
-                                    }`}
-                                    title={isEditing ? "完成編輯" : "編輯資訊"}
-                                >
-                                    {isEditing ? (
-                                        <>
-                                            <Lock size={13} />
-                                            <span>完成</span>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Settings size={13} />
-                                            <span>編輯</span>
-                                        </>
-                                    )}
-                                </button>
-                            </div>
-                        }
                     />
                 </div>
             )}

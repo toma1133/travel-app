@@ -35,6 +35,19 @@ const LiquidGlassBottomNav = ({
                             key={item.to}
                             to={path}
                             end={item.end}
+                            onClick={() => {
+                                // 點擊當前分頁時平滑滾動回頁面頂端 (如 iOS / Instagram 原生體驗)
+                                const isCurrent = window.location.pathname.endsWith(item.to);
+                                if (isCurrent) {
+                                    window.scrollTo({ top: 0, behavior: "smooth" });
+                                    const scrollContainers = document.querySelectorAll(
+                                        '[data-scroll-container="true"], main, .overflow-y-auto'
+                                    );
+                                    scrollContainers.forEach((el) => {
+                                        el.scrollTo({ top: 0, behavior: "smooth" });
+                                    });
+                                }
+                            }}
                             className={({ isActive }) =>
                                 `relative flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition-all duration-300 flex-1 active:scale-90 select-none ${
                                     isActive

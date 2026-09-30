@@ -141,7 +141,7 @@ const ItineraryItem = ({
                             </div>
                         )}
 
-                        {!isPrinting && isEditing && scheduleList.length > 0 && (
+                        {!isPrinting && (
                             <div className="flex pt-1 pb-1">
                                 <div className="w-12 sm:w-14 shrink-0" />
                                 <button

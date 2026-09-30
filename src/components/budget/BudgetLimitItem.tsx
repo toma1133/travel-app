@@ -11,6 +11,8 @@ type BudgetLimitItemProps = {
     used: number;
     convertToHome?: (amount: number, currency: string, homeCurrency?: string, exchangeRate?: number) => number;
     convertToLocal?: (amount: number, currency: string, localCurrency?: string, exchangeRate?: number) => number;
+    isSelected?: boolean;
+    onToggleSelect?: () => void;
 };
 
 const BudgetLimitItem = ({
@@ -22,6 +24,8 @@ const BudgetLimitItem = ({
     used,
     convertToHome,
     convertToLocal,
+    isSelected = false,
+    onToggleSelect,
 }: BudgetLimitItemProps) => {
     let currencyLabel = paymentMethod.currency_code || setting?.homeCurrency || "";
     if (
@@ -78,9 +82,15 @@ const BudgetLimitItem = ({
 
     return (
         <div
-            className={`
-                bg-card border border-border p-3 shadow-sm rounded-lg
-            `}
+            role="button"
+            tabIndex={0}
+            onClick={onToggleSelect}
+            className={`bg-card border p-3 shadow-xs rounded-xl transition-all cursor-pointer select-none ${
+                isSelected
+                    ? "border-primary ring-2 ring-inset ring-primary/50 bg-primary/5 shadow-xs"
+                    : "border-border hover:border-slate-400 dark:hover:border-slate-600 hover:bg-muted/40"
+            }`}
+            title={isSelected ? `點擊取消篩選【${paymentMethod.name}】` : `點擊篩選【${paymentMethod.name}】交易`}
         >
             <div className="flex justify-between items-center mb-2">
                 <div className="flex items-center">

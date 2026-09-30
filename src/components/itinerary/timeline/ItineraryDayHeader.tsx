@@ -65,7 +65,7 @@ export const ItineraryDayHeader: React.FC<ItineraryDayHeaderProps> = ({
         <div className="w-full select-none">
             {/* 主標頭區塊 */}
             <div
-                onClick={isEditing || isPrinting ? undefined : onToggleExpand}
+                onClick={isPrinting ? undefined : onToggleExpand}
                 className={`
                     w-full flex items-center justify-between transition-colors
                     ${
@@ -73,7 +73,7 @@ export const ItineraryDayHeader: React.FC<ItineraryDayHeaderProps> = ({
                             ? "p-3 sm:p-4 bg-white/60 dark:bg-white/[0.03] border-b border-black/[0.06] dark:border-white/[0.08]"
                             : "p-2 border-b border-black cursor-default"
                     }
-                    ${!isPrinting && !isEditing ? "cursor-pointer hover:bg-white/80 dark:hover:bg-white/[0.06]" : ""}
+                    ${!isPrinting ? "cursor-pointer hover:bg-white/80 dark:hover:bg-white/[0.06]" : ""}
                 `}
             >
                 <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
@@ -208,7 +208,7 @@ export const ItineraryDayHeader: React.FC<ItineraryDayHeaderProps> = ({
                     )}
 
                     {/* 手機版折疊/展開指示箭頭 */}
-                    {!isPrinting && !isEditing && (
+                    {!isPrinting && (
                         <div
                             className={`lg:hidden p-1 text-muted-foreground transition-transform duration-300 ${
                                 isExpanded ? "rotate-180" : ""

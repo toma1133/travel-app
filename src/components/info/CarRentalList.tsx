@@ -67,7 +67,7 @@ const CarRentalList = ({
                 </div>
 
                 <div className="flex items-center gap-2">
-                    {!isPrinting && isEditing && (
+                    {!isPrinting && (
                         <button
                             type="button"
                             onClick={(e) => {
