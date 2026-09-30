@@ -493,12 +493,11 @@ const BudgetPage: React.FC<BudgetPageProps> = ({
                 />
             )}
 
-            {/* 隱藏的手機版收據拍照上傳 input */}
+            {/* 隱藏的手機版收據辨識上傳 input（移除 capture 讓 iOS/行動端彈出原生選單：拍照、照片圖庫、從檔案選擇） */}
             <input
                 ref={mobileReceiptInputRef}
                 type="file"
                 accept="image/*"
-                capture="environment"
                 className="hidden"
                 onChange={(e) => {
                     const file = e.target.files?.[0];
