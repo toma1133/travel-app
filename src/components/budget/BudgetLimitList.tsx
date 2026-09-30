@@ -61,7 +61,7 @@ const BudgetLimitList = ({
                         itemCurrency !== setting?.homeCurrency &&
                         itemCurrency !== setting?.localCurrency
                     ) {
-                        itemCurrency = setting?.homeCurrency;
+                        itemCurrency = setting?.homeCurrency || "TWD";
                     }
 
                     if (itemCurrency !== targetCurrency) {

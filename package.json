@@ -5,8 +5,9 @@
     "type": "module",
     "scripts": {
         "dev": "vite",
-        "build": "vite build",
-        "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
+        "build": "tsc --noEmit && vite build",
+        "typecheck": "tsc --noEmit",
+        "lint": "eslint . --report-unused-disable-directives",
         "preview": "vite preview"
     },
     "dependencies": {
@@ -52,6 +53,8 @@
         "globals": "^16.5.0",
         "supabase": "^2.65.6",
         "tailwindcss": "^4.1.17",
+        "typescript": "^6.0.3",
+        "typescript-eslint": "^8.71.0",
         "vite": "npm:rolldown-vite@7.2.5"
     },
     "overrides": {

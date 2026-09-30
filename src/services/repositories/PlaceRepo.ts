@@ -5,7 +5,9 @@ import IRepo from "./IRepo";
 
 const placeCache = new Map<string, PlaceRow>();
 
-export const placeRepo: IRepo<PlaceRow, PlaceVM, PlaceVM, string> = {
+export const placeRepo: IRepo<PlaceRow, PlaceVM, PlaceVM, string> & {
+    getByIds: (ids: string[]) => Promise<PlaceRow[]>;
+} = {
     async getById(id: string | undefined): Promise<PlaceRow | null> {
         if (id === undefined || id === null) return null;
         if (placeCache.has(id)) {

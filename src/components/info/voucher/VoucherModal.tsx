@@ -187,7 +187,7 @@ export const VoucherModal: React.FC<VoucherModalProps> = ({
             isOpen={isOpen}
             onClose={onClose}
             maxWidth="lg"
-            className="bg-card/95"
+            className="bg-card/95 md:!max-w-[540px]"
         >
             <GlassModal.Header
                 title={

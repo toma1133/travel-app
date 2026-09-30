@@ -1,4 +1,5 @@
 import type { ParsedReceiptData, ReceiptLineItem, ReceiptScanOptions } from "../../models/types/ReceiptScannerTypes";
+import { supabaseClient } from "../SupabaseClient";
 
 /**
  * 根據品項名稱推測分類
@@ -63,7 +64,7 @@ class ReceiptScannerService {
     }
 
     /**
-     * 掃描收據影像：優先使用 Gemini Vision，失敗或無 Key 則使用高擬真模擬解析
+     * 掃描收據影像：優先使用 Supabase Edge Function (後端安全代理)，次選本地 API Key，最後 fallback 本地引擎
      */
     async scanReceipt(
         imageBlob: Blob,
@@ -73,6 +74,17 @@ class ReceiptScannerService {
         const tripCurrency = options?.tripCurrency || "JPY";
         const allMemberIds = options?.allMemberIds || [];
 
+        // 1. 優先嘗試呼叫 Supabase Edge Function (後端代理模式，金鑰安全不落地)
+        try {
+            const edgeResult = await this.scanWithEdgeFunction(imageBlob, tripCurrency, allMemberIds);
+            if (edgeResult && edgeResult.items.length > 0) {
+                return edgeResult;
+            }
+        } catch (edgeErr) {
+            console.warn("[ReceiptScanner] Supabase Edge Function 調用異常，切換至備援模式:", edgeErr);
+        }
+
+        // 2. 若本地有設定 API Key，嘗試前端直連 Gemini Vision
         if (apiKey) {
             try {
                 const cloudResult = await this.scanWithGeminiVision(imageBlob, apiKey, tripCurrency, allMemberIds);
@@ -84,8 +96,59 @@ class ReceiptScannerService {
             }
         }
 
-        // 本地智慧解析模式（無 Key 或 API 調用失敗時）
+        // 3. 本地智慧解析模式（無 Key 或 API 調用失敗時）
         return this.scanWithLocalEngine(imageBlob, tripCurrency, allMemberIds);
+    }
+
+    /**
+     * 透過 Supabase Edge Function 呼叫後端代理解析收據
+     */
+    private async scanWithEdgeFunction(
+        imageBlob: Blob,
+        fallbackCurrency: string,
+        allMemberIds: string[]
+    ): Promise<ParsedReceiptData | null> {
+        const { base64, mimeType } = await this.blobToBase64(imageBlob);
+
+        const { data, error } = await supabaseClient.functions.invoke("gemini-ocr", {
+            body: {
+                base64,
+                mimeType,
+                fallbackCurrency,
+                model: "gemini-2.0-flash-lite",
+            },
+        });
+
+        if (error) {
+            console.warn("[ReceiptScanner] Edge Function 回應錯誤:", error);
+            return null;
+        }
+
+        const parsed = data?.data;
+        if (!parsed) return null;
+
+        const items: ReceiptLineItem[] = (parsed.items || []).map((item: any) => ({
+            id: crypto.randomUUID(),
+            name: item.name || "消費項目",
+            amount: Number(item.amount) || 0,
+            quantity: Number(item.quantity) || 1,
+            category: item.category || guessCategoryByName(item.name || ""),
+            split_with: [...allMemberIds],
+            is_payer_included: true,
+            selected: true,
+        }));
+
+        const calculatedSum = items.reduce((sum, item) => sum + item.amount, 0);
+
+        return {
+            store_name: parsed.store_name || "收據店家",
+            date: parsed.date || new Date().toISOString().split("T")[0],
+            currency: parsed.currency || fallbackCurrency,
+            total_amount: Number(parsed.total_amount) || calculatedSum,
+            items,
+            confidence: 0.95,
+            source: "gemini_vision",
+        };
     }
 
     /**

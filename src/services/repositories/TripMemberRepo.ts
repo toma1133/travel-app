@@ -12,7 +12,9 @@ export const tripMemberRepo: IRepo<
     TripMemberRowInsert,
     TripMemberRowUpdate,
     string
-> = {
+> & {
+    listByTripIds: (tripIds: string[]) => Promise<TripMemberVM[]>;
+} = {
     async getById(id: string | undefined): Promise<TripMemberRow | null> {
         if (id === undefined || id === null) return null;
         const { data, error } = await supabaseClient

@@ -87,7 +87,12 @@ const ShoppingPage = ({
     const [selectedRecipient, setSelectedRecipient] = useState("all");
     const [selectedUser, setSelectedUser] = useState<string>("all");
     const [statusFilter, setStatusFilter] = useState<"all" | "unbought" | "bought">("all");
-    const [isFilterCollapsed, setIsFilterCollapsed] = useState(true);
+    const [isFilterCollapsed, setIsFilterCollapsed] = useState(() => {
+        if (typeof window !== "undefined" && window.innerWidth >= 768) {
+            return false;
+        }
+        return true;
+    });
     const [isCurrencyConverterOpen, setIsCurrencyConverterOpen] = useState(false);
     const [isStoreBatchBuyOpen, setIsStoreBatchBuyOpen] = useState(false);
     const [batchBuyStore, setBatchBuyStore] = useState<string>("");
@@ -663,13 +668,13 @@ const ShoppingPage = ({
                         </div>
                     </div>
 
-                    {/* Mobile Compact Filter Status Bar (shown on mobile when collapsed) */}
+                    {/* Compact Filter Status Bar (shown when collapsed) */}
                     {isFilterCollapsed && (
                         <div
                             role="button"
                             tabIndex={0}
                             onClick={() => setIsFilterCollapsed(false)}
-                            className="md:hidden flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl bg-card border border-border/80 text-xs cursor-pointer shadow-2xs hover:bg-muted/50 transition-colors"
+                            className="flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl bg-card border border-border/80 text-xs cursor-pointer shadow-2xs hover:bg-muted/50 transition-colors"
                         >
                             <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
                                 <span className="text-muted-foreground shrink-0 text-[11px] font-bold">篩選：</span>
@@ -695,14 +700,14 @@ const ShoppingPage = ({
                                 )}
                             </div>
                             <div className="flex items-center gap-1 shrink-0 text-primary text-[11px] font-bold">
-                                <span>展開</span>
+                                <span>展開篩選</span>
                                 <ChevronDown size={12} />
                             </div>
                         </div>
                     )}
 
                     {/* Full Filter Section (MemberFilter, RecipientFilter, TaxFreeBar) */}
-                    <div className={`${isFilterCollapsed ? "hidden md:block" : "block"} space-y-2.5 animate-in fade-in duration-200`}>
+                    <div className={`${isFilterCollapsed ? "hidden" : "block"} space-y-2.5 animate-in fade-in duration-200`}>
                         {/* Member Filter Row */}
                         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs">
                             <div className="flex items-center gap-1 text-muted-foreground font-bold text-xs shrink-0 pr-1">
@@ -828,7 +833,7 @@ const ShoppingPage = ({
                         {rawItems.length === 0 && (
                             <button
                                 type="button"
-                                onClick={handleOpenCreateModal}
+                                onClick={() => handleOpenCreateModal()}
                                 className="mt-2 px-4 py-2 rounded-2xl bg-primary text-primary-foreground font-bold text-xs hover:opacity-90 transition-opacity cursor-pointer shadow-xs inline-flex items-center gap-1.5"
                             >
                                 <Plus size={15} />
@@ -841,6 +846,7 @@ const ShoppingPage = ({
                         {filteredItems.map((item) => (
                             <SwipeableRow
                                 key={item.id}
+                                className="h-full"
                                 onSwipeRight={() => handleToggleComplete(item, !item.is_completed)}
                                 rightLabel={item.is_completed ? "設為未購" : "標記已購"}
                                 onSwipeLeft={() => setItemToDelete(item)}
@@ -1014,7 +1020,7 @@ const ShoppingPage = ({
             <FloatingSpeedDial
                 className="md:hidden"
                 mainLabel="購物快捷功能"
-                themeAccent={tripData?.theme_config?.accent}
+                themeAccent={typeof tripData?.theme_config?.accent === "string" ? tripData.theme_config.accent : undefined}
                 actions={[
                     {
                         id: "create-item",

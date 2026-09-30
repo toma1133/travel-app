@@ -1,7 +1,7 @@
 import React, { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useOutletContext, useParams } from "react-router-dom";
 import { useIsMutating } from "@tanstack/react-query";
-import { Calculator, Camera, Plus } from "lucide-react";
+import { Calculator, Camera, Loader2, Plus } from "lucide-react";
 import { CATEGORY_DEFINITIONS } from "../../constants/Categories";
 import moment from "moment";
 import useAuth from "../../hooks/UseAuth";
@@ -440,7 +440,7 @@ const BudgetPage: React.FC<BudgetPageProps> = ({
                     budgets={budgets}
                     profiles={profiles}
                     tripMembers={tripMembers}
-                    tripTitle={tripData?.name}
+                    tripTitle={tripData?.title}
                     session={session}
                     setting={currentSetting}
                     theme={currentTheme}
@@ -517,7 +517,7 @@ const BudgetPage: React.FC<BudgetPageProps> = ({
                     <FloatingSpeedDial
                         className="lg:hidden"
                         mainLabel="帳本快捷功能"
-                        themeAccent={currentTheme?.accent}
+                        themeAccent={typeof currentTheme?.accent === "string" ? currentTheme.accent : undefined}
                         actions={[
                             {
                                 id: "manual-expense",

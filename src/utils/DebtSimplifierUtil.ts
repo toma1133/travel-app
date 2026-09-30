@@ -69,7 +69,7 @@ export function calculateSimplifiedDebts(
             const p = profileLookup.get(tm.user_id);
             memberMap.set(tm.user_id, {
                 name: tm.profiles?.username || p?.username || tm.user_id.slice(0, 6),
-                avatar: tm.profiles?.avatar_url || p?.avatar_url || undefined,
+                avatar: (tm.profiles as any)?.avatar_url || (p as any)?.avatar_url || undefined,
             });
         }
     });
@@ -80,7 +80,7 @@ export function calculateSimplifiedDebts(
             const p = profileLookup.get(exp.user_id);
             memberMap.set(exp.user_id, {
                 name: p?.username || exp.user_id.slice(0, 6),
-                avatar: p?.avatar_url || undefined,
+                avatar: (p as any)?.avatar_url || undefined,
             });
         }
         (exp.split_with || []).forEach((uid) => {
@@ -88,7 +88,7 @@ export function calculateSimplifiedDebts(
                 const p = profileLookup.get(uid);
                 memberMap.set(uid, {
                     name: p?.username || uid.slice(0, 6),
-                    avatar: p?.avatar_url || undefined,
+                    avatar: (p as any)?.avatar_url || undefined,
                 });
             }
         });

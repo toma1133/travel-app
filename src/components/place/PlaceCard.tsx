@@ -520,7 +520,7 @@ const PlaceCard = ({
                         )}
                         {isValidPrice(place.info?.price) && (
                             <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold border border-emerald-500/20">
-                                預算 {place.info.price}
+                                預算 {place.info?.price}
                             </span>
                         )}
                         {place.info?.stay_duration && (

@@ -64,9 +64,6 @@ export const LiveTravelFocusCard: React.FC<LiveTravelFocusCardProps> = ({
         return itineraries.find((d) => d.date === currentDateStr) || null;
     }, [itineraries, currentDateStr]);
 
-    // 若系統日期「今天」不在旅程天數內，則不顯示焦點卡
-    if (!todayItinerary) return null;
-
     const activeDay = todayItinerary;
 
     // 取得當前日程的行程時間表運算結果

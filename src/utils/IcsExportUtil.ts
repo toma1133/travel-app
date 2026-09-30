@@ -4,7 +4,7 @@ import type { ItineraryVM } from "../models/types/ItineraryTypes";
  * Generate iCalendar (.ics) string for the entire trip itinerary
  */
 export const generateICS = (tripTitle: string, itinerarys: ItineraryVM[]): string => {
-    let icsContent = [
+    const icsContent = [
         "BEGIN:VCALENDAR",
         "VERSION:2.0",
         "PRODID:-//TravelApp//Trip Itinerary//EN",
@@ -16,7 +16,7 @@ export const generateICS = (tripTitle: string, itinerarys: ItineraryVM[]): strin
     itinerarys.forEach((day) => {
         const dateStr = day.date.replace(/-/g, ""); // YYYYMMDD
 
-        day.activities.forEach((act) => {
+        (day.activities || []).forEach((act) => {
             const timeClean = act.time ? act.time.replace(":", "") : "0900";
             const dtStart = `${dateStr}T${timeClean}00`;
             

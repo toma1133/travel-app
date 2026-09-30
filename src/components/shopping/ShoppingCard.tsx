@@ -138,7 +138,7 @@ const ShoppingCard: React.FC<ShoppingCardProps> = ({
             variant={isFullyBought ? "subtle" : "elevated"}
             rounded="3xl"
             padding="none"
-            className={`group transition-all duration-300 flex flex-col justify-between ${
+            className={`group transition-all duration-300 flex flex-col justify-between h-full ${
                 isFullyBought
                     ? "opacity-80 border-emerald-500/30 dark:border-emerald-500/20"
                     : "hover:border-primary/50 hover:shadow-xl hover:-translate-y-0.5"
@@ -263,7 +263,8 @@ const ShoppingCard: React.FC<ShoppingCardProps> = ({
 
                         {/* Main Product Name */}
                         <h4
-                            className={`text-sm sm:text-base font-bold text-neutral-900 dark:text-neutral-100 leading-snug line-clamp-2 ${
+                            title={item.name}
+                            className={`text-sm sm:text-base font-bold text-neutral-900 dark:text-neutral-100 leading-snug line-clamp-2 min-h-[2.5rem] sm:min-h-[2.8rem] flex items-center ${
                                 isFullyBought ? "line-through text-neutral-400 dark:text-neutral-500" : ""
                             }`}
                         >

@@ -15,5 +15,8 @@ stats.html
 .eslintcache
 
 *.local
+.env
+.env.*
+!.env.example
 mockDB.json
 .DS_Store

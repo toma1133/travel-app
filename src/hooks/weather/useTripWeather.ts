@@ -181,7 +181,7 @@ export function useTripWeather({
                 alerts.push({
                     date: day.date,
                     dayNumber: day.day_number,
-                    title: day.title,
+                    title: day.title ?? undefined,
                     probability: w.precipitationProbabilityMax,
                 });
             }

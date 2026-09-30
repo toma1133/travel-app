@@ -246,7 +246,7 @@ const BookshelfPage = () => {
 
         try {
             if (tripModalMode === "create") {
-                var tripId = crypto.randomUUID();
+                const tripId = crypto.randomUUID();
 
                 await insertTrip.mutateAsync({
                     ...tripData,
@@ -255,7 +255,7 @@ const BookshelfPage = () => {
                 // Insert creator as trip member
                 await insertTripMember.mutateAsync({
                     trip_id: tripId,
-                    user_id: session?.user.id!,
+                    user_id: session?.user.id || "",
                 });
             } else {
                 await updateTrip.mutateAsync(tripData);

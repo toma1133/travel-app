@@ -3,17 +3,15 @@ import { Languages, Volume2 } from "lucide-react";
 import { CategoryCustomSelect } from "../../common/CategoryCustomSelect";
 import type { PlaceVM } from "../../../models/types/PlaceTypes";
 
+import type { DetectedLanguage } from "../../../utils/SpeechLanguageUtil";
+
 export interface PlaceModalHeaderProps {
     formData: PlaceVM;
     onFormInputChange: ChangeEventHandler<
         HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
     >;
     speaking: boolean;
-    detectedNativeLang: {
-        name: string;
-        flag: string;
-        langCode: string;
-    };
+    detectedNativeLang: DetectedLanguage;
     onSpeakNative: () => void;
 }
 

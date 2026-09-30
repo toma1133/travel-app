@@ -50,6 +50,28 @@ const TaxFreeCelebration: React.FC<TaxFreeCelebrationProps> = ({
     const qualifiedStoresRef = useRef<Set<string>>(new Set());
     const isFirstMountRef = useRef<boolean>(true);
 
+    const triggerCelebration = (info: CelebrationInfo) => {
+        setCelebrationInfo(info);
+
+        // Haptic feedback for mobile devices
+        if (typeof window !== "undefined" && "vibrate" in navigator) {
+            try {
+                navigator.vibrate([100, 50, 100, 50, 200]);
+            } catch {}
+        }
+
+        // Fireworks Confetti burst
+        fireConfettiCannon();
+        setTimeout(fireConfettiCannon, 300);
+
+        // Auto dismiss after 6 seconds
+        const timer = setTimeout(() => {
+            setCelebrationInfo(null);
+        }, 6000);
+
+        return () => clearTimeout(timer);
+    };
+
     useEffect(() => {
         const currentlyQualified = new Set<string>();
 
@@ -85,28 +107,6 @@ const TaxFreeCelebration: React.FC<TaxFreeCelebrationProps> = ({
 
         qualifiedStoresRef.current = currentlyQualified;
     }, [allStores]);
-
-    const triggerCelebration = (info: CelebrationInfo) => {
-        setCelebrationInfo(info);
-
-        // Haptic feedback for mobile devices
-        if (typeof window !== "undefined" && "vibrate" in navigator) {
-            try {
-                navigator.vibrate([100, 50, 100, 50, 200]);
-            } catch {}
-        }
-
-        // Fireworks Confetti burst
-        fireConfettiCannon();
-        setTimeout(fireConfettiCannon, 300);
-
-        // Auto dismiss after 6 seconds
-        const timer = setTimeout(() => {
-            setCelebrationInfo(null);
-        }, 6000);
-
-        return () => clearTimeout(timer);
-    };
 
     if (!celebrationInfo) return null;
 

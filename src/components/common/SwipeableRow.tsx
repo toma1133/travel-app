@@ -182,7 +182,7 @@ export const SwipeableRow: React.FC<SwipeableRowProps> = ({
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         onTouchCancel={handleTouchEnd}
-        className="relative z-10"
+        className="relative z-10 h-full"
       >
         {children}
       </div>

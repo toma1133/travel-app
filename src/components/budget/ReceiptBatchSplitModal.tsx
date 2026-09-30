@@ -180,7 +180,7 @@ export const ReceiptBatchSplitModal: React.FC<ReceiptBatchSplitModalProps> = ({
                         imageFile instanceof File
                             ? imageFile
                             : new File([imageFile], `receipt_${Date.now()}.jpg`, { type: imageFile.type || "image/jpeg" }),
-                        { maxWidth: 1200, maxHeight: 1200, quality: 0.75, format: "image/jpeg" }
+                        { maxDimension: 1200, quality: 0.75, preferredMimeType: "image/jpeg" }
                     );
 
                     receiptImageId = `receipt_${crypto.randomUUID()}`;

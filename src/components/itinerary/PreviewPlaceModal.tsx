@@ -143,33 +143,33 @@ const PreviewPlaceModal: React.FC<PreviewPlaceModalProps> = ({
                 <div className="px-5 sm:px-6 space-y-4.5">
                     {/* 營業時間 / 入住退房資訊 */}
                     <OpeningHoursViewer
-                        open={place.info?.open}
-                        closedDays={place.info?.closed_days}
-                        checkIn={place.info?.check_in}
-                        checkOut={place.info?.check_out}
-                        type={place.type}
+                        open={place.info?.open ?? undefined}
+                        closedDays={place.info?.closed_days ?? undefined}
+                        checkIn={place.info?.check_in ?? undefined}
+                        checkOut={place.info?.check_out ?? undefined}
+                        type={place.type ?? undefined}
                     />
 
                     {/* 地點前往與入場規定 */}
                     <PlaceTransitLocationViewer
-                        transitAccess={place.info?.transit_access}
-                        loc={place.info?.loc}
-                        bookingStatus={place.info?.booking_status}
+                        transitAccess={place.info?.transit_access ?? undefined}
+                        loc={place.info?.loc ?? undefined}
+                        bookingStatus={place.info?.booking_status ?? undefined}
                         copied={copied}
                         onCopyAddress={handleCopyAddress}
                     />
 
                     {/* 推薦招牌品項 / 伴手禮 */}
                     <RecommendedItemsViewer
-                        items={place.info?.recommended_items}
+                        items={place.info?.recommended_items ?? undefined}
                         onSpeakItem={handleSpeakItem}
                         speakingItemIdx={speakingItemIdx}
                     />
 
                     {/* 付款方式與設施標籤 */}
                     <AmenitiesViewer
-                        paymentMethods={place.info?.payment_methods}
-                        amenities={place.info?.amenities}
+                        paymentMethods={place.info?.payment_methods ?? undefined}
+                        amenities={place.info?.amenities ?? undefined}
                     />
                 </div>
             </div>

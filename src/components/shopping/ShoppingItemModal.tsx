@@ -34,7 +34,7 @@ const ShoppingItemModal: React.FC<ShoppingItemModalProps> = (props) => {
     if (!isOpen) return null;
 
     return (
-        <GlassModal isOpen={isOpen} onClose={onClose} maxWidth="md" className="md:!max-w-[480px]">
+        <GlassModal isOpen={isOpen} onClose={onClose} maxWidth="xl" className="md:!max-w-[640px]">
             <GlassModal.Header
                 title={mode === "create" ? "✨ 新增商品" : "✏️ 編輯商品"}
                 onClose={onClose}

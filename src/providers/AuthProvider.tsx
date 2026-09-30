@@ -23,6 +23,16 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
         return () => subscription.unsubscribe();
     }, []);
 
+    const signInWithPassword = async (email: string, password: string) => {
+        setLoading(true);
+        const { error } = await supabaseClient.auth.signInWithPassword({
+            email,
+            password,
+        });
+        setLoading(false);
+        if (error) throw error;
+    };
+
     const signOut = async () => {
         setLoading(true);
         await supabaseClient.auth.signOut();
@@ -31,7 +41,7 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ session, loading, signOut }}>
+        <AuthContext.Provider value={{ session, loading, signInWithPassword, signOut }}>
             {children}
         </AuthContext.Provider>
     );
