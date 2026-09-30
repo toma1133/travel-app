@@ -326,21 +326,32 @@ const TransactionListItem = ({
                     {isExpanded && budgetItem.receipt_items && budgetItem.receipt_items.length > 0 && !isPrinting && (
                         <div className="mt-2 pt-2 border-t border-slate-100 dark:border-neutral-800/80 space-y-1.5 text-xs animate-in fade-in duration-150">
                             {budgetItem.receipt_items.map((sub, sIdx) => {
-                                const splitNames = (sub.split_with || [])
+                                // split_with 在細項中包含所有參與者（含付款人）
+                                const subParticipants = sub.split_with || [];
+                                const subParticipantCount = subParticipants.length;
+                                const subPerPerson = subParticipantCount > 0 && sub.amount > 0
+                                    ? Math.round(sub.amount / subParticipantCount)
+                                    : 0;
+                                const splitNames = subParticipants
                                     .map((uid) => tripMembers?.find((tm) => tm.user_id === uid)?.profiles?.username || uid.slice(0, 5))
                                     .join(", ");
                                 return (
                                     <div
                                         key={sub.id || sIdx}
-                                        className="flex items-center justify-between text-[11px] text-slate-600 dark:text-neutral-400 bg-slate-50/80 dark:bg-neutral-800/50 px-2 py-1 rounded-lg"
+                                        className="flex items-start justify-between text-[11px] text-slate-600 dark:text-neutral-400 bg-slate-50/80 dark:bg-neutral-800/50 px-2 py-1.5 rounded-lg"
                                     >
-                                        <div className="flex items-center gap-1.5 min-w-0 pr-1">
+                                        <div className="flex flex-col gap-0.5 min-w-0 pr-2">
                                             <span className="font-semibold text-slate-800 dark:text-neutral-200 truncate">
                                                 {sub.name || "未命名商品"}
                                             </span>
                                             {splitNames && (
-                                                <span className="text-[10px] text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-1 py-0.2 rounded shrink-0">
+                                                <span className="text-[10px] text-blue-600 dark:text-blue-400">
                                                     👤 {splitNames}
+                                                    {subParticipantCount > 1 && (
+                                                        <span className="ml-1 text-neutral-400">
+                                                            · 每人 {budgetItem.currency_code} {subPerPerson.toLocaleString()}
+                                                        </span>
+                                                    )}
                                                 </span>
                                             )}
                                         </div>
@@ -384,19 +395,29 @@ const TransactionListItem = ({
                 )}
                 {(members.length > 1 || budgetItem.is_payer_included === false) && (
                     <div>
-                        <div className="text-[10px] font-bold text-rose-500 mt-1">
-                            每人: {budgetItem.currency_code}{" "}
-                            {perPerson.toLocaleString()}
-                        </div>
-                        {budgetItem.currency_code !== setting?.homeCurrency && (
-                            <div className="text-[10px] text-muted-foreground font-mono">
-                                ≈ {setting?.homeCurrency}{" "}
-                                {convertToHome(
-                                    perPerson,
-                                    budgetItem.currency_code,
-                                    setting?.homeCurrency,
-                                    setting?.exchangeRate
-                                ).toLocaleString()}
+                        {budgetItem.receipt_items && budgetItem.receipt_items.length > 0 ? (
+                            // 細項分攤：顯示「依細項各自負擔」
+                            <div className="text-[10px] font-bold text-blue-600 dark:text-blue-400 mt-1 text-right">
+                                🧾 依細項分擔
+                            </div>
+                        ) : (
+                            // 平分模式：顯示每人金額
+                            <div>
+                                <div className="text-[10px] font-bold text-rose-500 mt-1">
+                                    每人: {budgetItem.currency_code}{" "}
+                                    {perPerson.toLocaleString()}
+                                </div>
+                                {budgetItem.currency_code !== setting?.homeCurrency && (
+                                    <div className="text-[10px] text-muted-foreground font-mono">
+                                        ≈ {setting?.homeCurrency}{" "}
+                                        {convertToHome(
+                                            perPerson,
+                                            budgetItem.currency_code,
+                                            setting?.homeCurrency,
+                                            setting?.exchangeRate
+                                        ).toLocaleString()}
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>

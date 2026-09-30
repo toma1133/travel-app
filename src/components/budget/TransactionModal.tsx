@@ -209,7 +209,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                                     />
                                 </div>
 
-                                {totalSplitParticipants > 1 && amountNum > 0 && (
+                                {splitMode === "simple" && totalSplitParticipants > 1 && amountNum > 0 && (
                                     <div className="pt-2 border-t border-black/[0.06] dark:border-white/[0.08] flex items-center gap-1.5 text-xs text-blue-600 dark:text-blue-400 font-mono">
                                         <Calculator size={13} />
                                         <span>
@@ -218,6 +218,40 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                                         </span>
                                     </div>
                                 )}
+                                {splitMode === "itemized" && receiptItems.length > 0 && amountNum > 0 && (() => {
+                                    // 計算每位成員應付的細項總額
+                                    const memberTotals: Record<string, number> = {};
+                                    receiptItems.forEach((item) => {
+                                        const participants = item.split_with || [];
+                                        if (participants.length === 0 || !item.amount) return;
+                                        const share = Math.round(item.amount / participants.length);
+                                        participants.forEach((uid) => {
+                                            memberTotals[uid] = (memberTotals[uid] || 0) + share;
+                                        });
+                                    });
+                                    const entries = Object.entries(memberTotals);
+                                    if (entries.length === 0) return null;
+                                    return (
+                                        <div className="pt-2 border-t border-black/[0.06] dark:border-white/[0.08] space-y-1">
+                                            <div className="flex items-center gap-1 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">
+                                                <Calculator size={11} />
+                                                <span>各人份額預覽</span>
+                                            </div>
+                                            <div className="flex flex-wrap gap-1.5">
+                                                {entries.map(([uid, total]) => {
+                                                    const name = tripMembers.find((tm) => tm.user_id === uid)?.profiles?.username || uid.slice(0, 5);
+                                                    const isPayer = uid === formData.user_id;
+                                                    return (
+                                                        <span key={uid} className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${isPayer ? "bg-blue-100 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300" : "bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-300"}`}>
+                                                            {name}{isPayer ? " 💳" : ""}
+                                                            <span className="font-mono">{formData.currency_code} {total.toLocaleString()}</span>
+                                                        </span>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    );
+                                })()}
                             </div>
 
                             {/* 交易明細 */}
@@ -477,7 +511,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                                                                     className={`px-2 py-0.5 rounded-lg text-[10px] font-bold border transition-all cursor-pointer ${
                                                                         isSelected
                                                                             ? "bg-blue-600 text-white border-blue-600 shadow-2xs"
-                                                                            : "bg-slate-100 dark:bg-neutral-700 text-slate-600 dark:text-neutral-300 border-transparent hover:bg-slate-200"
+                                                                            : "bg-slate-100 dark:bg-neutral-700 text-slate-600 dark:text-neutral-300 border-transparent hover:bg-slate-200 dark:hover:bg-neutral-600 dark:hover:text-neutral-100"
                                                                     }`}
                                                                 >
                                                                     {isSelected && "✓ "}{tm.profiles?.username || tm.user_id.slice(0, 5)}

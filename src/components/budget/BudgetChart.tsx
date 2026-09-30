@@ -171,8 +171,8 @@ const BudgetChart = ({
                                                 isSelected
                                                     ? "bg-primary/15 border-primary shadow-xs ring-2 ring-inset ring-primary/50"
                                                     : hasAnySelected
-                                                    ? "bg-slate-900/40 dark:bg-neutral-800/40 border-slate-700/40 opacity-40 hover:opacity-90"
-                                                    : "bg-slate-900/30 dark:bg-neutral-800/30 border-slate-700/50 hover:border-slate-500 hover:bg-slate-800/50"
+                                                    ? "bg-slate-200/70 dark:bg-neutral-800/40 border-slate-300/60 dark:border-slate-700/40 opacity-40 hover:opacity-90"
+                                                    : "bg-slate-100/80 dark:bg-neutral-800/30 border-slate-300/70 dark:border-slate-700/50 hover:border-slate-400 dark:hover:border-slate-500 hover:bg-slate-200/60 dark:hover:bg-slate-800/50"
                                             }`}
                                             title={
                                                 isSelected
@@ -190,7 +190,7 @@ const BudgetChart = ({
                                                         className={`text-xs font-bold whitespace-nowrap overflow-hidden text-ellipsis ${
                                                             isSelected
                                                                 ? "text-primary font-black"
-                                                                : "text-slate-200"
+                                                                : "text-slate-700 dark:text-slate-200"
                                                         }`}
                                                         title={getCategoryName(cat)}
                                                     >
@@ -199,13 +199,13 @@ const BudgetChart = ({
                                                 </div>
                                                 <span
                                                     className={`text-xs font-mono font-bold shrink-0 ml-1 ${
-                                                        isSelected ? "text-primary" : "text-rose-400"
+                                                        isSelected ? "text-primary" : "text-rose-500 dark:text-rose-400"
                                                     }`}
                                                 >
                                                     {pct}%
                                                 </span>
                                             </div>
-                                            <div className="w-full h-1.5 bg-slate-800 dark:bg-neutral-700 rounded-full overflow-hidden">
+                                            <div className="w-full h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
                                                 <div
                                                     className="h-full transition-all duration-700 rounded-full"
                                                     style={{
