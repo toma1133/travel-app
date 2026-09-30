@@ -92,6 +92,19 @@ export function calculateSimplifiedDebts(
                 });
             }
         });
+        if (exp.receipt_items && Array.isArray(exp.receipt_items)) {
+            exp.receipt_items.forEach((item) => {
+                (item.split_with || []).forEach((uid) => {
+                    if (uid && !memberMap.has(uid)) {
+                        const p = profileLookup.get(uid);
+                        memberMap.set(uid, {
+                            name: p?.username || uid.slice(0, 6),
+                            avatar: (p as any)?.avatar_url || undefined,
+                        });
+                    }
+                });
+            });
+        }
     });
 
     // 統計各成員總花費與總墊付
@@ -121,35 +134,99 @@ export function calculateSimplifiedDebts(
 
         paidMap.set(exp.user_id, (paidMap.get(exp.user_id) || 0) + baseAmount);
 
-        // 分攤名單處理
-        let splitList = exp.split_with ? [...exp.split_with] : [];
-        if (exp.is_payer_included !== false) {
-            splitList.push(exp.user_id);
-        }
-        splitList = Array.from(new Set(splitList));
+        // 分攤計算：判斷是否為「細項拆分模式」或「簡易平分模式」
+        const hasReceiptItems = Array.isArray(exp.receipt_items) && exp.receipt_items.length > 0;
 
-        if (splitList.length === 0) {
-            splitList = [exp.user_id];
-        }
+        if (hasReceiptItems) {
+            let itemsSum = 0;
+            exp.receipt_items!.forEach((item) => {
+                const itemBaseAmount = options.convertToBaseCurrency
+                    ? options.convertToBaseCurrency(Number(item.amount) || 0, exp.currency_code)
+                    : Number(item.amount) || 0;
+                itemsSum += itemBaseAmount;
 
-        const perPerson = baseAmount / splitList.length;
+                let itemSplitList = item.split_with ? [...item.split_with] : [];
+                if (item.is_payer_included !== false) {
+                    itemSplitList.push(exp.user_id);
+                }
+                itemSplitList = Array.from(new Set(itemSplitList));
+                if (itemSplitList.length === 0) {
+                    itemSplitList = [exp.user_id];
+                }
 
-        splitList.forEach((uid) => {
-            if (!memberMap.has(uid)) {
-                memberMap.set(uid, { name: uid.slice(0, 6) });
-                paidMap.set(uid, 0);
-                owedMap.set(uid, 0);
+                const itemPerPerson = itemBaseAmount / itemSplitList.length;
+                itemSplitList.forEach((uid) => {
+                    if (!memberMap.has(uid)) {
+                        memberMap.set(uid, { name: uid.slice(0, 6) });
+                        paidMap.set(uid, 0);
+                        owedMap.set(uid, 0);
+                    }
+
+                    const isSettledWithPayer = uid !== exp.user_id && exp.settled_with?.includes(uid);
+                    if (!isSettledWithPayer) {
+                        owedMap.set(uid, (owedMap.get(uid) || 0) + itemPerPerson);
+                    } else {
+                        paidMap.set(exp.user_id, (paidMap.get(exp.user_id) || 0) - itemPerPerson);
+                    }
+                });
+            });
+
+            // 處理細項總和與主金額之間的差額（如稅金、服務費、折價或零頭）
+            const remainder = baseAmount - itemsSum;
+            if (Math.abs(remainder) > 0.01) {
+                let splitList = exp.split_with ? [...exp.split_with] : [];
+                if (exp.is_payer_included !== false) {
+                    splitList.push(exp.user_id);
+                }
+                splitList = Array.from(new Set(splitList));
+                if (splitList.length === 0) splitList = [exp.user_id];
+
+                const remPerPerson = remainder / splitList.length;
+                splitList.forEach((uid) => {
+                    if (!memberMap.has(uid)) {
+                        memberMap.set(uid, { name: uid.slice(0, 6) });
+                        paidMap.set(uid, 0);
+                        owedMap.set(uid, 0);
+                    }
+                    const isSettledWithPayer = uid !== exp.user_id && exp.settled_with?.includes(uid);
+                    if (!isSettledWithPayer) {
+                        owedMap.set(uid, (owedMap.get(uid) || 0) + remPerPerson);
+                    } else {
+                        paidMap.set(exp.user_id, (paidMap.get(exp.user_id) || 0) - remPerPerson);
+                    }
+                });
+            }
+        } else {
+            // 簡易平分模式處理
+            let splitList = exp.split_with ? [...exp.split_with] : [];
+            if (exp.is_payer_included !== false) {
+                splitList.push(exp.user_id);
+            }
+            splitList = Array.from(new Set(splitList));
+
+            if (splitList.length === 0) {
+                splitList = [exp.user_id];
             }
 
-            // 若已有 settled_with 標記已結清，則此處不再記為未結帳款
-            const isSettledWithPayer = uid !== exp.user_id && exp.settled_with?.includes(uid);
-            if (!isSettledWithPayer) {
-                owedMap.set(uid, (owedMap.get(uid) || 0) + perPerson);
-            } else {
-                // 已結清：抵銷墊付者的待收款與成員的應付款
-                paidMap.set(exp.user_id, (paidMap.get(exp.user_id) || 0) - perPerson);
-            }
-        });
+            const perPerson = baseAmount / splitList.length;
+
+            splitList.forEach((uid) => {
+                if (!memberMap.has(uid)) {
+                    memberMap.set(uid, { name: uid.slice(0, 6) });
+                    paidMap.set(uid, 0);
+                    owedMap.set(uid, 0);
+                }
+
+                // 若已有 settled_with 標記已結清，則此處不再記為未結帳款
+                const isSettledWithPayer = uid !== exp.user_id && exp.settled_with?.includes(uid);
+                if (!isSettledWithPayer) {
+                    owedMap.set(uid, (owedMap.get(uid) || 0) + perPerson);
+                } else {
+                    // 已結清：抵銷墊付者的待收款與成員的應付款
+                    paidMap.set(exp.user_id, (paidMap.get(exp.user_id) || 0) - perPerson);
+                }
+            });
+        }
     });
 
     // 彙整 MemberBalance

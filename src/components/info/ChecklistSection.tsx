@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { CheckSquare, Square, Plus, Trash2, RotateCcw, Luggage, ChevronUp, ChevronDown } from "lucide-react";
 import {
     ChecklistItem,
     CHECKLIST_CATEGORIES,
-    DEFAULT_CHECKLIST_ITEMS,
 } from "../../models/types/ChecklistTypes";
 import DeleteModal from "../common/DeleteModal";
+import { useChecklist } from "../../hooks/checklist/useChecklist";
 
 type ChecklistSectionProps = {
     tripId: string;
@@ -14,64 +14,29 @@ type ChecklistSectionProps = {
 };
 
 const ChecklistSection = ({ tripId, isEditing, isPrinting }: ChecklistSectionProps) => {
-    const storageKey = `travel_checklist_${tripId}`;
-
-    const [items, setItems] = useState<ChecklistItem[]>(() => {
-        const saved = localStorage.getItem(storageKey);
-        if (saved) {
-            try {
-                return JSON.parse(saved);
-            } catch (e) {
-                console.error(e);
-            }
-        }
-        return DEFAULT_CHECKLIST_ITEMS.map((item) => ({
-            ...item,
-            id: crypto.randomUUID(),
-        }));
-    });
+    const {
+        items,
+        isLoading,
+        toggleItem,
+        addItem: addNewItem,
+        deleteItem,
+        resetToDefault,
+    } = useChecklist(tripId);
 
     const [newItemTitle, setNewItemTitle] = useState("");
     const [selectedCategory, setSelectedCategory] = useState<ChecklistItem["category"]>("documents");
     const [isResetModalOpen, setIsResetModalOpen] = useState(false);
     const [isOpen, setIsOpen] = useState(true);
 
-    useEffect(() => {
-        localStorage.setItem(storageKey, JSON.stringify(items));
-    }, [items, storageKey]);
-
-    const toggleItem = (id: string) => {
-        setItems((prev) =>
-            prev.map((item) =>
-                item.id === id ? { ...item, isCompleted: !item.isCompleted } : item
-            )
-        );
-    };
-
     const addItem = (e: React.FormEvent) => {
         e.preventDefault();
         if (!newItemTitle.trim()) return;
-        const newItem: ChecklistItem = {
-            id: crypto.randomUUID(),
-            category: selectedCategory,
-            title: newItemTitle.trim(),
-            isCompleted: false,
-        };
-        setItems((prev) => [...prev, newItem]);
+        addNewItem(newItemTitle.trim(), selectedCategory);
         setNewItemTitle("");
     };
 
-    const deleteItem = (id: string) => {
-        setItems((prev) => prev.filter((item) => item.id !== id));
-    };
-
     const handleConfirmReset = () => {
-        setItems(
-            DEFAULT_CHECKLIST_ITEMS.map((item) => ({
-                ...item,
-                id: crypto.randomUUID(),
-            }))
-        );
+        resetToDefault();
         setIsResetModalOpen(false);
     };
 

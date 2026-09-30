@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { CheckSquare, Square, Plus, Trash2, RotateCcw, Check, X } from "lucide-react";
 import {
     ChecklistItem,
     CHECKLIST_CATEGORIES,
-    DEFAULT_CHECKLIST_ITEMS,
 } from "../../models/types/ChecklistTypes";
+import { useChecklist } from "../../hooks/checklist/useChecklist";
 
 type ChecklistModalProps = {
     tripId: string;
@@ -12,63 +12,28 @@ type ChecklistModalProps = {
 };
 
 const ChecklistModal = ({ tripId, onClose }: ChecklistModalProps) => {
-    const storageKey = `travel_checklist_${tripId}`;
-
-    const [items, setItems] = useState<ChecklistItem[]>(() => {
-        const saved = localStorage.getItem(storageKey);
-        if (saved) {
-            try {
-                return JSON.parse(saved);
-            } catch (e) {
-                console.error(e);
-            }
-        }
-        return DEFAULT_CHECKLIST_ITEMS.map((item) => ({
-            ...item,
-            id: crypto.randomUUID(),
-        }));
-    });
+    const {
+        items,
+        isLoading,
+        toggleItem,
+        addItem: addNewItem,
+        deleteItem,
+        resetToDefault: performReset,
+    } = useChecklist(tripId);
 
     const [newItemTitle, setNewItemTitle] = useState("");
     const [selectedCategory, setSelectedCategory] = useState<ChecklistItem["category"]>("documents");
 
-    useEffect(() => {
-        localStorage.setItem(storageKey, JSON.stringify(items));
-    }, [items, storageKey]);
-
-    const toggleItem = (id: string) => {
-        setItems((prev) =>
-            prev.map((item) =>
-                item.id === id ? { ...item, isCompleted: !item.isCompleted } : item
-            )
-        );
-    };
-
     const addItem = (e: React.FormEvent) => {
         e.preventDefault();
         if (!newItemTitle.trim()) return;
-        const newItem: ChecklistItem = {
-            id: crypto.randomUUID(),
-            category: selectedCategory,
-            title: newItemTitle.trim(),
-            isCompleted: false,
-        };
-        setItems((prev) => [...prev, newItem]);
+        addNewItem(newItemTitle.trim(), selectedCategory);
         setNewItemTitle("");
-    };
-
-    const deleteItem = (id: string) => {
-        setItems((prev) => prev.filter((item) => item.id !== id));
     };
 
     const resetToDefault = () => {
         if (window.confirm("確定要重置行李清單回預設狀態嗎？")) {
-            setItems(
-                DEFAULT_CHECKLIST_ITEMS.map((item) => ({
-                    ...item,
-                    id: crypto.randomUUID(),
-                }))
-            );
+            performReset();
         }
     };
 

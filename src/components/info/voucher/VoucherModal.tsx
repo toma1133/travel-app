@@ -26,7 +26,7 @@ interface VoucherModalProps {
     voucherToEdit?: VoucherItem | null;
     onClose: () => void;
     onSave: (
-        data: Omit<VoucherItem, "id" | "trip_id" | "created_at" | "updated_at">
+        data: Omit<VoucherItem, "id" | "trip_id" | "created_at" | "updated_at">,
     ) => Promise<void>;
 }
 
@@ -67,9 +67,11 @@ export const VoucherModal: React.FC<VoucherModalProps> = ({
             setImageId(voucherToEdit.image_id);
 
             if (voucherToEdit.image_id) {
-                ImageVaultDB.getImageBlobUrl(voucherToEdit.image_id).then((url) => {
-                    setImagePreviewUrl(url);
-                });
+                ImageVaultDB.getImageBlobUrl(voucherToEdit.image_id).then(
+                    (url) => {
+                        setImagePreviewUrl(url);
+                    },
+                );
             } else {
                 setImagePreviewUrl(null);
             }
@@ -97,7 +99,9 @@ export const VoucherModal: React.FC<VoucherModalProps> = ({
     };
 
     // 處理圖片上傳與 Phase 1 智慧壓縮
-    const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImageSelect = async (
+        e: React.ChangeEvent<HTMLInputElement>,
+    ) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
@@ -127,9 +131,11 @@ export const VoucherModal: React.FC<VoucherModalProps> = ({
             setImagePreviewUrl(preview);
 
             // 顯示節省空間成就
-            const savedPercent = Math.round((1 - result.compressionRatio) * 100);
+            const savedPercent = Math.round(
+                (1 - result.compressionRatio) * 100,
+            );
             setCompressionInfo(
-                `已壓縮至 ${formatBytes(result.compressedSizeBytes)}（省下 ${savedPercent}% 空間）`
+                `已壓縮至 ${formatBytes(result.compressedSizeBytes)}（省下 ${savedPercent}% 空間）`,
             );
         } catch (err) {
             console.error("Image compression/save error:", err);
@@ -193,7 +199,9 @@ export const VoucherModal: React.FC<VoucherModalProps> = ({
                 title={
                     <div className="flex items-center justify-center gap-1.5">
                         <span className="text-base shrink-0">🎟️</span>
-                        <span className="truncate">{isEditMode ? "編輯電子票券" : "新增電子票券"}</span>
+                        <span className="truncate">
+                            {isEditMode ? "編輯電子票券" : "新增電子票券"}
+                        </span>
                     </div>
                 }
                 onClose={onClose}
@@ -209,13 +217,20 @@ export const VoucherModal: React.FC<VoucherModalProps> = ({
                 }
             />
 
-            <form id="voucher-form" onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
-                <GlassModal.Body className="space-y-5">
+            <form
+                id="voucher-form"
+                onSubmit={handleSubmit}
+                className="flex flex-col flex-1 overflow-hidden"
+            >
+                <GlassModal.Body className="space-y-5 no-scrollbar">
                     {/* Quick Template Presets (新增模式展示) */}
                     {!isEditMode && (
                         <div className="space-y-1.5">
                             <label className="text-xs font-bold text-muted-foreground flex items-center gap-1">
-                                <Sparkles size={12} className="text-amber-500" />
+                                <Sparkles
+                                    size={12}
+                                    className="text-amber-500"
+                                />
                                 <span>出國常用票券快速帶入</span>
                             </label>
                             <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
@@ -252,8 +267,12 @@ export const VoucherModal: React.FC<VoucherModalProps> = ({
                                                 : "liquid-glass-subtle border-border/50 text-muted-foreground hover:text-foreground"
                                         }`}
                                     >
-                                        <span className="text-base">{cat.icon}</span>
-                                        <span className="truncate">{cat.label}</span>
+                                        <span className="text-base">
+                                            {cat.icon}
+                                        </span>
+                                        <span className="truncate">
+                                            {cat.label}
+                                        </span>
                                     </button>
                                 );
                             })}
@@ -291,7 +310,9 @@ export const VoucherModal: React.FC<VoucherModalProps> = ({
                         {/* Mode A: Vector QR Code Input */}
                         <div className="space-y-2">
                             <label className="text-[11px] font-semibold text-muted-foreground flex items-center justify-between">
-                                <span>向量 QR 內容 (URL 網址或文字，0 KB 輕量渲染)</span>
+                                <span>
+                                    向量 QR 內容 (URL 網址或文字，0 KB 輕量渲染)
+                                </span>
                                 {qrContent && (
                                     <span className="text-[10px] text-primary font-mono">
                                         即時預覽中
@@ -303,12 +324,18 @@ export const VoucherModal: React.FC<VoucherModalProps> = ({
                                     type="text"
                                     placeholder="貼上網址或文字（例如 Visit Japan Web 連結）..."
                                     value={qrContent}
-                                    onChange={(e) => setQrContent(e.target.value)}
+                                    onChange={(e) =>
+                                        setQrContent(e.target.value)
+                                    }
                                     className="flex-1 liquid-glass-subtle rounded-xl px-3 py-2 text-xs text-foreground outline-none border border-border/60 focus:border-primary font-mono"
                                 />
                                 {qrContent ? (
                                     <div className="shrink-0 p-1 bg-white rounded-xl shadow-xs border border-neutral-300">
-                                        <QRCodeSVG value={qrContent} size={42} level="L" />
+                                        <QRCodeSVG
+                                            value={qrContent}
+                                            size={42}
+                                            level="L"
+                                        />
                                     </div>
                                 ) : null}
                             </div>
@@ -317,7 +344,10 @@ export const VoucherModal: React.FC<VoucherModalProps> = ({
                         {/* Mode B: Screenshot Upload with Phase 1 Compressor */}
                         <div className="space-y-2 pt-2 border-t border-border/40">
                             <label className="text-[11px] font-semibold text-muted-foreground flex items-center justify-between">
-                                <span>憑證圖檔 / 官方截圖（自動壓縮存入 IndexedDB）</span>
+                                <span>
+                                    憑證圖檔 / 官方截圖（自動壓縮存入
+                                    IndexedDB）
+                                </span>
                                 {compressionInfo && (
                                     <span className="text-[10px] text-emerald-500 font-mono">
                                         {compressionInfo}
@@ -362,10 +392,15 @@ export const VoucherModal: React.FC<VoucherModalProps> = ({
                                     <label
                                         htmlFor="voucher-file-input"
                                         className={`flex items-center justify-center gap-2 p-3 rounded-xl border border-dashed border-border/80 hover:border-primary/60 text-xs font-medium text-muted-foreground hover:text-foreground cursor-pointer transition-colors ${
-                                            isCompressing ? "opacity-50 pointer-events-none" : ""
+                                            isCompressing
+                                                ? "opacity-50 pointer-events-none"
+                                                : ""
                                         }`}
                                     >
-                                        <UploadCloud size={16} className="text-primary" />
+                                        <UploadCloud
+                                            size={16}
+                                            className="text-primary"
+                                        />
                                         <span>
                                             {isCompressing
                                                 ? "圖片壓縮中..."

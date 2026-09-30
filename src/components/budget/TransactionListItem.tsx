@@ -1,5 +1,5 @@
-import { JSX } from "react";
-import { Users, Receipt, Check, RotateCcw, Trash2, Wallet } from "lucide-react";
+import { useState, JSX } from "react";
+import { Users, Receipt, Check, RotateCcw, Trash2, Wallet, ChevronDown, ChevronUp } from "lucide-react";
 import { Session } from "@supabase/supabase-js";
 import moment from "moment";
 import SwipeableRow from "../common/SwipeableRow";
@@ -71,6 +71,7 @@ const TransactionListItem = ({
     const isSharedExpense = otherMembers.length > 0;
     const isPayer = budgetItem.user_id === session?.user?.id;
     const isParticipant = Boolean(session?.user?.id && otherMembers.includes(session.user.id));
+    const [isExpanded, setIsExpanded] = useState(false);
 
     let isSettled = false;
     let rightLabel = "收回帳款";
@@ -281,6 +282,21 @@ const TransactionListItem = ({
                                 <span>收據</span>
                             </button>
                         )}
+                        {/* 細項展開徽章 */}
+                        {budgetItem.receipt_items && budgetItem.receipt_items.length > 0 && !isPrinting && (
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setIsExpanded((prev) => !prev);
+                                }}
+                                className="inline-flex items-center gap-1 text-[10px] font-bold text-blue-600 dark:text-blue-300 bg-blue-100 hover:bg-blue-200 dark:bg-blue-950/50 px-1.5 py-0.5 rounded ml-1.5 transition-all cursor-pointer shadow-xs active:scale-95"
+                                title="展開/收合商品明細"
+                            >
+                                <span>🧾 {budgetItem.receipt_items.length} 項明細</span>
+                                {isExpanded ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
+                            </button>
+                        )}
                     </div>
                     {/* 分帳成員 (列印時可視需求決定是否顯示詳細名單，太長會佔空間) */}
                     {(members.length > 1 || budgetItem.is_payer_included === false) && (
@@ -305,6 +321,37 @@ const TransactionListItem = ({
                                 </span>
                             </div>
                         )}
+
+                    {/* 展開之商品細項清單 */}
+                    {isExpanded && budgetItem.receipt_items && budgetItem.receipt_items.length > 0 && !isPrinting && (
+                        <div className="mt-2 pt-2 border-t border-slate-100 dark:border-neutral-800/80 space-y-1.5 text-xs animate-in fade-in duration-150">
+                            {budgetItem.receipt_items.map((sub, sIdx) => {
+                                const splitNames = (sub.split_with || [])
+                                    .map((uid) => tripMembers?.find((tm) => tm.user_id === uid)?.profiles?.username || uid.slice(0, 5))
+                                    .join(", ");
+                                return (
+                                    <div
+                                        key={sub.id || sIdx}
+                                        className="flex items-center justify-between text-[11px] text-slate-600 dark:text-neutral-400 bg-slate-50/80 dark:bg-neutral-800/50 px-2 py-1 rounded-lg"
+                                    >
+                                        <div className="flex items-center gap-1.5 min-w-0 pr-1">
+                                            <span className="font-semibold text-slate-800 dark:text-neutral-200 truncate">
+                                                {sub.name || "未命名商品"}
+                                            </span>
+                                            {splitNames && (
+                                                <span className="text-[10px] text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-1 py-0.2 rounded shrink-0">
+                                                    👤 {splitNames}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <span className="font-mono font-bold text-slate-700 dark:text-neutral-300 shrink-0">
+                                            {budgetItem.currency_code} {Number(sub.amount).toLocaleString()}
+                                        </span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
                     {/* 支付方式 (列印顯示) */}
                     {isPrinting && (
                         <div className="text-[10px] text-muted-foreground mt-0.5 italic">

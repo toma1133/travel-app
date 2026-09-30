@@ -8,11 +8,13 @@ import {
     DollarSign,
     Calculator,
     Receipt,
+    Plus,
+    ListOrdered,
 } from "lucide-react";
 import { GlassModal, GlassSegmentedControl } from "../ui";
 import { CategoryCustomSelect } from "../common/CategoryCustomSelect";
 import { formatThousands, handleThousandsInputChange, parseThousandsToNumber } from "../../utils/numberFormat";
-import type { BudgetRow } from "../../models/types/BudgetTypes";
+import type { BudgetRow, BudgetSubItem } from "../../models/types/BudgetTypes";
 import type { PaymentMethodRow } from "../../models/types/PaymentMethodTypes";
 import type { TripSettingConf, TripThemeConf } from "../../models/types/TripTypes";
 import type { TripMemberVM } from "../../models/types/TripMemberTypes";
@@ -31,7 +33,7 @@ export type TransactionModalProps = {
     tripMembers?: TripMemberVM[];
     onCloseBtnClick: MouseEventHandler<HTMLButtonElement>;
     onDeleteBtnClick: (budgetItem: BudgetRow) => void;
-    onFormDataChange: (name: string, value?: string | number | boolean) => void;
+    onFormDataChange: (name: string, value?: any) => void;
     onFormInputChange: ChangeEventHandler<HTMLInputElement>;
     onFormSubmit: FormEventHandler<HTMLFormElement>;
 };
@@ -49,6 +51,45 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
     onFormSubmit,
 }) => {
     const [activeTab, setActiveTab] = useState<string>("basic");
+
+    const hasInitialSubItems = Array.isArray(formData.receipt_items) && formData.receipt_items.length > 0;
+    const [splitMode, setSplitMode] = useState<"simple" | "itemized">(hasInitialSubItems ? "itemized" : "simple");
+
+    const receiptItems: BudgetSubItem[] = (formData.receipt_items as BudgetSubItem[]) || [];
+    const itemsTotal = receiptItems.reduce((sum, it) => sum + (Number(it.amount) || 0), 0);
+
+    const handleAddSubItem = () => {
+        const allIds = tripMembers.map((m) => m.user_id).filter(Boolean);
+        const newItem: BudgetSubItem = {
+            id: crypto.randomUUID(),
+            name: "",
+            amount: 0,
+            category: formData.category || "shopping",
+            split_with: allIds,
+            is_payer_included: true,
+            selected: true,
+        };
+        onFormDataChange("receipt_items", [...receiptItems, newItem]);
+    };
+
+    const handleUpdateSubItem = (index: number, patch: Partial<BudgetSubItem>) => {
+        const updated = [...receiptItems];
+        updated[index] = { ...updated[index], ...patch };
+        onFormDataChange("receipt_items", updated);
+    };
+
+    const handleDeleteSubItem = (index: number) => {
+        const updated = receiptItems.filter((_, i) => i !== index);
+        onFormDataChange("receipt_items", updated.length > 0 ? updated : null);
+    };
+
+    const handleToggleSubItemMember = (index: number, userId: string) => {
+        const item = receiptItems[index];
+        const current = item.split_with || [];
+        const exists = current.includes(userId);
+        const next = exists ? current.filter((id) => id !== userId) : [...current, userId];
+        handleUpdateSubItem(index, { split_with: next });
+    };
 
     const [displayAmount, setDisplayAmount] = useState<string>(
         formData.amount ? formatThousands(formData.amount, true) : ""
@@ -263,65 +304,193 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                     {/* 👥 Tab 2: 分帳設定 */}
                     {activeTab === "split" && (
                         <div className="space-y-4">
-                            <div className="space-y-1.5">
-                                <div className="flex items-center justify-between px-1">
-                                    <span className="text-[11px] font-bold text-neutral-500 uppercase tracking-wider">
-                                        分帳對象
-                                    </span>
-                                    <span className="text-xs font-bold text-blue-600 dark:text-blue-400">
-                                        {totalSplitParticipants} 人分攤
-                                        {splitPerPerson > 0 && ` (每人 $${splitPerPerson.toLocaleString()})`}
-                                    </span>
-                                </div>
+                            {/* 分帳模式選擇器：簡易全額均分 vs 細項各自負擔 */}
+                            <div className="flex bg-slate-100 dark:bg-white/5 p-1 rounded-2xl border border-slate-200 dark:border-white/10">
+                                <button
+                                    type="button"
+                                    onClick={() => setSplitMode("simple")}
+                                    className={`flex-1 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                                        splitMode === "simple"
+                                            ? "bg-white dark:bg-neutral-800 text-blue-600 dark:text-blue-400 shadow-xs"
+                                            : "text-slate-600 dark:text-neutral-400 hover:text-slate-900"
+                                    }`}
+                                >
+                                    ⚡ 簡易全額均分
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setSplitMode("itemized");
+                                        if (receiptItems.length === 0) {
+                                            handleAddSubItem();
+                                        }
+                                    }}
+                                    className={`flex-1 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                                        splitMode === "itemized"
+                                            ? "bg-white dark:bg-neutral-800 text-blue-600 dark:text-blue-400 shadow-xs"
+                                            : "text-slate-600 dark:text-neutral-400 hover:text-slate-900"
+                                    }`}
+                                >
+                                    🧾 細項各自負擔 {receiptItems.length > 0 ? `(${receiptItems.length})` : ""}
+                                </button>
+                            </div>
 
-                                <div className="bg-white/90 dark:bg-neutral-900/70 border border-black/10 dark:border-white/10 rounded-2xl p-3.5 backdrop-blur-md space-y-3 shadow-xs">
-                                    <div className="flex flex-wrap gap-2">
-                                        {/* 自己 */}
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                onFormDataChange(
-                                                    "is_payer_included",
-                                                    formData.is_payer_included === false ? true : false
-                                                )
-                                            }
-                                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border ${
-                                                formData.is_payer_included !== false
-                                                    ? "bg-blue-600 text-white border-blue-600 shadow-xs"
-                                                    : "bg-slate-100 hover:bg-slate-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 border-slate-200 dark:border-neutral-700 text-slate-700 dark:text-neutral-300 shadow-2xs"
-                                            }`}
-                                        >
-                                            {formData.is_payer_included !== false && <Check size={12} className="stroke-[3]" />}
-                                            <span>自己 (參與分帳)</span>
-                                        </button>
+                            {/* --- 模式 1: 簡易全額均分 --- */}
+                            {splitMode === "simple" && (
+                                <div className="space-y-1.5">
+                                    <div className="flex items-center justify-between px-1">
+                                        <span className="text-[11px] font-bold text-neutral-500 uppercase tracking-wider">
+                                            分帳對象
+                                        </span>
+                                        <span className="text-xs font-bold text-blue-600 dark:text-blue-400">
+                                            {totalSplitParticipants} 人分攤
+                                            {splitPerPerson > 0 && ` (每人 $${splitPerPerson.toLocaleString()})`}
+                                        </span>
+                                    </div>
 
-                                        {/* 旅伴清單 */}
-                                        {Array.isArray(tripMembers) &&
-                                            tripMembers
-                                                .filter((tm) => tm.user_id !== formData.user_id)
-                                                .map((tm, i) => {
-                                                    const isSelected =
-                                                        formData.split_with?.includes(tm.user_id) || false;
+                                    <div className="bg-white/90 dark:bg-neutral-900/70 border border-black/10 dark:border-white/10 rounded-2xl p-3.5 backdrop-blur-md space-y-3 shadow-xs">
+                                        <div className="flex flex-wrap gap-2">
+                                            {/* 自己 */}
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    onFormDataChange(
+                                                        "is_payer_included",
+                                                        formData.is_payer_included === false ? true : false
+                                                    )
+                                                }
+                                                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border ${
+                                                    formData.is_payer_included !== false
+                                                        ? "bg-blue-600 text-white border-blue-600 shadow-xs"
+                                                        : "bg-slate-100 hover:bg-slate-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 border-slate-200 dark:border-neutral-700 text-slate-700 dark:text-neutral-300 shadow-2xs"
+                                                }`}
+                                            >
+                                                {formData.is_payer_included !== false && <Check size={12} className="stroke-[3]" />}
+                                                <span>自己 (參與分帳)</span>
+                                            </button>
 
-                                                    return (
-                                                        <button
-                                                            key={i}
-                                                            type="button"
-                                                            onClick={() => onFormDataChange("split_with", tm.user_id)}
-                                                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border ${
-                                                                isSelected
-                                                                    ? "bg-blue-600 text-white border-blue-600 shadow-xs"
-                                                                    : "bg-slate-100 hover:bg-slate-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 border-slate-200 dark:border-neutral-700 text-slate-700 dark:text-neutral-300 shadow-2xs"
-                                                            }`}
-                                                        >
-                                                            {isSelected && <Check size={12} className="stroke-[3]" />}
-                                                            <span>{tm.profiles?.username}</span>
-                                                        </button>
-                                                    );
-                                                })}
+                                            {/* 旅伴清單 */}
+                                            {Array.isArray(tripMembers) &&
+                                                tripMembers
+                                                    .filter((tm) => tm.user_id !== formData.user_id)
+                                                    .map((tm, i) => {
+                                                        const isSelected =
+                                                            formData.split_with?.includes(tm.user_id) || false;
+
+                                                        return (
+                                                            <button
+                                                                key={i}
+                                                                type="button"
+                                                                onClick={() => onFormDataChange("split_with", tm.user_id)}
+                                                                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border ${
+                                                                    isSelected
+                                                                        ? "bg-blue-600 text-white border-blue-600 shadow-xs"
+                                                                        : "bg-slate-100 hover:bg-slate-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 border-slate-200 dark:border-neutral-700 text-slate-700 dark:text-neutral-300 shadow-2xs"
+                                                                }`}
+                                                            >
+                                                                {isSelected && <Check size={12} className="stroke-[3]" />}
+                                                                <span>{tm.profiles?.username}</span>
+                                                            </button>
+                                                        );
+                                                    })}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                            )}
+
+                            {/* --- 模式 2: 細項各自負擔清單 --- */}
+                            {splitMode === "itemized" && (
+                                <div className="space-y-3">
+                                    <div className="flex items-center justify-between px-1">
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="text-[11px] font-bold text-neutral-500 uppercase tracking-wider">
+                                                商品細項清單 ({receiptItems.length})
+                                            </span>
+                                            {itemsTotal > 0 && itemsTotal !== Number(formData.amount) && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => onFormDataChange("amount", itemsTotal)}
+                                                    className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-full border border-amber-300 dark:border-amber-700 hover:underline cursor-pointer"
+                                                >
+                                                    🔄 總額同步為 ${itemsTotal.toLocaleString()}
+                                                </button>
+                                            )}
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={handleAddSubItem}
+                                            className="flex items-center gap-1 text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+                                        >
+                                            <Plus size={13} />
+                                            <span>新增細項</span>
+                                        </button>
+                                    </div>
+
+                                    {receiptItems.length === 0 ? (
+                                        <div className="p-4 rounded-2xl border border-dashed border-slate-200 dark:border-neutral-800 text-center space-y-2">
+                                            <p className="text-xs text-muted-foreground">尚無商品細項，請點選上方「新增細項」</p>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-2 max-h-60 overflow-y-auto no-scrollbar pr-1">
+                                            {receiptItems.map((item, idx) => (
+                                                <div
+                                                    key={item.id || idx}
+                                                    className="p-3 rounded-2xl bg-white dark:bg-neutral-850 border border-slate-200/90 dark:border-neutral-700/80 shadow-2xs space-y-2"
+                                                >
+                                                    <div className="flex items-center gap-2">
+                                                        <input
+                                                            type="text"
+                                                            value={item.name}
+                                                            onChange={(e) => handleUpdateSubItem(idx, { name: e.target.value })}
+                                                            placeholder="商品名稱 (例: 咖啡)"
+                                                            className="flex-1 bg-transparent text-xs font-bold text-foreground placeholder:text-muted-foreground/60 border-b border-dashed border-slate-200 dark:border-neutral-700 pb-1 focus:outline-none focus:border-blue-500"
+                                                        />
+                                                        <div className="flex items-center gap-1 shrink-0">
+                                                            <span className="text-xs font-bold text-neutral-400">$</span>
+                                                            <input
+                                                                type="number"
+                                                                value={item.amount || ""}
+                                                                onChange={(e) => handleUpdateSubItem(idx, { amount: Number(e.target.value) || 0 })}
+                                                                placeholder="金額"
+                                                                className="w-20 bg-transparent text-xs font-mono font-bold text-foreground text-right border-b border-dashed border-slate-200 dark:border-neutral-700 pb-1 focus:outline-none focus:border-blue-500"
+                                                            />
+                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleDeleteSubItem(idx)}
+                                                            className="p-1 text-neutral-400 hover:text-red-500 transition-colors cursor-pointer"
+                                                        >
+                                                            <Trash2 size={13} />
+                                                        </button>
+                                                    </div>
+
+                                                    {/* 成員分攤標籤 */}
+                                                    <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                                                        <span className="text-[10px] text-muted-foreground mr-1">分攤:</span>
+                                                        {tripMembers.map((tm) => {
+                                                            const isSelected = item.split_with?.includes(tm.user_id);
+                                                            return (
+                                                                <button
+                                                                    key={tm.user_id}
+                                                                    type="button"
+                                                                    onClick={() => handleToggleSubItemMember(idx, tm.user_id)}
+                                                                    className={`px-2 py-0.5 rounded-lg text-[10px] font-bold border transition-all cursor-pointer ${
+                                                                        isSelected
+                                                                            ? "bg-blue-600 text-white border-blue-600 shadow-2xs"
+                                                                            : "bg-slate-100 dark:bg-neutral-700 text-slate-600 dark:text-neutral-300 border-transparent hover:bg-slate-200"
+                                                                    }`}
+                                                                >
+                                                                    {isSelected && "✓ "}{tm.profiles?.username || tm.user_id.slice(0, 5)}
+                                                                </button>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
 
                             {/* 收款狀態 (代墊收回) */}
                             {mode === "edit" && formData.split_with && formData.split_with.length > 0 && (

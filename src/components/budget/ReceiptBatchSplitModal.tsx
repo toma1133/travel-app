@@ -56,10 +56,16 @@ export const ReceiptBatchSplitModal: React.FC<ReceiptBatchSplitModalProps> = ({
     const [paymentMethodId, setPaymentMethodId] = useState<string>(paymentMethods[0]?.id || "");
     const [items, setItems] = useState<ReceiptLineItem[]>(parsedData.items || []);
     const [isSaving, setIsSaving] = useState<boolean>(false);
+    const [saveMode, setSaveMode] = useState<"single_itemized" | "single_simple" | "batch_individual">("single_itemized");
 
     const allMemberIds = useMemo(() => {
         return tripMembers.map((m) => m.user_id).filter(Boolean) as string[];
     }, [tripMembers]);
+
+    const [simpleSplitWith, setSimpleSplitWith] = useState<string[]>(() => {
+        return tripMembers.map((m) => m.user_id).filter(Boolean) as string[];
+    });
+    const [simpleIsPayerIncluded] = useState<boolean>(true);
 
     // 計算所選明細總金額
     const selectedTotal = useMemo(() => {
@@ -202,25 +208,75 @@ export const ReceiptBatchSplitModal: React.FC<ReceiptBatchSplitModalProps> = ({
                 }
             }
 
-            // 2. 組裝要批次新增的 BudgetRow 紀錄清單
-            const budgetRowsToInsert: BudgetRowInsert[] = selectedItems.map((item) => {
+            // 2. 組裝要新增的 BudgetRow 紀錄清單 (依所選模式相容處理)
+            let budgetRowsToInsert: BudgetRowInsert[] = [];
+
+            if (saveMode === "single_itemized") {
+                // 模式 1: 匯入為單一交易（內嵌 OCR 細項）- 推薦
+                const allSelectedSplitWith = Array.from(
+                    new Set(selectedItems.flatMap((it) => it.split_with || []))
+                );
                 const rowId = crypto.randomUUID();
-                const displayName = item.name.trim() || "消費項目";
-                return {
-                    id: rowId,
-                    trip_id: tripId,
-                    user_id: payerId,
-                    payment_method_id: paymentMethodId,
-                    category: item.category || "shopping",
-                    title: `${displayName}${storeName ? ` (${storeName})` : ""}`,
-                    amount: Number(item.amount),
-                    currency_code: currency,
-                    expense_date: date,
-                    split_with: item.split_with && item.split_with.length > 0 ? item.split_with : null,
-                    is_payer_included: item.is_payer_included !== false,
-                    settled_with: [],
-                };
-            });
+                const primaryCategory = selectedItems[0]?.category || "shopping";
+
+                budgetRowsToInsert = [
+                    {
+                        id: rowId,
+                        trip_id: tripId,
+                        user_id: payerId,
+                        payment_method_id: paymentMethodId,
+                        category: primaryCategory,
+                        title: storeName.trim() || "收據消費",
+                        amount: Number(selectedTotal),
+                        currency_code: currency,
+                        expense_date: date,
+                        split_with: allSelectedSplitWith.length > 0 ? allSelectedSplitWith : null,
+                        is_payer_included: true,
+                        settled_with: [],
+                        receipt_items: selectedItems,
+                    },
+                ];
+            } else if (saveMode === "single_simple") {
+                // 模式 2: 單筆簡易平分（不保留個別商品細項，整筆平分）
+                const rowId = crypto.randomUUID();
+                budgetRowsToInsert = [
+                    {
+                        id: rowId,
+                        trip_id: tripId,
+                        user_id: payerId,
+                        payment_method_id: paymentMethodId,
+                        category: "shopping",
+                        title: storeName.trim() || "收據消費",
+                        amount: Number(targetTotal || selectedTotal),
+                        currency_code: currency,
+                        expense_date: date,
+                        split_with: simpleSplitWith.length > 0 ? simpleSplitWith : null,
+                        is_payer_included: simpleIsPayerIncluded,
+                        settled_with: [],
+                        receipt_items: null,
+                    },
+                ];
+            } else {
+                // 模式 3: 拆分為多筆獨立紀錄
+                budgetRowsToInsert = selectedItems.map((item) => {
+                    const rowId = crypto.randomUUID();
+                    const displayName = item.name.trim() || "消費項目";
+                    return {
+                        id: rowId,
+                        trip_id: tripId,
+                        user_id: payerId,
+                        payment_method_id: paymentMethodId,
+                        category: item.category || "shopping",
+                        title: `${displayName}${storeName ? ` (${storeName})` : ""}`,
+                        amount: Number(item.amount),
+                        currency_code: currency,
+                        expense_date: date,
+                        split_with: item.split_with && item.split_with.length > 0 ? item.split_with : null,
+                        is_payer_included: item.is_payer_included !== false,
+                        settled_with: [],
+                    };
+                });
+            }
 
             // 3. 呼叫批次插入方法
             await insertBudgetBatch(budgetRowsToInsert);
@@ -291,7 +347,7 @@ export const ReceiptBatchSplitModal: React.FC<ReceiptBatchSplitModalProps> = ({
                         disabled={isSaving}
                         className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-full shadow-xs active:scale-95 transition-all cursor-pointer shrink-0 disabled:opacity-50"
                     >
-                        {isSaving ? "處理中..." : `建立 (${items.filter((i) => i.selected).length})`}
+                        {isSaving ? "處理中..." : saveMode === "batch_individual" ? `建立 (${items.filter((i) => i.selected).length} 筆)` : "儲存記帳"}
                     </button>
                 </div>
 
@@ -379,6 +435,91 @@ export const ReceiptBatchSplitModal: React.FC<ReceiptBatchSplitModalProps> = ({
                             ))}
                         </select>
                     </div>
+                </div>
+
+                {/* 記帳模式切換卡片 */}
+                <div className="px-4 py-2.5 sm:px-5 sm:py-3 bg-slate-50 dark:bg-neutral-900/60 border-b border-slate-200/80 dark:border-white/[0.08] flex flex-col gap-2 shrink-0">
+                    <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-bold text-slate-500 dark:text-neutral-400 uppercase tracking-wider">
+                            記帳儲存模式
+                        </span>
+                        <span className="text-[10px] sm:text-[11px] font-medium text-slate-500 dark:text-neutral-400">
+                            {saveMode === "single_itemized" && "一家店記一筆，內嵌細項各自負擔"}
+                            {saveMode === "single_simple" && "整筆金額大家平分，不拆細項"}
+                            {saveMode === "batch_individual" && "每個品項各成一筆獨立紀錄"}
+                        </span>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-1.5 p-1 bg-slate-200/70 dark:bg-neutral-800 rounded-2xl">
+                        <button
+                            type="button"
+                            onClick={() => setSaveMode("single_itemized")}
+                            className={`py-1.5 px-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                                saveMode === "single_itemized"
+                                    ? "bg-white dark:bg-neutral-900 text-blue-600 dark:text-blue-400 shadow-xs"
+                                    : "text-slate-600 dark:text-neutral-400 hover:text-slate-900"
+                            }`}
+                        >
+                            <span>📦</span>
+                            <span className="truncate">單店一筆 (含細項)</span>
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={() => setSaveMode("single_simple")}
+                            className={`py-1.5 px-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                                saveMode === "single_simple"
+                                    ? "bg-white dark:bg-neutral-900 text-blue-600 dark:text-blue-400 shadow-xs"
+                                    : "text-slate-600 dark:text-neutral-400 hover:text-slate-900"
+                            }`}
+                        >
+                            <span>⚡</span>
+                            <span className="truncate">單筆簡易平分</span>
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={() => setSaveMode("batch_individual")}
+                            className={`py-1.5 px-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                                saveMode === "batch_individual"
+                                    ? "bg-white dark:bg-neutral-900 text-blue-600 dark:text-blue-400 shadow-xs"
+                                    : "text-slate-600 dark:text-neutral-400 hover:text-slate-900"
+                            }`}
+                        >
+                            <span>📑</span>
+                            <span className="truncate">拆為多筆獨立</span>
+                        </button>
+                    </div>
+
+                    {/* 若選擇單筆簡易平分，顯示平分成員選擇 */}
+                    {saveMode === "single_simple" && (
+                        <div className="p-2 rounded-xl bg-white dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 flex flex-wrap items-center gap-1.5">
+                            <span className="text-[11px] font-bold text-slate-500 mr-1">平分對象:</span>
+                            {tripMembers.map((tm) => {
+                                const isSelected = simpleSplitWith.includes(tm.user_id);
+                                return (
+                                    <button
+                                        key={tm.user_id}
+                                        type="button"
+                                        onClick={() => {
+                                            setSimpleSplitWith((prev) =>
+                                                isSelected
+                                                    ? prev.filter((id) => id !== tm.user_id)
+                                                    : [...prev, tm.user_id]
+                                            );
+                                        }}
+                                        className={`px-2 py-0.5 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
+                                            isSelected
+                                                ? "bg-blue-600 text-white border-blue-600 shadow-2xs"
+                                                : "bg-slate-100 dark:bg-neutral-700 text-slate-600 dark:text-neutral-300 border-transparent"
+                                        }`}
+                                    >
+                                        {isSelected && "✓ "}{tm.profiles?.username || tm.user_id.slice(0, 5)}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    )}
                 </div>
 
                 {/* 明細清單滑動區 */}

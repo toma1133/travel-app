@@ -9,6 +9,7 @@ import {
     AlertCircle,
     Info,
     Check,
+    Luggage,
 } from "lucide-react";
 import { GlassModal, GlassButton } from "../ui";
 import { useStorageManager } from "../../hooks/storage/useStorageManager";
@@ -25,22 +26,35 @@ export const StorageManagerModal: React.FC<StorageManagerModalProps> = ({
 }) => {
     const {
         usage,
+        checklistUsage,
         isLoading,
         isActionPending,
         refreshUsage,
         clearReceipts,
         clearAll,
+        clearChecklists,
     } = useStorageManager();
 
-    const [confirmAction, setConfirmAction] = useState<"receipts" | "all" | null>(
-        null
-    );
+    const [confirmAction, setConfirmAction] = useState<
+        "receipts" | "checklist" | "all" | null
+    >(null);
     const [actionMessage, setActionMessage] = useState<string | null>(null);
+
+    const handleClearChecklists = async () => {
+        const count = await clearChecklists();
+        setConfirmAction(null);
+        setActionMessage(
+            `已成功清除 ${count} 個行程的行李清單快取！下次開啟將自動重新載入預設清單。`
+        );
+        setTimeout(() => setActionMessage(null), 3500);
+    };
 
     const handleClearReceipts = async () => {
         const count = await clearReceipts();
         setConfirmAction(null);
-        setActionMessage(`已成功清除 ${count} 張收據照片，記帳數據依然完整保留！`);
+        setActionMessage(
+            `已成功清除 ${count} 張收據照片，記帳數據依然完整保留！`,
+        );
         setTimeout(() => setActionMessage(null), 3500);
     };
 
@@ -51,15 +65,21 @@ export const StorageManagerModal: React.FC<StorageManagerModalProps> = ({
         setTimeout(() => setActionMessage(null), 3500);
     };
 
-    // 預估以 50MB 作為極度充裕的安全基準刻度（實際 IndexedDB 可用數百 MB）
-    const totalBytes = usage?.total_bytes || 0;
+    // 預估以 50MB 作為極度充裕的安全基準刻度（包含收據圖檔、離線票券與行李清單）
+    const totalBytes = (usage?.total_bytes || 0) + (checklistUsage?.totalBytes || 0);
+    const totalMbString = (totalBytes / (1024 * 1024)).toFixed(2) + " MB";
     const safetyBarPercent = Math.min(
         100,
-        Math.max(1, (totalBytes / (50 * 1024 * 1024)) * 100)
+        Math.max(1, (totalBytes / (50 * 1024 * 1024)) * 100),
     );
 
     return (
-        <GlassModal isOpen={isOpen} onClose={onClose} maxWidth="sm" className="md:!max-w-[440px]">
+        <GlassModal
+            isOpen={isOpen}
+            onClose={onClose}
+            maxWidth="sm"
+            className="md:!max-w-[440px]"
+        >
             <GlassModal.Header
                 title="💾 儲存空間與圖檔管理"
                 subtitle="本地輕量 IndexedDB 空間用量與清理"
@@ -75,7 +95,7 @@ export const StorageManagerModal: React.FC<StorageManagerModalProps> = ({
                 }
             />
 
-            <GlassModal.Body className="space-y-4 text-xs sm:text-sm pb-6 sm:pb-8">
+            <GlassModal.Body className="space-y-4 text-xs sm:text-sm pb-6 sm:pb-8 no-scrollbar">
                 {/* 狀態訊息提示 */}
                 {actionMessage && (
                     <div className="p-3 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 flex items-center gap-2 animate-in fade-in duration-200">
@@ -109,10 +129,10 @@ export const StorageManagerModal: React.FC<StorageManagerModalProps> = ({
 
                     <div className="flex items-baseline justify-between">
                         <div className="text-2xl sm:text-3xl font-black tracking-tight text-neutral-950 dark:text-white font-mono">
-                            {usage ? usage.total_mb : "計算中..."}
+                            {totalMbString}
                         </div>
                         <span className="text-xs text-neutral-500 dark:text-neutral-400">
-                            共 {usage?.total_count || 0} 個圖檔
+                            共 {(usage?.total_count || 0)} 圖檔 / {(checklistUsage?.itemCount || 0)} 項清單
                         </span>
                     </div>
 
@@ -215,26 +235,92 @@ export const StorageManagerModal: React.FC<StorageManagerModalProps> = ({
                             隨旅程集中管理・離線可查
                         </div>
                     </div>
+
+                    {/* 行李打包清單卡片 */}
+                    <div className="p-3.5 rounded-2xl bg-teal-500/[0.06] dark:bg-teal-500/[0.08] border border-teal-500/20 dark:border-teal-500/20 shadow-xs flex flex-col justify-between gap-3">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <div className="p-1.5 rounded-lg bg-teal-500/15 text-teal-600 dark:text-teal-400">
+                                    <Luggage size={16} />
+                                </div>
+                                <span className="font-bold text-neutral-900 dark:text-white">
+                                    行李打包清單 (IndexedDB)
+                                </span>
+                            </div>
+                            <span className="text-xs font-mono font-bold text-neutral-900 dark:text-white">
+                                {checklistUsage?.tripCount || 0} 個行程 / {checklistUsage?.itemCount || 0} 項
+                            </span>
+                        </div>
+                        <div className="text-xs text-neutral-600 dark:text-neutral-400">
+                            佔用空間:{" "}
+                            <span className="font-mono font-semibold text-neutral-900 dark:text-white">
+                                {formatBytes(checklistUsage?.totalBytes || 0)}
+                            </span>
+                        </div>
+                        {confirmAction === "checklist" ? (
+                            <div className="flex items-center gap-2 pt-1 border-t border-teal-500/20">
+                                <button
+                                    type="button"
+                                    onClick={handleClearChecklists}
+                                    disabled={isActionPending}
+                                    className="flex-1 py-1.5 px-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs transition-colors shadow-xs cursor-pointer"
+                                >
+                                    確定重置清單
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setConfirmAction(null)}
+                                    className="py-1.5 px-2 rounded-xl bg-white dark:bg-neutral-800 text-neutral-700 dark:text-neutral-200 border border-neutral-300 dark:border-neutral-700 text-xs font-medium cursor-pointer"
+                                >
+                                    取消
+                                </button>
+                            </div>
+                        ) : (
+                            <button
+                                type="button"
+                                onClick={() => setConfirmAction("checklist")}
+                                disabled={!checklistUsage?.tripCount || isActionPending}
+                                className="w-full py-1.5 px-2 rounded-xl text-xs font-bold text-teal-700 dark:text-teal-300 bg-teal-500/15 hover:bg-teal-500/25 border border-teal-500/25 disabled:opacity-40 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                            >
+                                <Trash2 size={13} />
+                                <span>清空所有行李打包清單 (恢復預設)</span>
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 {/* 說明保證區塊 (解決使用者的儲存疑慮) */}
                 <div className="p-3.5 rounded-2xl bg-emerald-500/[0.08] dark:bg-emerald-500/[0.1] border border-emerald-500/25 space-y-2">
                     <div className="flex items-center gap-2 text-neutral-900 dark:text-white font-bold text-xs">
-                        <ShieldCheck size={16} className="text-emerald-600 dark:text-emerald-400" />
+                        <ShieldCheck
+                            size={16}
+                            className="text-emerald-600 dark:text-emerald-400"
+                        />
                         <span>雙重防膨脹安全保障</span>
                     </div>
                     <ul className="space-y-1.5 text-xs text-neutral-600 dark:text-neutral-300 pl-1">
                         <li className="flex items-start gap-1.5">
-                            <span className="text-emerald-600 dark:text-emerald-400 font-bold">•</span>
+                            <span className="text-emerald-600 dark:text-emerald-400 font-bold">
+                                •
+                            </span>
                             <span>
-                                <strong className="text-neutral-900 dark:text-white">前端智慧 Canvas 壓縮</strong>：所有上傳照片皆經演算法縮小至
-                                1024px，體積銳減 90% 以上（單張僅約 80~120KB），絕不浪費手機空間。
+                                <strong className="text-neutral-900 dark:text-white">
+                                    前端智慧 Canvas 壓縮
+                                </strong>
+                                ：所有上傳照片皆經演算法縮小至 1024px，體積銳減
+                                90% 以上（單張僅約
+                                80~120KB），絕不浪費手機空間。
                             </span>
                         </li>
                         <li className="flex items-start gap-1.5">
-                            <span className="text-emerald-600 dark:text-emerald-400 font-bold">•</span>
+                            <span className="text-emerald-600 dark:text-emerald-400 font-bold">
+                                •
+                            </span>
                             <span>
-                                <strong className="text-neutral-900 dark:text-white">旅程刪除自動級聯清空</strong>：當您在書架中刪除旅程時，該旅程底下的所有本地照片會一併自動清除，絕無隱藏垃圾。
+                                <strong className="text-neutral-900 dark:text-white">
+                                    旅程刪除自動級聯清空
+                                </strong>
+                                ：當您在書架中刪除旅程時，該旅程底下的所有本地照片會一併自動清除，絕無隱藏垃圾。
                             </span>
                         </li>
                     </ul>
