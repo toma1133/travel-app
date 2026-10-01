@@ -3,6 +3,9 @@ import { itineraryRepo } from "../../services/repositories/ItineraryRepo";
 import { QUERY_KEYS } from "../../constants/QueryKeys";
 import type { ItineraryVM } from "../../models/types/ItineraryTypes";
 
+import { syncTripItineraryDays } from "../../services/ItinerarySyncService";
+import type { TripRow } from "../../models/types/TripTypes";
+
 export const useItineraryMutations = (tripId?: string) => {
     const qc = useQueryClient();
 
@@ -48,10 +51,19 @@ export const useItineraryMutations = (tripId?: string) => {
         },
     });
 
-    const anyPending =
-        insert.isPending || update.isPending || upsert.isPending || remove.isPending;
+    const sync = useMutation({
+        mutationKey: ["itinerary_day", "sync"],
+        mutationFn: (trip: TripRow) => syncTripItineraryDays(trip),
+        onSettled: (_, __, trip) => {
+            invalidateItineraryData(trip.id);
+            qc.invalidateQueries({ queryKey: ["itinerary_day"] });
+        },
+    });
 
-    return { insert, update, upsert, remove, anyPending };
+    const anyPending =
+        insert.isPending || update.isPending || upsert.isPending || remove.isPending || sync.isPending;
+
+    return { insert, update, upsert, remove, sync, anyPending };
 };
 
 export default useItineraryMutations;

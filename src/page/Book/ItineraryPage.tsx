@@ -1,8 +1,8 @@
-import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useOutletContext, useParams } from "react-router-dom";
 import { useIsMutating } from "@tanstack/react-query";
 import moment from "moment";
-import { MapIcon, Plus, X } from "lucide-react";
+import { MapIcon, RefreshCw, X } from "lucide-react";
 import useAuth from "../../hooks/UseAuth";
 import useMediaQuery from "../../hooks/UseMediaQuery";
 import useItinerarys from "../../hooks/itinerary/UseItinerarys";
@@ -12,10 +12,7 @@ import SectionHeader from "../../components/common/SectionHeader";
 import DeleteModal from "../../components/common/DeleteModal";
 import ItineraryList from "../../components/itinerary/ItineraryList";
 import ItineraryDayModal from "../../components/itinerary/ItineraryDayModal";
-import ItineraryActivityModal from "../../components/itinerary/ItineraryActivityModal";
 import PreviewPlaceModal from "../../components/itinerary/PreviewPlaceModal";
-import OptimizeRouteModal from "../../components/itinerary/OptimizeRouteModal";
-import PlaceMapView from "../../components/place/PlaceMapView";
 import ItineraryDayTabBar from "../../components/itinerary/timeline/ItineraryDayTabBar";
 import TimelineSkeleton from "../../components/common/skeletons/TimelineSkeleton";
 import type BookLayoutContextType from "../../models/types/BookLayoutContextTypes";
@@ -24,9 +21,14 @@ import type { ItineraryActivitiy, ItineraryVM } from "../../models/types/Itinera
 import type { PlaceVM } from "../../models/types/PlaceTypes";
 import type { TripVM } from "../../models/types/TripTypes";
 import { ITINERARY_CATEGORIES } from "../../constants/Categories";
+import { getItinerarySyncErrorMessage } from "../../utils/ItinerarySyncUtil";
 import { computeDayTimelineSchedule } from "../../utils/ItineraryTimeUtil";
 import useTripWeather from "../../hooks/weather/useTripWeather";
 import LiveTravelFocusCard from "../../components/itinerary/LiveTravelFocusCard";
+
+const ItineraryActivityModal = lazy(() => import("../../components/itinerary/ItineraryActivityModal"));
+const OptimizeRouteModal = lazy(() => import("../../components/itinerary/OptimizeRouteModal"));
+const PlaceMapView = lazy(() => import("../../components/place/PlaceMapView"));
 
 type ItineraryPageProps = {
     isPrinting?: boolean;
@@ -39,38 +41,41 @@ const ItineraryPage = ({ isPrinting, tripDataOverride, tripIdOverride }: Itinera
     const { id: paramsId } = useParams<{ id: string }>();
     const tripId = tripIdOverride || paramsId;
     const { data: itinerarys, isLoading } = useItinerarys(tripId);
-    const { insert: insertDay, update: updateDay, remove: removeDay, anyPending } = useItineraryMutations();
+    const { insert: insertDay, update: updateDay, remove: removeDay, sync: syncDays, anyPending } = useItineraryMutations();
     const contextData = useOutletContext<BookLayoutContextType | null>();
     const tripData = tripDataOverride || contextData?.tripData;
     const { setIsPageLoading } = useOutletContext<LayoutContextType>();
 
     const isEditing = true;
     const scrollContainerRef = useRef<HTMLDivElement>(null);
-    const [selectedDayFilter, setSelectedDayFilter] = useState<string>("all");
+    const [daySelection, setDaySelection] = useState<{ tripId?: string; id: string }>();
+    const setSelectedDayFilter = useCallback((id: string) => setDaySelection({ tripId, id }), [tripId]);
+    const selectedDayFilter = daySelection?.tripId === tripId && (daySelection?.id === "all" || itinerarys?.some(day => day.id === daySelection?.id))
+        ? daySelection!.id
+        : itinerarys?.find(day => day.date === moment().format("YYYY-MM-DD"))?.id || itinerarys?.[0]?.id || "";
     const isDesktop = useMediaQuery("(min-width: 1024px)");
     const [showMobileMap, setShowMobileMap] = useState(false);
-    const hasInitFilterRef = useRef(false);
-
-    useEffect(() => {
-        if (!Array.isArray(itinerarys) || itinerarys.length === 0) return;
-        setSelectedDayFilter((prev) => {
-            if (!hasInitFilterRef.current) {
-                hasInitFilterRef.current = true;
-                const today = itinerarys.find((d) => d.date === moment().format("YYYY-MM-DD"));
-                return today ? today.id : itinerarys[0].id;
-            }
-            return prev === "all" || itinerarys.some((d) => d.id === prev) ? prev : itinerarys[0].id;
-        });
-    }, [itinerarys]);
-
-    const allPlaceIds = useMemo(() => {
-        if (!Array.isArray(itinerarys)) return [];
-        const ids = new Set<string>();
-        itinerarys.forEach((d) => d.activities?.forEach((a) => a.linkId && ids.add(a.linkId)));
-        return Array.from(ids);
-    }, [itinerarys]);
-
-    const { placeMap: linkedPlacesMap } = useTripPlacesBatch(tripId, allPlaceIds);
+    const [loadedDays, setLoadedDays] = useState<{ tripId?: string; ids: string[] }>({ ids: [] });
+    const onLoadDay = useCallback((id: string) => setLoadedDays(previous => {
+        const ids = previous.tripId === tripId ? previous.ids : [];
+        return ids.includes(id) ? previous : { tripId, ids: [...ids, id] };
+    }), [tripId]);
+    const loadedItineraries = useMemo(() => itinerarys?.filter(day => isPrinting || (showMobileMap && selectedDayFilter === "all") || day.id === selectedDayFilter ||
+        (selectedDayFilter === "all" && loadedDays.tripId === tripId && loadedDays.ids.includes(day.id))),
+        [itinerarys, isPrinting, showMobileMap, selectedDayFilter, loadedDays, tripId]);
+    const placeIds = useMemo(() => Array.from(new Set(loadedItineraries?.flatMap(day => day.activities?.map(activity => activity.linkId).filter(Boolean) || []) || [])), [loadedItineraries]);
+    const { placeMap: linkedPlacesMap } = useTripPlacesBatch(tripId, placeIds);
+    const [syncMessage, setSyncMessage] = useState("");
+    const handleSync = async () => {
+        if (!tripData || syncDays.isPending) return;
+        setSyncMessage("");
+        try {
+            const result = await syncDays.mutateAsync(tripData);
+            setSyncMessage(`同步完成，新增 ${result.added} 天、校正 ${result.updated} 天、刪除 ${result.removed} 天範圍外日程。`);
+        } catch (error) {
+            setSyncMessage(getItinerarySyncErrorMessage(error));
+        }
+    };
 
     const { dayPlacesMap, dayPlaceCounts } = useMemo(() => {
         const dMap: Record<string, PlaceVM[]> = { all: [] };
@@ -86,7 +91,7 @@ const ItineraryPage = ({ isPrinting, tripDataOverride, tripIdOverride }: Itinera
                     }
                 });
                 dMap[d.id] = validPlaces;
-                dCounts[d.id] = validPlaces.length;
+                dCounts[d.id] = d.activities?.filter(activity => activity.linkId).length || 0;
             });
         }
         return { dayPlacesMap: dMap, dayPlaceCounts: dCounts };
@@ -107,7 +112,7 @@ const ItineraryPage = ({ isPrinting, tripDataOverride, tripIdOverride }: Itinera
         locationName,
     } = useTripWeather({
         tripId,
-        itineraries: itinerarys,
+        itineraries: loadedItineraries,
         placesMap: linkedPlacesMap,
         startDate: tripData?.start_date,
         endDate: tripData?.end_date,
@@ -171,12 +176,22 @@ const ItineraryPage = ({ isPrinting, tripDataOverride, tripIdOverride }: Itinera
                     <SectionHeader
                         title="行程表"
                         subtitle="Timeline"
-                        theme={tripData?.theme_config!}
+                        theme={tripData?.theme_config ?? null}
                         hasBackBtn
                     />
                 </div>
             )}
 
+            {!isPrinting && (
+                <div className="shrink-0 px-3 sm:px-6 flex items-center gap-3">
+                    <button type="button" onClick={handleSync} disabled={!tripData || anyPending}
+                        className="inline-flex items-center gap-2 px-3 py-2 rounded-xl glass-pill text-xs font-bold cursor-pointer disabled:opacity-50">
+                        <RefreshCw size={14} className={syncDays.isPending ? "animate-spin" : ""} />
+                        {syncDays.isPending ? "同步中…" : "同步旅程天數"}
+                    </button>
+                    <span role="status" className="text-xs text-muted-foreground">{syncMessage}</span>
+                </div>
+            )}
             <div className={isPrinting ? "space-y-6 overflow-visible" : "flex-1 flex flex-col min-h-0 px-3 sm:px-6 pt-2 pb-2 lg:pb-3 overflow-hidden gap-3"}>
                 {isLoading ? (
                     <TimelineSkeleton />
@@ -216,7 +231,7 @@ const ItineraryPage = ({ isPrinting, tripDataOverride, tripIdOverride }: Itinera
                                         })
                                     }
                                     dayPlaceCounts={dayPlaceCounts}
-                                    totalPlacesCount={dayPlacesMap.all?.length}
+                                    totalPlacesCount={Object.values(dayPlaceCounts).reduce((sum, count) => sum + count, 0)}
                                     theme={tripData?.theme_config}
                                     weatherMap={weatherMap}
                                     isLoadingWeather={isWeatherLoading}
@@ -226,10 +241,10 @@ const ItineraryPage = ({ isPrinting, tripDataOverride, tripIdOverride }: Itinera
                         )}
 
                         <div className={isPrinting ? "block space-y-6" : "flex flex-col lg:flex-row gap-4 sm:gap-5 flex-1 min-h-0 overflow-hidden"}>
-                            <div ref={scrollContainerRef} data-scroll-container="true" className={isPrinting ? "w-full" : "w-full lg:max-w-[58%] flex-1 h-full overflow-y-auto no-scrollbar lg:pr-2 pb-28 lg:pb-8"}>
+                            <div ref={scrollContainerRef} data-scroll-container="true" style={{ overflowAnchor: "none" }} className={isPrinting ? "w-full" : "w-full lg:max-w-[58%] flex-1 h-full overflow-y-auto no-scrollbar lg:pr-2 pb-28 lg:pb-8"}>
                                 <ItineraryList
-                            itinerarys={itinerarys} pcSelectedDayId={selectedDayFilter} itineraryPlacesMap={dayPlacesMap} placeMap={linkedPlacesMap}
-                            isEditing={isEditing} isPrinting={isPrinting} theme={tripData?.theme_config!} scrollContainerRef={scrollContainerRef}
+                            onLoadDay={onLoadDay} itinerarys={itinerarys} pcSelectedDayId={selectedDayFilter} itineraryPlacesMap={dayPlacesMap} placeMap={linkedPlacesMap}
+                            isEditing={isEditing} isPrinting={isPrinting} theme={tripData?.theme_config ?? null} scrollContainerRef={scrollContainerRef}
                             onAddActivityBtnClick={(day) => {
                                 const sched = day.activities ? computeDayTimelineSchedule(day.activities) : [];
                                 const last = sched[sched.length - 1];
@@ -240,7 +255,7 @@ const ItineraryPage = ({ isPrinting, tripDataOverride, tripIdOverride }: Itinera
                             onDeleteDayBtnClick={(day) => setDel({ open: true, type: "day", key: `第 ${day.day_number} 天 ${day.title}`, day })}
                             onEditActivityBtnClick={(day, act) => setActModal({ open: true, mode: "edit", day, form: { ...act } })}
                             onEditDayBtnClick={(day) => setDayModal({ open: true, mode: "edit", form: { ...day } })}
-                            onOptimizeRouteBtnClick={(day) => setOptimizeDay(day)}
+                            onOptimizeRouteBtnClick={(day) => { setSelectedDayFilter(day.id); setOptimizeDay(day); }}
                             onOpenMapBtnClick={(day) => { setSelectedDayFilter(day.id); setShowMobileMap(true); }}
                             onSelectDay={(dayId) => setSelectedDayFilter(dayId)}
                             onViewBtnClick={(linkId, activity) => setPreview({ open: true, place: linkId ? linkedPlacesMap[linkId] : undefined, activity })}
@@ -258,7 +273,7 @@ const ItineraryPage = ({ isPrinting, tripDataOverride, tripIdOverride }: Itinera
                                 <span className="text-[11px] text-muted-foreground font-mono bg-accent/50 px-2 py-0.5 rounded-full">{activeMapPlaces.length} 個地標</span>
                             </div>
                             <div className="flex-1 w-full relative min-h-0">
-                                <PlaceMapView places={activeMapPlaces} showRouteLine highlightedPlaceId={hoveredPlace.id} highlightedIndex={hoveredPlace.index} enabled />
+                                <Suspense fallback={<div role="status" className="p-4 text-xs text-muted-foreground">地圖載入中…</div>}><PlaceMapView places={activeMapPlaces} showRouteLine highlightedPlaceId={hoveredPlace.id} highlightedIndex={hoveredPlace.index} enabled /></Suspense>
                             </div>
                         </div>
                     )}
@@ -282,20 +297,22 @@ const ItineraryPage = ({ isPrinting, tripDataOverride, tripIdOverride }: Itinera
                     </div>
                     {Array.isArray(itinerarys) && (
                         <div className="p-2 border-b border-border/60 bg-muted/30">
-                            <ItineraryDayTabBar days={itinerarys} selectedDayId={selectedDayFilter} onSelectDay={setSelectedDayFilter} dayPlaceCounts={dayPlaceCounts} totalPlacesCount={dayPlacesMap.all?.length} theme={tripData?.theme_config} />
+                            <ItineraryDayTabBar days={itinerarys} selectedDayId={selectedDayFilter} onSelectDay={setSelectedDayFilter} dayPlaceCounts={dayPlaceCounts} totalPlacesCount={Object.values(dayPlaceCounts).reduce((sum, count) => sum + count, 0)} theme={tripData?.theme_config} />
                         </div>
                     )}
                     <div className="flex-1 w-full relative">
-                        <PlaceMapView places={activeMapPlaces} showRouteLine highlightedPlaceId={hoveredPlace.id} highlightedIndex={hoveredPlace.index} enabled />
+                        <Suspense fallback={<div role="status" className="p-4 text-xs text-muted-foreground">地圖載入中…</div>}><PlaceMapView places={activeMapPlaces} showRouteLine highlightedPlaceId={hoveredPlace.id} highlightedIndex={hoveredPlace.index} enabled /></Suspense>
                     </div>
                 </div>
             )}
 
-            {dayModal.open && <ItineraryDayModal formData={dayModal.form} mode={dayModal.mode} theme={tripData?.theme_config!} onCloseBtnClick={() => setDayModal((p) => ({ ...p, open: false }))} onFormInputChange={(e) => setDayModal((p) => ({ ...p, form: { ...p.form, [e.target.name]: e.target.value, ...(e.target.name === "date" ? { weekday: moment(e.target.value).format("ddd") } : {}) } }))} onFormSubmit={handleDaySubmit} />}
-            {actModal.open && <ItineraryActivityModal formData={actModal.form} itinerary={actModal.day!} itineraryCategory={ITINERARY_CATEGORIES} mode={actModal.mode} theme={tripData?.theme_config!} onCloseBtnClick={() => setActModal((p) => ({ ...p, open: false }))} onFormInputChange={(e) => { const { name, value, type } = e.target; const checked = (e.target as HTMLInputElement).checked; if (name.startsWith("transitDetails.")) { const f = name.replace("transitDetails.", ""); setActModal((p) => ({ ...p, form: { ...p.form, transitDetails: { ...(p.form.transitDetails || {}), [f]: type === "checkbox" ? checked : value } } })); } else { setActModal((p) => ({ ...p, form: { ...p.form, [name]: value } })); } }} onFormSubmit={handleActSubmit} />}
+            <Suspense fallback={<div role="status" className="fixed bottom-24 left-4 z-[70] glass-panel p-3 rounded-xl">載入中…</div>}>
+            {dayModal.open && <ItineraryDayModal formData={dayModal.form} mode={dayModal.mode} theme={tripData?.theme_config ?? null} onCloseBtnClick={() => setDayModal((p) => ({ ...p, open: false }))} onFormInputChange={(e) => setDayModal((p) => ({ ...p, form: { ...p.form, [e.target.name]: e.target.value, ...(e.target.name === "date" ? { weekday: moment(e.target.value).format("ddd") } : {}) } }))} onFormSubmit={handleDaySubmit} />}
+            {actModal.open && <ItineraryActivityModal formData={actModal.form} itinerary={actModal.day!} itineraryCategory={ITINERARY_CATEGORIES} mode={actModal.mode} theme={tripData?.theme_config ?? null} onCloseBtnClick={() => setActModal((p) => ({ ...p, open: false }))} onFormInputChange={(e) => { const { name, value, type } = e.target; const checked = (e.target as HTMLInputElement).checked; if (name.startsWith("transitDetails.")) { const f = name.replace("transitDetails.", ""); setActModal((p) => ({ ...p, form: { ...p.form, transitDetails: { ...(p.form.transitDetails || {}), [f]: type === "checkbox" ? checked : value } } })); } else { setActModal((p) => ({ ...p, form: { ...p.form, [name]: value } })); } }} onFormSubmit={handleActSubmit} />}
             {del.open && <DeleteModal deleteKey={del.key} onCloseClick={() => setDel({ open: false, type: "", key: "" })} onConfirmClick={handleConfirmDelete} />}
-            {preview.open && (preview.place || preview.activity) && <PreviewPlaceModal place={preview.place} activity={preview.activity} theme={tripData?.theme_config!} onCloseBtnClick={() => setPreview({ open: false })} />}
+            {preview.open && (preview.place || preview.activity) && <PreviewPlaceModal place={preview.place} activity={preview.activity} theme={tripData?.theme_config ?? null} onCloseBtnClick={() => setPreview({ open: false })} />}
             {optimizeDay && <OptimizeRouteModal itineraryDay={optimizeDay} placesMap={new Map(Object.values(linkedPlacesMap).map((p) => [p.id, p]))} theme={tripData?.theme_config} onClose={() => setOptimizeDay(null)} onApplyOptimizedOrder={async (d, acts) => { await updateDay.mutateAsync({ ...d, activities: acts }); }} />}
+            </Suspense>
         </div>
     );
 };

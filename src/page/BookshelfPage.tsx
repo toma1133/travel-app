@@ -38,6 +38,7 @@ const BookshelfPage = () => {
         update: updateTrip,
         remove: removeTrip,
         anyPending: anyTripPending,
+        syncWarning,
     } = useTripMutations();
     const [targetTrip, setTargetTrip] = useState<TripVM | undefined>(undefined);
 
@@ -327,6 +328,7 @@ const BookshelfPage = () => {
                 subtitle="Travel Collections"
                 theme={null}
             />
+            {syncWarning && <p role="alert" className="px-4 py-2 text-sm text-amber-600 dark:text-amber-400">{syncWarning}</p>}
             {isTripsLoading ? (
                 <BookshelfSkeleton />
             ) : (

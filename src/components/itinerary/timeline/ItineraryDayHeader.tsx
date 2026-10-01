@@ -18,7 +18,7 @@ type ItineraryDayHeaderProps = {
     isEditing: boolean;
     isExpanded: boolean;
     isPrinting?: boolean;
-    weatherCoordinates: { lat: number; lng: number };
+    weatherCoordinates: { lat: number; lng: number; hasCoordinates: boolean };
     onToggleExpand: () => void;
     onOptimizeRoute?: (itinerary: ItineraryVM) => void;
     onOpenMap?: (itinerary: ItineraryVM) => void;
@@ -50,10 +50,9 @@ export const ItineraryDayHeader: React.FC<ItineraryDayHeaderProps> = ({
         weatherCoordinates.lat,
         weatherCoordinates.lng,
         itinerary.date,
-        { enabled: !isPrinting && !!itinerary.date }
+        { enabled: !isPrinting && isExpanded && weatherCoordinates.hasCoordinates && !!itinerary.date }
     );
 
-    const hasActivities = Array.isArray(itinerary.activities) && itinerary.activities.length > 0;
     const canOptimize = Array.isArray(itinerary.activities) && itinerary.activities.length >= 2;
     const hasLinkedPlaces = Array.isArray(itinerary.activities) && itinerary.activities.some((a) => a.linkId);
 

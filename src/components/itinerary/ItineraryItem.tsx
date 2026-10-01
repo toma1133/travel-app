@@ -52,28 +52,29 @@ const ItineraryItem = ({
         return (itinerary.activities || []).map((a) => a.linkId).filter(Boolean) as string[];
     }, [itinerary.activities]);
 
-    const hasExternalMap = Boolean(externalPlaceMap && Object.keys(externalPlaceMap).length > 0);
-    const { placeMap: fallbackPlaceMap } = useTripPlacesBatch(itinerary.trip_id, hasExternalMap ? [] : activityLinkIds);
+    const hasExternalMap = externalPlaceMap !== undefined;
+    const { placeMap: fallbackPlaceMap } = useTripPlacesBatch(itinerary.trip_id, hasExternalMap || (!isExpanded && !isPrinting) ? [] : activityLinkIds);
     const placeMap = hasExternalMap ? externalPlaceMap! : fallbackPlaceMap;
 
     const weatherCoordinates = useMemo(() => {
-        let lat = 25.033, lng = 121.565;
+        let lat = 0, lng = 0;
+        let hasCoordinates = false;
         if (Array.isArray(itinerary.activities)) {
             for (const act of itinerary.activities) {
                 if (act.linkId && placeMap[act.linkId]) {
                     const p = placeMap[act.linkId];
                     if (typeof p.lat === "number" && typeof p.lng === "number" && !isNaN(p.lat) && !isNaN(p.lng)) {
-                        lat = p.lat; lng = p.lng; break;
+                        lat = p.lat; lng = p.lng; hasCoordinates = true; break;
                     }
                 }
             }
         }
-        return { lat, lng };
+        return { lat, lng, hasCoordinates };
     }, [itinerary.activities, placeMap]);
 
     const scheduleList = useMemo(() => {
-        return Array.isArray(itinerary.activities) ? computeDayTimelineSchedule(itinerary.activities) : [];
-    }, [itinerary.activities]);
+        return (isExpanded || isPrinting) && Array.isArray(itinerary.activities) ? computeDayTimelineSchedule(itinerary.activities) : [];
+    }, [itinerary.activities, isExpanded, isPrinting]);
 
     return (
         <div className={`group relative transition-all duration-300 ${!isPrinting ? "glass-panel rounded-3xl mb-4 lg:mb-5 overflow-hidden" : "bg-white border-b-2 border-black pb-4 mb-6 overflow-visible block"}`}>

@@ -1,11 +1,13 @@
 import React, { useRef, useEffect } from "react";
 import moment from "moment";
+import useHorizontalScroll from "../../../hooks/UseHorizontalScroll";
 import {
     Calendar,
     MapPin,
     Umbrella,
     CloudRain,
     AlertTriangle,
+    ChevronLeft,
     ChevronRight,
     Plus,
 } from "lucide-react";
@@ -41,7 +43,7 @@ export const ItineraryDayTabBar: React.FC<ItineraryDayTabBarProps> = ({
     isLoadingWeather = false,
     locationName: _locationName,
 }) => {
-    const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const { scrollRef: scrollContainerRef, contentRef, bounds, scrollByPage, handlers } = useHorizontalScroll();
     const activeBtnRef = useRef<HTMLButtonElement>(null);
 
     // 當選取的天數改變時，平滑將選中的膠囊捲動至置中
@@ -49,15 +51,15 @@ export const ItineraryDayTabBar: React.FC<ItineraryDayTabBarProps> = ({
         if (activeBtnRef.current && scrollContainerRef.current) {
             const container = scrollContainerRef.current;
             const btn = activeBtnRef.current;
-            const btnLeft = btn.offsetLeft;
+            const btnLeft = btn.getBoundingClientRect().left - container.getBoundingClientRect().left + container.scrollLeft;
             const btnWidth = btn.offsetWidth;
-            const containerWidth = container.offsetWidth;
+            const containerWidth = container.clientWidth;
             container.scrollTo({
                 left: btnLeft - containerWidth / 2 + btnWidth / 2,
                 behavior: "smooth",
             });
         }
-    }, [selectedDayId]);
+    }, [selectedDayId, bounds.overflow, scrollContainerRef]);
 
     const accentBg = theme?.accent || "bg-primary";
     const todayDate = moment().format("YYYY-MM-DD");
@@ -83,10 +85,17 @@ export const ItineraryDayTabBar: React.FC<ItineraryDayTabBarProps> = ({
     return (
         <div className={`relative w-full rounded-2xl glass-panel p-2 overflow-hidden shadow-sm space-y-2 ${className}`}>
             {/* 整合式天數與天氣滑動列 */}
-            <div
-                ref={scrollContainerRef}
-                className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar scroll-smooth py-0.5 px-0.5"
-            >
+            <div className="flex items-center gap-1.5 min-w-0">
+                {bounds.overflow && (
+                    <button type="button" aria-label="向左捲動天數" title="向左捲動天數" disabled={!bounds.left}
+                        onClick={() => scrollByPage(-1)}
+                        className="hidden lg:inline-flex shrink-0 items-center justify-center w-8 h-8 rounded-xl glass-pill cursor-pointer disabled:opacity-30 disabled:cursor-default">
+                        <ChevronLeft size={16} />
+                    </button>
+                )}
+                <div ref={scrollContainerRef} {...handlers}
+                    className="min-w-0 flex-1 overflow-x-auto no-scrollbar py-0.5 px-0.5 lg:cursor-grab data-[dragging=true]:cursor-grabbing select-none">
+                <div ref={contentRef} className="flex w-max min-w-full items-center gap-1.5 sm:gap-2">
                 {/* 全部天數選項 */}
                 <button
                     ref={selectedDayId === "all" ? activeBtnRef : null}
@@ -244,6 +253,15 @@ export const ItineraryDayTabBar: React.FC<ItineraryDayTabBarProps> = ({
                     >
                         <Plus size={13} className="text-primary" />
                         <span>加一天</span>
+                    </button>
+                )}
+                </div>
+                </div>
+                {bounds.overflow && (
+                    <button type="button" aria-label="向右捲動天數" title="向右捲動天數" disabled={!bounds.right}
+                        onClick={() => scrollByPage(1)}
+                        className="hidden lg:inline-flex shrink-0 items-center justify-center w-8 h-8 rounded-xl glass-pill cursor-pointer disabled:opacity-30 disabled:cursor-default">
+                        <ChevronRight size={16} />
                     </button>
                 )}
             </div>
