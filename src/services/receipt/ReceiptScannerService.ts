@@ -1,28 +1,11 @@
-import type { ParsedReceiptData, ReceiptLineItem, ReceiptScanOptions } from "../../models/types/ReceiptScannerTypes";
+import type {
+    ParsedReceiptData,
+    ReceiptScanOptions,
+} from "../../models/types/ReceiptScannerTypes";
+import { buildReceiptPrompt } from "../../../supabase/functions/gemini-ocr/receiptPrompt";
+import { normalizeReceipt } from "./ReceiptParser";
+export { guessCategoryByName } from "./ReceiptParser";
 import { supabaseClient } from "../SupabaseClient";
-
-/**
- * 根據品項名稱推測分類
- */
-export function guessCategoryByName(name: string): string {
-    const lower = name.toLowerCase();
-    if (/(咖啡|拿鐵|紅茶|綠茶|點心|甜點|蛋糕|抹茶|珍珠|麵包|cafe|coffee|tea|dessert|bakery)/i.test(lower)) {
-        return "cafe";
-    }
-    if (/(定食|拉麵|壽司|燒肉|便當|火鍋|餐|飯|麵|居酒屋|串燒|麥當勞|肯德基|丼|beer|food|meal|dinner|lunch|breakfast)/i.test(lower)) {
-        return "food";
-    }
-    if (/(車票|地鐵|巴士|電車|計程車|suica|pasmo|icoca|ticket|train|bus|metro|taxi)/i.test(lower)) {
-        return "transport";
-    }
-    if (/(門票|入場券|展覽|影城|水族館|迪士尼|環球|museum|aquarium|park)/i.test(lower)) {
-        return "ticket";
-    }
-    if (/(藥妝|面膜|合利他命|eve|保養|伴手禮|餅乾|巧克力|衣服|襯衫|免稅|duty\s*free|donki|唐吉訶德|松本清|uniqlo|gu)/i.test(lower)) {
-        return "shopping";
-    }
-    return "shopping"; // 預設多數收據為購物
-}
 
 class ReceiptScannerService {
     /**
@@ -46,7 +29,9 @@ class ReceiptScannerService {
     /**
      * 將 Blob / File 轉為 base64 字串（不含 data: 前綴）
      */
-    private async blobToBase64(blob: Blob): Promise<{ base64: string; mimeType: string }> {
+    private async blobToBase64(
+        blob: Blob,
+    ): Promise<{ base64: string; mimeType: string }> {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onloadend = () => {
@@ -55,7 +40,10 @@ class ReceiptScannerService {
                 if (match) {
                     resolve({ mimeType: match[1], base64: match[2] });
                 } else {
-                    resolve({ mimeType: blob.type || "image/jpeg", base64: result.split(",")[1] || "" });
+                    resolve({
+                        mimeType: blob.type || "image/jpeg",
+                        base64: result.split(",")[1] || "",
+                    });
                 }
             };
             reader.onerror = reject;
@@ -68,31 +56,56 @@ class ReceiptScannerService {
      */
     async scanReceipt(
         imageBlob: Blob,
-        options?: ReceiptScanOptions
+        options?: ReceiptScanOptions,
     ): Promise<ParsedReceiptData> {
         const apiKey = options?.apiKey || this.getStoredApiKey();
         const tripCurrency = options?.tripCurrency || "JPY";
         const allMemberIds = options?.allMemberIds || [];
+        const knownStores = options?.knownStores || [];
 
         // 1. 優先嘗試呼叫 Supabase Edge Function (後端代理模式，金鑰安全不落地)
         try {
-            const edgeResult = await this.scanWithEdgeFunction(imageBlob, tripCurrency, allMemberIds);
-            if (edgeResult && edgeResult.items.length > 0) {
+            const edgeResult = await this.scanWithEdgeFunction(
+                imageBlob,
+                tripCurrency,
+                allMemberIds,
+                knownStores,
+            );
+            if (
+                edgeResult &&
+                (edgeResult.items.length > 0 || edgeResult.total_amount > 0)
+            ) {
                 return edgeResult;
             }
         } catch (edgeErr) {
-            console.warn("[ReceiptScanner] Supabase Edge Function 調用異常，切換至備援模式:", edgeErr);
+            console.warn(
+                "[ReceiptScanner] Supabase Edge Function 調用異常，切換至備援模式:",
+                edgeErr,
+            );
         }
 
         // 2. 若本地有設定 API Key，嘗試前端直連 Gemini Vision
         if (apiKey) {
             try {
-                const cloudResult = await this.scanWithGeminiVision(imageBlob, apiKey, tripCurrency, allMemberIds);
-                if (cloudResult && cloudResult.items.length > 0) {
+                const cloudResult = await this.scanWithGeminiVision(
+                    imageBlob,
+                    apiKey,
+                    tripCurrency,
+                    allMemberIds,
+                    knownStores,
+                );
+                if (
+                    cloudResult &&
+                    (cloudResult.items.length > 0 ||
+                        cloudResult.total_amount > 0)
+                ) {
                     return cloudResult;
                 }
             } catch (err) {
-                console.warn("[ReceiptScanner] Gemini Vision API 辨識異常，切換至本地智能解析模式:", err);
+                console.warn(
+                    "[ReceiptScanner] Gemini Vision API 辨識異常，切換至本地智能解析模式:",
+                    err,
+                );
             }
         }
 
@@ -106,18 +119,23 @@ class ReceiptScannerService {
     private async scanWithEdgeFunction(
         imageBlob: Blob,
         fallbackCurrency: string,
-        allMemberIds: string[]
+        allMemberIds: string[],
+        knownStores: NonNullable<ReceiptScanOptions["knownStores"]>,
     ): Promise<ParsedReceiptData | null> {
         const { base64, mimeType } = await this.blobToBase64(imageBlob);
 
-        const { data, error } = await supabaseClient.functions.invoke("gemini-ocr", {
-            body: {
-                base64,
-                mimeType,
-                fallbackCurrency,
-                model: "gemini-2.0-flash-lite",
+        const { data, error } = await supabaseClient.functions.invoke(
+            "gemini-ocr",
+            {
+                body: {
+                    base64,
+                    mimeType,
+                    fallbackCurrency,
+                    knownStores,
+                    model: "gemini-2.0-flash-lite",
+                },
             },
-        });
+        );
 
         if (error) {
             console.warn("[ReceiptScanner] Edge Function 回應錯誤:", error);
@@ -127,28 +145,7 @@ class ReceiptScannerService {
         const parsed = data?.data;
         if (!parsed) return null;
 
-        const items: ReceiptLineItem[] = (parsed.items || []).map((item: any) => ({
-            id: crypto.randomUUID(),
-            name: item.name || "消費項目",
-            amount: Number(item.amount) || 0,
-            quantity: Number(item.quantity) || 1,
-            category: item.category || guessCategoryByName(item.name || ""),
-            split_with: [...allMemberIds],
-            is_payer_included: true,
-            selected: true,
-        }));
-
-        const calculatedSum = items.reduce((sum, item) => sum + item.amount, 0);
-
-        return {
-            store_name: parsed.store_name || "收據店家",
-            date: parsed.date || new Date().toISOString().split("T")[0],
-            currency: parsed.currency || fallbackCurrency,
-            total_amount: Number(parsed.total_amount) || calculatedSum,
-            items,
-            confidence: 0.95,
-            source: "gemini_vision",
-        };
+        return normalizeReceipt(parsed, fallbackCurrency, allMemberIds);
     }
 
     /**
@@ -158,30 +155,15 @@ class ReceiptScannerService {
         imageBlob: Blob,
         apiKey: string,
         fallbackCurrency: string,
-        allMemberIds: string[]
+        allMemberIds: string[],
+        knownStores: NonNullable<ReceiptScanOptions["knownStores"]>,
     ): Promise<ParsedReceiptData> {
         const { base64, mimeType } = await this.blobToBase64(imageBlob);
 
-        const prompt = `You are an expert OCR receipt parser for travelers. Analyze this receipt or invoice image.
-Extract the following information as strict JSON (no markdown ticks or extra explanations):
-{
-  "store_name": "Store name on receipt or 'Unknown Store'",
-  "date": "YYYY-MM-DD if found, otherwise today's date",
-  "currency": "Standard 3-letter currency code (e.g. JPY, TWD, USD, EUR, KRW) found on receipt, default ${fallbackCurrency}",
-  "total_amount": 0, // total sum indicated on receipt
-  "items": [
-    {
-      "name": "Line item product or service name",
-      "amount": 0, // total amount for this line
-      "quantity": 1,
-      "category": "one of: food, shopping, transport, ticket, cafe, other"
-    }
-  ]
-}
-Ensure amounts are positive numbers. Extract all legible line items.`;
+        const prompt = buildReceiptPrompt(fallbackCurrency, knownStores);
 
         const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`,
             {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -204,7 +186,7 @@ Ensure amounts are positive numbers. Extract all legible line items.`;
                         responseMimeType: "application/json",
                     },
                 }),
-            }
+            },
         );
 
         if (!response.ok) {
@@ -222,28 +204,7 @@ Ensure amounts are positive numbers. Extract all legible line items.`;
         const cleanedText = text.replace(/```json\n?|\n?```/g, "").trim();
         const parsed = JSON.parse(cleanedText);
 
-        const items: ReceiptLineItem[] = (parsed.items || []).map((item: any) => ({
-            id: crypto.randomUUID(),
-            name: item.name || "消費項目",
-            amount: Number(item.amount) || 0,
-            quantity: Number(item.quantity) || 1,
-            category: item.category || guessCategoryByName(item.name || ""),
-            split_with: [...allMemberIds],
-            is_payer_included: true,
-            selected: true,
-        }));
-
-        const calculatedSum = items.reduce((sum, item) => sum + item.amount, 0);
-
-        return {
-            store_name: parsed.store_name || "收據店家",
-            date: parsed.date || new Date().toISOString().split("T")[0],
-            currency: parsed.currency || fallbackCurrency,
-            total_amount: Number(parsed.total_amount) || calculatedSum,
-            items,
-            source: "gemini_vision",
-            confidence: 0.95,
-        };
+        return normalizeReceipt(parsed, fallbackCurrency, allMemberIds);
     }
 
     /**
@@ -252,7 +213,7 @@ Ensure amounts are positive numbers. Extract all legible line items.`;
     private scanWithLocalEngine(
         _imageBlob: Blob,
         currency: string,
-        _allMemberIds: string[]
+        _allMemberIds: string[],
     ): ParsedReceiptData {
         const todayStr = new Date().toISOString().split("T")[0];
 

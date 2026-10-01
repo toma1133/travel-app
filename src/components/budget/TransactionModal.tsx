@@ -1,15 +1,12 @@
-import React, { ChangeEventHandler, FormEventHandler, MouseEventHandler, useState, useEffect } from "react";
+import React, { ChangeEventHandler, MouseEventHandler, useState, useEffect } from "react";
 import {
     Calendar,
     Trash2,
-    Users,
     Check,
     Wallet,
-    DollarSign,
     Calculator,
     Receipt,
     Plus,
-    ListOrdered,
 } from "lucide-react";
 import { GlassModal, GlassSegmentedControl } from "../ui";
 import { CategoryCustomSelect } from "../common/CategoryCustomSelect";
@@ -35,7 +32,10 @@ export type TransactionModalProps = {
     onDeleteBtnClick: (budgetItem: BudgetRow) => void;
     onFormDataChange: (name: string, value?: any) => void;
     onFormInputChange: ChangeEventHandler<HTMLInputElement>;
-    onFormSubmit: FormEventHandler<HTMLFormElement>;
+    onFormSubmit: (event: React.FormEvent<HTMLFormElement>, splitMode?: "simple" | "itemized") => void;
+    receiptPreviewUrl?: string;
+    receiptMessage?: string;
+    isSaving?: boolean;
 };
 
 export const TransactionModal: React.FC<TransactionModalProps> = ({
@@ -49,6 +49,9 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
     onFormDataChange,
     onFormInputChange,
     onFormSubmit,
+    receiptPreviewUrl,
+    receiptMessage,
+    isSaving = false,
 }) => {
     const [activeTab, setActiveTab] = useState<string>("basic");
 
@@ -59,10 +62,12 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
     const itemsTotal = receiptItems.reduce((sum, it) => sum + (Number(it.amount) || 0), 0);
 
     const handleAddSubItem = () => {
-        const allIds = tripMembers.map((m) => m.user_id).filter(Boolean);
+        const allIds = Array.from(new Set([formData.user_id, ...tripMembers.map((m) => m.user_id)].filter(Boolean)));
         const newItem: BudgetSubItem = {
             id: crypto.randomUUID(),
             name: "",
+            original_name: "",
+            quantity: 1,
             amount: 0,
             category: formData.category || "shopping",
             split_with: allIds,
@@ -85,10 +90,11 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
 
     const handleToggleSubItemMember = (index: number, userId: string) => {
         const item = receiptItems[index];
-        const current = item.split_with || [];
+        const current = Array.from(new Set([...(item.split_with || []), ...(item.is_payer_included !== false ? [formData.user_id] : [])]));
         const exists = current.includes(userId);
+        if (exists && current.length <= 1) return;
         const next = exists ? current.filter((id) => id !== userId) : [...current, userId];
-        handleUpdateSubItem(index, { split_with: next });
+        handleUpdateSubItem(index, { split_with: next, is_payer_included: next.includes(formData.user_id) });
     };
 
     const [displayAmount, setDisplayAmount] = useState<string>(
@@ -123,7 +129,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
             : 0;
 
     return (
-        <GlassModal isOpen={true} onClose={() => onCloseBtnClick({} as any)} maxWidth="md" className="md:!max-w-[460px]">
+        <GlassModal isOpen={true} onClose={() => { if (!isSaving) onCloseBtnClick({} as any); }} maxWidth="2xl" className="md:!max-w-[760px]">
             <GlassModal.Header
                 title={
                     <div className="flex items-center justify-center gap-1.5">
@@ -131,19 +137,33 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                         <span className="truncate">{mode === "create" ? "新增支出帳目" : "編輯支出帳目"}</span>
                     </div>
                 }
-                onClose={() => onCloseBtnClick({} as any)}
+                onClose={() => { if (!isSaving) onCloseBtnClick({} as any); }}
                 rightAction={
                     <button
                         type="submit"
                         form="transaction-form"
+                        disabled={isSaving}
                         className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-full shadow-xs active:scale-95 transition-all cursor-pointer shrink-0"
                     >
-                        {mode === "create" ? "完成" : "儲存"}
+                        {isSaving ? "儲存中…" : mode === "create" ? "完成" : "儲存"}
                     </button>
                 }
             />
 
             <GlassModal.Body className="p-4 sm:p-6 space-y-4 max-h-[75vh] overflow-y-auto no-scrollbar">
+                {receiptPreviewUrl && (
+                    <details className="rounded-2xl border border-border p-3 text-xs">
+                        <summary className="cursor-pointer font-bold">檢視收據照片與辨識資訊</summary>
+                        <p className="my-2 text-muted-foreground">{receiptMessage || "辨識結果已帶入下方欄位，請確認後儲存。"}</p>
+                        <img src={receiptPreviewUrl} alt="待記帳收據" className="max-h-64 w-full object-contain rounded-lg" />
+                    </details>
+                )}
+                {receiptItems.length > 0 && Math.abs(Number(formData.amount) - itemsTotal) > 0.005 && (
+                    <p className="rounded-xl bg-amber-50 dark:bg-amber-950/30 p-3 text-xs text-amber-700 dark:text-amber-300">
+                        細項合計 {formData.currency_code} {itemsTotal.toLocaleString()}，與帳目總額相差 {(Number(formData.amount) - itemsTotal).toLocaleString()}。
+                        請確認稅金、服務費或折扣；差額會依整筆帳目的分攤對象分攤。
+                    </p>
+                )}
                 {/* 分頁切換 (基本記帳 / 分帳設定) */}
                 <GlassSegmentedControl
                     value={activeTab}
@@ -151,7 +171,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                     options={[
                         { label: "💵 基本記帳", value: "basic" },
                         {
-                            label: `👥 分帳設定 ${
+                            label: `👥 細項與分帳 ${
                                 formData.split_with && formData.split_with.length > 0
                                     ? `(${formData.split_with.length})`
                                     : ""
@@ -162,7 +182,8 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                     size="sm"
                 />
 
-                <form id="transaction-form" onSubmit={onFormSubmit} className="space-y-4">
+                <form id="transaction-form" onSubmit={(e) => onFormSubmit(e, splitMode)} className="space-y-4">
+                    <fieldset disabled={isSaving} className="space-y-4">
                     {/* 💵 Tab 1: 基本記帳 */}
                     {activeTab === "basic" && (
                         <div className="space-y-4">
@@ -174,8 +195,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                                     </span>
                                     {/* 幣別切換膠囊 */}
                                     <div className="flex bg-slate-100 dark:bg-white/5 p-0.5 rounded-xl border border-slate-200 dark:border-white/10">
-                                        {[setting?.localCurrency, setting?.homeCurrency]
-                                            .filter(Boolean)
+                                        {Array.from(new Set([formData.currency_code, setting?.localCurrency, setting?.homeCurrency].filter(Boolean)))
                                             .map((curr) => (
                                                 <button
                                                     key={curr}
@@ -205,7 +225,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                                         onChange={handleAmountChange}
                                         onFocus={(e) => e.currentTarget.select()}
                                         placeholder="0"
-                                        className="flex-1 bg-transparent text-3xl sm:text-4xl font-mono font-black text-neutral-900 dark:text-neutral-100 outline-none tracking-tight placeholder:text-neutral-300 dark:placeholder:text-neutral-700"
+                                        className="min-w-0 flex-1 bg-transparent text-3xl sm:text-4xl font-mono font-black text-neutral-900 dark:text-neutral-100 outline-none tracking-tight placeholder:text-neutral-300 dark:placeholder:text-neutral-700"
                                     />
                                 </div>
 
@@ -222,7 +242,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                                     // 計算每位成員應付的細項總額
                                     const memberTotals: Record<string, number> = {};
                                     receiptItems.forEach((item) => {
-                                        const participants = item.split_with || [];
+                                        const participants = Array.from(new Set([...(item.split_with || []), ...(item.is_payer_included !== false ? [formData.user_id] : [])]));
                                         if (participants.length === 0 || !item.amount) return;
                                         const share = Math.round(item.amount / participants.length);
                                         participants.forEach((uid) => {
@@ -276,6 +296,12 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                                         />
                                     </div>
 
+                                    <label className="p-3.5 flex items-center gap-3">
+                                        <span className="text-xs font-bold w-16 shrink-0">備註</span>
+                                        <input type="text" name="notes" value={formData.notes || ""}
+                                            onChange={onFormInputChange} placeholder="原文店名或其他備註"
+                                            className="min-w-0 flex-1 bg-transparent text-xs outline-none" />
+                                    </label>
                                     {/* 分類 */}
                                     <div className="p-3.5">
                                         <CategoryCustomSelect
@@ -285,6 +311,17 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                                         />
                                     </div>
 
+                                    {mode === "create" && tripMembers.length > 0 && (
+                                        <label className="p-3.5 flex items-center justify-between gap-3">
+                                            <span className="text-xs font-bold">付款人</span>
+                                            <select aria-label="付款人" value={formData.user_id}
+                                                onChange={(e) => onFormDataChange("user_id", e.target.value)}
+                                                className="bg-neutral-50 dark:bg-neutral-800 border border-border rounded-xl px-3 py-1.5 text-xs">
+                                                {!tripMembers.some((member) => member.user_id === formData.user_id) && <option value={formData.user_id}>自己</option>}
+                                                {tripMembers.map((member) => <option key={member.user_id} value={member.user_id}>{member.profiles?.username || member.user_id.slice(0, 5)}</option>)}
+                                            </select>
+                                        </label>
+                                    )}
                                     {/* 支付方式 */}
                                     <div className="p-3.5 flex items-center justify-between gap-3">
                                         <div className="flex items-center gap-2">
@@ -296,6 +333,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                                         <select
                                             id="payment_method"
                                             name="payment_method_id"
+                                            required
                                             value={formData.payment_method_id || ""}
                                             onChange={(e) => onFormDataChange("payment_method_id", e.target.value)}
                                             className="bg-neutral-50 dark:bg-neutral-800 border border-black/15 dark:border-white/15 rounded-xl px-3 py-1.5 text-xs text-neutral-900 dark:text-neutral-100 font-medium outline-none cursor-pointer shadow-2xs"
@@ -465,7 +503,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                                             <p className="text-xs text-muted-foreground">尚無商品細項，請點選上方「新增細項」</p>
                                         </div>
                                     ) : (
-                                        <div className="space-y-2 max-h-60 overflow-y-auto no-scrollbar pr-1">
+                                        <div className="space-y-2">
                                             {receiptItems.map((item, idx) => (
                                                 <div
                                                     key={item.id || idx}
@@ -476,8 +514,9 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                                                             type="text"
                                                             value={item.name}
                                                             onChange={(e) => handleUpdateSubItem(idx, { name: e.target.value })}
-                                                            placeholder="商品名稱 (例: 咖啡)"
-                                                            className="flex-1 bg-transparent text-xs font-bold text-foreground placeholder:text-muted-foreground/60 border-b border-dashed border-slate-200 dark:border-neutral-700 pb-1 focus:outline-none focus:border-blue-500"
+                                                            aria-label={`品項 ${idx + 1} 中文名稱`}
+                                                            placeholder="商品中文名稱 (例: 咖啡)"
+                                                            className="min-w-0 flex-1 bg-transparent text-xs font-bold text-foreground placeholder:text-muted-foreground/60 border-b border-dashed border-slate-200 dark:border-neutral-700 pb-1 focus:outline-none focus:border-blue-500"
                                                         />
                                                         <div className="flex items-center gap-1 shrink-0">
                                                             <span className="text-xs font-bold text-neutral-400">$</span>
@@ -485,7 +524,9 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                                                                 type="number"
                                                                 value={item.amount || ""}
                                                                 onChange={(e) => handleUpdateSubItem(idx, { amount: Number(e.target.value) || 0 })}
-                                                                placeholder="金額"
+                                                                aria-label={`品項 ${idx + 1} 整列金額`}
+                                                                step="any"
+                                                                placeholder="整列金額"
                                                                 className="w-20 bg-transparent text-xs font-mono font-bold text-foreground text-right border-b border-dashed border-slate-200 dark:border-neutral-700 pb-1 focus:outline-none focus:border-blue-500"
                                                             />
                                                         </div>
@@ -498,11 +539,27 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                                                         </button>
                                                     </div>
 
+                                                    <div className="grid grid-cols-[minmax(0,1fr)_5rem] gap-3">
+                                                        <label className="text-[10px] text-muted-foreground">
+                                                            原文名稱
+                                                            <input type="text" value={item.original_name || ""}
+                                                                onChange={(e) => handleUpdateSubItem(idx, { original_name: e.target.value })}
+                                                                placeholder="收據上的原文"
+                                                                className="mt-1 w-full bg-transparent border-b border-border py-1 text-xs text-foreground outline-none" />
+                                                        </label>
+                                                        <label className="text-[10px] text-muted-foreground">
+                                                            數量
+                                                            <input type="number" min="0.001" step="any" required value={item.quantity ?? 1}
+                                                                onChange={(e) => handleUpdateSubItem(idx, { quantity: Number(e.target.value) })}
+                                                                className="mt-1 w-full bg-transparent border-b border-border py-1 text-xs text-foreground outline-none" />
+                                                        </label>
+                                                    </div>
+                                                    <p className="text-[10px] text-muted-foreground">金額為整列小計，已包含數量。</p>
                                                     {/* 成員分攤標籤 */}
                                                     <div className="flex flex-wrap items-center gap-1.5 pt-1">
                                                         <span className="text-[10px] text-muted-foreground mr-1">分攤:</span>
                                                         {tripMembers.map((tm) => {
-                                                            const isSelected = item.split_with?.includes(tm.user_id);
+                                                            const isSelected = item.split_with?.includes(tm.user_id) || (tm.user_id === formData.user_id && item.is_payer_included !== false);
                                                             return (
                                                                 <button
                                                                     key={tm.user_id}
@@ -592,6 +649,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                             </button>
                         </div>
                     )}
+                    </fieldset>
                 </form>
             </GlassModal.Body>
         </GlassModal>

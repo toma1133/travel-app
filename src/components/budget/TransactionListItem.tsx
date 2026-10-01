@@ -327,7 +327,7 @@ const TransactionListItem = ({
                         <div className="mt-2 pt-2 border-t border-slate-100 dark:border-neutral-800/80 space-y-1.5 text-xs animate-in fade-in duration-150">
                             {budgetItem.receipt_items.map((sub, sIdx) => {
                                 // split_with 在細項中包含所有參與者（含付款人）
-                                const subParticipants = sub.split_with || [];
+                                const subParticipants = Array.from(new Set([...(sub.split_with || []), ...(sub.is_payer_included !== false ? [budgetItem.user_id] : [])]));
                                 const subParticipantCount = subParticipants.length;
                                 const subPerPerson = subParticipantCount > 0 && sub.amount > 0
                                     ? Math.round(sub.amount / subParticipantCount)
@@ -342,8 +342,11 @@ const TransactionListItem = ({
                                     >
                                         <div className="flex flex-col gap-0.5 min-w-0 pr-2">
                                             <span className="font-semibold text-slate-800 dark:text-neutral-200 truncate">
-                                                {sub.name || "未命名商品"}
+                                                {sub.name || "未命名商品"} × {sub.quantity ?? 1}
                                             </span>
+                                            {sub.original_name && sub.original_name !== sub.name && (
+                                                <span className="text-[10px] break-words">{sub.original_name}</span>
+                                            )}
                                             {splitNames && (
                                                 <span className="text-[10px] text-blue-600 dark:text-blue-400">
                                                     👤 {splitNames}
@@ -363,6 +366,7 @@ const TransactionListItem = ({
                             })}
                         </div>
                     )}
+                    {budgetItem.notes && <p className="text-[10px] text-muted-foreground mt-1 break-words">{budgetItem.notes}</p>}
                     {/* 支付方式 (列印顯示) */}
                     {isPrinting && (
                         <div className="text-[10px] text-muted-foreground mt-0.5 italic">

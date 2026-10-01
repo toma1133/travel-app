@@ -1,6 +1,7 @@
 export interface ReceiptLineItem {
     id: string;
     name: string;
+    original_name?: string;
     amount: number;
     quantity?: number;
     category: string;
@@ -11,6 +12,9 @@ export interface ReceiptLineItem {
 
 export interface ParsedReceiptData {
     store_name: string;
+    original_store_name?: string;
+    category?: string;
+    category_reason?: string;
     date: string;
     currency: string;
     total_amount: number;
@@ -25,4 +29,13 @@ export interface ReceiptScanOptions {
     tripCurrency?: string;
     defaultPayerId?: string;
     allMemberIds?: string[];
+    knownStores?: ReceiptStoreContext[];
+}
+
+export interface ReceiptStoreContext {
+    name: string;
+    original_name?: string;
+    category?: string;
+    address?: string;
+    phone?: string;
 }

@@ -9,6 +9,10 @@ import useBudgets from "../../hooks/budget/UseBudgets";
 import useBudgetMutations from "../../hooks/budget/UseBudgetMutations";
 import usePaymentMethods from "../../hooks/budget/UsePaymentMethods";
 import usePaymentMethodMutations from "../../hooks/budget/UsePaymentMethodMutations";
+import usePlaces from "../../hooks/place/UsePlaces";
+import { ImageVaultDB } from "../../services/storage/ImageVaultDB";
+import { prepareBudgetForSave } from "../../utils/BudgetReceiptUtil";
+import { compressImage } from "../../utils/ImageCompressor";
 import useProfiles from "../../hooks/profile/UseProfiles";
 import useTripMembers from "../../hooks/tripMember/UseTripMembers";
 import useTripMutations from "../../hooks/trip/UseTripMutations";
@@ -21,7 +25,6 @@ import TransactionList from "../../components/budget/TransactionList";
 import TransactionModal from "../../components/budget/TransactionModal";
 import TransactionFilterModal from "../../components/budget/TransactionFilterModal";
 import QuickExpenseBar from "../../components/budget/QuickExpenseBar";
-import ReceiptBatchSplitModal from "../../components/budget/ReceiptBatchSplitModal";
 import ReceiptViewerModal from "../../components/budget/ReceiptViewerModal";
 import SmartSettlementModal from "../../components/budget/SmartSettlementModal";
 import FloatingCurrencyConverter from "../../components/shopping/FloatingCurrencyConverter";
@@ -30,7 +33,7 @@ import { useTripReceipts } from "../../hooks/budget/useTripReceipts";
 import { usePaymentMethodSettings } from "../../components/budget/usePaymentMethodSettings";
 import type BookLayoutContextType from "../../models/types/BookLayoutContextTypes";
 import type LayoutContextType from "../../models/types/LayoutContextTypes";
-import type { BudgetRow, BudgetRowInsert } from "../../models/types/BudgetTypes";
+import type { BudgetRow } from "../../models/types/BudgetTypes";
 import type { ParsedReceiptData } from "../../models/types/ReceiptScannerTypes";
 import type { TransactionFilterType } from "../../models/types/TransactionFilterTypes";
 import type { TripVM } from "../../models/types/TripTypes";
@@ -56,6 +59,7 @@ const BudgetPage: React.FC<BudgetPageProps> = ({
     const { insert: insertBudget, update: updateBudget, remove: removeBudget, anyPending: anyBudgetPending } = useBudgetMutations();
     const { data: paymentMethods, isLoading: isPaymentMethodsLoading } = usePaymentMethods(tripId, session?.user.id);
     const { upsert: upsertPaymentMethod, remove: removePaymentMethod, anyPending: anyPaymentMethodPending } = usePaymentMethodMutations();
+    const { data: places } = usePlaces(tripId);
     const { data: profiles, isLoading: isProfilesLoading } = useProfiles(true);
     const { data: tripMembers, isLoading: isTripMembersLoading } = useTripMembers(tripId, true);
     const { update: updateTrip, anyPending: anyTripPending } = useTripMutations();
@@ -136,7 +140,7 @@ const BudgetPage: React.FC<BudgetPageProps> = ({
         currency_code: tripData?.settings_config?.localCurrency || "",
         expense_date: moment().format("YYYY-MM-DD"), id: crypto.randomUUID(),
         payment_method_id: paymentMethods?.[0]?.id || "",
-        title: "", trip_id: tripId || "", updated_at: null,
+        title: "", notes: "", trip_id: tripId || "", updated_at: null,
         user_id: session ? session.user.id : "", split_with: [],
         is_payer_included: true, settled_with: [],
     }), [tripId, session, tripData, paymentMethods]);
@@ -200,17 +204,47 @@ const BudgetPage: React.FC<BudgetPageProps> = ({
     const { receiptMap, refreshReceipts } = useTripReceipts(tripId);
     const mobileReceiptInputRef = useRef<HTMLInputElement>(null);
     const [isScanningReceipt, setIsScanningReceipt] = useState(false);
-    const [batchSplitData, setBatchSplitData] = useState<{ parsed: ParsedReceiptData; file: File } | null>(null);
+    const [receiptDraft, setReceiptDraft] = useState<{ parsed: ParsedReceiptData; file: File; previewUrl: string } | null>(null);
     const [viewingReceipt, setViewingReceipt] = useState<{ imageId?: string; title?: string; date?: string; amount?: number; currency?: string } | null>(null);
 
+    const receiptPreviewUrl = receiptDraft?.previewUrl;
+    const [isSavingBudget, setIsSavingBudget] = useState(false);
+    const savingBudgetRef = useRef(false);
+    useEffect(() => {
+        return () => { if (receiptDraft) URL.revokeObjectURL(receiptDraft.previewUrl); };
+    }, [receiptDraft]);
+    const closeBudgetModal = () => {
+        if (savingBudgetRef.current) return;
+        setIsBudgetModalOpen(false);
+        setReceiptDraft(null);
+    };
+
     const handleReceiptFileSelected = async (file: File) => {
+        if (isScanningReceipt || savingBudgetRef.current) return;
         setIsScanningReceipt(true);
         try {
             const parsed = await ReceiptScanner.scanReceipt(file, {
                 tripCurrency: tripData?.settings_config?.localCurrency || "JPY",
-                allMemberIds: tripMembers?.map((m) => m.user_id).filter(Boolean) as string[],
+                allMemberIds: Array.from(new Set([session?.user.id || "", ...(tripMembers?.map((m) => m.user_id) || [])].filter(Boolean))),
+                knownStores: (places || []).slice(0, 100).map((place) => ({
+                    name: place.name, original_name: place.info?.native_name || undefined,
+                    category: place.type || undefined, address: place.info?.loc || undefined,
+                    phone: place.info?.phone || undefined,
+                })),
             });
-            setBatchSplitData({ parsed, file });
+            setReceiptDraft({ parsed, file, previewUrl: URL.createObjectURL(file) });
+            setBudgetModalMode("create");
+            const payerId = session?.user.id || "";
+            setFormBudget({
+                ...initialBudgetState, id: crypto.randomUUID(),
+                title: parsed.store_name, notes: parsed.original_store_name || "",
+                category: parsed.category || "other", amount: parsed.total_amount,
+                currency_code: parsed.currency, expense_date: parsed.date,
+                receipt_items: parsed.items.length > 0 ? parsed.items : null,
+                split_with: Array.from(new Set(parsed.items.flatMap((item) => item.split_with))).filter((id) => id !== payerId),
+                is_payer_included: true,
+            });
+            setIsBudgetModalOpen(true);
         } catch (err) {
             console.error("收據辨識出錯:", err);
             alert("收據解析失敗，請重試或確認照片是否清晰");
@@ -219,24 +253,52 @@ const BudgetPage: React.FC<BudgetPageProps> = ({
         }
     };
 
-    const handleBatchInsertBudgets = async (items: BudgetRowInsert[]) => {
-        for (const item of items) {
-            await insertBudget.mutateAsync(item);
-        }
-        await refreshReceipts();
-    };
-
-    const handleBudgetSubmit = async (e: FormEvent) => {
+    const handleBudgetSubmit = async (e: FormEvent, splitMode?: "simple" | "itemized") => {
         e.preventDefault();
+        if (savingBudgetRef.current) return;
+        if (!formBudget.title.trim() || !formBudget.payment_method_id || !formBudget.currency_code || !formBudget.expense_date || !Number.isFinite(Number(formBudget.amount)) || Number(formBudget.amount) <= 0) {
+            alert("請在基本記帳填寫名稱、日期、幣別、支付方式及大於零的金額。");
+            return;
+        }
+        if (formBudget.receipt_items?.some((item) => !Number.isFinite(Number(item.amount)) || !Number.isFinite(item.quantity ?? 1) || (item.quantity ?? 1) <= 0)) {
+            alert("請確認品項金額與大於零的數量。");
+            return;
+        }
+        if (splitMode === "simple" && formBudget.is_payer_included === false && !formBudget.split_with?.length) {
+            alert("請至少選擇一位分攤對象。");
+            return;
+        }
+        savingBudgetRef.current = true;
+        setIsSavingBudget(true);
+        const row = prepareBudgetForSave(formBudget, splitMode);
         try {
-            if (budgetModalMode === "create") {
-                await insertBudget.mutateAsync({ ...formBudget, id: crypto.randomUUID() });
-            } else {
-                await updateBudget.mutateAsync(formBudget);
+            if (budgetModalMode === "create") await insertBudget.mutateAsync(row);
+            else await updateBudget.mutateAsync(row);
+            if (receiptDraft) {
+                try {
+                    const compressed = await compressImage(receiptDraft.file, { maxDimension: 1200, quality: 0.75, preferredMimeType: "image/jpeg" });
+                    await ImageVaultDB.saveImage({
+                        id: `receipt_${crypto.randomUUID()}`, trip_id: tripId || "", type: "receipt",
+                        name: `${row.title || "收據"}_${row.expense_date}`, blob: compressed.blob,
+                        mime_type: compressed.blob.type || "image/jpeg",
+                        meta: { budget_ids: [row.id], store_name: row.title, original_store_name: receiptDraft.parsed.original_store_name, total_amount: row.amount, currency: row.currency_code },
+                    });
+                    await refreshReceipts();
+                } catch (imageError) {
+                    console.error("收據照片儲存失敗:", imageError);
+                    alert("帳目已儲存，但收據照片未能儲存。請保留原始照片。");
+                }
             }
+            setReceiptDraft(null);
             setFormBudget(initialBudgetState);
             setIsBudgetModalOpen(false);
-        } catch (err) { console.error(err); }
+        } catch (err) {
+            console.error(err);
+            alert("記帳儲存失敗，請檢查網路連線後重試。");
+        } finally {
+            savingBudgetRef.current = false;
+            setIsSavingBudget(false);
+        }
     };
 
     const handleConfirmDelete = async () => {
@@ -412,10 +474,22 @@ const BudgetPage: React.FC<BudgetPageProps> = ({
                 <TransactionModal
                     categories={budgetCategory} formData={formBudget} mode={budgetModalMode}
                     paymentMethods={paymentMethods} setting={currentSetting} theme={currentTheme}
-                    tripMembers={tripMembers} onCloseBtnClick={() => setIsBudgetModalOpen(false)}
+                    tripMembers={tripMembers} onCloseBtnClick={closeBudgetModal}
+                    receiptPreviewUrl={receiptPreviewUrl}
+                    receiptMessage={receiptDraft?.parsed.source === "manual" ? "未取得辨識結果，請參照照片手動輸入。" : receiptDraft?.parsed.category_reason}
+                    isSaving={isSavingBudget}
                     onDeleteBtnClick={(item) => { setBudgetToDelete(item); setIsDeleteModalOpen(true); }}
                     onFormDataChange={(name, value) => {
-                        if (name === "split_with" || name === "settled_with") {
+                        if (name === "user_id") {
+                            setFormBudget((prev) => {
+                                const participants = Array.from(new Set([...(prev.split_with || []), ...(prev.is_payer_included !== false ? [prev.user_id] : [])]));
+                                return { ...prev, user_id: value, split_with: participants.filter((id) => id !== value), is_payer_included: participants.includes(value),
+                                    receipt_items: prev.receipt_items?.map((item) => {
+                                        const ids = Array.from(new Set([...(item.split_with || []), ...(item.is_payer_included !== false ? [prev.user_id] : [])]));
+                                        return { ...item, split_with: ids, is_payer_included: ids.includes(value) };
+                                    }) };
+                            });
+                        } else if (name === "split_with" || name === "settled_with") {
                             const field = name as "split_with" | "settled_with";
                             const val = value!.toString();
                             const arr = formBudget[field] || [];
@@ -461,24 +535,6 @@ const BudgetPage: React.FC<BudgetPageProps> = ({
                         </p>
                     </div>
                 </div>
-            )}
-
-            {/* 收據批次拆帳確認視窗 */}
-            {batchSplitData && (
-                <ReceiptBatchSplitModal
-                    parsedData={batchSplitData.parsed}
-                    imageFile={batchSplitData.file}
-                    tripId={tripId || ""}
-                    currentUserId={session?.user.id || ""}
-                    paymentMethods={paymentMethods}
-                    tripMembers={tripMembers}
-                    defaultCurrency={tripData?.settings_config?.localCurrency || tripData?.settings_config?.homeCurrency || "TWD"}
-                    onClose={() => setBatchSplitData(null)}
-                    onBatchSaved={() => {
-                        setBatchSplitData(null);
-                    }}
-                    insertBudgetBatch={handleBatchInsertBudgets}
-                />
             )}
 
             {/* 收據照片燈箱檢視器 */}

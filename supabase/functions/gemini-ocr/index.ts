@@ -1,3 +1,4 @@
+import { buildReceiptPrompt } from "./receiptPrompt.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
@@ -35,6 +36,7 @@ serve(async (req) => {
             base64,
             mimeType = "image/jpeg",
             fallbackCurrency = "JPY",
+            knownStores = [],
             model = "gemini-2.0-flash-lite",
         } = body;
 
@@ -53,23 +55,10 @@ serve(async (req) => {
             );
         }
 
-        const prompt = `You are an expert OCR receipt parser for travelers. Analyze this receipt or invoice image.
-Extract the following information as strict JSON (no markdown ticks or extra explanations):
-{
-  "store_name": "Store name on receipt or 'Unknown Store'",
-  "date": "YYYY-MM-DD if found, otherwise today's date",
-  "currency": "Standard 3-letter currency code (e.g. JPY, TWD, USD, EUR, KRW) found on receipt, default ${fallbackCurrency}",
-  "total_amount": 0,
-  "items": [
-    {
-      "name": "Line item product or service name",
-      "amount": 0,
-      "quantity": 1,
-      "category": "one of: food, shopping, transport, ticket, cafe, other"
-    }
-  ]
-}
-Ensure amounts are positive numbers. Extract all legible line items.`;
+        const prompt = buildReceiptPrompt(
+            fallbackCurrency,
+            Array.isArray(knownStores) ? knownStores.slice(0, 100) : [],
+        );
 
         // 支援多模型備選切換 (優先使用指定的 flash-lite，若失敗自動 fallback 至 1.5-flash / 2.0-flash)
         const candidateModels = [

@@ -26,80 +26,34 @@ export const budgetRepo: IRepo<BudgetRow, BudgetRowInsert, BudgetRowUpdate, stri
         return (data as unknown as BudgetRow[]) ?? [];
     },
     async insert(payload: BudgetRowInsert): Promise<BudgetRow | null> {
-        try {
-            const { data, error } = await supabaseClient
-                .from("budget_items")
-                .insert(payload as any)
-                .select("*")
-                .single();
-            if (error) throw error;
-            return data as unknown as BudgetRow;
-        } catch (error: any) {
-            if (payload.receipt_items && (error.message?.includes("receipt_items") || error.details?.includes("receipt_items") || error.code === "PGRST204" || error.code === "42703")) {
-                console.warn("Supabase 尚未新增 receipt_items 欄位，略過該欄位重試。請記得在 Supabase 執行 migration。");
-                const { receipt_items, ...rest } = payload;
-                const { data, error: retryErr } = await supabaseClient
-                    .from("budget_items")
-                    .insert(rest as any)
-                    .select("*")
-                    .single();
-                if (retryErr) throw retryErr;
-                return data as unknown as BudgetRow;
-            }
-            throw error;
-        }
+        const { data, error } = await supabaseClient
+            .from("budget_items")
+            .insert(payload as any)
+            .select("*")
+            .single();
+        if (error) throw error;
+        return data as unknown as BudgetRow;
     },
     async update(patch: Partial<BudgetRowUpdate>): Promise<BudgetRow | null> {
         if (patch.id === null || patch.id === undefined) throw "ID is null";
-        try {
-            const { data, error } = await supabaseClient
-                .from("budget_items")
-                .update(patch as any)
-                .eq("id", patch.id)
-                .select("*")
-                .single();
+        const { data, error } = await supabaseClient
+            .from("budget_items")
+            .update(patch as any)
+            .eq("id", patch.id)
+            .select("*")
+            .single();
 
-            if (error) throw error;
-            return data as unknown as BudgetRow;
-        } catch (error: any) {
-            if (patch.receipt_items && (error.message?.includes("receipt_items") || error.details?.includes("receipt_items") || error.code === "PGRST204" || error.code === "42703")) {
-                console.warn("Supabase 尚未新增 receipt_items 欄位，略過該欄位重試更新。");
-                const { receipt_items, ...rest } = patch;
-                const { data, error: retryErr } = await supabaseClient
-                    .from("budget_items")
-                    .update(rest as any)
-                    .eq("id", patch.id)
-                    .select("*")
-                    .single();
-                if (retryErr) throw retryErr;
-                return data as unknown as BudgetRow;
-            }
-            throw error;
-        }
+        if (error) throw error;
+        return data as unknown as BudgetRow;
     },
     async upsert(payload: BudgetRowInsert): Promise<BudgetRow | null> {
-        try {
-            const { data, error } = await supabaseClient
-                .from("budget_items")
-                .upsert(payload as any)
-                .select("*")
-                .single();
-            if (error) throw error;
-            return data as unknown as BudgetRow;
-        } catch (error: any) {
-            if (payload.receipt_items && (error.message?.includes("receipt_items") || error.details?.includes("receipt_items") || error.code === "PGRST204" || error.code === "42703")) {
-                console.warn("Supabase 尚未新增 receipt_items 欄位，略過該欄位重試 upsert。");
-                const { receipt_items, ...rest } = payload;
-                const { data, error: retryErr } = await supabaseClient
-                    .from("budget_items")
-                    .upsert(rest as any)
-                    .select("*")
-                    .single();
-                if (retryErr) throw retryErr;
-                return data as unknown as BudgetRow;
-            }
-            throw error;
-        }
+        const { data, error } = await supabaseClient
+            .from("budget_items")
+            .upsert(payload as any)
+            .select("*")
+            .single();
+        if (error) throw error;
+        return data as unknown as BudgetRow;
     },
     async delete(id: string): Promise<void> {
         const { error } = await supabaseClient
