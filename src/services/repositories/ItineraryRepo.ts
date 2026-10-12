@@ -2,6 +2,7 @@ import { supabaseClient } from "../SupabaseClient";
 import {
     toItineraryInsert,
     toItineraryUpdate,
+    toItineraryVM,
 } from "../mappers/ItineraryMapper";
 import { ItineraryRow, ItineraryVM } from "../../models/types/ItineraryTypes";
 import IRepo from "./IRepo";
@@ -45,11 +46,16 @@ export const itineraryRepo: IRepo<
     },
     async update(patch: Partial<ItineraryVM>): Promise<ItineraryRow | null> {
         if (patch.id === null || patch.id === undefined) throw "ID is null";
+        const id = patch.id;
+        if (!patch.original_date && (patch.date !== undefined || patch.activities !== undefined || patch.is_utc !== undefined || patch.time_zone !== undefined)) {
+            const current = await itineraryRepo.getById(id);
+            if (current) patch = { ...toItineraryVM(current), ...patch };
+        }
         const restoredPatch = toItineraryUpdate(patch);
         const { data, error } = await supabaseClient
             .from("itinerary_days")
             .update(restoredPatch)
-            .eq("id", patch.id)
+            .eq("id", id)
             .select("*")
             .single();
         if (error) throw error;

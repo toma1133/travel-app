@@ -24,9 +24,9 @@ const FlightRecord = ({
 
     const getDuration = () => {
         if (!flight.departure_time || !flight.arrival_time) return "";
-        const start = moment(flight.departure_time, "HH:mm:ss");
-        const end = moment(flight.arrival_time, "HH:mm:ss");
-        if (end.isBefore(start)) end.add(1, "day");
+        const start = flight.is_utc && flight.departure_at_utc ? moment(flight.departure_at_utc) : moment(flight.departure_time, "HH:mm:ss");
+        const end = flight.is_utc && flight.arrival_at_utc ? moment(flight.arrival_at_utc) : moment(flight.arrival_time, "HH:mm:ss");
+        if (!flight.is_utc && end.isBefore(start)) end.add(1, "day");
         const diff = moment.duration(end.diff(start));
         const hours = Math.floor(diff.asHours());
         const minutes = diff.minutes();
@@ -48,6 +48,8 @@ const FlightRecord = ({
                     <span className="text-[10px] mt-2 font-mono opacity-80">
                         {flight.code}
                     </span>
+                    <span className="text-[10px]">{flight.is_utc ? flight.display_time_zone || flight.departure_time_zone : "原始時間"}</span>
+                    {flight.arrival_date && flight.arrival_date !== flight.flight_date && <span className="text-[10px]">抵達 {flight.arrival_date}</span>}
                 </div>
 
                 {/* 2. 中間：航程資訊 */}
@@ -127,7 +129,8 @@ const FlightRecord = ({
                         {flight.code}
                     </span>
                     <span>•</span>
-                    <span className="font-mono">{flight.flight_date}</span>
+                    <span className="font-mono">{flight.flight_date}{flight.arrival_date && flight.arrival_date !== flight.flight_date ? ` → ${flight.arrival_date}` : ""}</span>
+                    <span>{flight.is_utc ? flight.display_time_zone || flight.departure_time_zone : "原始時間"}</span>
                     <span>•</span>
                     {flight.passengers && flight.passengers.length > 0 ? (
                         <div className="inline-flex items-center gap-1 flex-wrap">

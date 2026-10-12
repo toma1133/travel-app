@@ -1,3 +1,4 @@
+import { toFlightStorage } from "../mappers/FlightMapper";
 import { supabaseClient } from "../SupabaseClient";
 import { FlightRow, FlightRowInsert, FlightRowUpdate } from "../../models/types/FlightTypes";
 import IRepo from "./IRepo";
@@ -25,13 +26,14 @@ export const flightRepo: IRepo<FlightRow, FlightRowInsert, FlightRowUpdate, stri
         return data ?? [];
     },
     async insert(payload: FlightRowInsert): Promise<FlightRow | null> {
+        payload = toFlightStorage(payload);
         const { data, error } = await supabaseClient
             .from("flights")
             .insert(payload)
             .select("*")
             .single();
         if (error) {
-            if (error.message?.includes("passengers") || (error as any).code === "42703") {
+            if (error.message?.includes("passengers")) {
                 const { passengers, ...rest } = payload as any;
                 const retry = await supabaseClient
                     .from("flights")
@@ -47,19 +49,23 @@ export const flightRepo: IRepo<FlightRow, FlightRowInsert, FlightRowUpdate, stri
     },
     async update(patch: Partial<FlightRowUpdate>): Promise<FlightRow | null> {
         if (patch.id === null || patch.id === undefined) throw "ID is null";
+        const id = patch.id;
+        // Merge partial edits with the stored endpoint zones before recalculating UTC.
+        const current = await flightRepo.getById(id);
+        patch = toFlightStorage({ ...current, ...patch });
         const { data, error } = await supabaseClient
             .from("flights")
             .update(patch)
-            .eq("id", patch.id)
+            .eq("id", id)
             .select("*")
             .single();
         if (error) {
-            if (error.message?.includes("passengers") || (error as any).code === "42703") {
+            if (error.message?.includes("passengers")) {
                 const { passengers, ...rest } = patch as any;
                 const retry = await supabaseClient
                     .from("flights")
                     .update(rest)
-                    .eq("id", patch.id)
+                    .eq("id", id)
                     .select("*")
                     .single();
                 if (retry.error) throw retry.error;
@@ -67,16 +73,17 @@ export const flightRepo: IRepo<FlightRow, FlightRowInsert, FlightRowUpdate, stri
             }
             throw error;
         }
-        return data;
+        return data ?? null;
     },
     async upsert(payload: FlightRowInsert): Promise<FlightRow | null> {
+        payload = toFlightStorage(payload);
         const { data, error } = await supabaseClient
             .from("flights")
             .upsert(payload)
             .select("*")
             .single();
         if (error) {
-            if (error.message?.includes("passengers") || (error as any).code === "42703") {
+            if (error.message?.includes("passengers")) {
                 const { passengers, ...rest } = payload as any;
                 const retry = await supabaseClient
                     .from("flights")

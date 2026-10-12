@@ -7,6 +7,7 @@ import FormModal from "../common/FormModal";
 type ItineraryDayModalProps = {
     formData: ItineraryVM;
     mode: string;
+    errorMessage?: string;
     theme: TripThemeConf | null;
     onCloseBtnClick: MouseEventHandler<HTMLButtonElement>;
     onFormInputChange: ChangeEventHandler<HTMLInputElement>;
@@ -15,6 +16,7 @@ type ItineraryDayModalProps = {
 
 const ItineraryDayModal = ({
     formData,
+    errorMessage,
     mode,
     theme,
     onCloseBtnClick,
@@ -25,7 +27,7 @@ const ItineraryDayModal = ({
     const getWeekdayLabel = (dateStr: string) => {
         if (!dateStr) return "";
         try {
-            const date = new Date(dateStr);
+            const date = new Date(`${dateStr}T12:00:00`);
             if (isNaN(date.getTime())) return "";
             const days = ["週日", "週一", "週二", "週三", "週四", "週五", "週六"];
             return days[date.getDay()];
@@ -52,6 +54,8 @@ const ItineraryDayModal = ({
             maxWidthClass="sm:max-w-md"
         >
             <div className="space-y-4">
+                {errorMessage && <p role="alert" className="text-sm text-rose-500">{errorMessage}</p>}
+                <p className="text-xs text-muted-foreground">日程日期用於 DAY 分組。活動日期、時間與時區請在各活動中設定。</p>
                 {/* 📌 Inset Grouped Section */}
                 <div className="space-y-1.5">
                     <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider px-1">

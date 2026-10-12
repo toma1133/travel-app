@@ -7,6 +7,7 @@ import React, {
     useEffect,
     useMemo,
 } from "react";
+import TimeZoneSelect from "../common/TimeZoneSelect";
 import {
     Clock,
     Tag,
@@ -50,7 +51,7 @@ import { CategoryCustomSelect } from "../common/CategoryCustomSelect";
 import { placeRepo } from "../../services/repositories/PlaceRepo";
 import { toPlacesVM } from "../../services/mappers/PlaceMapper";
 import { RoutingService } from "../../services/api/RoutingService";
-import { parseDurationToMinutes, addMinutesToTime } from "../../utils/ItineraryTimeUtil";
+import { parseDurationToMinutes, addMinutesToTime, compareItineraryActivities } from "../../utils/ItineraryTimeUtil";
 import { getBusinessStatus, getScheduledMoment } from "../../utils/OpeningHoursUtil";
 import { hapticFeedback } from "../../utils/HapticUtil";
 
@@ -61,6 +62,8 @@ type ItineraryActivityModalProps = {
     itinerary: ItineraryVM | null;
     itineraryCategory: any[];
     mode: string;
+    errorMessage?: string;
+    onTimeSettingsChange: (patch: Partial<ItineraryActivitiy>) => void;
     theme: TripThemeConf | null;
     onCloseBtnClick: MouseEventHandler<HTMLButtonElement>;
     onFormInputChange: ChangeEventHandler<
@@ -71,6 +74,8 @@ type ItineraryActivityModalProps = {
 
 const ItineraryActivityModal = ({
     formData,
+    errorMessage,
+    onTimeSettingsChange,
     itinerary,
     mode,
     theme,
@@ -199,7 +204,7 @@ const ItineraryActivityModal = ({
 
             const activities = (itinerary.activities || [])
                 .slice()
-                .sort((a, b) => a.time.localeCompare(b.time));
+                .sort((a, b) => compareItineraryActivities(a, b, itinerary));
 
             let currentIndex = -1;
             if (typeof formData.activityIndex === "number") {
@@ -223,7 +228,7 @@ const ItineraryActivityModal = ({
                 }
             } else if (activities.length > 0) {
                 nextActivity =
-                    activities.find((a) => a.time > formData.time && a.linkId) || null;
+                    activities.find((a) => compareItineraryActivities(a, formData, itinerary) > 0 && a.linkId) || null;
             }
 
             if (!nextActivity || !nextActivity.linkId) {
@@ -323,14 +328,14 @@ const ItineraryActivityModal = ({
         if (!selectedPlace || selectedPlace.type === "hotel" || selectedPlace.type === "stay" || !selectedPlace.info?.open || !formData.time) {
             return null;
         }
-        const scheduledMoment = getScheduledMoment(itinerary?.date, formData.time);
+        const scheduledMoment = getScheduledMoment(formData.time_date || itinerary?.date, formData.time);
         const status = getBusinessStatus(selectedPlace.info.open, selectedPlace.info.closed_days, scheduledMoment);
         const isConflict = status.status === "closed" || status.status === "closed_today";
         return {
             ...status,
             isConflict,
         };
-    }, [selectedPlace, itinerary?.date, formData.time]);
+    }, [selectedPlace, itinerary?.date, formData.time, formData.time_date]);
 
     const [translateY, setTranslateY] = useState(0);
     const [isDragging, setIsDragging] = useState(false);
@@ -642,6 +647,24 @@ const ItineraryActivityModal = ({
                         </span>
 
                         <div className="bg-card border border-border/80 rounded-2xl overflow-hidden divide-y divide-border/60 text-xs shadow-2xs">
+                            {errorMessage && <p role="alert" className="p-3 text-rose-500">{errorMessage}</p>}
+                            <div className="p-3 space-y-3">
+                                <label className="flex items-center gap-2">
+                                    <input type="checkbox" checked={formData.is_utc ?? !!itinerary?.is_utc}
+                                        onChange={e => onTimeSettingsChange({ is_utc: e.target.checked })} />
+                                    此活動使用 UTC 儲存
+                                </label>
+                                <TimeZoneSelect value={formData.time_zone} label="活動時區"
+                                    disabled={!(formData.is_utc ?? itinerary?.is_utc)}
+                                    onChange={time_zone => onTimeSettingsChange({ time_zone })} />
+                                <p className="text-muted-foreground">依此活動時區輸入日期與時間；同一天的活動可使用不同時區。</p>
+                            </div>
+                            {(formData.is_utc ?? itinerary?.is_utc) && <div className="p-3 flex flex-wrap items-center gap-2">
+                                <label htmlFor="activity-date">活動日期</label>
+                                <input id="activity-date" type="date" name="time_date" required
+                                    value={formData.time_date || itinerary?.date || ""} onChange={onFormInputChange}
+                                    className="bg-transparent dark:[color-scheme:dark]" />
+                            </div>}
                             {/* 1. 時間 */}
                             <div className="bg-card hover:bg-muted/10 transition-colors">
                                 <div className="p-3 sm:p-3.5 flex items-center justify-between gap-3">

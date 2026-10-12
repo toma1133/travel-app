@@ -2,6 +2,7 @@ import React from "react";
 import { AlertTriangle } from "lucide-react";
 import { getTransitIcon } from "../../../constants/Categories";
 import type { ItineraryActivitiy } from "../../../models/types/ItineraryTypes";
+import { formatMinutesToDuration } from "../../../utils/ItineraryTimeUtil";
 
 type TransitConnectorNodeProps = {
     transit: {
@@ -11,6 +12,8 @@ type TransitConnectorNodeProps = {
         durationFormatted?: string;
         departureTime?: string;
         arrivalTime?: string;
+        departureDate?: string;
+        arrivalDate?: string;
     };
     transitDetails?: ItineraryActivitiy["transitDetails"];
     isLateConflict: boolean;
@@ -27,7 +30,13 @@ export const TransitConnectorNode: React.FC<TransitConnectorNodeProps> = ({
     freeGapMinutes,
     isPrinting = false,
 }) => {
-    if (!transit.hasTransit) return null;
+    if (!transit.hasTransit) {
+        if (freeGapMinutes < 15) return null;
+        return <div className="flex items-center my-2 text-[11px] text-muted-foreground">
+            <div className="w-12 sm:w-14 shrink-0" />
+            <span className="rounded-full border border-border px-2.5 py-1">自由活動 {formatMinutesToDuration(freeGapMinutes)}</span>
+        </div>;
+    }
 
     const TransitIconComp = getTransitIcon(transit.mode);
     const transitNote =
@@ -96,7 +105,7 @@ export const TransitConnectorNode: React.FC<TransitConnectorNodeProps> = ({
                                 </span>
                                 <span className={isPrinting ? "text-black font-bold" : "opacity-40"}>➔</span>
                                 <span className={isPrinting ? "text-black font-extrabold" : isLateConflict ? "text-rose-600 dark:text-rose-400 font-bold" : "text-primary font-bold"}>
-                                    預計 {transit.arrivalTime} 抵達
+                                    預計 {transit.arrivalDate && transit.arrivalDate !== transit.departureDate ? `${transit.arrivalDate} ` : ""}{transit.arrivalTime} 抵達
                                 </span>
                             </>
                         ) : transit.durationFormatted ? (

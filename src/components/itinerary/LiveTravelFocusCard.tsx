@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import moment from "moment";
+import { getBrowserTimeZone, utcToLocal } from "../../utils/DateTimeUtil";
 import {
     Navigation,
     Clock,
@@ -32,6 +33,7 @@ export interface LiveTravelFocusCardProps {
     selectedDayId: string;
     onSelectDay: (dayId: string) => void;
     theme?: TripThemeConf | null;
+    timeZone?: string;
 }
 
 export const LiveTravelFocusCard: React.FC<LiveTravelFocusCardProps> = ({
@@ -42,18 +44,18 @@ export const LiveTravelFocusCard: React.FC<LiveTravelFocusCardProps> = ({
     selectedDayId,
     onSelectDay,
     theme: _theme,
+    timeZone = getBrowserTimeZone(),
 }) => {
     // 即時時間更新 (每 30 秒更新一次時間字串)
-    const [currentTimeStr, setCurrentTimeStr] = useState<string>(() => moment().format("HH:mm"));
-    const [currentDateStr, setCurrentDateStr] = useState<string>(() => moment().format("YYYY-MM-DD"));
+    const [now, setNow] = useState(() => new Date().toISOString());
+    const { date: currentDateStr } = utcToLocal(now, timeZone);
 
     // 展開/收合狀態 (預設展開)
     const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
 
     useEffect(() => {
         const timer = setInterval(() => {
-            setCurrentTimeStr(moment().format("HH:mm"));
-            setCurrentDateStr(moment().format("YYYY-MM-DD"));
+            setNow(new Date().toISOString());
         }, 30000);
         return () => clearInterval(timer);
     }, []);
@@ -61,8 +63,11 @@ export const LiveTravelFocusCard: React.FC<LiveTravelFocusCardProps> = ({
     // 判斷今日是否在旅程期間中 (僅在旅程當天顯示 Live 焦點卡)
     const todayItinerary = useMemo(() => {
         if (!Array.isArray(itineraries) || itineraries.length === 0) return null;
-        return itineraries.find((d) => d.date === currentDateStr) || null;
-    }, [itineraries, currentDateStr]);
+        const instant = Date.parse(now);
+        return itineraries.find(d => computeDayTimelineSchedule(d.activities, d).some(meta => meta.startAtMs <= instant && instant < meta.transit.arrivalAtMs))
+            || itineraries.find(d => d.activities?.some(activity => (activity.is_utc ?? d.is_utc) && activity.time_date === currentDateStr))
+            || itineraries.find(d => d.date === currentDateStr) || null;
+    }, [itineraries, currentDateStr, now]);
 
     const activeDay = todayItinerary;
 
@@ -71,7 +76,7 @@ export const LiveTravelFocusCard: React.FC<LiveTravelFocusCardProps> = ({
         if (!activeDay || !Array.isArray(activeDay.activities) || activeDay.activities.length === 0) {
             return [];
         }
-        return computeDayTimelineSchedule(activeDay.activities);
+        return computeDayTimelineSchedule(activeDay.activities, activeDay);
     }, [activeDay]);
 
     // 依當前時間計算「進行中 (NOW)」與「下一個目標 (NEXT)」
@@ -86,11 +91,12 @@ export const LiveTravelFocusCard: React.FC<LiveTravelFocusCardProps> = ({
             };
         }
 
-        const nowMinutes = moment.duration(currentTimeStr).asMinutes();
+        const nowMinutes = Date.parse(now) / 60000;
+        const startMinutes = (meta: ActivityScheduleMeta) => meta.startAtMs / 60000;
 
         // 1. 旅程尚未開始 (現在時間比第一項活動早)
         const firstMeta = scheduleMetas[0];
-        const firstStartMins = moment.duration(firstMeta.startTime).asMinutes();
+        const firstStartMins = startMinutes(firstMeta);
         if (nowMinutes < firstStartMins) {
             const diff = firstStartMins - nowMinutes;
             return {
@@ -105,11 +111,9 @@ export const LiveTravelFocusCard: React.FC<LiveTravelFocusCardProps> = ({
         // 2. 遍歷檢查是否有活動正在進行中
         for (let i = 0; i < scheduleMetas.length; i++) {
             const meta = scheduleMetas[i];
-            const startMins = moment.duration(meta.startTime).asMinutes();
-            const endMins = moment.duration(meta.endTime).asMinutes();
-            const transitEndMins = meta.transit.arrivalTime
-                ? moment.duration(meta.transit.arrivalTime).asMinutes()
-                : endMins;
+            const startMins = startMinutes(meta);
+            const endMins = meta.endAtMs / 60000;
+            const transitEndMins = meta.transit.arrivalAtMs / 60000;
 
             // 在活動停留時間內
             if (nowMinutes >= startMins && nowMinutes < endMins) {
@@ -117,7 +121,7 @@ export const LiveTravelFocusCard: React.FC<LiveTravelFocusCardProps> = ({
                 const elapsed = nowMinutes - startMins;
                 const progress = Math.min(100, Math.round((elapsed / totalStay) * 100));
                 const next = scheduleMetas[i + 1] || null;
-                const nextMins = next ? moment.duration(next.startTime).asMinutes() - nowMinutes : null;
+                const nextMins = next ? startMinutes(next) - nowMinutes : null;
 
                 return {
                     status: "in_activity" as const,
@@ -131,7 +135,7 @@ export const LiveTravelFocusCard: React.FC<LiveTravelFocusCardProps> = ({
             // 在前往下一站的路程或自由時間內
             if (nowMinutes >= endMins && nowMinutes < transitEndMins) {
                 const next = scheduleMetas[i + 1] || null;
-                const nextMins = next ? moment.duration(next.startTime).asMinutes() - nowMinutes : null;
+                const nextMins = next ? startMinutes(next) - nowMinutes : null;
                 const totalTransit = Math.max(1, transitEndMins - endMins);
                 const elapsed = nowMinutes - endMins;
                 const progress = Math.min(100, Math.round((elapsed / totalTransit) * 100));
@@ -148,7 +152,7 @@ export const LiveTravelFocusCard: React.FC<LiveTravelFocusCardProps> = ({
             // 若在此項結束與下一項開始之間的空檔 (Gap)
             const next = scheduleMetas[i + 1];
             if (next) {
-                const nextStartMins = moment.duration(next.startTime).asMinutes();
+                const nextStartMins = startMinutes(next);
                 if (nowMinutes >= transitEndMins && nowMinutes < nextStartMins) {
                     const diff = nextStartMins - nowMinutes;
                     return {
@@ -171,7 +175,7 @@ export const LiveTravelFocusCard: React.FC<LiveTravelFocusCardProps> = ({
             minutesToNext: null,
             progressPercent: 100,
         };
-    }, [scheduleMetas, currentTimeStr]);
+    }, [scheduleMetas, now]);
 
     if (!activeDay) return null;
 

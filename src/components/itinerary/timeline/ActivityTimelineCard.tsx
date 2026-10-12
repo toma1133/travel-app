@@ -153,6 +153,8 @@ export const ActivityTimelineCard: React.FC<ActivityTimelineCardProps> = ({
                     }`}
                 >
                     {startTime}
+                    {(activity.is_utc ?? itineraryDay.is_utc) && activity.time_date && activity.time_date !== itineraryDay.date &&
+                        <span className="block text-[10px] font-normal">{activity.time_date}</span>}
                 </span>
             </div>
 
@@ -320,7 +322,7 @@ export const ActivityTimelineCard: React.FC<ActivityTimelineCardProps> = ({
                                     <BusinessStatusBadge
                                         place={linkedPlace}
                                         activityTime={activity.time}
-                                        itineraryDate={itineraryDay.date}
+                                        itineraryDate={activity.time_date || itineraryDay.date}
                                         isPrinting={isPrinting}
                                     />
 

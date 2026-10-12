@@ -1,3 +1,6 @@
+import TimeZoneSelect from "../../components/common/TimeZoneSelect";
+import { getBrowserTimeZone } from "../../utils/DateTimeUtil";
+import { toFlightForm } from "../../services/mappers/FlightMapper";
 import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import { useOutletContext, useParams } from "react-router-dom";
 import { useIsMutating } from "@tanstack/react-query";
@@ -45,13 +48,15 @@ const InfoPage = ({
     tripIdOverride,
 }: InfoPageProps) => {
     const { session } = useAuth();
+    const [displayTimeZone, setDisplayTimeZone] = useState(getBrowserTimeZone);
+    const [flightSaveError, setFlightSaveError] = useState("");
     const { id: paramsId } = useParams<{ id: string }>();
     const tripId = tripIdOverride || paramsId;
     const {
         data: flights,
         isLoading: isFlightsLoading,
         error: flightsError,
-    } = useFlights(tripId);
+    } = useFlights(tripId, displayTimeZone);
     const {
         insert: insertFlight,
         update: updateFlight,
@@ -170,6 +175,10 @@ const InfoPage = ({
     const [flightModalMode, setFlightModalMode] = useState("create");
     const initialFlightState: FlightRow = useMemo(
         () => ({
+            is_utc: true,
+            arrival_date: moment().format("YYYY-MM-DD"),
+            departure_time_zone: displayTimeZone,
+            arrival_time_zone: displayTimeZone,
             arrival_loc: "",
             arrival_time: moment().format("HH:mm"),
             code: "",
@@ -184,7 +193,7 @@ const InfoPage = ({
             updated_at: null,
             user_id: session ? session.user.id : "",
         }),
-        [tripId, session]
+        [tripId, session, displayTimeZone]
     );
     const [formFlight, setFormFlight] = useState(initialFlightState);
     const [flightToDelete, setFlightToDelete] = useState<FlightRow | null>(
@@ -192,14 +201,16 @@ const InfoPage = ({
     );
 
     const handleOpenCreateFlightModal = () => {
+        setFlightSaveError("");
         setFlightModalMode("create");
         setFormFlight({ ...initialFlightState });
         setIsFlightModalOpen(true);
     };
 
     const handleOpenEditFlightModal = (flight: FlightRow) => {
+        setFlightSaveError("");
         setFlightModalMode("edit");
-        setFormFlight(flight);
+        setFormFlight(toFlightForm(flight));
         setIsFlightModalOpen(true);
     };
 
@@ -228,6 +239,7 @@ const InfoPage = ({
     const handleFlightFormSubmit = async (e: FormEvent) => {
         e.preventDefault();
 
+        setFlightSaveError("");
         const flightData = { ...formFlight };
 
         try {
@@ -242,6 +254,7 @@ const InfoPage = ({
             setFormFlight(initialFlightState);
             setIsFlightModalOpen(false);
         } catch (err) {
+            setFlightSaveError(err instanceof Error ? err.message : "航班儲存失敗，請稍後再試。");
             console.error(err);
         }
     };
@@ -490,6 +503,7 @@ const InfoPage = ({
                         : "overflow-y-auto no-scrollbar px-4 pt-4 pb-28 md:pb-12 space-y-6"
                 }`}
             >
+                {!isPrinting && <TimeZoneSelect value={displayTimeZone} onChange={setDisplayTimeZone} label="航班顯示時區" />}
                 <FlightList
                     flights={flights}
                     companionNames={companionNames}
@@ -536,6 +550,8 @@ const InfoPage = ({
                     companionNames={companionNames}
                     onCloseBtnClick={handleCloseFlightModal}
                     onFormInputChange={handleFlightFormInputChange}
+                    onTimeSettingsChange={patch => setFormFlight(prev => ({ ...prev, ...patch }))}
+                    errorMessage={flightSaveError}
                     onPassengersChange={handleFlightPassengersChange}
                     onFormSubmit={handleFlightFormSubmit}
                 />

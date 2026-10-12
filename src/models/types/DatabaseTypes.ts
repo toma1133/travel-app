@@ -188,6 +188,12 @@ export type Database = {
             };
             flights: {
                 Row: {
+                    is_utc?: boolean;
+                    arrival_date?: string | null;
+                    departure_time_zone?: string | null;
+                    arrival_time_zone?: string | null;
+                    departure_at_utc?: string | null;
+                    arrival_at_utc?: string | null;
                     arrival_loc: string | null;
                     arrival_time: string | null;
                     code: string | null;
@@ -203,6 +209,12 @@ export type Database = {
                     user_id: string;
                 };
                 Insert: {
+                    is_utc?: boolean;
+                    arrival_date?: string | null;
+                    departure_time_zone?: string | null;
+                    arrival_time_zone?: string | null;
+                    departure_at_utc?: string | null;
+                    arrival_at_utc?: string | null;
                     arrival_loc?: string | null;
                     arrival_time?: string | null;
                     code?: string | null;
@@ -218,6 +230,12 @@ export type Database = {
                     user_id: string;
                 };
                 Update: {
+                    is_utc?: boolean;
+                    arrival_date?: string | null;
+                    departure_time_zone?: string | null;
+                    arrival_time_zone?: string | null;
+                    departure_at_utc?: string | null;
+                    arrival_at_utc?: string | null;
                     arrival_loc?: string | null;
                     arrival_time?: string | null;
                     code?: string | null;
@@ -244,6 +262,9 @@ export type Database = {
             };
             itinerary_days: {
                 Row: {
+                    is_utc?: boolean;
+                    time_zone?: string | null;
+                    date_utc?: string | null;
                     activities: Json | null;
                     created_at: string | null;
                     date: string;
@@ -256,6 +277,9 @@ export type Database = {
                     weekday: string | null;
                 };
                 Insert: {
+                    is_utc?: boolean;
+                    time_zone?: string | null;
+                    date_utc?: string | null;
                     activities?: Json | null;
                     created_at?: string | null;
                     date: string;
@@ -268,6 +292,9 @@ export type Database = {
                     weekday?: string | null;
                 };
                 Update: {
+                    is_utc?: boolean;
+                    time_zone?: string | null;
+                    date_utc?: string | null;
                     activities?: Json | null;
                     created_at?: string | null;
                     date?: string;

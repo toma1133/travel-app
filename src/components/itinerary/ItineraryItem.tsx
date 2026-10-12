@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { Plus } from "lucide-react";
 import type { ItineraryActivitiy, ItineraryVM } from "../../models/types/ItineraryTypes";
-import { computeDayTimelineSchedule, timeToMinutes } from "../../utils/ItineraryTimeUtil";
+import { computeDayTimelineSchedule, getTimelineConnection } from "../../utils/ItineraryTimeUtil";
 import type { TripThemeConf } from "../../models/types/TripTypes";
 import type { PlaceVM } from "../../models/types/PlaceTypes";
 import useTripPlacesBatch from "../../hooks/place/UseTripPlacesBatch";
@@ -73,8 +73,8 @@ const ItineraryItem = ({
     }, [itinerary.activities, placeMap]);
 
     const scheduleList = useMemo(() => {
-        return (isExpanded || isPrinting) && Array.isArray(itinerary.activities) ? computeDayTimelineSchedule(itinerary.activities) : [];
-    }, [itinerary.activities, isExpanded, isPrinting]);
+        return (isExpanded || isPrinting) && Array.isArray(itinerary.activities) ? computeDayTimelineSchedule(itinerary.activities, itinerary) : [];
+    }, [itinerary, isExpanded, isPrinting]);
 
     return (
         <div className={`group relative transition-all duration-300 ${!isPrinting ? "glass-panel rounded-3xl mb-4 lg:mb-5 overflow-hidden" : "bg-white border-b-2 border-black pb-4 mb-6 overflow-visible block"}`}>
@@ -97,17 +97,14 @@ const ItineraryItem = ({
                                 const linkedPlace = activity.linkId ? placeMap[activity.linkId] : null;
 
                                 const nextItem = scheduleList[scheduleIdx + 1];
-                                const arrivalMins = transit.arrivalTime ? timeToMinutes(transit.arrivalTime) : null;
-                                const nextStartMins = nextItem?.startTime ? timeToMinutes(nextItem.startTime) : null;
-                                const isLateConflict = arrivalMins !== null && nextStartMins !== null && nextStartMins < arrivalMins && arrivalMins - nextStartMins < 720;
-                                const delayMinutes = isLateConflict ? arrivalMins! - nextStartMins! : 0;
+                                const connection = getTimelineConnection(item, nextItem);
+                                const delayMinutes = connection.delayMinutes;
+                                const isLateConflict = delayMinutes > 0;
 
                                 const prevItem = scheduleIdx > 0 ? scheduleList[scheduleIdx - 1] : null;
-                                const prevArrivalMins = prevItem?.transit?.arrivalTime ? timeToMinutes(prevItem.transit.arrivalTime) : null;
-                                const currentStartMins = timeToMinutes(startTime);
-                                const isDelayedFromPrev = prevArrivalMins !== null && currentStartMins < prevArrivalMins && prevArrivalMins - currentStartMins < 720;
-                                const delayFromPrevMinutes = isDelayedFromPrev ? prevArrivalMins! - currentStartMins : 0;
-                                const freeGapMinutes = arrivalMins !== null && nextStartMins !== null && nextStartMins > arrivalMins ? nextStartMins - arrivalMins : 0;
+                                const delayFromPrevMinutes = prevItem ? getTimelineConnection(prevItem, item).delayMinutes : 0;
+                                const isDelayedFromPrev = delayFromPrevMinutes > 0;
+                                const freeGapMinutes = connection.gapMinutes;
 
                                 const hasGps = !!(linkedPlace && typeof linkedPlace.lat === "number" && typeof linkedPlace.lng === "number" && !isNaN(linkedPlace.lat) && !isNaN(linkedPlace.lng));
                                 const placeIndexInDay = hasGps

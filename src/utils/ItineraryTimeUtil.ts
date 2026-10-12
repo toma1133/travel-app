@@ -5,6 +5,7 @@
  */
 
 import type { ItineraryActivitiy } from "../models/types/ItineraryTypes";
+import { getBrowserTimeZone, localToUtc, utcToLocal } from "./DateTimeUtil";
 
 /**
  * Parses free-form duration string into total minutes.
@@ -132,7 +133,34 @@ export function calculateTimeDiffMinutes(startTimeStr: string, endTimeStr: strin
     return end - start;
 }
 
+type TimelineContext = { date?: string; is_utc?: boolean; time_zone?: string | null; display_time_zone?: string };
+
+/** UTC is authoritative; legacy clock values keep their browser-local interpretation. */
+export function getActivityStartMs(activity: ItineraryActivitiy, day: TimelineContext = {}): number {
+    const isUtc = activity.is_utc ?? day.is_utc ?? !!activity.time_utc;
+    if (isUtc && activity.time_utc) {
+        const instant = Date.parse(activity.time_utc);
+        if (Number.isFinite(instant)) return instant;
+    }
+    const date = activity.time_date || day.date || "2000-01-01";
+    if (isUtc) {
+        try {
+            return Date.parse(localToUtc(date, activity.time || "09:00", activity.display_time_zone || activity.time_zone || day.time_zone || getBrowserTimeZone()));
+        } catch { return NaN; }
+    }
+    return Date.parse(`${date}T${activity.time || "09:00"}`);
+}
+
+export function compareItineraryActivities(a: ItineraryActivitiy, b: ItineraryActivitiy, day: TimelineContext = {}): number {
+    const diff = getActivityStartMs(a, day) - getActivityStartMs(b, day);
+    return Number.isFinite(diff) && diff !== 0 ? diff : (a.activityIndex || 0) - (b.activityIndex || 0);
+}
+
 export type ActivityScheduleMeta = {
+    startAtMs: number;
+    endAtMs: number;
+    startDate: string;
+    endDate: string;
     activity: ItineraryActivitiy;
     index: number;
     // Activity Time Interval
@@ -144,6 +172,9 @@ export type ActivityScheduleMeta = {
 
     // Transit to Next Stop
     transit: {
+        arrivalAtMs: number;
+        departureDate: string;
+        arrivalDate: string;
         hasTransit: boolean;
         mode: string; // e.g. "walk", "car", "train"
         transitMinutes: number | null; // e.g. 30
@@ -163,21 +194,54 @@ export type ActivityScheduleMeta = {
     } | null;
 };
 
+/** Shared by connectors and activity delay badges; includes the full calendar date. */
+export function getTimelineConnection(current: ActivityScheduleMeta, next?: ActivityScheduleMeta) {
+    const difference = next ? (next.startAtMs - current.transit.arrivalAtMs) / 60000 : 0;
+    return {
+        gapMinutes: Number.isFinite(difference) ? Math.max(0, difference) : 0,
+        delayMinutes: Number.isFinite(difference) ? Math.max(0, -difference) : 0,
+    };
+}
+
 /**
  * Computes the continuous time schedule for an itinerary day's activities.
  */
 export function computeDayTimelineSchedule(
-    activities: ItineraryActivitiy[] | null | undefined
+    activities: ItineraryActivitiy[] | null | undefined,
+    day: TimelineContext = {},
 ): ActivityScheduleMeta[] {
     if (!Array.isArray(activities) || activities.length === 0) {
         return [];
     }
 
+    let previousStart = -Infinity;
+    const starts = activities.map(act => {
+        let start = getActivityStartMs(act, day);
+        // Undated historical overnight schedules used clock-only values.
+        if (!act.time_date && !act.time_utc && start < previousStart - 12 * 3600000) {
+            while (start < previousStart) start += 86400000;
+        }
+        previousStart = start;
+        return start;
+    });
+    const localParts = (instant: number, act: ItineraryActivitiy) => {
+        if (!Number.isFinite(instant)) return { date: act.time_date || day.date || "", time: act.time || "09:00" };
+        if ((act.is_utc ?? day.is_utc ?? !!act.time_utc) && act.time_utc) {
+            return utcToLocal(new Date(instant).toISOString(), act.display_time_zone || day.display_time_zone || getBrowserTimeZone());
+        }
+        const local = new Date(instant);
+        const pad = (n: number) => String(n).padStart(2, "0");
+        return { date: `${local.getFullYear()}-${pad(local.getMonth() + 1)}-${pad(local.getDate())}`, time: `${pad(local.getHours())}:${pad(local.getMinutes())}` };
+    };
     return activities.map((act, idx) => {
-        const startTime = act.time || "09:00";
+        const startAtMs = starts[idx];
+        const start = localParts(startAtMs, act);
+        const startTime = start.time;
         const stayMinutes = parseDurationToMinutes(act.duration);
         const hasStayDuration = typeof stayMinutes === "number" && stayMinutes > 0;
-        const endTime = hasStayDuration ? addMinutesToTime(startTime, stayMinutes!) : startTime;
+        const endAtMs = startAtMs + (hasStayDuration ? stayMinutes! * 60000 : 0);
+        const end = localParts(endAtMs, act);
+        const endTime = end.time;
 
         const durationFormatted = hasStayDuration
             ? formatMinutesToDuration(stayMinutes!)
@@ -191,10 +255,9 @@ export function computeDayTimelineSchedule(
         const hasTransit = hasTransitMode || hasTransitDuration;
 
         const departureTime = endTime;
-        const arrivalTime =
-            typeof transitMinutes === "number" && transitMinutes > 0
-                ? addMinutesToTime(departureTime, transitMinutes)
-                : departureTime;
+        const arrivalAtMs = endAtMs + (typeof transitMinutes === "number" && transitMinutes > 0 ? transitMinutes * 60000 : 0);
+        const arrival = localParts(arrivalAtMs, act);
+        const arrivalTime = arrival.time;
 
         const transitDurationFormatted =
             typeof transitMinutes === "number" && transitMinutes > 0
@@ -207,14 +270,7 @@ export function computeDayTimelineSchedule(
             const nextAct = activities[idx + 1];
             if (nextAct && nextAct.time) {
                 const nextStartTime = nextAct.time;
-                const transitEndMins = timeToMinutes(hasTransitDuration ? arrivalTime : endTime);
-                let nextStartMins = timeToMinutes(nextStartTime);
-
-                if (nextStartMins < transitEndMins) {
-                    nextStartMins += 1440; // Next day
-                }
-
-                const diff = nextStartMins - transitEndMins;
+                const diff = (starts[idx + 1] - arrivalAtMs) / 60000;
                 if (diff >= 15) {
                     gapToNext = {
                         hasGap: true,
@@ -228,6 +284,10 @@ export function computeDayTimelineSchedule(
         }
 
         return {
+            startAtMs,
+            endAtMs,
+            startDate: start.date,
+            endDate: end.date,
             activity: act,
             index: idx,
             startTime,
@@ -236,6 +296,9 @@ export function computeDayTimelineSchedule(
             hasStayDuration,
             durationFormatted,
             transit: {
+                arrivalAtMs,
+                departureDate: end.date,
+                arrivalDate: arrival.date,
                 hasTransit,
                 mode: act.transitMode || "walk",
                 transitMinutes,

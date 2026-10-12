@@ -1,4 +1,5 @@
 import type { ItineraryVM } from "../models/types/ItineraryTypes";
+import { localToUtc } from "./DateTimeUtil";
 
 /**
  * Generate iCalendar (.ics) string for the entire trip itinerary
@@ -17,13 +18,13 @@ export const generateICS = (tripTitle: string, itinerarys: ItineraryVM[]): strin
         const dateStr = day.date.replace(/-/g, ""); // YYYYMMDD
 
         (day.activities || []).forEach((act) => {
-            const timeClean = act.time ? act.time.replace(":", "") : "0900";
-            const dtStart = `${dateStr}T${timeClean}00`;
-            
-            // Calculate default end time (+1 hour)
-            const hour = parseInt(timeClean.substring(0, 2) || "09", 10);
-            const endHourStr = String((hour + 1) % 24).padStart(2, "0");
-            const dtEnd = `${dateStr}T${endHourStr}${timeClean.substring(2, 4) || "00"}00`;
+            const isUtc = act.is_utc ?? day.is_utc;
+            const start = isUtc
+                ? act.time_utc || localToUtc(act.time_date || day.date, act.time || "09:00", act.display_time_zone || act.time_zone || day.time_zone || undefined)
+                : `${day.date}T${act.time?.slice(0, 5) || "09:00"}:00Z`;
+            const format = (value: string) => value.replace(/[-:]/g, "").replace(/\.\d{3}Z$/, isUtc ? "Z" : "").replace(/Z$/, isUtc ? "Z" : "");
+            const dtStart = format(new Date(start).toISOString());
+            const dtEnd = format(new Date(Date.parse(start) + 3600000).toISOString());
 
             const summary = `[${day.title || `Day ${day.day_number}`}] ${act.title}`;
             let description = act.desc || "";

@@ -5,6 +5,10 @@ export type ItineraryRowInsert = TablesInsert<"itinerary_days">;
 export type ItineraryRowUpdate = TablesUpdate<"itinerary_days">;
 
 export type TransitScheduleItem = {
+    departureUtc?: string;
+    arrivalUtc?: string;
+    departureDate?: string;
+    arrivalDate?: string;
     name: string; // 車次 / 班次名稱 (例如 "Haruka 16号")
     departureTime?: string; // 出發時間 (例如 "10:44")
     arrivalTime?: string; // 到達時間 (例如 "11:31")
@@ -29,6 +33,13 @@ export type TransitDetails = {
 };
 
 export type ItineraryActivity = {
+    /** Undefined inherits the day's legacy/UTC mode for backwards compatibility. */
+    is_utc?: boolean;
+    time_zone?: string;
+    /** Display-only metadata; removed before saving JSON. */
+    display_time_zone?: string;
+    time_utc?: string;
+    time_date?: string;
     time: string;
     title: string;
     desc: string;
@@ -48,4 +59,6 @@ export type ItineraryActivitiy = ItineraryActivity;
 
 export type ItineraryVM = Omit<ItineraryRow, "activities"> & {
     activities: ItineraryActivity[] | null;
+    original_date?: string;
+    display_time_zone?: string;
 };

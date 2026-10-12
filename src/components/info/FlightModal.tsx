@@ -1,3 +1,4 @@
+import TimeZoneSelect from "../common/TimeZoneSelect";
 import { ChangeEventHandler, FormEventHandler, MouseEventHandler, useState } from "react";
 import { Plane, Calendar, Clock, Users, User, Plus, X, Check } from "lucide-react";
 import type { FlightRow } from "../../models/types/FlightTypes";
@@ -7,6 +8,8 @@ import FormModal from "../common/FormModal";
 type FlightModalProps = {
     formData: FlightRow;
     mode: string;
+    errorMessage?: string;
+    onTimeSettingsChange: (patch: Partial<FlightRow>) => void;
     theme: TripThemeConf | null;
     companionNames?: string[];
     onCloseBtnClick: MouseEventHandler<HTMLButtonElement>;
@@ -17,6 +20,8 @@ type FlightModalProps = {
 
 const FlightModal = ({
     formData,
+    errorMessage,
+    onTimeSettingsChange,
     mode,
     theme,
     companionNames = [],
@@ -70,6 +75,12 @@ const FlightModal = ({
             maxWidthClass="sm:max-w-lg"
         >
             <div className="space-y-4">
+                {errorMessage && <p role="alert" className="text-sm text-rose-500">{errorMessage}</p>}
+                <label className="flex items-center gap-2 text-xs">
+                    <input type="checkbox" checked={!!formData.is_utc} onChange={e => onTimeSettingsChange({ is_utc: e.target.checked })} />
+                    使用 UTC 儲存起降日期與時間
+                </label>
+                <p className="text-xs text-muted-foreground">未啟用時維持舊資料時間。啟用後請填寫起飛與抵達日期，可各自選擇機場時區。</p>
                 {/* ✈️ Group 1: 航班與航線資訊 */}
                 <div className="space-y-1.5">
                     <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider px-1">
@@ -156,6 +167,10 @@ const FlightModal = ({
                             />
                         </div>
 
+                        <div className="p-3.5 bg-card/80">
+                            <TimeZoneSelect value={formData.departure_time_zone} disabled={!formData.is_utc} label="起飛時區"
+                                onChange={departure_time_zone => onTimeSettingsChange({ departure_time_zone })} />
+                        </div>
                         {/* 起飛時間 */}
                         <div className="p-3.5 bg-card/80 flex items-center justify-between gap-3">
                             <div className="flex items-center gap-2">
@@ -174,6 +189,16 @@ const FlightModal = ({
                             />
                         </div>
 
+                        <div className="p-3.5 bg-card/80 flex flex-wrap items-center justify-between gap-3">
+                            <label className="text-xs font-bold text-muted-foreground" htmlFor="arrival-date">抵達日期</label>
+                            <input id="arrival-date" type="date" name="arrival_date" required={!!formData.is_utc}
+                                value={formData.arrival_date || ""} onChange={onFormInputChange}
+                                className="rounded-xl border border-border bg-muted/40 px-2.5 py-1 text-xs dark:[color-scheme:dark]" />
+                        </div>
+                        <div className="p-3.5 bg-card/80">
+                            <TimeZoneSelect value={formData.arrival_time_zone} disabled={!formData.is_utc} label="抵達時區"
+                                onChange={arrival_time_zone => onTimeSettingsChange({ arrival_time_zone })} />
+                        </div>
                         {/* 抵達時間 */}
                         <div className="p-3.5 bg-card/80 flex items-center justify-between gap-3">
                             <div className="flex items-center gap-2">
