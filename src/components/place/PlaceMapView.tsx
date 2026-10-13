@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
-import { MapContainer, TileLayer, Marker, Popup, Polyline, Tooltip } from "react-leaflet";
-import { MapVectorLayer } from "./MapVectorLayer";
+import { MapContainer, Marker, Popup, Polyline, Tooltip } from "react-leaflet";
+import MapBasemap from "./MapBasemap";
 import L from "leaflet";
 import {
     Car,
@@ -52,16 +52,17 @@ import {
     getBusinessStatus,
 } from "../../utils/OpeningHoursUtil";
 
-type PlaceMapViewProps = {
+export type PlaceMapViewProps = {
     places: PlaceVM[] | null;
     showRouteLine?: boolean;
     highlightedPlaceId?: string | null;
     highlightedIndex?: number | null;
     enabled?: boolean;
+    initialMapStyle?: MapStyleKey;
 };
 
 // Map Style Options
-type MapStyleKey = "auto" | "stadia_smooth" | "stadia_outdoors" | "voyager" | "positron" | "dark" | "satellite";
+type MapStyleKey = "lightweight" | "auto" | "stadia_smooth" | "stadia_outdoors" | "voyager" | "positron" | "dark" | "satellite";
 
 const CARTO_API_KEY = import.meta.env.VITE_CARTO_API_KEY?.trim() || "";
 const CARTO_KEY_PARAM = CARTO_API_KEY ? `?key=${CARTO_API_KEY}` : "";
@@ -85,6 +86,15 @@ const MAP_STYLES: {
     subdomains?: string;
     maxZoom?: number;
 }[] = [
+    {
+        key: "lightweight",
+        label: "輕量地圖",
+        type: "raster",
+        lightUrl: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png" + CARTO_KEY_PARAM,
+        darkUrl: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png" + CARTO_KEY_PARAM,
+        attribution: CARTO_ATTRIBUTION,
+        subdomains: "abcd",
+    },
     {
         key: "auto",
         label: "自動主題",
@@ -484,13 +494,14 @@ const PlaceMapView = ({
     highlightedPlaceId,
     highlightedIndex,
     enabled = true,
+    initialMapStyle = "auto",
 }: PlaceMapViewProps) => {
     const { theme } = useTheme();
     const isDark = theme === "dark";
     const [routeMode, setRouteMode] = useState<RouteMode>("driving");
     const [routeData, setRouteData] = useState<MultiStopRouteResult | null>(null);
     const [isRouteLoading, setIsRouteLoading] = useState(false);
-    const [selectedMapStyle, setSelectedMapStyle] = useState<MapStyleKey>("auto");
+    const [selectedMapStyle, setSelectedMapStyle] = useState<MapStyleKey>(initialMapStyle);
     const [showStyleMenu, setShowStyleMenu] = useState(false);
 
     const validPlaces = useMemo(() => {
@@ -554,24 +565,28 @@ const PlaceMapView = ({
         }
 
         let isMounted = true;
+        setRouteData(null);
         setIsRouteLoading(true);
 
         const fetchRoute = async () => {
             const stops = validPlaces.map((p) => ({ lat: p.lat, lng: p.lng }));
-            const res = await RoutingService.getMultiStopRoute(stops, routeMode);
-
-            if (isMounted) {
-                setRouteData(res);
-                setIsRouteLoading(false);
+            try {
+                const res = await RoutingService.getMultiStopRoute(stops, routeMode);
+                if (isMounted) setRouteData(res);
+            } catch {
+                // Keep the straight-line fallback usable if routing fails.
+            } finally {
+                if (isMounted) setIsRouteLoading(false);
             }
         };
 
-        fetchRoute();
+        const timer = window.setTimeout(() => { void fetchRoute(); }, 250);
 
         return () => {
             isMounted = false;
+            window.clearTimeout(timer);
         };
-    }, [validPlaces, routeMode, showRouteLine]);
+    }, [validPlaces, routeMode, showRouteLine, enabled]);
 
     const straightLinePositions = useMemo(() => {
         return validPlaces.map((p) => [p.lat, p.lng] as [number, number]);
@@ -688,24 +703,13 @@ const PlaceMapView = ({
     return (
         <div className="w-full h-full relative max-w-full overflow-hidden">
             <MapContainer
-                key={`${isDark ? "map-dark" : "map-light"}-${selectedMapStyle}`}
                 className="w-full h-full flex-1 rounded-xl overflow-hidden shadow-md relative z-0"
                 center={defaultCenter}
                 zoom={defaultZoom}
             >
-                {activeStyleConfig.type === "vector" ? (
-                    <MapVectorLayer
-                        key={`vector-${selectedMapStyle}-${isDark ? "dark" : "light"}`}
-                        styleUrl={activeTileUrl}
-                    />
-                ) : (
-                    <TileLayer
-                        url={activeTileUrl}
-                        attribution={activeStyleConfig.attribution}
-                        subdomains={activeStyleConfig.subdomains || "abc"}
-                        maxZoom={activeStyleConfig.maxZoom || 19}
-                    />
-                )}
+                <MapBasemap key={activeTileUrl} type={activeStyleConfig.type} url={activeTileUrl}
+                    attribution={activeStyleConfig.attribution} subdomains={activeStyleConfig.subdomains}
+                    maxZoom={activeStyleConfig.maxZoom} />
 
                 {/* Real Road Polyline Route or Fallback Line */}
                 {showRouteLine && validPlaces.length > 1 && (

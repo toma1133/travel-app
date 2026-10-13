@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { lazy, Suspense, useState, useEffect, useMemo, useRef } from "react";
 import {
     MapContainer,
     TileLayer,
@@ -7,7 +7,6 @@ import {
     useMap,
     useMapEvents,
 } from "react-leaflet";
-import { MapVectorLayer } from "./MapVectorLayer";
 import L from "leaflet";
 import {
     Search,
@@ -32,6 +31,8 @@ import {
 import { OSMService, OSMPlace, WikiData } from "../../services/api/OSMService";
 import { KakaoLocalService, KakaoPlace, KakaoAddressDoc } from "../../services/api/KakaoLocalService";
 import { useTheme } from "../../contexts/ThemeContext";
+
+const MapVectorLayer = lazy(() => import("./MapVectorLayer").then(module => ({ default: module.MapVectorLayer })));
 
 const CARTO_API_KEY = import.meta.env.VITE_CARTO_API_KEY?.trim() || "";
 const CARTO_KEY_PARAM = CARTO_API_KEY ? `?key=${CARTO_API_KEY}` : "";
@@ -578,14 +579,16 @@ export const PlaceSearchMapPickerModal: React.FC<PlaceSearchMapPickerModalProps>
                             className="w-full h-full z-10"
                             style={{ background: isDark ? "#18181b" : "#f4f4f5" }}
                         >
-                            <MapVectorLayer
-                                key={`picker-vector-${isDark ? "dark" : "light"}`}
-                                styleUrl={
-                                    isDark
-                                        ? `https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json${CARTO_KEY_PARAM}`
-                                        : `https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json${CARTO_KEY_PARAM}`
-                                }
-                            />
+                            <Suspense fallback={null}>
+                                <MapVectorLayer
+                                    key={`picker-vector-${isDark ? "dark" : "light"}`}
+                                    styleUrl={
+                                        isDark
+                                            ? `https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json${CARTO_KEY_PARAM}`
+                                            : `https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json${CARTO_KEY_PARAM}`
+                                    }
+                                />
+                            </Suspense>
 
                             <MapViewController
                                 selectedPlace={selectedPlace}

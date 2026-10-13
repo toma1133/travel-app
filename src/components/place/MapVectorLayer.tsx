@@ -13,18 +13,23 @@ if (typeof window !== "undefined") {
 
 interface MapVectorLayerProps {
     styleUrl: string;
+    onReady?: () => void;
+    onError?: () => void;
 }
 
 /**
  * Renders a MapLibre GL Vector Tile Layer inside React Leaflet MapContainer.
  * Keeps all Leaflet markers, popups, and polylines intact on top of high-DPI vector basemaps.
  */
-export const MapVectorLayer: React.FC<MapVectorLayerProps> = ({ styleUrl }) => {
+export const MapVectorLayer: React.FC<MapVectorLayerProps> = ({ styleUrl, onReady, onError }) => {
     const map = useMap();
     const layerRef = useRef<L.MaplibreGL | null>(null);
 
     useEffect(() => {
         if (!map || !styleUrl) return;
+        let glMap: ReturnType<L.MaplibreGL["getMaplibreMap"]> | undefined;
+        const handleReady = () => onReady?.();
+        const handleError = () => onError?.();
 
         try {
             const glLayer = L.maplibreGL({
@@ -33,11 +38,19 @@ export const MapVectorLayer: React.FC<MapVectorLayerProps> = ({ styleUrl }) => {
 
             layerRef.current = glLayer;
             glLayer.addTo(map);
+            glMap = glLayer.getMaplibreMap();
+            glMap.on("load", handleReady);
+            glMap.on("idle", handleReady);
+            glMap.on("error", handleError);
         } catch (err) {
             console.error("Failed to initialize MapVectorLayer (MapLibre GL):", err);
+            onError?.();
         }
 
         return () => {
+            glMap?.off("load", handleReady);
+            glMap?.off("idle", handleReady);
+            glMap?.off("error", handleError);
             if (layerRef.current && map.hasLayer(layerRef.current)) {
                 try {
                     map.removeLayer(layerRef.current);
@@ -47,7 +60,7 @@ export const MapVectorLayer: React.FC<MapVectorLayerProps> = ({ styleUrl }) => {
             }
             layerRef.current = null;
         };
-    }, [map, styleUrl]);
+    }, [map, styleUrl, onReady, onError]);
 
     return null;
 };

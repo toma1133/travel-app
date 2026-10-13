@@ -28,10 +28,10 @@ import { getItinerarySyncErrorMessage } from "../../utils/ItinerarySyncUtil";
 import { computeDayTimelineSchedule, compareItineraryActivities } from "../../utils/ItineraryTimeUtil";
 import useTripWeather from "../../hooks/weather/useTripWeather";
 import LiveTravelFocusCard from "../../components/itinerary/LiveTravelFocusCard";
+import BackgroundPlaceMap from "../../components/place/BackgroundPlaceMap";
 
 const ItineraryActivityModal = lazy(() => import("../../components/itinerary/ItineraryActivityModal"));
 const OptimizeRouteModal = lazy(() => import("../../components/itinerary/OptimizeRouteModal"));
-const PlaceMapView = lazy(() => import("../../components/place/PlaceMapView"));
 
 type ItineraryPageProps = {
     isPrinting?: boolean;
@@ -293,7 +293,7 @@ const ItineraryPage = ({ isPrinting, tripDataOverride, tripIdOverride }: Itinera
                                 <span className="text-[11px] text-muted-foreground font-mono bg-accent/50 px-2 py-0.5 rounded-full">{activeMapPlaces.length} 個地標</span>
                             </div>
                             <div className="flex-1 w-full relative min-h-0">
-                                <Suspense fallback={<div role="status" className="p-4 text-xs text-muted-foreground">地圖載入中…</div>}><PlaceMapView places={activeMapPlaces} showRouteLine highlightedPlaceId={hoveredPlace.id} highlightedIndex={hoveredPlace.index} enabled /></Suspense>
+                                <BackgroundPlaceMap places={activeMapPlaces} showRouteLine highlightedPlaceId={hoveredPlace.id} highlightedIndex={hoveredPlace.index} enabled />
                             </div>
                         </div>
                     )}
@@ -321,7 +321,7 @@ const ItineraryPage = ({ isPrinting, tripDataOverride, tripIdOverride }: Itinera
                         </div>
                     )}
                     <div className="flex-1 w-full relative">
-                        <Suspense fallback={<div role="status" className="p-4 text-xs text-muted-foreground">地圖載入中…</div>}><PlaceMapView places={activeMapPlaces} showRouteLine highlightedPlaceId={hoveredPlace.id} highlightedIndex={hoveredPlace.index} enabled /></Suspense>
+                        <BackgroundPlaceMap places={activeMapPlaces} showRouteLine highlightedPlaceId={hoveredPlace.id} highlightedIndex={hoveredPlace.index} enabled />
                     </div>
                 </div>
             )}
