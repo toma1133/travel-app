@@ -167,7 +167,7 @@ const ItineraryPage = ({ isPrinting, tripDataOverride, tripIdOverride }: Itinera
         const edited = actModal.mode === "create" ? [...acts, actModal.form] : acts.map((a) => (a.activityIndex === actModal.form.activityIndex ? actModal.form : a));
         // Normalize each input zone before sorting activities in the list display zone.
         const storage = toItineraryUpdate({ ...actModal.day, activities: edited });
-        const next = toItineraryVM({ ...actModal.day, activities: storage.activities ?? null }, displayTimeZone).activities || [];
+        const next = toItineraryVM({ ...actModal.day, activities: storage.activities ?? null }, displayTimeZone ?? undefined).activities || [];
         next.sort((a, b) => compareItineraryActivities(a, b, actModal.day!)).forEach((a, i) => (a.activityIndex = i));
         setSelectedDayFilter(actModal.day.id);
         await updateDay.mutateAsync({ ...actModal.day, activities: next });

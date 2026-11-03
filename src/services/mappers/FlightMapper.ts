@@ -1,7 +1,7 @@
 import type { FlightRow, FlightRowInsert, FlightRowUpdate } from "../../models/types/FlightTypes";
 import { getBrowserTimeZone, localToUtc, utcToLocal } from "../../utils/DateTimeUtil";
 
-export function toFlightVM(row: FlightRow, zone?: string): FlightRow {
+export function toFlightVM(row: FlightRow, zone?: string | null): FlightRow {
     if (!row.is_utc) return row;
     const depZone = zone || row.departure_time_zone || getBrowserTimeZone();
     const arrZone = zone || row.arrival_time_zone || getBrowserTimeZone();
@@ -15,7 +15,7 @@ export function toFlightVM(row: FlightRow, zone?: string): FlightRow {
         arrival_time: arrival?.time ?? row.arrival_time,
         departure_time_zone: depZone,
         arrival_time_zone: arrZone,
-        display_time_zone: zone || (depZone === arrZone ? depZone : `${depZone} / ${arrZone}`),
+        display_time_zone: (zone ?? undefined) || (depZone === arrZone ? depZone : `${depZone} / ${arrZone}`),
     };
 }
 

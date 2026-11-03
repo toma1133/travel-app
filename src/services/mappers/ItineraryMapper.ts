@@ -20,9 +20,9 @@ function projectActivity(activity: ItineraryActivitiy, zone: string): ItineraryA
         } : undefined };
 }
 
-export const toItineraryVM = (row: ItineraryRow, zone?: string): ItineraryVM => {
+export const toItineraryVM = (row: ItineraryRow, zone?: string | null): ItineraryVM => {
     const activities = parseJsonOrString<ItineraryActivitiy[]>(row.activities);
-    return { ...row, original_date: row.date, display_time_zone: zone,
+    return { ...row, original_date: row.date, display_time_zone: zone ?? undefined,
         activities: activities?.map(activity => {
             if (!usesUtc(activity, row)) return activity;
             // 優先使用該活動或日程選取的時區；若未設定才使用指定的 zone 或瀏覽器時區
@@ -35,7 +35,7 @@ export const toItineraryVM = (row: ItineraryRow, zone?: string): ItineraryVM => 
         }).sort((a, b) => compareItineraryActivities(a, b, row)) ?? activities };
 };
 
-export const toItinerarysVM = (rows: ItineraryRow[], zone?: string): ItineraryVM[] => rows.map(row => toItineraryVM(row, zone));
+export const toItinerarysVM = (rows: ItineraryRow[], zone?: string | null): ItineraryVM[] => rows.map(row => toItineraryVM(row, zone));
 
 /** Edit in the activity's own saved zone, even after the list display zone changes. */
 export function toItineraryActivityForm(activity: ItineraryActivitiy, day: ItineraryVM): ItineraryActivitiy {
