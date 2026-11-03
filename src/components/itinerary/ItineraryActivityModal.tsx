@@ -285,7 +285,7 @@ const ItineraryActivityModal = ({
 
                 setRoutingMessage({
                     type: "success",
-                    text: `已成功取得「${originPlace.name}」➔「${destPlace.name}」路程：約 ${routeResult.durationFormatted}（${routeResult.distanceFormatted}）`,
+                    text: `已成功取得「${originPlace.name}」➔「${destPlace.name}」路程：${routeResult.durationFormatted}（${routeResult.distanceFormatted}）`,
                 });
             } else {
                 setRoutingMessage({
