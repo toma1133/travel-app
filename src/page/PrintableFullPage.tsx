@@ -100,6 +100,11 @@ const PrintableFullPage = ({ tripData, onClose }: PrintableFullPageProps) => {
                         print-color-adjust: exact !important;
                     }
 
+                    /* 列印時隱藏所有按鈕與懸浮元件 */
+                    button, [role="button"] {
+                        display: none !important;
+                    }
+
                     /* 關鍵：列印時強制佈局容器的 overflow 為 visible，
                        並清除固定高度，防止內容被裁切或重疊。
                        排除 img 和有明確尺寸的圖片容器。 */

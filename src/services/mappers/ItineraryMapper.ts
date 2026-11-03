@@ -20,15 +20,22 @@ function projectActivity(activity: ItineraryActivitiy, zone: string): ItineraryA
         } : undefined };
 }
 
-export const toItineraryVM = (row: ItineraryRow, zone = getBrowserTimeZone()): ItineraryVM => {
+export const toItineraryVM = (row: ItineraryRow, zone?: string): ItineraryVM => {
     const activities = parseJsonOrString<ItineraryActivitiy[]>(row.activities);
     return { ...row, original_date: row.date, display_time_zone: zone,
-        activities: activities?.map(activity => usesUtc(activity, row)
-            ? { ...projectActivity(activity, zone), time_zone: activity.time_zone || row.time_zone || zone, display_time_zone: zone }
-            : activity).sort((a, b) => compareItineraryActivities(a, b, row)) ?? activities };
+        activities: activities?.map(activity => {
+            if (!usesUtc(activity, row)) return activity;
+            // 優先使用該活動或日程選取的時區；若未設定才使用指定的 zone 或瀏覽器時區
+            const effectiveZone = zone || activity.time_zone || row.time_zone || getBrowserTimeZone();
+            return {
+                ...projectActivity(activity, effectiveZone),
+                time_zone: activity.time_zone || row.time_zone || effectiveZone,
+                display_time_zone: effectiveZone,
+            };
+        }).sort((a, b) => compareItineraryActivities(a, b, row)) ?? activities };
 };
 
-export const toItinerarysVM = (rows: ItineraryRow[], zone = getBrowserTimeZone()): ItineraryVM[] => rows.map(row => toItineraryVM(row, zone));
+export const toItinerarysVM = (rows: ItineraryRow[], zone?: string): ItineraryVM[] => rows.map(row => toItineraryVM(row, zone));
 
 /** Edit in the activity's own saved zone, even after the list display zone changes. */
 export function toItineraryActivityForm(activity: ItineraryActivitiy, day: ItineraryVM): ItineraryActivitiy {

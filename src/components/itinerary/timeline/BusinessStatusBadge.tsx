@@ -43,6 +43,21 @@ export const BusinessStatusBadge: React.FC<BusinessStatusBadgeProps> = ({
         ? getBusinessStatus(place.info.open, place.info?.closed_days, scheduledMoment)
         : null;
 
+    // 列印模式：不顯示「非營業時段」警示與即時狀態，若有營業時間則呈現時間
+    if (isPrinting) {
+        const hoursText =
+            (scheduledStatus?.todayHoursText && scheduledStatus.todayHoursText !== "未設定" && scheduledStatus.todayHoursText) ||
+            (place.info?.open && place.info.open.trim());
+        if (hoursText) {
+            return (
+                <span className="font-mono text-[10px] text-gray-700 truncate">
+                    營業時間 {hoursText}
+                </span>
+            );
+        }
+        return null;
+    }
+
     const isScheduleConflict = !!(
         activityTime &&
         scheduledStatus &&

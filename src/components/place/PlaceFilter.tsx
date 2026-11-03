@@ -45,12 +45,24 @@ const PlaceFilter = ({
     const activeCategory = placeCategories.find((c) => c.id === activeFilterId);
     const hasActiveFilters = activeFilterId !== "all" || selectedTags.length > 0;
 
+    // 結合可用標籤與已選取標籤（確保已選中但數量為 0 的標籤依然可見且可取消）
+    const allDisplayTags = useMemo(() => {
+        const map = new Map<string, number>();
+        availableTags.forEach((item) => map.set(item.tag, item.count));
+        selectedTags.forEach((tag) => {
+            if (!map.has(tag)) {
+                map.set(tag, 0);
+            }
+        });
+        return Array.from(map.entries()).map(([tag, count]) => ({ tag, count }));
+    }, [availableTags, selectedTags]);
+
     // 依搜尋字串過濾下拉選單中的標籤
     const filteredAvailableTags = useMemo(() => {
-        if (!tagSearchQuery.trim()) return availableTags;
+        if (!tagSearchQuery.trim()) return allDisplayTags;
         const q = tagSearchQuery.trim().toLowerCase();
-        return availableTags.filter((t) => t.tag.toLowerCase().includes(q));
-    }, [availableTags, tagSearchQuery]);
+        return allDisplayTags.filter((t) => t.tag.toLowerCase().includes(q));
+    }, [allDisplayTags, tagSearchQuery]);
 
     // 點擊外部自動關閉下拉選單
     useEffect(() => {
@@ -139,8 +151,8 @@ const PlaceFilter = ({
                         )}
                     </div>
 
-                    {/* 2. 標籤篩選下拉按鈕 (若此行程有標籤時顯示) */}
-                    {availableTags.length > 0 && (
+                    {/* 2. 標籤篩選下拉按鈕 (若此行程有標籤或有已選取標籤時顯示) */}
+                    {(availableTags.length > 0 || selectedTags.length > 0) && (
                         <div className="relative inline-block" ref={tagDropdownRef}>
                             <button
                                 type="button"
@@ -295,12 +307,15 @@ const PlaceFilter = ({
             </div>
 
             {/* 3. 標籤快速切換橫列 (精簡取前 5 個熱門標籤與當前已選取標籤，乾淨不佔空間) */}
-            {availableTags.length > 0 && (() => {
+            {(availableTags.length > 0 || selectedTags.length > 0) && (() => {
                 const top5 = availableTags.slice(0, 5);
                 const top5Set = new Set(top5.map((t) => t.tag));
-                const extraSelected = availableTags.filter(
-                    (t) => selectedTags.includes(t.tag) && !top5Set.has(t.tag)
-                );
+                const extraSelected = selectedTags
+                    .filter((tag) => !top5Set.has(tag))
+                    .map((tag) => {
+                        const found = availableTags.find((t) => t.tag === tag);
+                        return found || { tag, count: 0 };
+                    });
                 const displayQuickTags = [...top5, ...extraSelected];
 
                 return (

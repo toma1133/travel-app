@@ -1,10 +1,9 @@
 import { toFlightVM } from "../../services/mappers/FlightMapper";
-import { getBrowserTimeZone } from "../../utils/DateTimeUtil";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { flightRepo } from "../../services/repositories/FlightRepo";
 import type { FlightRow } from "../../models/types/FlightTypes";
 
-const useFlights = (tripId: string | undefined, timeZone = getBrowserTimeZone()) => {
+const useFlights = (tripId: string | undefined, timeZone?: string) => {
     return useQuery<FlightRow[]>({
         queryKey: ["flights", tripId],
         queryFn: async () => {

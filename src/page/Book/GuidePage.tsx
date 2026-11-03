@@ -93,13 +93,13 @@ const GuidePage = ({
             // 檢查類型
             const matchType = filter === "all" || p.type === filter;
 
-            // 檢查標籤 (必須包含所有選取的標籤)
+            // 檢查標籤 (聯集：符合任一選取的標籤即可)
             const placeTags = p.tags
                 ? p.tags.split(",").map((t) => t.trim()).filter(Boolean)
                 : [];
             const matchTags =
                 selectedTags.length === 0 ||
-                selectedTags.every((tag) => placeTags.includes(tag));
+                selectedTags.some((tag) => placeTags.includes(tag));
 
             return matchType && matchTags;
         });
@@ -126,6 +126,16 @@ const GuidePage = ({
             .sort((a, b) => b[1] - a[1])
             .map(([tag, count]) => ({ tag, count }));
     }, [places]);
+
+    // 當地點標籤被修改或刪除導致已選中的標籤數量歸零時，自動從已選標籤中移除
+    useEffect(() => {
+        if (!Array.isArray(places) || isLoading) return;
+        const availableTagSet = new Set(availableTags.map((t) => t.tag));
+        setSelectedTags((prev) => {
+            const next = prev.filter((tag) => availableTagSet.has(tag));
+            return next.length === prev.length ? prev : next;
+        });
+    }, [availableTags, places, isLoading]);
 
     const mutatingCount = useIsMutating({ mutationKey: ["place"] });
 
@@ -372,14 +382,16 @@ const GuidePage = ({
             )}
 
             {/* 手機版懸浮新增按鈕 (FAB) */}
+            {!isPrinting && (
             <button
                 type="button"
                 onClick={handleOpenCreateModal}
-                className="md:hidden fixed bottom-[calc(5.2rem+env(safe-area-inset-bottom,0px))] right-4 sm:right-6 z-40 w-12 h-12 rounded-full bg-primary text-primary-foreground shadow-xl flex items-center justify-center active:scale-90 transition-all cursor-pointer hover:opacity-90"
+                className="md:hidden fixed bottom-[calc(5.2rem+env(safe-area-inset-bottom,0px))] right-4 sm:right-6 z-40 w-12 h-12 rounded-full bg-primary text-primary-foreground shadow-xl flex items-center justify-center active:scale-90 transition-all cursor-pointer hover:opacity-90 print:hidden"
                 title="新增景點"
             >
                 <Plus size={22} />
             </button>
+            )}
         </div>
     );
 };

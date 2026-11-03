@@ -41,12 +41,12 @@ type ItineraryPageProps = {
 
 const ItineraryPage = ({ isPrinting, tripDataOverride, tripIdOverride }: ItineraryPageProps) => {
     const { session } = useAuth();
-    const [displayTimeZone, setDisplayTimeZone] = useState(getBrowserTimeZone);
+    const [displayTimeZone, setDisplayTimeZone] = useState<string | null>(null);
     const [daySaveError, setDaySaveError] = useState("");
     const [activitySaveError, setActivitySaveError] = useState("");
     const { id: paramsId } = useParams<{ id: string }>();
     const tripId = tripIdOverride || paramsId;
-    const { data: itinerarys, isLoading } = useItinerarys(tripId, displayTimeZone);
+    const { data: itinerarys, isLoading } = useItinerarys(tripId, isPrinting || !displayTimeZone ? undefined : displayTimeZone);
     const { insert: insertDay, update: updateDay, remove: removeDay, sync: syncDays, anyPending } = useItineraryMutations();
     const contextData = useOutletContext<BookLayoutContextType | null>();
     const tripData = tripDataOverride || contextData?.tripData;
@@ -217,7 +217,7 @@ const ItineraryPage = ({ isPrinting, tripDataOverride, tripIdOverride }: Itinera
                     <>
                         {!isPrinting && Array.isArray(itinerarys) && itinerarys.length > 0 && (
                             <div className="space-y-2.5 shrink-0">
-                                <LiveTravelFocusCard timeZone={displayTimeZone}
+                                <LiveTravelFocusCard timeZone={displayTimeZone || getBrowserTimeZone()}
                                     trip={tripData}
                                     itineraries={itinerarys}
                                     placesMap={linkedPlacesMap}
@@ -269,7 +269,7 @@ const ItineraryPage = ({ isPrinting, tripDataOverride, tripIdOverride }: Itinera
                                 const last = sched[sched.length - 1];
                                 const defTime = last?.transit?.arrivalTime || last?.endTime || last?.startTime || "09:00";
                                 setActivitySaveError("");
-                                setActModal({ open: true, mode: "create", day, form: { is_utc: true, time_zone: displayTimeZone, time_date: last?.transit.arrivalDate || day.date, time: defTime, title: "", desc: "", type: "sight", linkId: "", activityIndex: day.activities?.length || 0 } });
+                                setActModal({ open: true, mode: "create", day, form: { is_utc: true, time_zone: displayTimeZone || day.time_zone || getBrowserTimeZone(), time_date: last?.transit.arrivalDate || day.date, time: defTime, title: "", desc: "", type: "sight", linkId: "", activityIndex: day.activities?.length || 0 } });
                             }}
                             onDeleteActivityBtnClick={(day, act) => setDel({ open: true, type: "activity", key: `第 ${day.day_number} 天：${act.title}`, day, act })}
                             onDeleteDayBtnClick={(day) => setDel({ open: true, type: "day", key: `第 ${day.day_number} 天 ${day.title}`, day })}

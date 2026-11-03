@@ -48,7 +48,7 @@ const InfoPage = ({
     tripIdOverride,
 }: InfoPageProps) => {
     const { session } = useAuth();
-    const [displayTimeZone, setDisplayTimeZone] = useState(getBrowserTimeZone);
+    const [displayTimeZone, setDisplayTimeZone] = useState<string | null>(null);
     const [flightSaveError, setFlightSaveError] = useState("");
     const { id: paramsId } = useParams<{ id: string }>();
     const tripId = tripIdOverride || paramsId;
@@ -56,7 +56,7 @@ const InfoPage = ({
         data: flights,
         isLoading: isFlightsLoading,
         error: flightsError,
-    } = useFlights(tripId, displayTimeZone);
+    } = useFlights(tripId, isPrinting || !displayTimeZone ? undefined : displayTimeZone);
     const {
         insert: insertFlight,
         update: updateFlight,
@@ -177,8 +177,8 @@ const InfoPage = ({
         () => ({
             is_utc: true,
             arrival_date: moment().format("YYYY-MM-DD"),
-            departure_time_zone: displayTimeZone,
-            arrival_time_zone: displayTimeZone,
+            departure_time_zone: displayTimeZone || getBrowserTimeZone(),
+            arrival_time_zone: displayTimeZone || getBrowserTimeZone(),
             arrival_loc: "",
             arrival_time: moment().format("HH:mm"),
             code: "",

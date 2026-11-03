@@ -227,7 +227,7 @@ export function computeDayTimelineSchedule(
     const localParts = (instant: number, act: ItineraryActivitiy) => {
         if (!Number.isFinite(instant)) return { date: act.time_date || day.date || "", time: act.time || "09:00" };
         if ((act.is_utc ?? day.is_utc ?? !!act.time_utc) && act.time_utc) {
-            return utcToLocal(new Date(instant).toISOString(), act.display_time_zone || day.display_time_zone || getBrowserTimeZone());
+            return utcToLocal(new Date(instant).toISOString(), act.time_zone || day.time_zone || act.display_time_zone || day.display_time_zone || getBrowserTimeZone());
         }
         const local = new Date(instant);
         const pad = (n: number) => String(n).padStart(2, "0");

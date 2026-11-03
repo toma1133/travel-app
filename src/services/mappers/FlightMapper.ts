@@ -1,13 +1,22 @@
 import type { FlightRow, FlightRowInsert, FlightRowUpdate } from "../../models/types/FlightTypes";
 import { getBrowserTimeZone, localToUtc, utcToLocal } from "../../utils/DateTimeUtil";
 
-export function toFlightVM(row: FlightRow, zone = getBrowserTimeZone()): FlightRow {
+export function toFlightVM(row: FlightRow, zone?: string): FlightRow {
     if (!row.is_utc) return row;
-    const departure = row.departure_at_utc ? utcToLocal(row.departure_at_utc, zone) : null;
-    const arrival = row.arrival_at_utc ? utcToLocal(row.arrival_at_utc, zone) : null;
-    return { ...row, flight_date: departure?.date ?? row.flight_date, departure_time: departure?.time ?? row.departure_time,
-        arrival_date: arrival?.date ?? row.arrival_date, arrival_time: arrival?.time ?? row.arrival_time,
-        display_time_zone: zone };
+    const depZone = zone || row.departure_time_zone || getBrowserTimeZone();
+    const arrZone = zone || row.arrival_time_zone || getBrowserTimeZone();
+    const departure = row.departure_at_utc ? utcToLocal(row.departure_at_utc, depZone) : null;
+    const arrival = row.arrival_at_utc ? utcToLocal(row.arrival_at_utc, arrZone) : null;
+    return {
+        ...row,
+        flight_date: departure?.date ?? row.flight_date,
+        departure_time: departure?.time ?? row.departure_time,
+        arrival_date: arrival?.date ?? row.arrival_date,
+        arrival_time: arrival?.time ?? row.arrival_time,
+        departure_time_zone: depZone,
+        arrival_time_zone: arrZone,
+        display_time_zone: zone || (depZone === arrZone ? depZone : `${depZone} / ${arrZone}`),
+    };
 }
 
 /** Restore each endpoint's saved zone before populating editable local fields. */
