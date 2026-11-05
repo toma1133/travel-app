@@ -5,12 +5,175 @@ import { getBrowserTimeZone, getTimeZones } from "../../utils/DateTimeUtil";
 
 const staticZones = getTimeZones();
 
+export const AIRPORT_TIMEZONE_MAP: Record<string, string> = {
+    // 中東轉機樞紐
+    DXB: "Asia/Dubai",
+    DWC: "Asia/Dubai",
+    AUH: "Asia/Dubai",
+    DOH: "Asia/Qatar",
+    // 英國與歐洲樞紐
+    LGW: "Europe/London",
+    LHR: "Europe/London",
+    STN: "Europe/London",
+    LTN: "Europe/London",
+    LCY: "Europe/London",
+    MAN: "Europe/London",
+    EDI: "Europe/London",
+    CDG: "Europe/Paris",
+    ORY: "Europe/Paris",
+    FRA: "Europe/Berlin",
+    MUC: "Europe/Berlin",
+    BER: "Europe/Berlin",
+    AMS: "Europe/Amsterdam",
+    FCO: "Europe/Rome",
+    MXP: "Europe/Rome",
+    MAD: "Europe/Madrid",
+    BCN: "Europe/Madrid",
+    ZRH: "Europe/Zurich",
+    GVA: "Europe/Zurich",
+    VIE: "Europe/Vienna",
+    PRG: "Europe/Prague",
+    BUD: "Europe/Budapest",
+    WAW: "Europe/Warsaw",
+    CPH: "Europe/Copenhagen",
+    ARN: "Europe/Stockholm",
+    OSL: "Europe/Oslo",
+    HEL: "Europe/Helsinki",
+    KEF: "Atlantic/Reykjavik",
+    IST: "Europe/Istanbul",
+    SAW: "Europe/Istanbul",
+    ATH: "Europe/Athens",
+    // 亞洲主要機場
+    TPE: "Asia/Taipei",
+    TSA: "Asia/Taipei",
+    KHH: "Asia/Taipei",
+    RMQ: "Asia/Taipei",
+    NRT: "Asia/Tokyo",
+    HND: "Asia/Tokyo",
+    KIX: "Asia/Tokyo",
+    FUK: "Asia/Tokyo",
+    CTS: "Asia/Tokyo",
+    OKA: "Asia/Tokyo",
+    NGO: "Asia/Tokyo",
+    ICN: "Asia/Seoul",
+    GMP: "Asia/Seoul",
+    PUS: "Asia/Seoul",
+    CJU: "Asia/Seoul",
+    HKG: "Asia/Hong_Kong",
+    MFM: "Asia/Macau",
+    BKK: "Asia/Bangkok",
+    DMK: "Asia/Bangkok",
+    HKT: "Asia/Bangkok",
+    CNX: "Asia/Bangkok",
+    SIN: "Asia/Singapore",
+    KUL: "Asia/Kuala_Lumpur",
+    SGN: "Asia/Ho_Chi_Minh",
+    HAN: "Asia/Ho_Chi_Minh",
+    MNL: "Asia/Manila",
+    CGK: "Asia/Jakarta",
+    DPS: "Asia/Jakarta",
+    PVG: "Asia/Shanghai",
+    SHA: "Asia/Shanghai",
+    PEK: "Asia/Shanghai",
+    PKX: "Asia/Shanghai",
+    CAN: "Asia/Shanghai",
+    SZX: "Asia/Shanghai",
+    // 美洲與大洋洲
+    JFK: "America/New_York",
+    EWR: "America/New_York",
+    LGA: "America/New_York",
+    BOS: "America/New_York",
+    IAD: "America/New_York",
+    DCA: "America/New_York",
+    ORD: "America/Chicago",
+    DFW: "America/Chicago",
+    LAX: "America/Los_Angeles",
+    SFO: "America/Los_Angeles",
+    SEA: "America/Los_Angeles",
+    LAS: "America/Los_Angeles",
+    YVR: "America/Vancouver",
+    YYZ: "America/Toronto",
+    YUL: "America/Toronto",
+    HNL: "Pacific/Honolulu",
+    SYD: "Australia/Sydney",
+    MEL: "Australia/Melbourne",
+    BNE: "Australia/Sydney",
+    PER: "Australia/Perth",
+    AKL: "Pacific/Auckland",
+    CHC: "Pacific/Auckland",
+};
+
+export const TIMEZONE_ALIASES: Record<string, string> = {
+    冰島: "Atlantic/Reykjavik",
+    雷克雅維克: "Atlantic/Reykjavik",
+    台灣: "Asia/Taipei",
+    臺灣: "Asia/Taipei",
+    台北: "Asia/Taipei",
+    臺北: "Asia/Taipei",
+    日本: "Asia/Tokyo",
+    東京: "Asia/Tokyo",
+    大阪: "Asia/Tokyo",
+    京都: "Asia/Tokyo",
+    沖繩: "Asia/Tokyo",
+    北海道: "Asia/Tokyo",
+    韓國: "Asia/Seoul",
+    首爾: "Asia/Seoul",
+    釜山: "Asia/Seoul",
+    濟州: "Asia/Seoul",
+    香港: "Asia/Hong_Kong",
+    澳門: "Asia/Macau",
+    泰國: "Asia/Bangkok",
+    曼谷: "Asia/Bangkok",
+    清邁: "Asia/Bangkok",
+    普吉: "Asia/Bangkok",
+    新加坡: "Asia/Singapore",
+    馬來西亞: "Asia/Kuala_Lumpur",
+    吉隆坡: "Asia/Kuala_Lumpur",
+    越南: "Asia/Ho_Chi_Minh",
+    胡志明: "Asia/Ho_Chi_Minh",
+    河內: "Asia/Ho_Chi_Minh",
+    杜拜: "Asia/Dubai",
+    阿聯酋: "Asia/Dubai",
+    多哈: "Asia/Qatar",
+    卡達: "Asia/Qatar",
+    倫敦: "Europe/London",
+    英國: "Europe/London",
+    巴黎: "Europe/Paris",
+    法國: "Europe/Paris",
+    德國: "Europe/Berlin",
+    柏林: "Europe/Berlin",
+    法蘭克福: "Europe/Berlin",
+    荷蘭: "Europe/Amsterdam",
+    阿姆斯特丹: "Europe/Amsterdam",
+    瑞士: "Europe/Zurich",
+    蘇黎世: "Europe/Zurich",
+    義大利: "Europe/Rome",
+    羅馬: "Europe/Rome",
+    米蘭: "Europe/Rome",
+    西班牙: "Europe/Madrid",
+    馬德里: "Europe/Madrid",
+    巴塞隆納: "Europe/Madrid",
+    土耳其: "Europe/Istanbul",
+    伊斯坦堡: "Europe/Istanbul",
+    紐約: "America/New_York",
+    洛杉磯: "America/Los_Angeles",
+    舊金山: "America/Los_Angeles",
+    西雅圖: "America/Los_Angeles",
+    夏威夷: "Pacific/Honolulu",
+    雪梨: "Australia/Sydney",
+    墨爾本: "Australia/Melbourne",
+    奧克蘭: "Pacific/Auckland",
+    紐西蘭: "Pacific/Auckland",
+};
+
 export type TimeZoneSelectProps = {
     value?: string | null;
     onChange: (value: string) => void;
     label?: string;
-    disabled?: boolean;
+    disabled?: boolean;TimeZoneSelect
     className?: string;
+    localTimeZone?: string | null;
+    homeTimeZone?: string | null;
 };
 
 export default function TimeZoneSelect({
@@ -19,6 +182,8 @@ export default function TimeZoneSelect({
     label = "時區",
     disabled = false,
     className = "",
+    localTimeZone,
+    homeTimeZone,
 }: TimeZoneSelectProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
@@ -37,20 +202,27 @@ export default function TimeZoneSelect({
     });
 
     const browserTimeZone = useMemo(() => getBrowserTimeZone(), []);
-    const current = value || browserTimeZone;
+    const current = value || localTimeZone || browserTimeZone;
 
-    // 所有時區列表（包含當前選中時區）
+    // 所有時區列表（包含當前選中、當地、本國時區）
     const allZones = useMemo(() => {
-        return [...new Set([current, ...staticZones])];
-    }, [current]);
+        return [...new Set([current, localTimeZone, homeTimeZone, ...staticZones].filter(Boolean) as string[])];
+    }, [current, localTimeZone, homeTimeZone]);
 
     // 依搜尋條件過濾時區
     const filteredZones = useMemo(() => {
         const q = searchQuery.trim().toLowerCase();
         if (!q) {
-            // 無搜尋字串時，優先將瀏覽器時區置頂
-            const others = allZones.filter((z) => z !== browserTimeZone);
-            return browserTimeZone ? [browserTimeZone, ...others] : allZones;
+            // 無搜尋字串時，優先將 當地時區 -> 本國時區 -> 瀏覽器時區 置頂
+            const topZones = [
+                localTimeZone,
+                homeTimeZone !== localTimeZone ? homeTimeZone : null,
+                browserTimeZone !== localTimeZone && browserTimeZone !== homeTimeZone ? browserTimeZone : null,
+            ].filter((z): z is string => Boolean(z));
+
+            const topSet = new Set(topZones);
+            const others = allZones.filter((z) => !topSet.has(z));
+            return [...topZones, ...others];
         }
 
         return allZones.filter((zone) => {
@@ -59,9 +231,29 @@ export default function TimeZoneSelect({
             const isBrowserMatch =
                 zone === browserTimeZone &&
                 ("瀏覽器時區".includes(q) || "browser".includes(q) || "本機".includes(q));
-            return lower.includes(q) || withSpaces.includes(q) || isBrowserMatch;
+            const isLocalMatch =
+                zone === localTimeZone &&
+                ("當地".includes(q) || "當地時區".includes(q) || "local".includes(q));
+            const isHomeMatch =
+                zone === homeTimeZone &&
+                ("本國".includes(q) || "本國時區".includes(q) || "home".includes(q));
+            const airportMatch = AIRPORT_TIMEZONE_MAP[q.toUpperCase()] === zone;
+            const aliasMatch =
+                TIMEZONE_ALIASES[q] === zone ||
+                Object.entries(TIMEZONE_ALIASES).some(
+                    ([k, v]) => v === zone && k.toLowerCase().includes(q)
+                );
+            return (
+                lower.includes(q) ||
+                withSpaces.includes(q) ||
+                isBrowserMatch ||
+                isLocalMatch ||
+                isHomeMatch ||
+                airportMatch ||
+                aliasMatch
+            );
         });
-    }, [allZones, searchQuery, browserTimeZone]);
+    }, [allZones, searchQuery, browserTimeZone, localTimeZone, homeTimeZone]);
 
     // 計算彈出選單位置（支援視窗防溢位與向上展開）
     useLayoutEffect(() => {
@@ -203,11 +395,19 @@ export default function TimeZoneSelect({
                 <div className="flex items-center gap-1.5 truncate max-w-[200px] sm:max-w-[260px]">
                     <Globe size={13} className="text-primary shrink-0" />
                     <span className="truncate font-medium">{current}</span>
-                    {current === browserTimeZone && (
+                    {current === localTimeZone ? (
+                        <span className="text-[10px] text-emerald-700 dark:text-emerald-300 bg-emerald-500/15 px-1.5 py-0.2 rounded-sm shrink-0 font-bold">
+                            當地
+                        </span>
+                    ) : current === homeTimeZone ? (
+                        <span className="text-[10px] text-sky-700 dark:text-sky-300 bg-sky-500/15 px-1.5 py-0.2 rounded-sm shrink-0 font-bold">
+                            本國
+                        </span>
+                    ) : current === browserTimeZone ? (
                         <span className="text-[10px] text-muted-foreground bg-muted px-1 py-0.2 rounded-sm shrink-0">
                             本機
                         </span>
-                    )}
+                    ) : null}
                 </div>
                 <ChevronDown
                     size={13}
@@ -276,7 +476,9 @@ export default function TimeZoneSelect({
                             {filteredZones.length > 0 ? (
                                 filteredZones.map((zone) => {
                                     const isSelected = zone === current;
-                                    const isBrowser = zone === browserTimeZone;
+                                    const isLocal = zone === localTimeZone;
+                                    const isHome = zone === homeTimeZone && !isLocal;
+                                    const isBrowser = zone === browserTimeZone && !isLocal && !isHome;
                                     return (
                                         <button
                                             key={zone}
@@ -292,8 +494,18 @@ export default function TimeZoneSelect({
                                         >
                                             <div className="flex items-center gap-2 truncate">
                                                 <span className="truncate">{zone}</span>
+                                                {isLocal && (
+                                                    <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-bold shrink-0">
+                                                        當地時區
+                                                    </span>
+                                                )}
+                                                {isHome && (
+                                                    <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-sky-500/15 text-sky-700 dark:text-sky-300 font-bold shrink-0">
+                                                        本國時區
+                                                    </span>
+                                                )}
                                                 {isBrowser && (
-                                                    <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-primary/10 text-primary font-medium shrink-0">
+                                                    <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-muted text-muted-foreground font-medium shrink-0">
                                                         瀏覽器時區
                                                     </span>
                                                 )}

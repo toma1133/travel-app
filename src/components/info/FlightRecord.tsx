@@ -33,6 +33,26 @@ const FlightRecord = ({
         return `${hours}h ${minutes}m`;
     };
 
+    const getDayDiff = () => {
+        if (flight.flight_date && flight.arrival_date) {
+            const dep = moment(flight.flight_date, "YYYY-MM-DD");
+            const arr = moment(flight.arrival_date, "YYYY-MM-DD");
+            if (dep.isValid() && arr.isValid()) {
+                return arr.diff(dep, "days");
+            }
+        }
+        if (flight.departure_time && flight.arrival_time && !flight.arrival_date) {
+            const dep = moment(flight.departure_time, "HH:mm:ss");
+            const arr = moment(flight.arrival_time, "HH:mm:ss");
+            if (arr.isBefore(dep)) {
+                return 1;
+            }
+        }
+        return 0;
+    };
+
+    const dayDiff = getDayDiff();
+
     // --- 列印模式：登機證風格 (Boarding Pass Style) 保持原樣不變 ---
     if (isPrinting) {
         return (
@@ -81,11 +101,18 @@ const FlightRecord = ({
                         </div>
 
                         <div className="flex flex-col items-end">
-                            <span className="text-2xl font-black text-black leading-none">
-                                {moment(flight.arrival_time, "HH:mm:ss").format(
-                                    "HH:mm"
+                            <div className="flex items-baseline">
+                                <span className="text-2xl font-black text-black leading-none">
+                                    {moment(flight.arrival_time, "HH:mm:ss").format(
+                                        "HH:mm"
+                                    )}
+                                </span>
+                                {dayDiff !== 0 && (
+                                    <span className="text-xs font-black text-red-600 ml-0.5">
+                                        {dayDiff > 0 ? `+${dayDiff}` : `${dayDiff}`}
+                                    </span>
                                 )}
-                            </span>
+                            </div>
                             <span className="text-sm font-bold text-gray-600">
                                 {flight.arrival_loc}
                             </span>
@@ -127,8 +154,7 @@ const FlightRecord = ({
                         {flight.code}
                     </span>
                     <span>•</span>
-                    <span className="font-mono">{flight.flight_date}{flight.arrival_date && flight.arrival_date !== flight.flight_date ? ` → ${flight.arrival_date}` : ""}</span>
-                    <span>{flight.is_utc ? (flight.departure_time_zone === flight.arrival_time_zone ? flight.departure_time_zone : `${flight.departure_time_zone || ""} → ${flight.arrival_time_zone || ""}`) : "原始時間"}</span>
+                    <span className="font-mono">{flight.flight_date}</span>
                     <span>•</span>
                     {flight.passengers && flight.passengers.length > 0 ? (
                         <div className="inline-flex items-center gap-1 flex-wrap">
@@ -153,10 +179,15 @@ const FlightRecord = ({
 
             <div className="flex items-center justify-between sm:justify-end sm:text-right gap-4 shrink-0 border-t sm:border-t-0 pt-2 sm:pt-0 border-border/30">
                 <div>
-                    <div className="font-mono text-foreground font-bold text-sm tracking-tight">
-                        {moment(flight.departure_time, "HH:mm:ss").format("HH:mm")}
+                    <div className="font-mono text-foreground font-bold text-sm tracking-tight flex items-center justify-end">
+                        <span>{moment(flight.departure_time, "HH:mm:ss").format("HH:mm")}</span>
                         <span className="mx-1 text-muted-foreground font-light">➝</span>
-                        {moment(flight.arrival_time, "HH:mm:ss").format("HH:mm")}
+                        <span>{moment(flight.arrival_time, "HH:mm:ss").format("HH:mm")}</span>
+                        {dayDiff !== 0 && (
+                            <span className="text-[10px] font-bold text-rose-500 ml-1">
+                                {dayDiff > 0 ? `+${dayDiff}` : `${dayDiff}`}
+                            </span>
+                        )}
                     </div>
                     {getDuration() && (
                         <div className="flex items-center sm:justify-end gap-1 text-[11px] text-muted-foreground mt-0.5">

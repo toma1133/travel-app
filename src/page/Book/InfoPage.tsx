@@ -1,5 +1,7 @@
-import TimeZoneSelect from "../../components/common/TimeZoneSelect";
-import { getBrowserTimeZone } from "../../utils/DateTimeUtil";
+import {
+    currencyToTimeZone,
+    getBrowserTimeZone,
+} from "../../utils/DateTimeUtil";
 import { toFlightForm } from "../../services/mappers/FlightMapper";
 import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import { useOutletContext, useParams } from "react-router-dom";
@@ -48,7 +50,6 @@ const InfoPage = ({
     tripIdOverride,
 }: InfoPageProps) => {
     const { session } = useAuth();
-    const [displayTimeZone, setDisplayTimeZone] = useState<string | null>(null);
     const [flightSaveError, setFlightSaveError] = useState("");
     const { id: paramsId } = useParams<{ id: string }>();
     const tripId = tripIdOverride || paramsId;
@@ -56,7 +57,7 @@ const InfoPage = ({
         data: flights,
         isLoading: isFlightsLoading,
         error: flightsError,
-    } = useFlights(tripId, isPrinting || !displayTimeZone ? undefined : displayTimeZone);
+    } = useFlights(tripId);
     const {
         insert: insertFlight,
         update: updateFlight,
@@ -98,10 +99,10 @@ const InfoPage = ({
                         (m) =>
                             m.profiles?.username ||
                             m.profiles?.email?.split("@")[0] ||
-                            ""
+                            "",
                     )
-                    .filter(Boolean)
-            )
+                    .filter(Boolean),
+            ),
         );
     }, [tripMembers]);
 
@@ -170,6 +171,13 @@ const InfoPage = ({
     const [deleteType, setDeleteType] = useState("");
     const [deleteKey, setDeleteKey] = useState("");
 
+    const tripLocalZone = currencyToTimeZone(
+        tripData?.settings_config?.localCurrency,
+    );
+    const tripHomeZone = currencyToTimeZone(
+        tripData?.settings_config?.homeCurrency,
+    );
+
     // --- Flight Modal Handlers ---
     const [isFlightModalOpen, setIsFlightModalOpen] = useState(false);
     const [flightModalMode, setFlightModalMode] = useState("create");
@@ -177,8 +185,10 @@ const InfoPage = ({
         () => ({
             is_utc: true,
             arrival_date: moment().format("YYYY-MM-DD"),
-            departure_time_zone: displayTimeZone || getBrowserTimeZone(),
-            arrival_time_zone: displayTimeZone || getBrowserTimeZone(),
+            departure_time_zone:
+                tripHomeZone || getBrowserTimeZone(),
+            arrival_time_zone:
+                tripLocalZone || tripHomeZone || getBrowserTimeZone(),
             arrival_loc: "",
             arrival_time: moment().format("HH:mm"),
             code: "",
@@ -193,11 +203,11 @@ const InfoPage = ({
             updated_at: null,
             user_id: session ? session.user.id : "",
         }),
-        [tripId, session, displayTimeZone]
+        [tripId, session, tripHomeZone, tripLocalZone],
     );
     const [formFlight, setFormFlight] = useState(initialFlightState);
     const [flightToDelete, setFlightToDelete] = useState<FlightRow | null>(
-        null
+        null,
     );
 
     const handleOpenCreateFlightModal = () => {
@@ -254,7 +264,11 @@ const InfoPage = ({
             setFormFlight(initialFlightState);
             setIsFlightModalOpen(false);
         } catch (err) {
-            setFlightSaveError(err instanceof Error ? err.message : "航班儲存失敗，請稍後再試。");
+            setFlightSaveError(
+                err instanceof Error
+                    ? err.message
+                    : "航班儲存失敗，請稍後再試。",
+            );
             console.error(err);
         }
     };
@@ -277,10 +291,10 @@ const InfoPage = ({
             user_id: session ? session.user.id : "",
             link_id: "",
         }),
-        [tripId, session]
+        [tripId, session],
     );
     const [formAccommodation, setFormAccommodation] = useState(
-        initialAccommodationState
+        initialAccommodationState,
     );
     const [accommodationToDelete, setAccommodationToDelete] =
         useState<AccommodationRow | null>(null);
@@ -292,7 +306,7 @@ const InfoPage = ({
     };
 
     const handleOpenEditAccommodationModal = (
-        accommodation: AccommodationRow
+        accommodation: AccommodationRow,
     ) => {
         setAccommodationModalMode("edit");
         setFormAccommodation(accommodation);
@@ -300,7 +314,7 @@ const InfoPage = ({
     };
 
     const handleAccommodationFormInputChange = (
-        e: ChangeEvent<HTMLInputElement>
+        e: ChangeEvent<HTMLInputElement>,
     ) => {
         const { name, value } = e.target;
         setFormAccommodation((prev) => ({ ...prev, [name]: value }));
@@ -334,7 +348,7 @@ const InfoPage = ({
     };
 
     const handleOpenDeleteAccommodationModal = (
-        accommodation: AccommodationRow
+        accommodation: AccommodationRow,
     ) => {
         setAccommodationToDelete(accommodation);
         setDeleteType("accommodation");
@@ -360,7 +374,7 @@ const InfoPage = ({
             updated_at: null,
             user_id: session ? session.user.id : "",
         }),
-        [tripId, session]
+        [tripId, session],
     );
     const [formCarRental, setFormCarRental] = useState(initialCarRentalState);
     const [carRentalToDelete, setCarRentalToDelete] =
@@ -377,10 +391,10 @@ const InfoPage = ({
         setFormCarRental({
             ...carRental,
             pickup_datetime: moment(carRental.pickup_datetime).format(
-                "YYYY-MM-DD HH:mm:ss"
+                "YYYY-MM-DD HH:mm:ss",
             ),
             dropoff_datetime: moment(carRental.dropoff_datetime).format(
-                "YYYY-MM-DD HH:mm:ss"
+                "YYYY-MM-DD HH:mm:ss",
             ),
         });
         setIsCarRentalModalOpen(true);
@@ -399,16 +413,16 @@ const InfoPage = ({
             `租車公司:${carRental.company} 租車車型: ${
                 carRental.model
             } 取車: ${moment(carRental.pickup_datetime).format(
-                "YYYY-MM-DD HH:mm:ss"
+                "YYYY-MM-DD HH:mm:ss",
             )} ${carRental.pickup_loc} 還車: ${moment(
-                carRental.dropoff_datetime
-            ).format("YYYY-MM-DD HH:mm:ss")} ${carRental.dropoff_loc}`
+                carRental.dropoff_datetime,
+            ).format("YYYY-MM-DD HH:mm:ss")} ${carRental.dropoff_loc}`,
         );
         setIsDeleteModalOpen(true);
     };
 
     const handleCarRentalFormInputChange = (
-        e: ChangeEvent<HTMLInputElement>
+        e: ChangeEvent<HTMLInputElement>,
     ) => {
         const { name, value } = e.target;
         setFormCarRental((prev) => ({ ...prev, [name]: value }));
@@ -442,7 +456,7 @@ const InfoPage = ({
                 case "accommodation":
                     if (!accommodationToDelete) return;
                     await removeAccommodation.mutateAsync(
-                        accommodationToDelete.id
+                        accommodationToDelete.id,
                     );
                     break;
                 case "car_rental":
@@ -503,7 +517,6 @@ const InfoPage = ({
                         : "overflow-y-auto no-scrollbar px-4 pt-4 pb-28 md:pb-12 space-y-6"
                 }`}
             >
-                {!isPrinting && <TimeZoneSelect value={displayTimeZone} onChange={setDisplayTimeZone} label="航班顯示時區" />}
                 <FlightList
                     flights={flights}
                     companionNames={companionNames}
@@ -536,10 +549,16 @@ const InfoPage = ({
                     onEditBtnClick={handleOpenEditCarRentalModal}
                 />
                 {!isPrinting && (
-                    <ChecklistSection tripId={tripId || "default"} isEditing={isEditing} />
+                    <ChecklistSection
+                        tripId={tripId || "default"}
+                        isEditing={isEditing}
+                    />
                 )}
                 {!isPrinting && (
-                    <div className="w-full shrink-0 h-12 md:h-8 pointer-events-none" aria-hidden="true" />
+                    <div
+                        className="w-full shrink-0 h-12 md:h-8 pointer-events-none"
+                        aria-hidden="true"
+                    />
                 )}
             </div>
             {isFlightModalOpen && (
@@ -548,9 +567,13 @@ const InfoPage = ({
                     mode={flightModalMode}
                     theme={tripData?.theme_config!}
                     companionNames={companionNames}
+                    localTimeZone={tripLocalZone}
+                    homeTimeZone={tripHomeZone}
                     onCloseBtnClick={handleCloseFlightModal}
                     onFormInputChange={handleFlightFormInputChange}
-                    onTimeSettingsChange={patch => setFormFlight(prev => ({ ...prev, ...patch }))}
+                    onTimeSettingsChange={(patch) =>
+                        setFormFlight((prev) => ({ ...prev, ...patch }))
+                    }
                     errorMessage={flightSaveError}
                     onPassengersChange={handleFlightPassengersChange}
                     onFormSubmit={handleFlightFormSubmit}

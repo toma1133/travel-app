@@ -4,6 +4,7 @@ import { Plane, Calendar, Clock, Users, User, Plus, X, Check } from "lucide-reac
 import type { FlightRow } from "../../models/types/FlightTypes";
 import type { TripThemeConf } from "../../models/types/TripTypes";
 import FormModal from "../common/FormModal";
+import { detectTimeZoneFromLocation } from "../../utils/DateTimeUtil";
 
 type FlightModalProps = {
     formData: FlightRow;
@@ -12,6 +13,8 @@ type FlightModalProps = {
     onTimeSettingsChange: (patch: Partial<FlightRow>) => void;
     theme: TripThemeConf | null;
     companionNames?: string[];
+    localTimeZone?: string | null;
+    homeTimeZone?: string | null;
     onCloseBtnClick: MouseEventHandler<HTMLButtonElement>;
     onFormInputChange: ChangeEventHandler<HTMLInputElement>;
     onPassengersChange?: (passengers: string[] | null) => void;
@@ -25,6 +28,8 @@ const FlightModal = ({
     mode,
     theme,
     companionNames = [],
+    localTimeZone,
+    homeTimeZone,
     onCloseBtnClick,
     onFormInputChange,
     onPassengersChange,
@@ -117,7 +122,13 @@ const FlightModal = ({
                                 required
                                 name="departure_loc"
                                 value={formData.departure_loc || ""}
-                                onChange={onFormInputChange}
+                                onChange={(e) => {
+                                    onFormInputChange(e);
+                                    const detected = detectTimeZoneFromLocation(e.target.value);
+                                    if (detected) {
+                                        onTimeSettingsChange({ departure_time_zone: detected });
+                                    }
+                                }}
                                 placeholder="例如：TPE 桃園機場"
                                 className="flex-1 bg-transparent text-xs text-foreground placeholder:text-muted-foreground/40 outline-none font-medium"
                             />
@@ -135,7 +146,13 @@ const FlightModal = ({
                                 required
                                 name="arrival_loc"
                                 value={formData.arrival_loc || ""}
-                                onChange={onFormInputChange}
+                                onChange={(e) => {
+                                    onFormInputChange(e);
+                                    const detected = detectTimeZoneFromLocation(e.target.value);
+                                    if (detected) {
+                                        onTimeSettingsChange({ arrival_time_zone: detected });
+                                    }
+                                }}
                                 placeholder="例如：KIX 關西機場 / NRT 成田"
                                 className="flex-1 bg-transparent text-xs text-foreground placeholder:text-muted-foreground/40 outline-none font-medium"
                             />
@@ -169,6 +186,7 @@ const FlightModal = ({
 
                         <div className="p-3.5 bg-card/80">
                             <TimeZoneSelect value={formData.departure_time_zone} disabled={!formData.is_utc} label="起飛時區"
+                                localTimeZone={localTimeZone} homeTimeZone={homeTimeZone}
                                 onChange={departure_time_zone => onTimeSettingsChange({ departure_time_zone })} />
                         </div>
                         {/* 起飛時間 */}
@@ -197,6 +215,7 @@ const FlightModal = ({
                         </div>
                         <div className="p-3.5 bg-card/80">
                             <TimeZoneSelect value={formData.arrival_time_zone} disabled={!formData.is_utc} label="抵達時區"
+                                localTimeZone={localTimeZone} homeTimeZone={homeTimeZone}
                                 onChange={arrival_time_zone => onTimeSettingsChange({ arrival_time_zone })} />
                         </div>
                         {/* 抵達時間 */}

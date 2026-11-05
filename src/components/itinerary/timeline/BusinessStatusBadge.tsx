@@ -1,12 +1,15 @@
 import React from "react";
+import moment from "moment";
 import { AlertTriangle } from "lucide-react";
 import type { PlaceVM } from "../../../models/types/PlaceTypes";
 import { getBusinessStatus, getScheduledMoment } from "../../../utils/OpeningHoursUtil";
+import { utcToLocal } from "../../../utils/DateTimeUtil";
 
 type BusinessStatusBadgeProps = {
     place?: PlaceVM | null;
     activityTime?: string;
     itineraryDate: string;
+    timeZone?: string | null;
     isPrinting?: boolean;
 };
 
@@ -14,6 +17,7 @@ export const BusinessStatusBadge: React.FC<BusinessStatusBadgeProps> = ({
     place,
     activityTime,
     itineraryDate,
+    timeZone,
     isPrinting = false,
 }) => {
     if (!place) return null;
@@ -92,9 +96,17 @@ export const BusinessStatusBadge: React.FC<BusinessStatusBadgeProps> = ({
         );
     }
 
-    // 3. 即時營業狀態
+    // 3. 即時營業狀態 (優先使用當地時間判斷)
+    const targetZone = timeZone || (place as any)?.time_zone;
+    const currentLocalMoment = targetZone
+        ? (() => {
+              const local = utcToLocal(new Date().toISOString(), targetZone);
+              return getScheduledMoment(local.date, local.time);
+          })()
+        : moment();
+
     const currentBusinessStatus = place.info?.open
-        ? getBusinessStatus(place.info.open, place.info?.closed_days)
+        ? getBusinessStatus(place.info.open, place.info?.closed_days, currentLocalMoment)
         : null;
 
     if (!currentBusinessStatus?.badgeText) return null;

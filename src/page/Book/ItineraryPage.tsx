@@ -1,6 +1,5 @@
-import TimeZoneSelect from "../../components/common/TimeZoneSelect";
-import { getBrowserTimeZone } from "../../utils/DateTimeUtil";
 import { toItineraryActivityForm, toItineraryVM, toItineraryUpdate } from "../../services/mappers/ItineraryMapper";
+import { currencyToTimeZone, getBrowserTimeZone } from "../../utils/DateTimeUtil";
 import { FormEvent, lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useOutletContext, useParams } from "react-router-dom";
 import { useIsMutating } from "@tanstack/react-query";
@@ -41,16 +40,18 @@ type ItineraryPageProps = {
 
 const ItineraryPage = ({ isPrinting, tripDataOverride, tripIdOverride }: ItineraryPageProps) => {
     const { session } = useAuth();
-    const [displayTimeZone, setDisplayTimeZone] = useState<string | null>(null);
     const [daySaveError, setDaySaveError] = useState("");
     const [activitySaveError, setActivitySaveError] = useState("");
     const { id: paramsId } = useParams<{ id: string }>();
     const tripId = tripIdOverride || paramsId;
-    const { data: itinerarys, isLoading } = useItinerarys(tripId, isPrinting || !displayTimeZone ? undefined : displayTimeZone);
+    const { data: itinerarys, isLoading } = useItinerarys(tripId);
     const { insert: insertDay, update: updateDay, remove: removeDay, sync: syncDays, anyPending } = useItineraryMutations();
     const contextData = useOutletContext<BookLayoutContextType | null>();
     const tripData = tripDataOverride || contextData?.tripData;
     const { setIsPageLoading } = useOutletContext<LayoutContextType>();
+
+    const tripLocalZone = currencyToTimeZone(tripData?.settings_config?.localCurrency);
+    const tripHomeZone = currencyToTimeZone(tripData?.settings_config?.homeCurrency);
 
     const isEditing = true;
     const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -167,7 +168,7 @@ const ItineraryPage = ({ isPrinting, tripDataOverride, tripIdOverride }: Itinera
         const edited = actModal.mode === "create" ? [...acts, actModal.form] : acts.map((a) => (a.activityIndex === actModal.form.activityIndex ? actModal.form : a));
         // Normalize each input zone before sorting activities in the list display zone.
         const storage = toItineraryUpdate({ ...actModal.day, activities: edited });
-        const next = toItineraryVM({ ...actModal.day, activities: storage.activities ?? null }, displayTimeZone ?? undefined).activities || [];
+        const next = toItineraryVM({ ...actModal.day, activities: storage.activities ?? null }).activities || [];
         next.sort((a, b) => compareItineraryActivities(a, b, actModal.day!)).forEach((a, i) => (a.activityIndex = i));
         setSelectedDayFilter(actModal.day.id);
         await updateDay.mutateAsync({ ...actModal.day, activities: next });
@@ -206,7 +207,6 @@ const ItineraryPage = ({ isPrinting, tripDataOverride, tripIdOverride }: Itinera
                         <RefreshCw size={14} className={syncDays.isPending ? "animate-spin" : ""} />
                         {syncDays.isPending ? "同步中…" : "同步旅程天數"}
                     </button>
-                    <TimeZoneSelect value={displayTimeZone} onChange={setDisplayTimeZone} label="行程顯示時區" />
                     <span role="status" className="text-xs text-muted-foreground">{syncMessage}</span>
                 </div>
             )}
@@ -217,7 +217,7 @@ const ItineraryPage = ({ isPrinting, tripDataOverride, tripIdOverride }: Itinera
                     <>
                         {!isPrinting && Array.isArray(itinerarys) && itinerarys.length > 0 && (
                             <div className="space-y-2.5 shrink-0">
-                                <LiveTravelFocusCard timeZone={displayTimeZone || getBrowserTimeZone()}
+                                <LiveTravelFocusCard
                                     trip={tripData}
                                     itineraries={itinerarys}
                                     placesMap={linkedPlacesMap}
@@ -245,7 +245,7 @@ const ItineraryPage = ({ isPrinting, tripDataOverride, tripIdOverride }: Itinera
                                                 updated_at: null,
                                                 user_id: session?.user?.id || "",
                                                 weekday: moment().format("ddd"),
-                                                is_utc: false, time_zone: null, date_utc: null, original_date: undefined,
+                                                is_utc: false, time_zone: tripLocalZone || null, date_utc: null, original_date: undefined,
                                             },
                                         })
                                     }
@@ -268,8 +268,9 @@ const ItineraryPage = ({ isPrinting, tripDataOverride, tripIdOverride }: Itinera
                                 const sched = day.activities ? computeDayTimelineSchedule(day.activities, day) : [];
                                 const last = sched[sched.length - 1];
                                 const defTime = last?.transit?.arrivalTime || last?.endTime || last?.startTime || "09:00";
+                                const defaultZone = tripLocalZone || day.time_zone || getBrowserTimeZone();
                                 setActivitySaveError("");
-                                setActModal({ open: true, mode: "create", day, form: { is_utc: true, time_zone: displayTimeZone || day.time_zone || getBrowserTimeZone(), time_date: last?.transit.arrivalDate || day.date, time: defTime, title: "", desc: "", type: "sight", linkId: "", activityIndex: day.activities?.length || 0 } });
+                                setActModal({ open: true, mode: "create", day, form: { is_utc: true, time_zone: defaultZone, time_date: last?.transit.arrivalDate || day.date, time: defTime, title: "", desc: "", type: "sight", linkId: "", activityIndex: day.activities?.length || 0 } });
                             }}
                             onDeleteActivityBtnClick={(day, act) => setDel({ open: true, type: "activity", key: `第 ${day.day_number} 天：${act.title}`, day, act })}
                             onDeleteDayBtnClick={(day) => setDel({ open: true, type: "day", key: `第 ${day.day_number} 天 ${day.title}`, day })}
@@ -328,7 +329,7 @@ const ItineraryPage = ({ isPrinting, tripDataOverride, tripIdOverride }: Itinera
 
             <Suspense fallback={<div role="status" className="fixed bottom-24 left-4 z-[70] glass-panel p-3 rounded-xl">載入中…</div>}>
             {dayModal.open && <ItineraryDayModal errorMessage={daySaveError} formData={dayModal.form} mode={dayModal.mode} theme={tripData?.theme_config ?? null} onCloseBtnClick={() => setDayModal((p) => ({ ...p, open: false }))} onFormInputChange={(e) => setDayModal((p) => ({ ...p, form: { ...p.form, [e.target.name]: e.target.value, ...(e.target.name === "date" ? { weekday: moment(e.target.value).format("ddd") } : {}) } }))} onFormSubmit={handleDaySubmit} />}
-            {actModal.open && <ItineraryActivityModal onTimeSettingsChange={patch => setActModal(p => ({ ...p, form: { ...p.form, ...patch } }))} errorMessage={activitySaveError} formData={actModal.form} itinerary={actModal.day!} itineraryCategory={ITINERARY_CATEGORIES} mode={actModal.mode} theme={tripData?.theme_config ?? null} onCloseBtnClick={() => setActModal((p) => ({ ...p, open: false }))} onFormInputChange={(e) => { const { name, value, type } = e.target; const checked = (e.target as HTMLInputElement).checked; if (name.startsWith("transitDetails.")) { const f = name.replace("transitDetails.", ""); setActModal((p) => ({ ...p, form: { ...p.form, transitDetails: { ...(p.form.transitDetails || {}), [f]: type === "checkbox" ? checked : value } } })); } else { setActModal((p) => ({ ...p, form: { ...p.form, [name]: value } })); } }} onFormSubmit={handleActSubmit} />}
+            {actModal.open && <ItineraryActivityModal localTimeZone={tripLocalZone} homeTimeZone={tripHomeZone} onTimeSettingsChange={patch => setActModal(p => ({ ...p, form: { ...p.form, ...patch } }))} errorMessage={activitySaveError} formData={actModal.form} itinerary={actModal.day!} itineraryCategory={ITINERARY_CATEGORIES} mode={actModal.mode} theme={tripData?.theme_config ?? null} onCloseBtnClick={() => setActModal((p) => ({ ...p, open: false }))} onFormInputChange={(e) => { const { name, value, type } = e.target; const checked = (e.target as HTMLInputElement).checked; if (name.startsWith("transitDetails.")) { const f = name.replace("transitDetails.", ""); setActModal((p) => ({ ...p, form: { ...p.form, transitDetails: { ...(p.form.transitDetails || {}), [f]: type === "checkbox" ? checked : value } } })); } else { setActModal((p) => ({ ...p, form: { ...p.form, [name]: value } })); } }} onFormSubmit={handleActSubmit} />}
             {del.open && <DeleteModal deleteKey={del.key} onCloseClick={() => setDel({ open: false, type: "", key: "" })} onConfirmClick={handleConfirmDelete} />}
             {preview.open && (preview.place || preview.activity) && <PreviewPlaceModal place={preview.place} activity={preview.activity} theme={tripData?.theme_config ?? null} onCloseBtnClick={() => setPreview({ open: false })} />}
             {optimizeDay && <OptimizeRouteModal itineraryDay={optimizeDay} placesMap={new Map(Object.values(linkedPlacesMap).map((p) => [p.id, p]))} theme={tripData?.theme_config} onClose={() => setOptimizeDay(null)} onApplyOptimizedOrder={async (d, acts) => { await updateDay.mutateAsync({ ...d, activities: acts }); }} />}

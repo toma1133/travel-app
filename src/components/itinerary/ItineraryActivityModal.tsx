@@ -65,6 +65,8 @@ type ItineraryActivityModalProps = {
     errorMessage?: string;
     onTimeSettingsChange: (patch: Partial<ItineraryActivitiy>) => void;
     theme: TripThemeConf | null;
+    localTimeZone?: string | null;
+    homeTimeZone?: string | null;
     onCloseBtnClick: MouseEventHandler<HTMLButtonElement>;
     onFormInputChange: ChangeEventHandler<
         HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
@@ -79,6 +81,8 @@ const ItineraryActivityModal = ({
     itinerary,
     mode,
     theme,
+    localTimeZone,
+    homeTimeZone,
     onCloseBtnClick,
     onFormInputChange,
     onFormSubmit,
@@ -655,6 +659,8 @@ const ItineraryActivityModal = ({
                                     此活動使用 UTC 儲存
                                 </label>
                                 <TimeZoneSelect value={formData.time_zone} label="活動時區"
+                                    localTimeZone={localTimeZone}
+                                    homeTimeZone={homeTimeZone}
                                     disabled={!(formData.is_utc ?? itinerary?.is_utc)}
                                     onChange={time_zone => onTimeSettingsChange({ time_zone })} />
                                 <p className="text-muted-foreground">依此活動時區輸入日期與時間；同一天的活動可使用不同時區。</p>
