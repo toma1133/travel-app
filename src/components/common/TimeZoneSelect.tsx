@@ -170,7 +170,7 @@ export type TimeZoneSelectProps = {
     value?: string | null;
     onChange: (value: string) => void;
     label?: string;
-    disabled?: boolean;TimeZoneSelect
+    disabled?: boolean;
     className?: string;
     localTimeZone?: string | null;
     homeTimeZone?: string | null;
